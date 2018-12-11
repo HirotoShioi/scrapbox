@@ -21,7 +21,7 @@ data Markdown
     | BlockQuote ScrapText
     | BulletPoints [ScrapText]
     | CodeBlock CodeName Code
-    | NewLine ScrapText
+    | BulletLine ScrapText
     | Simple ScrapText
     | Table TableContent -- No sure how to implement yet!!
     | Thumbnail Url
@@ -32,7 +32,7 @@ data ScrapText =
     | Styled Style ScrapText ScrapText
     | SimpleText Text ScrapText
     | Link (Maybe Text) Url ScrapText
-    | End
+    | EndLine
     deriving (Eq, Show)
 
 type TableContent = [Text]
