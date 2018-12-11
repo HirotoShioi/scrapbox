@@ -6,22 +6,23 @@ module Lib where
 import           RIO
 import           RIO.List
 import qualified RIO.Text       as T
+import qualified Data.ByteString.Char8 as C8
 
 import           Types
 
 -- | Produce ScrapBox Markdown in human readable format
-encodePretty :: Page -> Text
-encodePretty = T.unlines . encode
+encodePretty :: Page -> ByteString
+encodePretty = C8.unlines . encode
 
-encode :: Page -> [Text]
+encode :: Page -> [ByteString]
 encode page =
     let mds =  getContent $ pContent page
-    in concatMap (\md -> encodeMarkdown md) mds
+    in concatMap (map encodeUtf8 . encodeMarkdown) mds
 
 encodeMarkdown :: Markdown -> [Text]
 encodeMarkdown = \case
     BreakLine                      -> [""]
-    BlockQuote text                -> ["> " <> encodeText text]
+    BlockQuote text                -> [">" <> encodeText text]
     BulletPoints contents          -> encodeBulletPoints contents
     CodeBlock codeName code        -> encodeCodeBlock codeName code
     BulletLine text                -> ["\t" <> encodeText text]
@@ -72,7 +73,6 @@ encodeTable tableContent = undefined
 
 encodeBulletPoints :: [ScrapText] -> [Text]
 encodeBulletPoints txt = map (\scrapText -> "\t" <> encodeText scrapText) txt
-
 
 -- decode :: ???? -> Parser [Markdown]
 -- decode = undefined
