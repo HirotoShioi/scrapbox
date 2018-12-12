@@ -52,7 +52,7 @@ encodeContext ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ct
     encodeScrapContext :: ScrapContext -> Text
     encodeScrapContext = \case
         CodeNotation code              -> "`" <> code <> "`"
-        Link (Just linkName) (Url url) -> blocked $ linkName <> " " <> url
+        Link (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
         Link Nothing (Url url)         -> blocked url
         PlainText text                 -> text
 
