@@ -39,7 +39,7 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote ScrapText
     -- ^ BlockQuote like markdown
-    | BulletLine ScrapText
+    | BulletLine Int ScrapText
     -- ^ Bulletpoint styled line
     | BulletPoints [ScrapText]
     -- ^ Bullet points
@@ -76,8 +76,8 @@ data Style =
     -- ^ Bold style
     | Italic
     -- ^ Italic style
-    | None
-    -- ^ None
+    | NoStyle
+    -- ^ No styles
     | StrikeThrough
     deriving (Eq, Show)
 

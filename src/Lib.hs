@@ -4,13 +4,13 @@
 module Lib where
 
 import           RIO
-import           RIO.List
 import qualified RIO.Text       as T
 import qualified Data.ByteString.Char8 as C8
 
 import           Types
 
 -- | Produce ScrapBox Markdown in human readable format
+--
 -- Not working well
 encodePretty :: Markdown -> ByteString
 encodePretty = C8.unlines . encodeMarkdown
@@ -21,18 +21,22 @@ encodeMarkdown md =
     let blocks =  getMarkdown md
     in concatMap (map encodeUtf8 . encodeBlocks) blocks
 
+-- | Smart constructor for creating 'Markdown' with given '[Block]'
+mkMarkdown :: [Block] -> Markdown
+mkMarkdown = Markdown
+
 -- Encode blocks
 encodeBlocks :: Block -> [Text]
 encodeBlocks = \case
-    BreakLine               -> [""]
-    BlockQuote text         -> [">" <> encodeText text]
-    BulletPoints contents   -> encodeBulletPoints contents
-    BulletLine text         -> ["\t" <> encodeText text]
-    CodeBlock codeName code -> encodeCodeBlock codeName code
-    Header headerSize ctx   -> [encodeHeader headerSize ctx]
-    Simple text             -> [encodeText text]
-    Table table             -> encodeTable table
-    Thumbnail (Url url)     -> [blocked url]
+    BreakLine                -> [""]
+    BlockQuote scrapText     -> ["> " <> encodeText scrapText]
+    BulletPoints contents    -> encodeBulletPoints contents
+    BulletLine num scrapText -> [T.replicate num "\t" <> encodeText scrapText]
+    CodeBlock codeName code  -> encodeCodeBlock codeName code
+    Header headerSize ctx    -> [encodeHeader headerSize ctx]
+    Simple scrapText         -> [encodeText scrapText]
+    Table table              -> encodeTable table
+    Thumbnail (Url url)      -> [blocked url]
 
 -- | Encode given 'ScrapText' into text
 encodeText :: ScrapText -> Text
@@ -55,23 +59,23 @@ encodeContext ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ct
 -- | Encode with style (Do not export this)
 encodeWithStyle :: Style -> Context -> Text
 encodeWithStyle style ctx = case style of
-    None -> encodeContext ctx
+    NoStyle -> encodeContext ctx
     Bold -> 
         let boldStyle = StyleData 0 True False False
-        in encodeStyled boldStyle ctx
+        in encodeCustomStyle boldStyle ctx
     Italic -> 
         let italicStyle = StyleData 0 False True False
-        in encodeStyled italicStyle ctx
+        in encodeCustomStyle italicStyle ctx
     StrikeThrough ->
         let strikeThroughStyle = StyleData 0 False False True
-        in encodeStyled strikeThroughStyle ctx
-    Custom style' -> encodeStyled style' ctx
+        in encodeCustomStyle strikeThroughStyle ctx
+    Custom customStyle -> encodeCustomStyle customStyle ctx
 
-encodeStyled :: StyleData -> Context -> Text
-encodeStyled (StyleData headerNum isBold isItalic isStrikeThrough) ctx =
-    let italic         = if isItalic then "/" else ""
-        strikeThrough  = if isStrikeThrough then "-" else ""
-        bold           = if isBold then "*" else ""
+encodeCustomStyle :: StyleData -> Context -> Text
+encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) ctx =
+    let italic         = if isItalic then "/" else mempty
+        strikeThrough  = if isStrikeThrough then "-" else mempty
+        bold           = if isBold then "*" else mempty
         headerNum'     = if isBold then 0 else headerNum
         combinedSyntax = mconcat
             [ T.replicate headerNum' "*"
@@ -101,7 +105,7 @@ encodeBulletPoints text = map (\scrapText -> "\t" <> encodeText scrapText) text
 encodeHeader :: Int -> Context -> Text
 encodeHeader headerSize ctx = 
     let style     = StyleData headerSize False False False
-    in encodeStyled style ctx
+    in encodeCustomStyle style ctx
 
 -- | Add an block to a given encoded text
 blocked :: Text -> Text
