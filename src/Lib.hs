@@ -69,7 +69,7 @@ encodeWithStyle style ctx = case style of
     StrikeThrough ->
         let strikeThroughStyle = StyleData 0 False False True
         in encodeCustomStyle strikeThroughStyle ctx
-    Custom customStyle -> encodeCustomStyle customStyle ctx
+    CustomStyle customStyle -> encodeCustomStyle customStyle ctx
 
 encodeCustomStyle :: StyleData -> Context -> Text
 encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) ctx =

@@ -24,7 +24,7 @@ breakLine :: Block
 breakLine = BreakLine
 
 --------------------------------------------------------------------------------
--- blocks
+-- Blocks
 --------------------------------------------------------------------------------
 
 -- "Get started",
@@ -105,10 +105,11 @@ pagesThat = bulletLineWithText 2 "Pages that are directly linked or two steps aw
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = BulletLine 1 $ ScrapText [seeImagesText, column1, column2, onThePage]
+seeImages = BulletLine 1 $ ScrapText [seeImagesText, column1, brackets, column2, onThePage]
   where
     seeImagesText = scrapWithPlainText "See images, videos, and external links added inside "
     column1       = Scrap NoStyle [CodeNotation "["]
+    brackets      = scrapWithPlainText " brackets"
     column2       = Scrap NoStyle [CodeNotation "]"]
     onThePage     = scrapWithPlainText " on the page"
 
@@ -152,8 +153,11 @@ getsInterestingBlock =
     , breakLine
     ]
 
+onceStartedBlock :: [Block]
+onceStartedBlock = []
+
 getStartedMarkdown :: Markdown
-getStartedMarkdown = mkMarkdown $ getStartedBlock <> getsInterestingBlock
+getStartedMarkdown = mkMarkdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
 
 -- "Get started",
 -- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",

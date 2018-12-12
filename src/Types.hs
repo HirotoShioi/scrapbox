@@ -62,15 +62,15 @@ newtype ScrapText = ScrapText {
 
 -- | Scrap is an context which can have a style
 data Scrap = Scrap
-    { sStyle   :: !Style
-    , sContent :: !Context
+    { scrapStyle   :: !Style
+    , scrapContent :: !Context
     } deriving (Eq, Show)
 
 type Context = [ScrapContext]
 
 -- | Style that can be applied to the 'Context'
 data Style = 
-      Custom StyleData
+      CustomStyle StyleData
     -- ^ You can use this to combine all three as of the styles as well as Header
     | Bold
     -- ^ Bold style
