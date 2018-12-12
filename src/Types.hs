@@ -6,36 +6,52 @@ import RIO.Time
 -- https://scrapbox.io/help/Syntax
 
 data Page = Page
-    { pContent   :: Content
-    , pCreatedAt :: UTCTime
-    , pUpdatedAt :: UTCTime
-    , pTitle     :: Text
+    { pContent   :: !Markdown
+    , pCreatedAt :: !UTCTime
+    , pUpdatedAt :: !UTCTime
+    , pTitle     :: !Text
     } deriving (Eq, Show)
 
-newtype Content = Content 
-    { getContent :: [Markdown]
+newtype Markdown = Markdown 
+    { getContent :: [Block]
     } deriving (Eq, Show)
 
-data Markdown
+data Block
     = BreakLine
     | BlockQuote ScrapText
+    | BulletLine ScrapText
     | BulletPoints [ScrapText]
     | CodeBlock CodeName Code
-    | BulletLine ScrapText
+    | Header Int ScrapText
     | Simple ScrapText
     | Table TableContent -- No sure how to implement yet!!
     | Thumbnail Url
     deriving (Eq, Show)
 
-data ScrapText = 
-      CodeNotation Text ScrapText
-    | Styled Style ScrapText ScrapText
-    | SimpleText Text ScrapText
-    | Link (Maybe Text) Url ScrapText
-    | EndLine
+newtype ScrapText = ScrapText {
+    getScrapText :: [Scrap] 
+    } deriving (Eq, Show)
+
+data Scrap = Scrap
+    { sStyle :: Style
+    , sContent :: Context
+    } deriving (Eq, Show)
+
+data Style = 
+      Custom StyleData
+    | Bold
+    | Italic
+    | None
+    | StrikeThrough
     deriving (Eq, Show)
 
-type TableContent = [Text]
+data Context =
+      CodeNotation Text
+    | Link (Maybe Text) Url
+    | PlainText Text
+    deriving (Eq, Show)
+
+type TableContent = [[Text]]
 type Code = Text
 
 newtype Url = Url 
@@ -46,7 +62,7 @@ newtype CodeName = CodeName
     { getCodeName :: Text
     } deriving (Eq, Show)
 
-data Style = Style
+data StyleData = StyleData
     { bHeader        :: !Int
     , bBold          :: !Bool
     , bItalic        :: !Bool

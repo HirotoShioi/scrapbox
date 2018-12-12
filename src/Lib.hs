@@ -11,39 +11,54 @@ import qualified Data.ByteString.Char8 as C8
 import           Types
 
 -- | Produce ScrapBox Markdown in human readable format
-encodePretty :: Page -> ByteString
+encodePretty :: Markdown -> ByteString
 encodePretty = C8.unlines . encode
 
-encode :: Page -> [ByteString]
-encode page =
-    let mds =  getContent $ pContent page
-    in concatMap (map encodeUtf8 . encodeMarkdown) mds
+encode :: Markdown -> [ByteString]
+encode md =
+    let blocks =  getContent md
+    in concatMap (map encodeUtf8 . encodeMarkdown) blocks
 
-encodeMarkdown :: Markdown -> [Text]
+encodeMarkdown :: Block -> [Text]
 encodeMarkdown = \case
     BreakLine                      -> [""]
     BlockQuote text                -> [">" <> encodeText text]
     BulletPoints contents          -> encodeBulletPoints contents
-    CodeBlock codeName code        -> encodeCodeBlock codeName code
     BulletLine text                -> ["\t" <> encodeText text]
+    CodeBlock codeName code        -> encodeCodeBlock codeName code
+    Header headerSize text         -> [encodeHeader headerSize (encodeText text)]
     Simple text                    -> [encodeText text]
     Table table                    -> encodeTable table
     Thumbnail (Url url)            -> [block url]
 
 encodeText :: ScrapText -> Text
-encodeText = \case
-    CodeNotation code next              -> "`" <> code <> "`" <> encodeText next
-    Link (Just linkName) (Url url) next -> block (linkName <> " " <> url) <> encodeText next
-    Link Nothing (Url url) next         -> block url <> encodeText next
-    SimpleText text next                -> text <> encodeText next
-    Styled style text next              -> encodeStyled style text <> encodeText next
-    EndLine                             -> ""
+encodeText (ScrapText scraps) = foldr (\scrap acc-> encodeScrapText scrap <> acc) mempty scraps
 
-block :: Text -> Text
-block content = "[" <> content <> "]"
+encodeScrapText :: Scrap -> Text
+encodeScrapText (Scrap style scrap) =
+    let encodedScrap = case scrap of
+            CodeNotation code              -> "`" <> code <> "`"
+            Link (Just linkName) (Url url) -> block $ linkName <> " " <> url
+            Link Nothing (Url url)         -> block url
+            PlainText text                 -> text
+    in encodeWithStyle style encodedScrap
 
-encodeStyled :: Style -> ScrapText -> Text
-encodeStyled (Style headerNum isBold isItalic isStrikeThrough) md =
+encodeWithStyle :: Style -> Text -> Text
+encodeWithStyle style text = case style of
+    None -> text
+    Bold -> 
+        let boldStyle = StyleData 0 True False False
+        in encodeStyled boldStyle text
+    Italic -> 
+        let italicStyle = StyleData 0 False True False
+        in encodeStyled italicStyle text
+    StrikeThrough ->
+        let strikeThroughStyle = StyleData 0 False False True
+        in encodeStyled strikeThroughStyle text
+    Custom style' -> encodeStyled style' text
+
+encodeStyled :: StyleData -> Text -> Text
+encodeStyled (StyleData headerNum isBold isItalic isStrikeThrough) text =
     let italic         = if isItalic then "/" else ""
         strikeThrough  = if isStrikeThrough then "-" else ""
         bold           = if isBold then "*" else ""
@@ -55,7 +70,7 @@ encodeStyled (Style headerNum isBold isItalic isStrikeThrough) md =
             , strikeThrough
             , " "
             ]
-    in block $ combinedSyntax <> encodeText md
+    in block $ combinedSyntax <> text
 
 encodeCodeBlock :: CodeName -> Text -> [Text]
 encodeCodeBlock (CodeName name) code = do
@@ -72,7 +87,20 @@ encodeTable :: TableContent -> [Text]
 encodeTable tableContent = undefined
 
 encodeBulletPoints :: [ScrapText] -> [Text]
-encodeBulletPoints txt = map (\scrapText -> "\t" <> encodeText scrapText) txt
+encodeBulletPoints text = map (\scrapText -> "\t" <> encodeText scrapText) text
 
--- decode :: ???? -> Parser [Markdown]
--- decode = undefined
+encodeHeader :: Int -> Text -> Text
+encodeHeader headerSize scrapText = 
+    let style     = StyleData headerSize False False False
+    in encodeStyled style scrapText
+
+block :: Text -> Text
+block content = "[" <> content <> "]"
+
+-- decodeHtml :: ???? -> Parser Content
+-- decodeHtml = undefined
+
+-- decodeMarkdown :: ???? -> Parser Content
+-- decodeMarkdown = undefined
+
+-- Need to make an chart
