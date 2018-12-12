@@ -44,7 +44,7 @@ welcome = textBlock "Welcome to your new Scrapbox project!"
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
-everythingIs = Header 2 [PlainText "Everything is editable"]
+everythingIs = Header 2 [PlainText "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
@@ -56,7 +56,8 @@ pressTab = bulletLine 2 "Press tab at the beginning of a line to indent and add 
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
-highlightText = BulletLine 1 $ ScrapText [highlight, newLink, column, bold, column, crossed, space, italic, period]
+highlightText = BulletLine 1 $ ScrapText 
+    [highlight, newLink, column, bold, column, crossed, space, italic, period]
   where
     highlight :: Scrap
     highlight = plainText " Highlight text to make it a "
@@ -88,7 +89,7 @@ addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wor
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
-hereIs = Header 2 [PlainText "Here is where it gets interesting "]
+hereIs = Header 2 [PlainText "🎯 Here is where it gets interesting "]
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
@@ -100,11 +101,13 @@ clickNewLink = BulletLine 1 $ ScrapText [clickA, newLink, toCreate]
 
 -- Click related thumbnails in the footer of any page to explore ideas you have linked.
 clickRelated :: Block
-clickRelated = textBlock "Click related thumbnails in the footer of any page to explore ideas you have linked."
+clickRelated = textBlock "Click related thumbnails in the footer of any page to explore ideas \
+    \you have linked."
 
 -- " \tPages that are directly linked or two steps away from the current page will be displayed.",
 pagesThat :: Block
-pagesThat = bulletLine 2 "Pages that are directly linked or two steps away from the current page will be displayed."
+pagesThat = bulletLine 2 "Pages that are directly linked or two steps away from the current page \
+    \will be displayed."
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
@@ -139,7 +142,10 @@ useScrapbox = BulletLine 1 $ ScrapText [useScrapText, codeBlocksText, giveFeedba
 forExample :: Block
 forExample = bulletLine 1 "For example"
 
--- "\tLets say you are working on developing a new website. You might want to discuss ideas with your team before and while you execute the plan.  First create a page `Site plan` to start a conversation about the site requirements and link some useful resources. On that page you might add a link for a new page called `Social media buttons`.",
+-- "\tLets say you are working on developing a new website. You might want to discuss ideas with 
+-- your team before and while you execute the plan.  First create a page `Site plan` to start a 
+-- conversation about the site requirements and link some useful resources. On that page you might 
+-- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
 letsSay = BulletLine 1 $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
   where
@@ -151,12 +157,15 @@ letsSay = BulletLine 1 $ ScrapText [letsSayText, sitePlan, toStart, socialMedia,
     socialMedia = codeNotation "Social media buttons"
     period      = plainText "."
 
--- "\tYou can immediately click on that link to `Social media buttons` and start editing.  There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll see a related link that will take you back to `Site Plan`. ",
+-- "\tYou can immediately click on that link to `Social media buttons` and start editing. 
+-- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll 
+-- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
 youCanImmediately = BulletLine 1 $ ScrapText 
   [youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan, twitter, relatedLink, sitePlan, period]
   where
-    youcan = plainText "You can immediately click on that link to `Social media buttons` and start editing.  There you may add links to "
+    youcan = plainText "You can immediately click on that link to `Social media buttons` and start editing. \
+    \ There you may add links to "
     socialMedia = codeNotation "Social media buttons"
     twitter     = codeNotation "Twitter"
     faceBook    = codeNotation "Facebook"
@@ -183,7 +192,8 @@ whatIdeas = BlockQuote $ ScrapText [Scrap Italic [PlainText "What ideas in your 
 
 -- "[** 📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project ]",
 onceYouGot :: Block
-onceYouGot = Header 2 $ [PlainText "📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project "]
+onceYouGot = Header 2 $ [PlainText "📌 Once you've got the basics, here are ways to dig deeper and \
+  \get the most out of your new project "]
 
 
 -- " See a list of all the [https://scrapbox.io/help/Things%20you%20can%20do Things you can do] ",
@@ -248,7 +258,8 @@ thankYouFor = Simple $ ScrapText [thankyou]
 thankYouThumbnail :: Block
 thankYouThumbnail = Thumbnail (Url "https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58")
 
--- ">Note: When you're done reading you might change the title of this page to 'Welcome to project-name' and add some personalized instructions for your team.",
+-- ">Note: When you're done reading you might change the title of this page to 'Welcome to 
+-- project-name' and add some personalized instructions for your team.",
 noteWhen :: Block
 noteWhen = BlockQuote $ ScrapText [noteWhenText]
   where
