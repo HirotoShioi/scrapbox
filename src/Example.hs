@@ -27,24 +27,31 @@ breakLine = BreakLine
 -- blocks
 --------------------------------------------------------------------------------
 
+-- "Get started",
 getStarted :: Block
 getStarted = simpleTextBlock "Get started"
 
+-- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",
 startedThumbnail :: Block
 startedThumbnail = Thumbnail (Url "https://gyazo.com/5f93e65a3b979ae5333aca4f32600611")
 
+-- "Welcome to your new Scrapbox project!",
 welcome :: Block
 welcome = simpleTextBlock "Welcome to your new Scrapbox project!"
 
+-- "[** 📝Everything is editable]"
 everythingIs :: Block
 everythingIs = Header 2 [PlainText "Everything is editable"]
 
+-- "\tClick on any line and start typing to edit. "
 clickOn :: Block
 clickOn = bulletLineWithText 1 "Click on any line and start typing to edit. "
 
+-- "\t\tPress tab at the beginning of a line to indent and add a bullet point."
 pressTab :: Block
 pressTab = bulletLineWithText 2 "Press tab at the beginning of a line to indent and add a bullet point."
 
+-- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
 highlightText = BulletLine 1 $ ScrapText [highlight, newLink, column, bold, column, crossed, space, italic, period]
   where
@@ -65,6 +72,7 @@ highlightText = BulletLine 1 $ ScrapText [highlight, newLink, column, bold, colu
     italic :: Scrap
     italic = Scrap Italic [PlainText "more"]
 
+-- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block 
 addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2] 
   where
@@ -75,6 +83,7 @@ addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wor
     wordsYouWant = scrapWithPlainText "words you want to link "
     column2      = Scrap NoStyle [CodeNotation "]"]
 
+-- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
 hereIs = Header 2 [PlainText "Here is where it gets interesting "]
 
@@ -109,6 +118,42 @@ ourGoalIs = BlockQuote $ ScrapText [ourGoalIsText]
   where
     ourGoalIsText = scrapWithPlainText "Our goal is to help you build a map of your ideas that gains\
     \ clarity and context with every scrap you add. "
+
+getStartedBlock :: [Block]
+getStartedBlock = 
+    [ getStarted
+    , startedThumbnail
+    , welcome
+    , breakLine
+    , everythingIs
+    , breakLine
+    , clickOn
+    , breakLine
+    , pressTab
+    , breakLine
+    , highlightText
+    , addLinks
+    , breakLine
+    ]
+
+getsInterestingBlock :: [Block]
+getsInterestingBlock = 
+    [ hereIs
+    , breakLine
+    , clickNewLink
+    , breakLine
+    , clickRelated
+    , pagesThat
+    , breakLine
+    , seeImages
+    , breakLine
+    , ourGoalIs
+    , breakLine
+    , breakLine
+    ]
+
+getStartedMarkdown :: Markdown
+getStartedMarkdown = mkMarkdown $ getStartedBlock <> getsInterestingBlock
 
 -- "Get started",
 -- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",
@@ -169,39 +214,3 @@ ourGoalIs = BlockQuote $ ScrapText [ourGoalIsText]
 -- "",
 -- "",
 -- ">Note: When you're done reading you might change the title of this page to 'Welcome to project-name' and add some personalized instructions for your team.",
-
-getStartedBlock :: [Block]
-getStartedBlock = 
-    [ getStarted
-    , startedThumbnail
-    , welcome
-    , breakLine
-    , everythingIs
-    , breakLine
-    , clickOn
-    , breakLine
-    , pressTab
-    , breakLine
-    , highlightText
-    , addLinks
-    , breakLine
-    ]
-
-getsInterestingBlock :: [Block]
-getsInterestingBlock = 
-    [ hereIs
-    , breakLine
-    , clickNewLink
-    , breakLine
-    , clickRelated
-    , pagesThat
-    , breakLine
-    , seeImages
-    , breakLine
-    , ourGoalIs
-    , breakLine
-    , breakLine
-    ]
-
-getStartedMarkdown :: Markdown
-getStartedMarkdown = mkMarkdown $ getStartedBlock <> getsInterestingBlock
