@@ -20,6 +20,9 @@ bulletLineWithText num text = BulletLine num $ ScrapText $ [Scrap NoStyle [Plain
 scrapWithPlainText :: Text -> Scrap
 scrapWithPlainText text = Scrap NoStyle [PlainText text]
 
+scrapCodeNotationSimple :: Text -> Scrap
+scrapCodeNotationSimple text = Scrap NoStyle [CodeNotation text]
+
 breakLine :: Block
 breakLine = BreakLine
 
@@ -77,11 +80,11 @@ addLinks :: Block
 addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2] 
   where
     addingLinks  = scrapWithPlainText "Add links while typing with a "
-    symbol       = Scrap NoStyle [CodeNotation "#"]
+    symbol       = scrapCodeNotationSimple "#"
     beforeOr     = scrapWithPlainText " before or brackets around "
-    column1      = Scrap NoStyle [CodeNotation "["]
+    column1      = scrapCodeNotationSimple "["
     wordsYouWant = scrapWithPlainText "words you want to link "
-    column2      = Scrap NoStyle [CodeNotation "]"]
+    column2      = scrapCodeNotationSimple "]"
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
@@ -108,9 +111,9 @@ seeImages :: Block
 seeImages = BulletLine 1 $ ScrapText [seeImagesText, column1, brackets, column2, onThePage]
   where
     seeImagesText = scrapWithPlainText "See images, videos, and external links added inside "
-    column1       = Scrap NoStyle [CodeNotation "["]
+    column1       = scrapCodeNotationSimple "["
     brackets      = scrapWithPlainText " brackets"
-    column2       = Scrap NoStyle [CodeNotation "]"]
+    column2       = scrapCodeNotationSimple  "]"
     onThePage     = scrapWithPlainText " on the page"
 
 -- "> Our goal is to help you build a map of your ideas that gains clarity and context with every scrap you add. ",
@@ -119,6 +122,141 @@ ourGoalIs = BlockQuote $ ScrapText [ourGoalIsText]
   where
     ourGoalIsText = scrapWithPlainText "Our goal is to help you build a map of your ideas that gains\
     \ clarity and context with every scrap you add. "
+
+-- "[* What can you put in a Scrapbox project?]",
+whatCan :: Block
+whatCan = Header 1 $ [PlainText "What can you put in a Scrapbox project?"]
+
+-- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
+useScrapbox :: Block
+useScrapbox = BulletLine 1 $ ScrapText [useScrapText, codeBlocksText, giveFeedback]
+  where
+    useScrapText   = scrapWithPlainText "Use Scrapbox to outline ideas, discuss "
+    codeBlocksText = scrapCodeNotationSimple "code blocks"
+    giveFeedback   = scrapWithPlainText ", give feedback, and brainstorm. "
+
+-- "[* For example]",
+forExample :: Block
+forExample = bulletLineWithText 1 "For example"
+
+-- "\tLets say you are working on developing a new website. You might want to discuss ideas with your team before and while you execute the plan.  First create a page `Site plan` to start a conversation about the site requirements and link some useful resources. On that page you might add a link for a new page called `Social media buttons`.",
+letsSay :: Block
+letsSay = BulletLine 1 $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
+  where
+    letsSayText = scrapWithPlainText "Lets say you are working on developing a new website. \
+    \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
+    sitePlan    = scrapCodeNotationSimple "Site plan"
+    toStart     = scrapWithPlainText " to start a conversation about the site requirements and link \
+    \some useful resources. On that page you might add a link for a new page called "
+    socialMedia = scrapCodeNotationSimple "Social media buttons"
+    period      = scrapWithPlainText "."
+
+-- "\tYou can immediately click on that link to `Social media buttons` and start editing.  There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll see a related link that will take you back to `Site Plan`. ",
+youCanImmediately :: Block
+youCanImmediately = BulletLine 1 $ ScrapText 
+  [youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan, twitter, relatedLink, sitePlan, period]
+  where
+    youcan = scrapWithPlainText "You can immediately click on that link to `Social media buttons` and start editing.  There you may add links to "
+    socialMedia = scrapCodeNotationSimple "Social media buttons"
+    twitter     = scrapCodeNotationSimple "Twitter"
+    faceBook    = scrapCodeNotationSimple "Facebook"
+    andStart    = scrapWithPlainText " and start editing.  There you may add links to "
+    column      = scrapWithPlainText ", "
+    nextYoucan  = scrapWithPlainText ", etc.  Next you can click on "
+    relatedLink = scrapWithPlainText " and you'll see a related link that will take you back to "
+    sitePlan    = scrapCodeNotationSimple "Site Plan"
+    period      = scrapWithPlainText ". "
+
+-- Once you can easily and directly type your ideas while also building context ideas become more
+-- clear the more you use it. No more folders full of dead text means no more teams isolated from their own ideas.
+onceYoucan :: Block
+onceYoucan = simpleTextBlock "Once you can easily and directly type your ideas while also building \
+    \ context ideas become more clear the more you use it. No more folders full of dead text means no \
+    \more teams isolated from their own ideas."
+
+-- >  [/ What ideas in your head could your team benefit from you putting down right now? Go create
+--  your first three or so pages and add a few links. From 3 to 3,000 pages your ideas will only grow in context.]
+whatIdeas :: Block
+whatIdeas = BlockQuote $ ScrapText [Scrap Italic [PlainText "What ideas in your head could your team \
+    \ benefit from you putting down right now? Go create your first three or so pages and add a few \
+    \links. From 3 to 3,000 pages your ideas will only grow in context."]]
+
+-- "[** 📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project ]",
+onceYouGot :: Block
+onceYouGot = Header 2 $ [PlainText "📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project "]
+
+
+-- " See a list of all the [https://scrapbox.io/help/Things%20you%20can%20do Things you can do] ",
+seeAList :: Block
+seeAList = Simple $ ScrapText [seeAListText, thingsYouCando, space]
+  where
+    seeAListText = scrapWithPlainText " See a list of all the "
+    thingsYouCando = Scrap NoStyle [Link (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")]
+    space = scrapWithPlainText " "
+
+-- " \tIncludes more syntax, inviting team members, and creating profiles",
+includesMore :: Block
+includesMore = bulletLineWithText 1 "Includes more syntax, inviting team members, and creating profiles"
+
+
+-- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
+seeSome :: Block
+seeSome = BulletLine 1 $ ScrapText [seeSomeText, exampleProjects, space]
+  where
+    seeSomeText = scrapWithPlainText "See some "
+    exampleProjects = Scrap NoStyle [Link (Just "Example projects") (Url "https://scrapbox.io/help/exampless")]
+    space           = scrapWithPlainText " "
+
+-- " \tIncludes a SaaS startup, design agency, and more",
+includesSaas :: Block
+includesSaas = bulletLineWithText 2 "Includes a SaaS startup, design agency, and more"
+
+
+-- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
+howTos :: Block
+howTos = BulletLine 1 $ ScrapText [see, howTosText, space]
+  where
+    see        = scrapWithPlainText "See "
+    howTosText = Scrap NoStyle [Link (Just "How-tos and support") (Url "https://scrapbox.io/help/")]
+    space      = scrapWithPlainText " "
+
+-- " \tFor detailed instructions and answers to FAQs",
+forDetails :: Block
+forDetails = bulletLineWithText 2 "For detailed instructions and answers to FAQs"
+
+-- "[* We would love to hear any questions or feedback you may have]",
+weWouldLove :: Block
+weWouldLove = Header 1 $ [PlainText "We would love to hear any questions or feedback you may have"]
+
+-- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
+pleaseLet :: Block
+pleaseLet = Simple $ ScrapText [pleaseLetText, twitter, andText, faceBook]
+  where
+    pleaseLetText = scrapWithPlainText "Please let us know if you have any suggestions, questions, or \
+      \points of friction.You can contact us directly by email: contact@scrapbox.io, "
+    andText       = scrapWithPlainText ", and "
+    twitter       = Scrap NoStyle [Link (Just "twitter") (Url "https://twitter.com/scrapboxapp")]
+    faceBook      = Scrap NoStyle [Link (Just "facebook") (Url "https://facebook.com/scrapboxapp")]
+
+-- "[/ Thank you for using Scrapbox!]",
+thankYouFor :: Block
+thankYouFor = Simple $ ScrapText [thankyou]
+  where
+    thankyou = Scrap Italic [PlainText "Thank you for using Scrapbox!"]
+
+-- "[https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58]",
+thankYouThumbnail :: Block
+thankYouThumbnail = Thumbnail (Url "https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58")
+
+-- ">Note: When you're done reading you might change the title of this page to 'Welcome to project-name' and add some personalized instructions for your team.",
+noteWhen :: Block
+noteWhen = BlockQuote $ ScrapText [noteWhenText]
+  where
+    noteWhenText =  scrapWithPlainText "Note: When you're done reading you might change the title of \
+    \ this page to 'Welcome to project-name' and add some personalized instructions for your team."
+----------------------------------------------------------------------------------------------------
+-- Accumulated blocks
+----------------------------------------------------------------------------------------------------
 
 getStartedBlock :: [Block]
 getStartedBlock = 
@@ -154,7 +292,40 @@ getsInterestingBlock =
     ]
 
 onceStartedBlock :: [Block]
-onceStartedBlock = []
+onceStartedBlock = 
+    [ whatCan
+    , useScrapbox
+    , breakLine
+    , forExample
+    , letsSay
+    , breakLine
+    , youCanImmediately
+    , breakLine
+    , onceYoucan
+    , breakLine
+    , whatIdeas
+    , breakLine
+    , breakLine
+    , onceYouGot
+    , seeAList
+    , includesMore
+    , breakLine
+    , breakLine
+    , seeSome
+    , includesSaas
+    , breakLine
+    , howTos
+    , forDetails
+    , breakLine
+    , breakLine
+    , weWouldLove
+    , pleaseLet
+    , breakLine
+    , thankYouFor
+    , breakLine
+    , breakLine
+    , noteWhen
+    ]
 
 getStartedMarkdown :: Markdown
 getStartedMarkdown = mkMarkdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock

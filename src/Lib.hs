@@ -29,7 +29,7 @@ mkMarkdown = Markdown
 encodeBlocks :: Block -> [Text]
 encodeBlocks = \case
     BreakLine                -> [""]
-    BlockQuote scrapText     -> ["> " <> encodeText scrapText]
+    BlockQuote scrapText     -> [">" <> encodeText scrapText]
     BulletPoints contents    -> encodeBulletPoints contents
     BulletLine num scrapText -> [T.replicate num "\t" <> encodeText scrapText]
     CodeBlock codeName code  -> encodeCodeBlock codeName code
