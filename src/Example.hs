@@ -12,16 +12,16 @@ import Lib
 --------------------------------------------------------------------------------
 
 textBlock :: Text -> Block
-textBlock text = Simple $ ScrapText [Scrap NoStyle [PlainText text]]
+textBlock text = Simple $ ScrapText [Context NoStyle [PlainText text]]
 
 bulletLine :: Int -> Text -> Block
-bulletLine num text = BulletLine num $ ScrapText $ [Scrap NoStyle [PlainText text]]
+bulletLine num text = BulletLine num $ ScrapText $ [Context NoStyle [PlainText text]]
 
-plainText :: Text -> Scrap
-plainText text = Scrap NoStyle [PlainText text]
+plainText :: Text -> Context
+plainText text = Context NoStyle [PlainText text]
 
-codeNotation :: Text -> Scrap
-codeNotation text = Scrap NoStyle [CodeNotation text]
+codeNotation :: Text -> Context
+codeNotation text = Context NoStyle [CodeNotation text]
 
 breakLine :: Block
 breakLine = BreakLine
@@ -59,22 +59,14 @@ highlightText :: Block
 highlightText = BulletLine 1 $ ScrapText 
     [highlight, newLink, column, bold, column, crossed, space, italic, period]
   where
-    highlight :: Scrap
     highlight = plainText " Highlight text to make it a "
-    newLink :: Scrap
-    newLink = Scrap NoStyle [Link Nothing (Url "New link")]
-    column :: Scrap
+    newLink = Context NoStyle [Link Nothing (Url "New link")]
     column = plainText ", "
-    space :: Scrap
     space = plainText " "
-    period :: Scrap
     period = plainText "."
-    bold :: Scrap
-    bold = Scrap Bold [PlainText "bold"]
-    crossed :: Scrap
-    crossed = Scrap StrikeThrough [PlainText "and"]
-    italic :: Scrap
-    italic = Scrap Italic [PlainText "more"]
+    bold = Context Bold [PlainText "bold"]
+    crossed = Context StrikeThrough [PlainText "and"]
+    italic = Context Italic [PlainText "more"]
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block 
@@ -96,7 +88,7 @@ clickNewLink :: Block
 clickNewLink = BulletLine 1 $ ScrapText [clickA, newLink, toCreate]
   where
     clickA   = plainText "Click a "
-    newLink  = Scrap NoStyle [Link Nothing (Url "New Link")]
+    newLink  = Context NoStyle [Link Nothing (Url "New Link")]
     toCreate = plainText " to create a new page with that title and open it."
 
 -- Click related thumbnails in the footer of any page to explore ideas you have linked.
@@ -186,7 +178,7 @@ onceYoucan = textBlock "Once you can easily and directly type your ideas while a
 -- >  [/ What ideas in your head could your team benefit from you putting down right now? Go create
 --  your first three or so pages and add a few links. From 3 to 3,000 pages your ideas will only grow in context.]
 whatIdeas :: Block
-whatIdeas = BlockQuote $ ScrapText [Scrap Italic [PlainText "What ideas in your head could your team \
+whatIdeas = BlockQuote $ ScrapText [Context Italic [PlainText "What ideas in your head could your team \
     \ benefit from you putting down right now? Go create your first three or so pages and add a few \
     \links. From 3 to 3,000 pages your ideas will only grow in context."]]
 
@@ -201,7 +193,7 @@ seeAList :: Block
 seeAList = Simple $ ScrapText [seeAListText, thingsYouCando, space]
   where
     seeAListText = plainText " See a list of all the "
-    thingsYouCando = Scrap NoStyle [Link (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")]
+    thingsYouCando = Context NoStyle [Link (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")]
     space = plainText " "
 
 -- " \tIncludes more syntax, inviting team members, and creating profiles",
@@ -214,7 +206,7 @@ seeSome :: Block
 seeSome = BulletLine 1 $ ScrapText [seeSomeText, exampleProjects, space]
   where
     seeSomeText = plainText "See some "
-    exampleProjects = Scrap NoStyle [Link (Just "Example projects") (Url "https://scrapbox.io/help/exampless")]
+    exampleProjects = Context NoStyle [Link (Just "Example projects") (Url "https://scrapbox.io/help/exampless")]
     space           = plainText " "
 
 -- " \tIncludes a SaaS startup, design agency, and more",
@@ -227,7 +219,7 @@ howTos :: Block
 howTos = BulletLine 1 $ ScrapText [see, howTosText, space]
   where
     see        = plainText "See "
-    howTosText = Scrap NoStyle [Link (Just "How-tos and support") (Url "https://scrapbox.io/help/")]
+    howTosText = Context NoStyle [Link (Just "How-tos and support") (Url "https://scrapbox.io/help/")]
     space      = plainText " "
 
 -- " \tFor detailed instructions and answers to FAQs",
@@ -245,14 +237,14 @@ pleaseLet = Simple $ ScrapText [pleaseLetText, twitter, andText, faceBook]
     pleaseLetText = plainText "Please let us know if you have any suggestions, questions, or \
       \points of friction.You can contact us directly by email: contact@scrapbox.io, "
     andText       = plainText ", and "
-    twitter       = Scrap NoStyle [Link (Just "twitter") (Url "https://twitter.com/scrapboxapp")]
-    faceBook      = Scrap NoStyle [Link (Just "facebook") (Url "https://facebook.com/scrapboxapp")]
+    twitter       = Context NoStyle [Link (Just "twitter") (Url "https://twitter.com/scrapboxapp")]
+    faceBook      = Context NoStyle [Link (Just "facebook") (Url "https://facebook.com/scrapboxapp")]
 
 -- "[/ Thank you for using Scrapbox!]",
 thankYouFor :: Block
 thankYouFor = Simple $ ScrapText [thankyou]
   where
-    thankyou = Scrap Italic [PlainText "Thank you for using Scrapbox!"]
+    thankyou = Context Italic [PlainText "Thank you for using Scrapbox!"]
 
 -- "[https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58]",
 thankYouThumbnail :: Block

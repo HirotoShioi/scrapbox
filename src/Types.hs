@@ -7,6 +7,7 @@ import RIO.Time
 
 -- TODO: Make naming more easy to understand/ makes sense
 
+-- | Data structure of an scrapbox page in JSON format
 data Page = Page
     { pContent   :: !Markdown
     , pCreatedAt :: !UTCTime
@@ -45,7 +46,7 @@ data Block
     -- ^ Bullet points
     | CodeBlock CodeName CodeSnippet
     -- ^ Code blocks
-    | Header Int Context
+    | Header Int Content
     -- ^ Header
     | Simple ScrapText
     -- ^ Simple text
@@ -55,18 +56,18 @@ data Block
     -- ^ Thumbnail
     deriving (Eq, Show)
 
--- | ScrapText are consisted by list of Scrap which are context associated with an style
+-- | ScrapText are consisted by list of Scrap which are contexts associated with an style
 newtype ScrapText = ScrapText {
-    getScrapText :: [Scrap] 
+    getScrapText :: [Context] 
     } deriving (Eq, Show)
 
 -- | Scrap is an context which can have a style
-data Scrap = Scrap
+data Context = Context
     { scrapStyle   :: !Style
-    , scrapContent :: !Context
+    , scrapContent :: !Content
     } deriving (Eq, Show)
 
-type Context = [ScrapContext]
+type Content = [Segment]
 
 -- | Style that can be applied to the 'Context'
 data Style = 
@@ -79,10 +80,11 @@ data Style =
     | NoStyle
     -- ^ No styles
     | StrikeThrough
+    -- ^ StrikeThrough style
     deriving (Eq, Show)
 
 -- | Context
-data ScrapContext =
+data Segment =
       CodeNotation Text
     -- ^ CodeNotation
     | Link (Maybe Text) Url
@@ -93,7 +95,7 @@ data ScrapContext =
 
 -- | StyleData
 data StyleData = StyleData
-    { bHeader        :: !Int
+    { bHeaderSize    :: !Int
     -- ^ Size of an header,
     , bBold          :: !Bool
     -- ^ Bold style

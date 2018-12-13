@@ -40,16 +40,16 @@ encodeBlocks = \case
 
 -- | Encode given 'ScrapText' into text
 encodeText :: ScrapText -> Text
-encodeText (ScrapText scraps) = foldr (\scrap acc-> encodeScrapText scrap <> acc) mempty scraps
+encodeText (ScrapText ctxs) = foldr (\scrap acc-> encodeScrapText scrap <> acc) mempty ctxs
 
 -- | Encode given 'Scrap' into text
-encodeScrapText :: Scrap -> Text
-encodeScrapText (Scrap style ctx) = encodeWithStyle style ctx
+encodeScrapText :: Context -> Text
+encodeScrapText (Context style content) = encodeWithStyle style content
 
-encodeContext :: Context -> Text
-encodeContext ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ctxs
+encodeContent :: Content -> Text
+encodeContent ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ctxs
   where
-    encodeScrapContext :: ScrapContext -> Text
+    encodeScrapContext :: Segment -> Text
     encodeScrapContext = \case
         CodeNotation code              -> "`" <> code <> "`"
         Link (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
@@ -57,9 +57,9 @@ encodeContext ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ct
         PlainText text                 -> text
 
 -- | Encode with style (Do not export this)
-encodeWithStyle :: Style -> Context -> Text
+encodeWithStyle :: Style -> Content -> Text
 encodeWithStyle style ctx = case style of
-    NoStyle -> encodeContext ctx
+    NoStyle -> encodeContent ctx
     Bold -> 
         let boldStyle = StyleData 0 True False False
         in encodeCustomStyle boldStyle ctx
@@ -71,8 +71,8 @@ encodeWithStyle style ctx = case style of
         in encodeCustomStyle strikeThroughStyle ctx
     CustomStyle customStyle -> encodeCustomStyle customStyle ctx
 
-encodeCustomStyle :: StyleData -> Context -> Text
-encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) ctx =
+encodeCustomStyle :: StyleData -> Content -> Text
+encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =
     let italic         = if isItalic then "/" else mempty
         strikeThrough  = if isStrikeThrough then "-" else mempty
         bold           = if isBold then "*" else mempty
@@ -84,7 +84,7 @@ encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) ctx =
             , strikeThrough
             , " "
             ]
-    in blocked $ combinedSyntax <> (encodeContext ctx)
+    in blocked $ combinedSyntax <> (encodeContent content)
 
 -- | Encode 'CodeBlock'
 encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]
@@ -102,10 +102,10 @@ encodeBulletPoints :: [ScrapText] -> [Text]
 encodeBulletPoints text = map (\scrapText -> "\t" <> encodeText scrapText) text
 
 -- | Encode header
-encodeHeader :: Int -> Context -> Text
-encodeHeader headerSize ctx = 
-    let style     = StyleData headerSize False False False
-    in encodeCustomStyle style ctx
+encodeHeader :: Int -> Content -> Text
+encodeHeader headerSize content = 
+    let style = StyleData headerSize False False False
+    in encodeCustomStyle style content
 
 -- | Add an block to a given encoded text
 blocked :: Text -> Text
