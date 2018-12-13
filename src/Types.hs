@@ -46,9 +46,9 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote ScrapText
     -- ^ BlockQuote like markdown
-    | BulletLine BulletSize ScrapText
+    | BulletPoint BulletSize ScrapText
     -- ^ Bulletpoint styled line
-    | BulletPoints [ScrapText]
+    | BulletList [ScrapText]
     -- ^ Bullet points
     | CodeBlock CodeName CodeSnippet
     -- ^ Code blocks

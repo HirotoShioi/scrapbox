@@ -27,15 +27,15 @@ mkMarkdown = Markdown
 -- Encode blocks
 encodeBlock :: Block -> [Text]
 encodeBlock = \case
-    BreakLine                             -> [""]
-    BlockQuote scrapText                  -> [">" <> encodeText scrapText]
-    BulletPoints contents                 -> encodeBulletPoints contents
-    BulletLine (BulletSize num) scrapText -> [T.replicate num " " <> encodeText scrapText]
-    CodeBlock codeName code               -> encodeCodeBlock codeName code
-    Document scrapText                    -> [encodeText scrapText]
-    Header (HeaderSize num) ctx           -> [encodeHeader num ctx]
-    Table table                           -> encodeTable table
-    Thumbnail (Url url)                   -> [blocked url]
+    BreakLine                              -> [""]
+    BlockQuote scrapText                   -> [">" <> encodeText scrapText]
+    BulletList contents                    -> encodeBulletPoints contents
+    BulletPoint (BulletSize num) scrapText -> [T.replicate num " " <> encodeText scrapText]
+    CodeBlock codeName code                -> encodeCodeBlock codeName code
+    Document scrapText                     -> [encodeText scrapText]
+    Header (HeaderSize num) ctx            -> [encodeHeader num ctx]
+    Table table                            -> encodeTable table
+    Thumbnail (Url url)                    -> [blocked url]
 
 -- | Encode given 'ScrapText' into text
 encodeText :: ScrapText -> Text
@@ -46,10 +46,10 @@ encodeScrapText :: Context -> Text
 encodeScrapText (Context style content) = encodeWithStyle style content
 
 encodeContent :: Content -> Text
-encodeContent ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ctxs
+encodeContent ctxs = foldr (\ctx acc -> encodeSegment ctx <> acc) mempty ctxs
   where
-    encodeScrapContext :: Segment -> Text
-    encodeScrapContext = \case
+    encodeSegment :: Segment -> Text
+    encodeSegment = \case
         CodeNotation code              -> "`" <> code <> "`"
         Link (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
         Link Nothing (Url url)         -> blocked url

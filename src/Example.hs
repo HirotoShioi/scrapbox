@@ -20,7 +20,7 @@ textBlock :: Text -> Block
 textBlock text = Document $ ScrapText [plainText text]
 
 bulletLine :: Int -> Text -> Block
-bulletLine num text = BulletLine (BulletSize num) $ ScrapText $ [plainText text]
+bulletLine num text = BulletPoint (BulletSize num) $ ScrapText $ [plainText text]
 
 textContext :: Style -> Text -> Context
 textContext style text = Context style [SimpleText text]
@@ -82,7 +82,7 @@ pressTab = bulletLine 2 "Press tab at the beginning of a line to indent and add 
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
-highlightText = BulletLine (BulletSize 1) $ ScrapText
+highlightText = BulletPoint (BulletSize 1) $ ScrapText
     [highlight, newLink, column, bold, column, crossed, space, italic, period]
   where
     highlight = plainText " Highlight text to make it a "
@@ -96,7 +96,7 @@ highlightText = BulletLine (BulletSize 1) $ ScrapText
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block
-addLinks = BulletLine (BulletSize 2) $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]
+addLinks = BulletPoint (BulletSize 2) $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]
   where
     addingLinks  = plainText "Add links while typing with a "
     symbol       = plainNotation "#"
@@ -111,7 +111,7 @@ hereIs = Header (HeaderSize 2) [SimpleText "🎯 Here is where it gets interesti
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
-clickNewLink = BulletLine (BulletSize 1) $ ScrapText [clickA, newLink, toCreate]
+clickNewLink = BulletPoint (BulletSize 1) $ ScrapText [clickA, newLink, toCreate]
   where
     clickA   = plainText "Click a "
     newLink  = plainLink Nothing (Url "New Link")
@@ -129,7 +129,7 @@ pagesThat = bulletLine 2 "Pages that are directly linked or two steps away from 
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = BulletLine (BulletSize 1) $ ScrapText [seeImageSimpleText, column1, brackets, column2, onThePage]
+seeImages = BulletPoint (BulletSize 1) $ ScrapText [seeImageSimpleText, column1, brackets, column2, onThePage]
   where
     seeImageSimpleText = plainText "See images, videos, and external links added inside "
     column1       = plainNotation "["
@@ -150,7 +150,7 @@ whatCan = Header (HeaderSize 1) $ [SimpleText "What can you put in a Scrapbox pr
 
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
-useScrapbox = BulletLine (BulletSize 1) $ ScrapText [useScrapText, codeBlockSimpleText, giveFeedback]
+useScrapbox = BulletPoint (BulletSize 1) $ ScrapText [useScrapText, codeBlockSimpleText, giveFeedback]
   where
     useScrapText   = plainText "Use Scrapbox to outline ideas, discuss "
     codeBlockSimpleText = plainNotation "code blocks"
@@ -165,7 +165,7 @@ forExample = bulletLine 1 "For example"
 -- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
-letsSay = BulletLine (BulletSize 1) $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
+letsSay = BulletPoint (BulletSize 1) $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
   where
     letsSayText = plainText "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
@@ -179,7 +179,7 @@ letsSay = BulletLine (BulletSize 1) $ ScrapText [letsSayText, sitePlan, toStart,
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
 -- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
-youCanImmediately = BulletLine (BulletSize 1) $ ScrapText
+youCanImmediately = BulletPoint (BulletSize 1) $ ScrapText
   [youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan, twitter, relatedLink, sitePlan, period]
   where
     youcan = plainText "You can immediately click on that link to `Social media buttons` and start editing. \
@@ -228,7 +228,7 @@ includesMore = bulletLine 1 "Includes more syntax, inviting team members, and cr
 
 -- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
 seeSome :: Block
-seeSome = BulletLine (BulletSize 1) $ ScrapText [seeSomeText, exampleProjects, space]
+seeSome = BulletPoint (BulletSize 1) $ ScrapText [seeSomeText, exampleProjects, space]
   where
     seeSomeText     = plainText "See some "
     exampleProjects = plainLink (Just "Example projects") (Url "https://scrapbox.io/help/exampless")
@@ -241,7 +241,7 @@ includesSaas = bulletLine 2 "Includes a SaaS startup, design agency, and more"
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = BulletLine (BulletSize 1) $ ScrapText [see, howToSimpleText, space]
+howTos = BulletPoint (BulletSize 1) $ ScrapText [see, howToSimpleText, space]
   where
     see        = plainText "See "
     howToSimpleText = plainLink (Just "How-tos and support") (Url "https://scrapbox.io/help/")
