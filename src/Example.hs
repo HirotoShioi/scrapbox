@@ -2,29 +2,50 @@
 
 module Example where
 
-import RIO
+import           RIO   hiding (link)
 
-import Types
-import Lib
+import           Lib
+import           Types
 
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
 
 textBlock :: Text -> Block
-textBlock text = Simple $ ScrapText [Context NoStyle [PlainText text]]
+textBlock text = Document $ ScrapText [plainText text]
 
 bulletLine :: Int -> Text -> Block
-bulletLine num text = BulletLine num $ ScrapText $ [Context NoStyle [PlainText text]]
+bulletLine num text = BulletLine num $ ScrapText $ [plainText text]
+
+textContext :: Style -> Text -> Context
+textContext style text = Context style [PlainText text]
 
 plainText :: Text -> Context
-plainText text = Context NoStyle [PlainText text]
+plainText = textContext NoStyle
 
-codeNotation :: Text -> Context
-codeNotation text = Context NoStyle [CodeNotation text]
+boldText :: Text -> Context
+boldText = textContext Bold
+
+italicText :: Text -> Context
+italicText = textContext Italic
+
+strikeThroughText :: Text -> Context
+strikeThroughText = textContext StrikeThrough
+
+codeNotation :: Style -> Text -> Context
+codeNotation style text = Context style [CodeNotation text]
+
+plainNotation :: Text -> Context
+plainNotation = codeNotation NoStyle
 
 breakLine :: Block
 breakLine = BreakLine
+
+link :: Style -> Maybe Text -> Url -> Context
+link style mName url = Context style [Link mName url]
+
+plainLink :: Maybe Text -> Url -> Context
+plainLink = link NoStyle
 
 --------------------------------------------------------------------------------
 -- Blocks
@@ -56,28 +77,28 @@ pressTab = bulletLine 2 "Press tab at the beginning of a line to indent and add 
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
-highlightText = BulletLine 1 $ ScrapText 
+highlightText = BulletLine 1 $ ScrapText
     [highlight, newLink, column, bold, column, crossed, space, italic, period]
   where
     highlight = plainText " Highlight text to make it a "
-    newLink = Context NoStyle [Link Nothing (Url "New link")]
-    column = plainText ", "
-    space = plainText " "
-    period = plainText "."
-    bold = Context Bold [PlainText "bold"]
-    crossed = Context StrikeThrough [PlainText "and"]
-    italic = Context Italic [PlainText "more"]
+    newLink   = plainLink Nothing (Url "New link")
+    column    = plainText ", "
+    space     = plainText " "
+    period    = plainText "."
+    bold      = boldText "bold"
+    crossed   = strikeThroughText "and"
+    italic    = italicText "more"
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
-addLinks :: Block 
-addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2] 
+addLinks :: Block
+addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]
   where
     addingLinks  = plainText "Add links while typing with a "
-    symbol       = codeNotation "#"
+    symbol       = plainNotation "#"
     beforeOr     = plainText " before or brackets around "
-    column1      = codeNotation "["
+    column1      = plainNotation "["
     wordsYouWant = plainText "words you want to link "
-    column2      = codeNotation "]"
+    column2      = plainNotation "]"
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
@@ -88,7 +109,7 @@ clickNewLink :: Block
 clickNewLink = BulletLine 1 $ ScrapText [clickA, newLink, toCreate]
   where
     clickA   = plainText "Click a "
-    newLink  = Context NoStyle [Link Nothing (Url "New Link")]
+    newLink  = plainLink Nothing (Url "New Link")
     toCreate = plainText " to create a new page with that title and open it."
 
 -- Click related thumbnails in the footer of any page to explore ideas you have linked.
@@ -106,16 +127,16 @@ seeImages :: Block
 seeImages = BulletLine 1 $ ScrapText [seeImagesText, column1, brackets, column2, onThePage]
   where
     seeImagesText = plainText "See images, videos, and external links added inside "
-    column1       = codeNotation "["
+    column1       = plainNotation "["
     brackets      = plainText " brackets"
-    column2       = codeNotation  "]"
+    column2       = plainNotation  "]"
     onThePage     = plainText " on the page"
 
 -- "> Our goal is to help you build a map of your ideas that gains clarity and context with every scrap you add. ",
 ourGoalIs :: Block
 ourGoalIs = BlockQuote $ ScrapText [ourGoalIsText]
   where
-    ourGoalIsText = plainText "Our goal is to help you build a map of your ideas that gains\
+    ourGoalIsText = plainText " Our goal is to help you build a map of your ideas that gains\
     \ clarity and context with every scrap you add. "
 
 -- "[* What can you put in a Scrapbox project?]",
@@ -127,45 +148,45 @@ useScrapbox :: Block
 useScrapbox = BulletLine 1 $ ScrapText [useScrapText, codeBlocksText, giveFeedback]
   where
     useScrapText   = plainText "Use Scrapbox to outline ideas, discuss "
-    codeBlocksText = codeNotation "code blocks"
+    codeBlocksText = plainNotation "code blocks"
     giveFeedback   = plainText ", give feedback, and brainstorm. "
 
 -- "[* For example]",
 forExample :: Block
 forExample = bulletLine 1 "For example"
 
--- "\tLets say you are working on developing a new website. You might want to discuss ideas with 
--- your team before and while you execute the plan.  First create a page `Site plan` to start a 
--- conversation about the site requirements and link some useful resources. On that page you might 
+-- "\tLets say you are working on developing a new website. You might want to discuss ideas with
+-- your team before and while you execute the plan.  First create a page `Site plan` to start a
+-- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
 letsSay = BulletLine 1 $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
   where
     letsSayText = plainText "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
-    sitePlan    = codeNotation "Site plan"
+    sitePlan    = plainNotation "Site plan"
     toStart     = plainText " to start a conversation about the site requirements and link \
     \some useful resources. On that page you might add a link for a new page called "
-    socialMedia = codeNotation "Social media buttons"
+    socialMedia = plainNotation "Social media buttons"
     period      = plainText "."
 
--- "\tYou can immediately click on that link to `Social media buttons` and start editing. 
--- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll 
+-- "\tYou can immediately click on that link to `Social media buttons` and start editing.
+-- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
 -- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
-youCanImmediately = BulletLine 1 $ ScrapText 
+youCanImmediately = BulletLine 1 $ ScrapText
   [youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan, twitter, relatedLink, sitePlan, period]
   where
     youcan = plainText "You can immediately click on that link to `Social media buttons` and start editing. \
     \ There you may add links to "
-    socialMedia = codeNotation "Social media buttons"
-    twitter     = codeNotation "Twitter"
-    faceBook    = codeNotation "Facebook"
+    socialMedia = plainNotation "Social media buttons"
+    twitter     = plainNotation "Twitter"
+    faceBook    = plainNotation "Facebook"
     andStart    = plainText " and start editing.  There you may add links to "
     column      = plainText ", "
     nextYoucan  = plainText ", etc.  Next you can click on "
     relatedLink = plainText " and you'll see a related link that will take you back to "
-    sitePlan    = codeNotation "Site Plan"
+    sitePlan    = plainNotation "Site Plan"
     period      = plainText ". "
 
 -- Once you can easily and directly type your ideas while also building context ideas become more
@@ -190,23 +211,22 @@ onceYouGot = Header 2 $ [PlainText "📌 Once you've got the basics, here are wa
 
 -- " See a list of all the [https://scrapbox.io/help/Things%20you%20can%20do Things you can do] ",
 seeAList :: Block
-seeAList = Simple $ ScrapText [seeAListText, thingsYouCando, space]
+seeAList = Document $ ScrapText [seeAListText, thingsYouCando, space]
   where
-    seeAListText = plainText " See a list of all the "
-    thingsYouCando = Context NoStyle [Link (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")]
-    space = plainText " "
+    seeAListText   = plainText " See a list of all the "
+    thingsYouCando = plainLink (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")
+    space          = plainText " "
 
 -- " \tIncludes more syntax, inviting team members, and creating profiles",
 includesMore :: Block
 includesMore = bulletLine 1 "Includes more syntax, inviting team members, and creating profiles"
 
-
 -- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
 seeSome :: Block
 seeSome = BulletLine 1 $ ScrapText [seeSomeText, exampleProjects, space]
   where
-    seeSomeText = plainText "See some "
-    exampleProjects = Context NoStyle [Link (Just "Example projects") (Url "https://scrapbox.io/help/exampless")]
+    seeSomeText     = plainText "See some "
+    exampleProjects = plainLink (Just "Example projects") (Url "https://scrapbox.io/help/exampless")
     space           = plainText " "
 
 -- " \tIncludes a SaaS startup, design agency, and more",
@@ -219,7 +239,7 @@ howTos :: Block
 howTos = BulletLine 1 $ ScrapText [see, howTosText, space]
   where
     see        = plainText "See "
-    howTosText = Context NoStyle [Link (Just "How-tos and support") (Url "https://scrapbox.io/help/")]
+    howTosText = plainLink (Just "How-tos and support") (Url "https://scrapbox.io/help/")
     space      = plainText " "
 
 -- " \tFor detailed instructions and answers to FAQs",
@@ -232,25 +252,25 @@ weWouldLove = Header 1 $ [PlainText "We would love to hear any questions or feed
 
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block
-pleaseLet = Simple $ ScrapText [pleaseLetText, twitter, andText, faceBook]
+pleaseLet = Document $ ScrapText [pleaseLetText, twitter, andText, faceBook]
   where
     pleaseLetText = plainText "Please let us know if you have any suggestions, questions, or \
       \points of friction.You can contact us directly by email: contact@scrapbox.io, "
     andText       = plainText ", and "
-    twitter       = Context NoStyle [Link (Just "twitter") (Url "https://twitter.com/scrapboxapp")]
-    faceBook      = Context NoStyle [Link (Just "facebook") (Url "https://facebook.com/scrapboxapp")]
+    twitter       = plainLink (Just "twitter") (Url "https://twitter.com/scrapboxapp")
+    faceBook      = plainLink (Just "facebook") (Url "https://facebook.com/scrapboxapp")
 
 -- "[/ Thank you for using Scrapbox!]",
 thankYouFor :: Block
-thankYouFor = Simple $ ScrapText [thankyou]
+thankYouFor = Document $ ScrapText [thankYou]
   where
-    thankyou = Context Italic [PlainText "Thank you for using Scrapbox!"]
+    thankYou = italicText "Thank you for using Scrapbox!"
 
 -- "[https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58]",
 thankYouThumbnail :: Block
 thankYouThumbnail = Thumbnail (Url "https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58")
 
--- ">Note: When you're done reading you might change the title of this page to 'Welcome to 
+-- ">Note: When you're done reading you might change the title of this page to 'Welcome to
 -- project-name' and add some personalized instructions for your team.",
 noteWhen :: Block
 noteWhen = BlockQuote $ ScrapText [noteWhenText]
@@ -262,7 +282,7 @@ noteWhen = BlockQuote $ ScrapText [noteWhenText]
 ----------------------------------------------------------------------------------------------------
 
 getStartedBlock :: [Block]
-getStartedBlock = 
+getStartedBlock =
     [ getStarted
     , startedThumbnail
     , welcome
@@ -279,7 +299,7 @@ getStartedBlock =
     ]
 
 getsInterestingBlock :: [Block]
-getsInterestingBlock = 
+getsInterestingBlock =
     [ hereIs
     , breakLine
     , clickNewLink
@@ -295,7 +315,7 @@ getsInterestingBlock =
     ]
 
 onceStartedBlock :: [Block]
-onceStartedBlock = 
+onceStartedBlock =
     [ whatCan
     , useScrapbox
     , breakLine

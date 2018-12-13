@@ -3,17 +3,14 @@
 
 module Lib where
 
-import           RIO
-import qualified RIO.Text       as T
 import qualified Data.ByteString.Char8 as C8
-
+import           RIO
+import qualified RIO.Text              as T
 import           Types
 
--- | Produce ScrapBox Markdown in human readable format
---
--- Not working well
-encodePretty :: Markdown -> ByteString
-encodePretty = C8.unlines . encodeMarkdown
+-- Pretty print Mark down
+encodePretty :: Markdown -> Text
+encodePretty (Markdown blocks) = T.unlines $ concatMap encodeBlocks blocks
 
 -- | Encode given `Markdown' into list of ByteStrings
 encodeMarkdown :: Markdown -> [ByteString]
@@ -31,10 +28,10 @@ encodeBlocks = \case
     BreakLine                -> [""]
     BlockQuote scrapText     -> [">" <> encodeText scrapText]
     BulletPoints contents    -> encodeBulletPoints contents
-    BulletLine num scrapText -> [T.replicate num "\t" <> encodeText scrapText]
+    BulletLine num scrapText -> [T.replicate num " " <> encodeText scrapText]
     CodeBlock codeName code  -> encodeCodeBlock codeName code
+    Document scrapText       -> [encodeText scrapText]
     Header headerSize ctx    -> [encodeHeader headerSize ctx]
-    Simple scrapText         -> [encodeText scrapText]
     Table table              -> encodeTable table
     Thumbnail (Url url)      -> [blocked url]
 
@@ -56,14 +53,33 @@ encodeContent ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ct
         Link Nothing (Url url)         -> blocked url
         PlainText text                 -> text
 
+-- | Encode 'CodeBlock'
+encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]
+encodeCodeBlock (CodeName name) code = do
+    let codeName = "code:" <> name
+    let codeContent = map (\line -> " " <> line) (T.lines $ getCodeSnippet code)
+    [codeName] <> codeContent
+
+-- | Encode an table
+encodeTable :: TableContent -> [Text]
+encodeTable tableContent = undefined
+
+-- | Encode bulletpoints
+encodeBulletPoints :: [ScrapText] -> [Text]
+encodeBulletPoints text = map (\scrapText -> "\t" <> encodeText scrapText) text
+
+-- | Add an block to a given encoded text
+blocked :: Text -> Text
+blocked content = "[" <> content <> "]"
+
 -- | Encode with style (Do not export this)
 encodeWithStyle :: Style -> Content -> Text
 encodeWithStyle style ctx = case style of
     NoStyle -> encodeContent ctx
-    Bold -> 
+    Bold ->
         let boldStyle = StyleData 0 True False False
         in encodeCustomStyle boldStyle ctx
-    Italic -> 
+    Italic ->
         let italicStyle = StyleData 0 False True False
         in encodeCustomStyle italicStyle ctx
     StrikeThrough ->
@@ -86,27 +102,8 @@ encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
             ]
     in blocked $ combinedSyntax <> (encodeContent content)
 
--- | Encode 'CodeBlock'
-encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]
-encodeCodeBlock (CodeName name) code = do
-    let codeName = "code:" <> name
-    let codeContent = map (\line -> " " <> line) (T.lines $ getCodeSnippet code)
-    [codeName] <> codeContent
-
--- | Encode an table
-encodeTable :: TableContent -> [Text]
-encodeTable tableContent = undefined
-
--- | Encode bulletpoints
-encodeBulletPoints :: [ScrapText] -> [Text]
-encodeBulletPoints text = map (\scrapText -> "\t" <> encodeText scrapText) text
-
 -- | Encode header
 encodeHeader :: Int -> Content -> Text
-encodeHeader headerSize content = 
+encodeHeader headerSize content =
     let style = StyleData headerSize False False False
     in encodeCustomStyle style content
-
--- | Add an block to a given encoded text
-blocked :: Text -> Text
-blocked content = "[" <> content <> "]"

@@ -1,7 +1,7 @@
 module Types where
 
-import RIO
-import RIO.Time
+import           RIO
+import           RIO.Time
 
 -- https://scrapbox.io/help/Syntax
 
@@ -15,23 +15,24 @@ data Page = Page
     , pTitle     :: !Text
     } deriving (Eq, Show)
 
-type TableContent = [[Text]]
-
-newtype Url = Url 
-    { getUrl :: Text
+newtype TableContent = TableContent {
+    getTableContent :: [[Text]]
     } deriving (Eq, Show)
 
-newtype CodeName = CodeName 
-    { getCodeName :: Text
+newtype Url = Url Text
+    deriving (Eq, Show)
+
+newtype CodeName = CodeName {
+    getCodeName :: Text
     } deriving (Eq, Show)
 
-newtype CodeSnippet = CodeSnippet
-    { getCodeSnippet :: Text
+newtype CodeSnippet = CodeSnippet {
+    getCodeSnippet :: Text
     } deriving (Eq, Show)
 
 -- | Markdown consist of list of 'Blocks'
-newtype Markdown = Markdown 
-    { getMarkdown :: [Block]
+newtype Markdown = Markdown {
+    getMarkdown :: [Block]
     } deriving (Eq, Show)
 
 -- | Blocks are contents
@@ -48,7 +49,7 @@ data Block
     -- ^ Code blocks
     | Header Int Content
     -- ^ Header
-    | Simple ScrapText
+    | Document ScrapText
     -- ^ Simple text
     | Table TableContent -- No sure how to implement yet!!
     -- ^ Table
@@ -56,21 +57,18 @@ data Block
     -- ^ Thumbnail
     deriving (Eq, Show)
 
--- | ScrapText are consisted by list of Scrap which are contexts associated with an style
-newtype ScrapText = ScrapText {
-    getScrapText :: [Context] 
-    } deriving (Eq, Show)
+-- | ScrapText are consisted by list of 'Context'
+newtype ScrapText = ScrapText [Context]
+    deriving (Eq, Show)
 
--- | Scrap is an context which can have a style
-data Context = Context
-    { scrapStyle   :: !Style
-    , scrapContent :: !Content
-    } deriving (Eq, Show)
+-- | Context is an content which are associated with an 'Style'
+data Context = Context !Style !Content
+    deriving (Eq, Show)
 
 type Content = [Segment]
 
--- | Style that can be applied to the 'Context'
-data Style = 
+-- | Style that can be applied to the 'Segment'
+data Style =
       CustomStyle StyleData
     -- ^ You can use this to combine all three as of the styles as well as Header
     | Bold
@@ -83,7 +81,7 @@ data Style =
     -- ^ StrikeThrough style
     deriving (Eq, Show)
 
--- | Context
+-- | Segment
 data Segment =
       CodeNotation Text
     -- ^ CodeNotation
@@ -95,11 +93,11 @@ data Segment =
 
 -- | StyleData
 data StyleData = StyleData
-    { bHeaderSize    :: !Int
+    { sHeaderSize    :: !Int
     -- ^ Size of an header,
-    , bBold          :: !Bool
+    , sBold          :: !Bool
     -- ^ Bold style
-    , bItalic        :: !Bool
+    , sItalic        :: !Bool
     -- ^ Italic style
     , bStrikeThrough :: !Bool
     -- ^ Strike through
