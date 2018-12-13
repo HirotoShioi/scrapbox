@@ -23,7 +23,7 @@ bulletLine :: Int -> Text -> Block
 bulletLine num text = BulletLine (BulletSize num) $ ScrapText $ [plainText text]
 
 textContext :: Style -> Text -> Context
-textContext style text = Context style [PlainText text]
+textContext style text = Context style [SimpleText text]
 
 plainText :: Text -> Context
 plainText = textContext NoStyle
@@ -70,7 +70,7 @@ welcome = textBlock "Welcome to your new Scrapbox project!"
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
-everythingIs = Header (HeaderSize 2) [PlainText "📝 Everything is editable"]
+everythingIs = Header (HeaderSize 2) [SimpleText "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
@@ -107,7 +107,7 @@ addLinks = BulletLine (BulletSize 2) $ ScrapText [addingLinks, symbol, beforeOr,
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
-hereIs = Header (HeaderSize 2) [PlainText "🎯 Here is where it gets interesting "]
+hereIs = Header (HeaderSize 2) [SimpleText "🎯 Here is where it gets interesting "]
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
@@ -129,9 +129,9 @@ pagesThat = bulletLine 2 "Pages that are directly linked or two steps away from 
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = BulletLine (BulletSize 1) $ ScrapText [seeImagesText, column1, brackets, column2, onThePage]
+seeImages = BulletLine (BulletSize 1) $ ScrapText [seeImageSimpleText, column1, brackets, column2, onThePage]
   where
-    seeImagesText = plainText "See images, videos, and external links added inside "
+    seeImageSimpleText = plainText "See images, videos, and external links added inside "
     column1       = plainNotation "["
     brackets      = plainText " brackets"
     column2       = plainNotation  "]"
@@ -139,21 +139,21 @@ seeImages = BulletLine (BulletSize 1) $ ScrapText [seeImagesText, column1, brack
 
 -- "> Our goal is to help you build a map of your ideas that gains clarity and context with every scrap you add. ",
 ourGoalIs :: Block
-ourGoalIs = BlockQuote $ ScrapText [ourGoalIsText]
+ourGoalIs = BlockQuote $ ScrapText [ourGoalISimpleText]
   where
-    ourGoalIsText = plainText " Our goal is to help you build a map of your ideas that gains\
+    ourGoalISimpleText = plainText " Our goal is to help you build a map of your ideas that gains\
     \ clarity and context with every scrap you add. "
 
 -- "[* What can you put in a Scrapbox project?]",
 whatCan :: Block
-whatCan = Header (HeaderSize 1) $ [PlainText "What can you put in a Scrapbox project?"]
+whatCan = Header (HeaderSize 1) $ [SimpleText "What can you put in a Scrapbox project?"]
 
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
-useScrapbox = BulletLine (BulletSize 1) $ ScrapText [useScrapText, codeBlocksText, giveFeedback]
+useScrapbox = BulletLine (BulletSize 1) $ ScrapText [useScrapText, codeBlockSimpleText, giveFeedback]
   where
     useScrapText   = plainText "Use Scrapbox to outline ideas, discuss "
-    codeBlocksText = plainNotation "code blocks"
+    codeBlockSimpleText = plainNotation "code blocks"
     giveFeedback   = plainText ", give feedback, and brainstorm. "
 
 -- "[* For example]",
@@ -204,13 +204,13 @@ onceYoucan = textBlock "Once you can easily and directly type your ideas while a
 -- >  [/ What ideas in your head could your team benefit from you putting down right now? Go create
 --  your first three or so pages and add a few links. From 3 to 3,000 pages your ideas will only grow in context.]
 whatIdeas :: Block
-whatIdeas = BlockQuote $ ScrapText [Context Italic [PlainText "What ideas in your head could your team \
+whatIdeas = BlockQuote $ ScrapText [Context Italic [SimpleText "What ideas in your head could your team \
     \ benefit from you putting down right now? Go create your first three or so pages and add a few \
     \links. From 3 to 3,000 pages your ideas will only grow in context."]]
 
 -- "[** 📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project ]",
 onceYouGot :: Block
-onceYouGot = Header (HeaderSize 2) $ [PlainText "📌 Once you've got the basics, here are ways to dig deeper and \
+onceYouGot = Header (HeaderSize 2) $ [SimpleText "📌 Once you've got the basics, here are ways to dig deeper and \
   \get the most out of your new project "]
 
 
@@ -241,10 +241,10 @@ includesSaas = bulletLine 2 "Includes a SaaS startup, design agency, and more"
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = BulletLine (BulletSize 1) $ ScrapText [see, howTosText, space]
+howTos = BulletLine (BulletSize 1) $ ScrapText [see, howToSimpleText, space]
   where
     see        = plainText "See "
-    howTosText = plainLink (Just "How-tos and support") (Url "https://scrapbox.io/help/")
+    howToSimpleText = plainLink (Just "How-tos and support") (Url "https://scrapbox.io/help/")
     space      = plainText " "
 
 -- " \tFor detailed instructions and answers to FAQs",
@@ -253,7 +253,7 @@ forDetails = bulletLine 2 "For detailed instructions and answers to FAQs"
 
 -- "[* We would love to hear any questions or feedback you may have]",
 weWouldLove :: Block
-weWouldLove = Header (HeaderSize 1) $ [PlainText "We would love to hear any questions or feedback you may have"]
+weWouldLove = Header (HeaderSize 1) $ [SimpleText "We would love to hear any questions or feedback you may have"]
 
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block

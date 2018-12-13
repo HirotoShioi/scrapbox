@@ -92,7 +92,7 @@ data Segment =
     -- ^ CodeNotation
     | Link (Maybe Text) Url
     -- ^ Link, it can have href
-    | PlainText Text
+    | SimpleText Text
     -- ^ Just an simple text
     deriving (Eq, Show)
 

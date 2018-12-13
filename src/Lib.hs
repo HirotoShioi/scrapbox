@@ -53,7 +53,7 @@ encodeContent ctxs = foldr (\ctx acc -> encodeScrapContext ctx <> acc) mempty ct
         CodeNotation code              -> "`" <> code <> "`"
         Link (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
         Link Nothing (Url url)         -> blocked url
-        PlainText text                 -> text
+        SimpleText text                 -> text
 
 -- | Encode 'CodeBlock'
 encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]
