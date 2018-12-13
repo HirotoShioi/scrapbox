@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Example where
+module Example
+  ( getStartedMarkdown
+  , getsInterestingMd
+  , onceStartedMd
+  , getStartedMd
+  ) where
 
 import           RIO   hiding (link)
 
@@ -15,7 +20,7 @@ textBlock :: Text -> Block
 textBlock text = Document $ ScrapText [plainText text]
 
 bulletLine :: Int -> Text -> Block
-bulletLine num text = BulletLine num $ ScrapText $ [plainText text]
+bulletLine num text = BulletLine (BulletSize num) $ ScrapText $ [plainText text]
 
 textContext :: Style -> Text -> Context
 textContext style text = Context style [PlainText text]
@@ -65,7 +70,7 @@ welcome = textBlock "Welcome to your new Scrapbox project!"
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
-everythingIs = Header 2 [PlainText "📝 Everything is editable"]
+everythingIs = Header (HeaderSize 2) [PlainText "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
@@ -77,7 +82,7 @@ pressTab = bulletLine 2 "Press tab at the beginning of a line to indent and add 
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
-highlightText = BulletLine 1 $ ScrapText
+highlightText = BulletLine (BulletSize 1) $ ScrapText
     [highlight, newLink, column, bold, column, crossed, space, italic, period]
   where
     highlight = plainText " Highlight text to make it a "
@@ -91,7 +96,7 @@ highlightText = BulletLine 1 $ ScrapText
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block
-addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]
+addLinks = BulletLine (BulletSize 2) $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]
   where
     addingLinks  = plainText "Add links while typing with a "
     symbol       = plainNotation "#"
@@ -102,11 +107,11 @@ addLinks = BulletLine 2 $ ScrapText [addingLinks, symbol, beforeOr, column1, wor
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
-hereIs = Header 2 [PlainText "🎯 Here is where it gets interesting "]
+hereIs = Header (HeaderSize 2) [PlainText "🎯 Here is where it gets interesting "]
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
-clickNewLink = BulletLine 1 $ ScrapText [clickA, newLink, toCreate]
+clickNewLink = BulletLine (BulletSize 1) $ ScrapText [clickA, newLink, toCreate]
   where
     clickA   = plainText "Click a "
     newLink  = plainLink Nothing (Url "New Link")
@@ -124,7 +129,7 @@ pagesThat = bulletLine 2 "Pages that are directly linked or two steps away from 
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = BulletLine 1 $ ScrapText [seeImagesText, column1, brackets, column2, onThePage]
+seeImages = BulletLine (BulletSize 1) $ ScrapText [seeImagesText, column1, brackets, column2, onThePage]
   where
     seeImagesText = plainText "See images, videos, and external links added inside "
     column1       = plainNotation "["
@@ -141,11 +146,11 @@ ourGoalIs = BlockQuote $ ScrapText [ourGoalIsText]
 
 -- "[* What can you put in a Scrapbox project?]",
 whatCan :: Block
-whatCan = Header 1 $ [PlainText "What can you put in a Scrapbox project?"]
+whatCan = Header (HeaderSize 1) $ [PlainText "What can you put in a Scrapbox project?"]
 
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
-useScrapbox = BulletLine 1 $ ScrapText [useScrapText, codeBlocksText, giveFeedback]
+useScrapbox = BulletLine (BulletSize 1) $ ScrapText [useScrapText, codeBlocksText, giveFeedback]
   where
     useScrapText   = plainText "Use Scrapbox to outline ideas, discuss "
     codeBlocksText = plainNotation "code blocks"
@@ -160,7 +165,7 @@ forExample = bulletLine 1 "For example"
 -- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
-letsSay = BulletLine 1 $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
+letsSay = BulletLine (BulletSize 1) $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
   where
     letsSayText = plainText "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
@@ -174,7 +179,7 @@ letsSay = BulletLine 1 $ ScrapText [letsSayText, sitePlan, toStart, socialMedia,
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
 -- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
-youCanImmediately = BulletLine 1 $ ScrapText
+youCanImmediately = BulletLine (BulletSize 1) $ ScrapText
   [youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan, twitter, relatedLink, sitePlan, period]
   where
     youcan = plainText "You can immediately click on that link to `Social media buttons` and start editing. \
@@ -205,7 +210,7 @@ whatIdeas = BlockQuote $ ScrapText [Context Italic [PlainText "What ideas in you
 
 -- "[** 📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project ]",
 onceYouGot :: Block
-onceYouGot = Header 2 $ [PlainText "📌 Once you've got the basics, here are ways to dig deeper and \
+onceYouGot = Header (HeaderSize 2) $ [PlainText "📌 Once you've got the basics, here are ways to dig deeper and \
   \get the most out of your new project "]
 
 
@@ -223,7 +228,7 @@ includesMore = bulletLine 1 "Includes more syntax, inviting team members, and cr
 
 -- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
 seeSome :: Block
-seeSome = BulletLine 1 $ ScrapText [seeSomeText, exampleProjects, space]
+seeSome = BulletLine (BulletSize 1) $ ScrapText [seeSomeText, exampleProjects, space]
   where
     seeSomeText     = plainText "See some "
     exampleProjects = plainLink (Just "Example projects") (Url "https://scrapbox.io/help/exampless")
@@ -236,7 +241,7 @@ includesSaas = bulletLine 2 "Includes a SaaS startup, design agency, and more"
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = BulletLine 1 $ ScrapText [see, howTosText, space]
+howTos = BulletLine (BulletSize 1) $ ScrapText [see, howTosText, space]
   where
     see        = plainText "See "
     howTosText = plainLink (Just "How-tos and support") (Url "https://scrapbox.io/help/")
@@ -248,7 +253,7 @@ forDetails = bulletLine 2 "For detailed instructions and answers to FAQs"
 
 -- "[* We would love to hear any questions or feedback you may have]",
 weWouldLove :: Block
-weWouldLove = Header 1 $ [PlainText "We would love to hear any questions or feedback you may have"]
+weWouldLove = Header (HeaderSize 1) $ [PlainText "We would love to hear any questions or feedback you may have"]
 
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block
@@ -345,10 +350,20 @@ onceStartedBlock =
     , pleaseLet
     , breakLine
     , thankYouFor
+    , thankYouThumbnail
     , breakLine
     , breakLine
     , noteWhen
     ]
+
+getStartedMd :: Markdown
+getStartedMd = mkMarkdown getStartedBlock
+
+getsInterestingMd :: Markdown
+getsInterestingMd = mkMarkdown getsInterestingBlock
+
+onceStartedMd :: Markdown
+onceStartedMd = mkMarkdown onceStartedBlock
 
 getStartedMarkdown :: Markdown
 getStartedMarkdown = mkMarkdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
