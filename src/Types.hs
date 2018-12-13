@@ -31,9 +31,14 @@ newtype CodeSnippet = CodeSnippet {
     } deriving (Eq, Show)
 
 -- | Markdown consist of list of 'Blocks'
-newtype Markdown = Markdown {
-    getMarkdown :: [Block]
-    } deriving (Eq, Show)
+newtype Markdown = Markdown [Block]
+    deriving (Eq, Show)
+
+newtype HeaderSize = HeaderSize Int
+    deriving (Eq, Show)
+
+newtype BulletSize = BulletSize Int
+    deriving (Eq, Show)
 
 -- | Blocks are contents
 data Block
@@ -41,13 +46,13 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote ScrapText
     -- ^ BlockQuote like markdown
-    | BulletLine Int ScrapText
+    | BulletLine BulletSize ScrapText
     -- ^ Bulletpoint styled line
     | BulletPoints [ScrapText]
     -- ^ Bullet points
     | CodeBlock CodeName CodeSnippet
     -- ^ Code blocks
-    | Header Int Content
+    | Header HeaderSize Content
     -- ^ Header
     | Document ScrapText
     -- ^ Simple text

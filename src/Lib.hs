@@ -1,39 +1,41 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib where
+module Lib 
+    ( encodePretty
+    , encodeMarkdown
+    , mkMarkdown
+    ) where
 
-import qualified Data.ByteString.Char8 as C8
 import           RIO
 import qualified RIO.Text              as T
 import           Types
 
 -- Pretty print Mark down
 encodePretty :: Markdown -> Text
-encodePretty (Markdown blocks) = T.unlines $ concatMap encodeBlocks blocks
+encodePretty (Markdown blocks) = T.unlines $ concatMap encodeBlock blocks
 
 -- | Encode given `Markdown' into list of ByteStrings
 encodeMarkdown :: Markdown -> [ByteString]
-encodeMarkdown md =
-    let blocks =  getMarkdown md
-    in concatMap (map encodeUtf8 . encodeBlocks) blocks
+encodeMarkdown (Markdown blocks) =
+    concatMap (map encodeUtf8 . encodeBlock) blocks
 
 -- | Smart constructor for creating 'Markdown' with given '[Block]'
 mkMarkdown :: [Block] -> Markdown
 mkMarkdown = Markdown
 
 -- Encode blocks
-encodeBlocks :: Block -> [Text]
-encodeBlocks = \case
-    BreakLine                -> [""]
-    BlockQuote scrapText     -> [">" <> encodeText scrapText]
-    BulletPoints contents    -> encodeBulletPoints contents
-    BulletLine num scrapText -> [T.replicate num " " <> encodeText scrapText]
-    CodeBlock codeName code  -> encodeCodeBlock codeName code
-    Document scrapText       -> [encodeText scrapText]
-    Header headerSize ctx    -> [encodeHeader headerSize ctx]
-    Table table              -> encodeTable table
-    Thumbnail (Url url)      -> [blocked url]
+encodeBlock :: Block -> [Text]
+encodeBlock = \case
+    BreakLine                             -> [""]
+    BlockQuote scrapText                  -> [">" <> encodeText scrapText]
+    BulletPoints contents                 -> encodeBulletPoints contents
+    BulletLine (BulletSize num) scrapText -> [T.replicate num " " <> encodeText scrapText]
+    CodeBlock codeName code               -> encodeCodeBlock codeName code
+    Document scrapText                    -> [encodeText scrapText]
+    Header (HeaderSize num) ctx           -> [encodeHeader num ctx]
+    Table table                           -> encodeTable table
+    Thumbnail (Url url)                   -> [blocked url]
 
 -- | Encode given 'ScrapText' into text
 encodeText :: ScrapText -> Text
