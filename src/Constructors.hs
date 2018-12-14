@@ -24,9 +24,10 @@ module Constructors
     -- * For creating custom style
     , styleData
     -- * Segment
-    , simpleText
     , codeNotation
+    , hashtag
     , link
+    , simpleText
     ) where
 
 import           RIO   hiding (link)
@@ -112,6 +113,9 @@ simpleText = SimpleText
 
 codeNotation :: Text -> Segment
 codeNotation = CodeNotation
+
+hashtag :: Text -> Segment
+hashtag = HashTag
 
 link :: Maybe Text -> Text -> Segment
 link mName url = Link mName (Url url)

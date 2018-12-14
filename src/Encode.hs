@@ -51,9 +51,10 @@ encodeContent ctxs = foldr (\ctx acc -> encodeSegment ctx <> acc) mempty ctxs
     encodeSegment :: Segment -> Text
     encodeSegment = \case
         CodeNotation code              -> "`" <> code <> "`"
+        HashTag text                   -> "#" <> text
         Link (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
         Link Nothing (Url url)         -> blocked url
-        SimpleText text                 -> text
+        SimpleText text                -> text
 
 -- | Encode 'CodeBlock'
 encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]

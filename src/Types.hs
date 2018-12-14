@@ -5,7 +5,7 @@ module Types where
 
 import           Data.List    (groupBy)
 import           RIO
-import           RIO.Time
+import           RIO.Time     (UTCTime)
 
 import           GHC.Generics (Generic)
 
@@ -96,6 +96,8 @@ data Style =
 data Segment =
       CodeNotation Text
     -- ^ CodeNotation
+    | HashTag Text
+    -- ^ Hashtag
     | Link (Maybe Text) Url
     -- ^ Link, it can have href
     | SimpleText Text
