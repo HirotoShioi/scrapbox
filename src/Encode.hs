@@ -1,14 +1,19 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib 
+module Encode
     ( encodePretty
     , encodeMarkdown
     ) where
 
 import           RIO
-import qualified RIO.Text              as T
-import           Types
+import qualified RIO.Text as T
+
+import           Types    (Block (..), BulletSize (..), CodeName (..),
+                           CodeSnippet (..), Content, Context (..),
+                           HeaderSize (..), Markdown (..), ScrapText (..),
+                           Segment (..), Style (..), StyleData (..),
+                           TableContent, Url (..))
 
 -- Pretty print Mark down
 encodePretty :: Markdown -> Text
@@ -22,15 +27,15 @@ encodeMarkdown (Markdown blocks) =
 -- Encode blocks
 encodeBlock :: Block -> [Text]
 encodeBlock = \case
-    LineBreak                              -> [""]
-    BlockQuote scrapText                   -> [">" <> encodeText scrapText]
-    BulletList contents                    -> encodeBulletPoints contents
-    BulletPoint (BulletSize num) scrapText -> [T.replicate num " " <> encodeText scrapText]
-    CodeBlock codeName code                -> encodeCodeBlock codeName code
-    Document scrapText                     -> [encodeText scrapText]
-    Header (HeaderSize num) contents       -> [encodeHeader num contents]
-    Table table                            -> encodeTable table
-    Thumbnail (Url url)                    -> [blocked url]
+    LineBreak                          -> [""]
+    BlockQuote stext                   -> [">" <> encodeText stext]
+    BulletList contents                -> encodeBulletPoints contents
+    BulletPoint (BulletSize num) stext -> [T.replicate num " " <> encodeText stext]
+    CodeBlock codeName code            -> encodeCodeBlock codeName code
+    Document stext                     -> [encodeText stext]
+    Header (HeaderSize num) contents   -> [encodeHeader num contents]
+    Table tableContent                 -> encodeTable tableContent
+    Thumbnail (Url url)                -> [blocked url]
 
 -- | Encode given 'ScrapText' into text
 encodeText :: ScrapText -> Text
@@ -63,7 +68,7 @@ encodeTable tableContent = undefined
 
 -- | Encode bulletpoints
 encodeBulletPoints :: [ScrapText] -> [Text]
-encodeBulletPoints text = map (\scrapText -> "\t" <> encodeText scrapText) text
+encodeBulletPoints stexts = map (\stext -> "\t" <> encodeText stext) stexts
 
 -- | Add an block to a given encoded text
 blocked :: Text -> Text

@@ -112,42 +112,8 @@ data StyleData = StyleData
     } deriving (Eq, Show)
 
 --------------------------------------------------------------------------------
--- Smart constructors
+-- Verbose/Unverbose
 --------------------------------------------------------------------------------
-
-textBlock :: Text -> Block
-textBlock text = Document $ ScrapText [noStyle [simpleText text]]
-
-bulletPoint :: Int -> Text -> Block
-bulletPoint num text = BulletPoint (BulletSize num) $ ScrapText $ [noStyle [simpleText text]]
-
-lineBreak :: Block
-lineBreak = LineBreak
-
-simpleText :: Text -> Segment
-simpleText = SimpleText
-
-codeNotation :: Text -> Segment
-codeNotation = CodeNotation
-
-link :: Maybe Text -> Url -> Segment
-link = Link
-
-noStyle :: [Segment] -> Context
-noStyle segments = Context NoStyle segments
-
-bold :: [Segment] -> Context
-bold segments = Context Bold segments
-
-italic :: [Segment] -> Context
-italic segments = Context Italic segments
-
-strikeThrough :: [Segment] -> Context
-strikeThrough segments = Context StrikeThrough segments
-
--- | Smart constructor for creating 'Markdown' with given '[Block]'
-mkMarkdown :: [Block] -> Markdown
-mkMarkdown = Markdown
 
 -- | Convert given Markdown into verbose structure
 mkVerbose :: Markdown -> Markdown
@@ -155,11 +121,11 @@ mkVerbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
   where
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
-        BlockQuote scrapText      -> BlockQuote $ verboseScrapText scrapText
-        BulletList scrapTexts     -> BulletList $ map verboseScrapText scrapTexts
-        BulletPoint num scrapText -> BulletPoint num (verboseScrapText scrapText)
-        Document scrapText        -> Document $ verboseScrapText scrapText
-        other                     -> other
+        BlockQuote stext      -> BlockQuote $ verboseScrapText stext
+        BulletList stexts     -> BulletList $ map verboseScrapText stexts
+        BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
+        Document stext        -> Document $ verboseScrapText stext
+        other                 -> other
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
     mkVerboseContext :: Context -> [Context]
@@ -172,11 +138,11 @@ unVerbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
   where
     unVerboseBlocks :: Block -> Block
     unVerboseBlocks = \case
-        BlockQuote scrapText      -> BlockQuote $ unVerboseScrapText scrapText
-        BulletList scrapTexts     -> BulletList $ map unVerboseScrapText scrapTexts
-        BulletPoint num scrapText -> BulletPoint num (unVerboseScrapText scrapText)
-        Document scrapText        -> Document $ unVerboseScrapText scrapText
-        other                     -> other
+        BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
+        BulletList stexts     -> BulletList $ map unVerboseScrapText stexts
+        BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
+        Document stext        -> Document $ unVerboseScrapText stext
+        other                 -> other
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText ctxs) = ScrapText $ map concatContext $ groupBy 
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
