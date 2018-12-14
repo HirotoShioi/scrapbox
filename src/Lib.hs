@@ -27,7 +27,7 @@ mkMarkdown = Markdown
 -- Encode blocks
 encodeBlock :: Block -> [Text]
 encodeBlock = \case
-    BreakLine                              -> [""]
+    LineBreak                              -> [""]
     BlockQuote scrapText                   -> [">" <> encodeText scrapText]
     BulletList contents                    -> encodeBulletPoints contents
     BulletPoint (BulletSize num) scrapText -> [T.replicate num " " <> encodeText scrapText]
@@ -91,15 +91,15 @@ encodeWithStyle style ctx = case style of
 
 encodeCustomStyle :: StyleData -> Content -> Text
 encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =
-    let italic         = if isItalic then "/" else mempty
-        strikeThrough  = if isStrikeThrough then "-" else mempty
-        bold           = if isBold then "*" else mempty
-        headerNum'     = if isBold then 0 else headerNum
-        combinedSyntax = mconcat
+    let italicSymbol         = if isItalic then "/" else mempty
+        strikeThroughSymbol  = if isStrikeThrough then "-" else mempty
+        boldSymbol           = if isBold then "*" else mempty
+        headerNum'           = if isBold then 0 else headerNum
+        combinedSyntax       = mconcat
             [ T.replicate headerNum' "*"
-            , bold
-            , italic
-            , strikeThrough
+            , boldSymbol
+            , italicSymbol
+            , strikeThroughSymbol
             , " "
             ]
     in blocked $ combinedSyntax <> (encodeContent content)

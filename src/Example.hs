@@ -13,47 +13,7 @@ import           Lib
 import           Types
 
 --------------------------------------------------------------------------------
--- Helper function
---------------------------------------------------------------------------------
-
-textBlock :: Text -> Block
-textBlock text = Document $ ScrapText [plainText text]
-
-bulletLine :: Int -> Text -> Block
-bulletLine num text = BulletPoint (BulletSize num) $ ScrapText $ [plainText text]
-
-textContext :: Style -> Text -> Context
-textContext style text = Context style [SimpleText text]
-
-plainText :: Text -> Context
-plainText = textContext NoStyle
-
-boldText :: Text -> Context
-boldText = textContext Bold
-
-italicText :: Text -> Context
-italicText = textContext Italic
-
-strikeThroughText :: Text -> Context
-strikeThroughText = textContext StrikeThrough
-
-codeNotation :: Style -> Text -> Context
-codeNotation style text = Context style [CodeNotation text]
-
-plainNotation :: Text -> Context
-plainNotation = codeNotation NoStyle
-
-breakLine :: Block
-breakLine = BreakLine
-
-link :: Style -> Maybe Text -> Url -> Context
-link style mName url = Context style [Link mName url]
-
-plainLink :: Maybe Text -> Url -> Context
-plainLink = link NoStyle
-
---------------------------------------------------------------------------------
--- Blocks
+-- SECTION: Get started
 --------------------------------------------------------------------------------
 
 -- "Get started",
@@ -70,52 +30,64 @@ welcome = textBlock "Welcome to your new Scrapbox project!"
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
-everythingIs = Header (HeaderSize 2) [SimpleText "📝 Everything is editable"]
+everythingIs = Header (HeaderSize 2) [simpleText "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
-clickOn = bulletLine 1 "Click on any line and start typing to edit. "
+clickOn = bulletPoint 1 "Click on any line and start typing to edit. "
 
 -- "\t\tPress tab at the beginning of a line to indent and add a bullet point."
 pressTab :: Block
-pressTab = bulletLine 2 "Press tab at the beginning of a line to indent and add a bullet point."
+pressTab = bulletPoint 2 "Press tab at the beginning of a line to indent and add a bullet point."
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
 highlightText = BulletPoint (BulletSize 1) $ ScrapText
-    [highlight, newLink, column, bold, column, crossed, space, italic, period]
+    [ noStyle [highlight, newLink, column]
+    , bold [boldTxt]
+    , noStyle [column]
+    , strikeThrough [crossed]
+    , noStyle [space]
+    , italic [more]
+    , noStyle [period]
+    ]
   where
-    highlight = plainText " Highlight text to make it a "
-    newLink   = plainLink Nothing (Url "New link")
-    column    = plainText ", "
-    space     = plainText " "
-    period    = plainText "."
-    bold      = boldText "bold"
-    crossed   = strikeThroughText "and"
-    italic    = italicText "more"
+    highlight = simpleText " Highlight text to make it a "
+    newLink   = link Nothing (Url "New link")
+    column    = simpleText ", "
+    space     = simpleText " "
+    period    = simpleText "."
+    boldTxt   = simpleText "bold"
+    crossed   = simpleText "and"
+    more      = simpleText "more"
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block
-addLinks = BulletPoint (BulletSize 2) $ ScrapText [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]
+addLinks = BulletPoint (BulletSize 2) $ 
+    ScrapText [ noStyle [addingLinks, symbol, beforeOr, column1, wordsYouWant, column2]]
   where
-    addingLinks  = plainText "Add links while typing with a "
-    symbol       = plainNotation "#"
-    beforeOr     = plainText " before or brackets around "
-    column1      = plainNotation "["
-    wordsYouWant = plainText "words you want to link "
-    column2      = plainNotation "]"
+    addingLinks  = simpleText "Add links while typing with a "
+    symbol       = codeNotation "#"
+    beforeOr     = simpleText " before or brackets around "
+    column1      = codeNotation "["
+    wordsYouWant = simpleText "words you want to link "
+    column2      = codeNotation "]"
+
+----------------------------------------------------------------------------------------------------
+-- SECTION: Here is where it gets interesting
+----------------------------------------------------------------------------------------------------
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
-hereIs = Header (HeaderSize 2) [SimpleText "🎯 Here is where it gets interesting "]
+hereIs = Header (HeaderSize 2) [simpleText "🎯 Here is where it gets interesting "]
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
-clickNewLink = BulletPoint (BulletSize 1) $ ScrapText [clickA, newLink, toCreate]
+clickNewLink = BulletPoint (BulletSize 1) $ ScrapText [noStyle [clickA, newLink, toCreate]]
   where
-    clickA   = plainText "Click a "
-    newLink  = plainLink Nothing (Url "New Link")
-    toCreate = plainText " to create a new page with that title and open it."
+    clickA   = simpleText "Click a "
+    newLink  = link Nothing (Url "New Link")
+    toCreate = simpleText " to create a new page with that title and open it."
 
 -- Click related thumbnails in the footer of any page to explore ideas you have linked.
 clickRelated :: Block
@@ -124,75 +96,83 @@ clickRelated = textBlock "Click related thumbnails in the footer of any page to 
 
 -- " \tPages that are directly linked or two steps away from the current page will be displayed.",
 pagesThat :: Block
-pagesThat = bulletLine 2 "Pages that are directly linked or two steps away from the current page \
+pagesThat = bulletPoint 2 "Pages that are directly linked or two steps away from the current page \
     \will be displayed."
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = BulletPoint (BulletSize 1) $ ScrapText [seeImageSimpleText, column1, brackets, column2, onThePage]
+seeImages = BulletPoint (BulletSize 1) $ ScrapText 
+    [noStyle [seeImageSimpleText, column1, brackets, column2, onThePage]]
   where
-    seeImageSimpleText = plainText "See images, videos, and external links added inside "
-    column1       = plainNotation "["
-    brackets      = plainText " brackets"
-    column2       = plainNotation  "]"
-    onThePage     = plainText " on the page"
+    seeImageSimpleText = simpleText "See images, videos, and external links added inside "
+    column1            = codeNotation "["
+    brackets           = simpleText " brackets"
+    column2            = codeNotation  "]"
+    onThePage          = simpleText " on the page"
 
 -- "> Our goal is to help you build a map of your ideas that gains clarity and context with every scrap you add. ",
 ourGoalIs :: Block
-ourGoalIs = BlockQuote $ ScrapText [ourGoalISimpleText]
+ourGoalIs = BlockQuote $ ScrapText [noStyle [ourGoalISimpleText]]
   where
-    ourGoalISimpleText = plainText " Our goal is to help you build a map of your ideas that gains\
+    ourGoalISimpleText = simpleText " Our goal is to help you build a map of your ideas that gains\
     \ clarity and context with every scrap you add. "
+
+----------------------------------------------------------------------------------------------------
+-- SECTION: What can you put in a Scrapbox project?
+----------------------------------------------------------------------------------------------------
 
 -- "[* What can you put in a Scrapbox project?]",
 whatCan :: Block
-whatCan = Header (HeaderSize 1) $ [SimpleText "What can you put in a Scrapbox project?"]
+whatCan = Header (HeaderSize 1) $ [simpleText "What can you put in a Scrapbox project?"]
 
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
-useScrapbox = BulletPoint (BulletSize 1) $ ScrapText [useScrapText, codeBlockSimpleText, giveFeedback]
+useScrapbox = BulletPoint (BulletSize 1) $ 
+    ScrapText [noStyle [useScrapText, codeBlockSimpleText, giveFeedback]]
   where
-    useScrapText   = plainText "Use Scrapbox to outline ideas, discuss "
-    codeBlockSimpleText = plainNotation "code blocks"
-    giveFeedback   = plainText ", give feedback, and brainstorm. "
+    useScrapText        = simpleText "Use Scrapbox to outline ideas, discuss "
+    codeBlockSimpleText = codeNotation "code blocks"
+    giveFeedback        = simpleText ", give feedback, and brainstorm. "
 
 -- "[* For example]",
 forExample :: Block
-forExample = bulletLine 1 "For example"
+forExample = bulletPoint 1 "For example"
 
 -- "\tLets say you are working on developing a new website. You might want to discuss ideas with
 -- your team before and while you execute the plan.  First create a page `Site plan` to start a
 -- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
-letsSay = BulletPoint (BulletSize 1) $ ScrapText [letsSayText, sitePlan, toStart, socialMedia, period]
+letsSay = BulletPoint (BulletSize 1) $ ScrapText [ noStyle [letsSayText, sitePlan, toStart, socialMedia, period]]
   where
-    letsSayText = plainText "Lets say you are working on developing a new website. \
+    letsSayText = simpleText "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
-    sitePlan    = plainNotation "Site plan"
-    toStart     = plainText " to start a conversation about the site requirements and link \
+    sitePlan    = codeNotation "Site plan"
+    toStart     = simpleText " to start a conversation about the site requirements and link \
     \some useful resources. On that page you might add a link for a new page called "
-    socialMedia = plainNotation "Social media buttons"
-    period      = plainText "."
+    socialMedia = codeNotation "Social media buttons"
+    period      = simpleText "."
 
 -- "\tYou can immediately click on that link to `Social media buttons` and start editing.
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
 -- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
-youCanImmediately = BulletPoint (BulletSize 1) $ ScrapText
-  [youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan, twitter, relatedLink, sitePlan, period]
+youCanImmediately = BulletPoint (BulletSize 1) $ 
+    ScrapText [noStyle
+        [ youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan
+        , twitter, relatedLink, sitePlan, period]]
   where
-    youcan = plainText "You can immediately click on that link to `Social media buttons` and start editing. \
-    \ There you may add links to "
-    socialMedia = plainNotation "Social media buttons"
-    twitter     = plainNotation "Twitter"
-    faceBook    = plainNotation "Facebook"
-    andStart    = plainText " and start editing.  There you may add links to "
-    column      = plainText ", "
-    nextYoucan  = plainText ", etc.  Next you can click on "
-    relatedLink = plainText " and you'll see a related link that will take you back to "
-    sitePlan    = plainNotation "Site Plan"
-    period      = plainText ". "
+    youcan      = simpleText "You can immediately click on that link to `Social media buttons` and \
+    \ start editing. There you may add links to "
+    socialMedia = codeNotation "Social media buttons"
+    twitter     = codeNotation "Twitter"
+    faceBook    = codeNotation "Facebook"
+    andStart    = simpleText " and start editing.  There you may add links to "
+    column      = simpleText ", "
+    nextYoucan  = simpleText ", etc.  Next you can click on "
+    relatedLink = simpleText " and you'll see a related link that will take you back to "
+    sitePlan    = codeNotation "Site Plan"
+    period      = simpleText ". "
 
 -- Once you can easily and directly type your ideas while also building context ideas become more
 -- clear the more you use it. No more folders full of dead text means no more teams isolated from their own ideas.
@@ -204,72 +184,72 @@ onceYoucan = textBlock "Once you can easily and directly type your ideas while a
 -- >  [/ What ideas in your head could your team benefit from you putting down right now? Go create
 --  your first three or so pages and add a few links. From 3 to 3,000 pages your ideas will only grow in context.]
 whatIdeas :: Block
-whatIdeas = BlockQuote $ ScrapText [Context Italic [SimpleText "What ideas in your head could your team \
+whatIdeas = BlockQuote $ ScrapText [italic [simpleText "What ideas in your head could your team \
     \ benefit from you putting down right now? Go create your first three or so pages and add a few \
     \links. From 3 to 3,000 pages your ideas will only grow in context."]]
 
 -- "[** 📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project ]",
 onceYouGot :: Block
-onceYouGot = Header (HeaderSize 2) $ [SimpleText "📌 Once you've got the basics, here are ways to dig deeper and \
+onceYouGot = Header (HeaderSize 2) $ [simpleText "📌 Once you've got the basics, here are ways to dig deeper and \
   \get the most out of your new project "]
 
 
 -- " See a list of all the [https://scrapbox.io/help/Things%20you%20can%20do Things you can do] ",
 seeAList :: Block
-seeAList = Document $ ScrapText [seeAListText, thingsYouCando, space]
+seeAList = Document $ ScrapText [noStyle [seeAListText, thingsYouCando, space]]
   where
-    seeAListText   = plainText " See a list of all the "
-    thingsYouCando = plainLink (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")
-    space          = plainText " "
+    seeAListText   = simpleText " See a list of all the "
+    thingsYouCando = link (Just "Things you can do") (Url "https://scrapbox.io/help/Things%20you%20can%20do")
+    space          = simpleText " "
 
 -- " \tIncludes more syntax, inviting team members, and creating profiles",
 includesMore :: Block
-includesMore = bulletLine 1 "Includes more syntax, inviting team members, and creating profiles"
+includesMore = bulletPoint 1 "Includes more syntax, inviting team members, and creating profiles"
 
 -- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
 seeSome :: Block
-seeSome = BulletPoint (BulletSize 1) $ ScrapText [seeSomeText, exampleProjects, space]
+seeSome = BulletPoint (BulletSize 1) $ ScrapText [noStyle [seeSomeText, exampleProjects, space]]
   where
-    seeSomeText     = plainText "See some "
-    exampleProjects = plainLink (Just "Example projects") (Url "https://scrapbox.io/help/exampless")
-    space           = plainText " "
+    seeSomeText     = simpleText "See some "
+    exampleProjects = link (Just "Example projects") (Url "https://scrapbox.io/help/exampless")
+    space           = simpleText " "
 
 -- " \tIncludes a SaaS startup, design agency, and more",
 includesSaas :: Block
-includesSaas = bulletLine 2 "Includes a SaaS startup, design agency, and more"
+includesSaas = bulletPoint 2 "Includes a SaaS startup, design agency, and more"
 
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = BulletPoint (BulletSize 1) $ ScrapText [see, howToSimpleText, space]
+howTos = BulletPoint (BulletSize 1) $ ScrapText [noStyle [see, howToSimpleText, space]]
   where
-    see        = plainText "See "
-    howToSimpleText = plainLink (Just "How-tos and support") (Url "https://scrapbox.io/help/")
-    space      = plainText " "
+    see             = simpleText "See "
+    howToSimpleText = link (Just "How-tos and support") (Url "https://scrapbox.io/help/")
+    space           = simpleText " "
 
 -- " \tFor detailed instructions and answers to FAQs",
 forDetails :: Block
-forDetails = bulletLine 2 "For detailed instructions and answers to FAQs"
+forDetails = bulletPoint 2 "For detailed instructions and answers to FAQs"
 
 -- "[* We would love to hear any questions or feedback you may have]",
 weWouldLove :: Block
-weWouldLove = Header (HeaderSize 1) $ [SimpleText "We would love to hear any questions or feedback you may have"]
+weWouldLove = Header (HeaderSize 1) $ [simpleText "We would love to hear any questions or feedback you may have"]
 
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block
-pleaseLet = Document $ ScrapText [pleaseLetText, twitter, andText, faceBook]
+pleaseLet = Document $ ScrapText [noStyle [pleaseLetText, twitter, andText, faceBook]]
   where
-    pleaseLetText = plainText "Please let us know if you have any suggestions, questions, or \
+    pleaseLetText = simpleText "Please let us know if you have any suggestions, questions, or \
       \points of friction.You can contact us directly by email: contact@scrapbox.io, "
-    andText       = plainText ", and "
-    twitter       = plainLink (Just "twitter") (Url "https://twitter.com/scrapboxapp")
-    faceBook      = plainLink (Just "facebook") (Url "https://facebook.com/scrapboxapp")
+    andText       = simpleText ", and "
+    twitter       = link (Just "twitter") (Url "https://twitter.com/scrapboxapp")
+    faceBook      = link (Just "facebook") (Url "https://facebook.com/scrapboxapp")
 
 -- "[/ Thank you for using Scrapbox!]",
 thankYouFor :: Block
-thankYouFor = Document $ ScrapText [thankYou]
+thankYouFor = Document $ ScrapText [italic [thankYou]]
   where
-    thankYou = italicText "Thank you for using Scrapbox!"
+    thankYou = simpleText "Thank you for using Scrapbox!"
 
 -- "[https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58]",
 thankYouThumbnail :: Block
@@ -278,10 +258,11 @@ thankYouThumbnail = Thumbnail (Url "https://gyazo.com/5aeffb3e8a6561ae78430664d8
 -- ">Note: When you're done reading you might change the title of this page to 'Welcome to
 -- project-name' and add some personalized instructions for your team.",
 noteWhen :: Block
-noteWhen = BlockQuote $ ScrapText [noteWhenText]
+noteWhen = BlockQuote $ ScrapText [noStyle [noteWhenText]]
   where
-    noteWhenText =  plainText "Note: When you're done reading you might change the title of \
+    noteWhenText =  simpleText "Note: When you're done reading you might change the title of \
     \ this page to 'Welcome to project-name' and add some personalized instructions for your team."
+
 ----------------------------------------------------------------------------------------------------
 -- Accumulated blocks
 ----------------------------------------------------------------------------------------------------
@@ -291,68 +272,68 @@ getStartedBlock =
     [ getStarted
     , startedThumbnail
     , welcome
-    , breakLine
+    , lineBreak
     , everythingIs
-    , breakLine
+    , lineBreak
     , clickOn
-    , breakLine
+    , lineBreak
     , pressTab
-    , breakLine
+    , lineBreak
     , highlightText
     , addLinks
-    , breakLine
+    , lineBreak
     ]
 
 getsInterestingBlock :: [Block]
 getsInterestingBlock =
     [ hereIs
-    , breakLine
+    , lineBreak
     , clickNewLink
-    , breakLine
+    , lineBreak
     , clickRelated
     , pagesThat
-    , breakLine
+    , lineBreak
     , seeImages
-    , breakLine
+    , lineBreak
     , ourGoalIs
-    , breakLine
-    , breakLine
+    , lineBreak
+    , lineBreak
     ]
 
 onceStartedBlock :: [Block]
 onceStartedBlock =
     [ whatCan
     , useScrapbox
-    , breakLine
+    , lineBreak
     , forExample
     , letsSay
-    , breakLine
+    , lineBreak
     , youCanImmediately
-    , breakLine
+    , lineBreak
     , onceYoucan
-    , breakLine
+    , lineBreak
     , whatIdeas
-    , breakLine
-    , breakLine
+    , lineBreak
+    , lineBreak
     , onceYouGot
     , seeAList
     , includesMore
-    , breakLine
-    , breakLine
+    , lineBreak
+    , lineBreak
     , seeSome
     , includesSaas
-    , breakLine
+    , lineBreak
     , howTos
     , forDetails
-    , breakLine
-    , breakLine
+    , lineBreak
+    , lineBreak
     , weWouldLove
     , pleaseLet
-    , breakLine
+    , lineBreak
     , thankYouFor
     , thankYouThumbnail
-    , breakLine
-    , breakLine
+    , lineBreak
+    , lineBreak
     , noteWhen
     ]
 

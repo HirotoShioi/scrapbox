@@ -42,7 +42,7 @@ newtype BulletSize = BulletSize Int
 
 -- | Blocks are contents
 data Block
-    = BreakLine
+    = LineBreak
     -- ^ Simply breaks a line
     | BlockQuote ScrapText
     -- ^ BlockQuote like markdown
@@ -107,3 +107,37 @@ data StyleData = StyleData
     , bStrikeThrough :: !Bool
     -- ^ Strike through
     } deriving (Eq, Show)
+
+--------------------------------------------------------------------------------
+-- Smart constructors
+--------------------------------------------------------------------------------
+
+textBlock :: Text -> Block
+textBlock text = Document $ ScrapText [noStyle [simpleText text]]
+
+bulletPoint :: Int -> Text -> Block
+bulletPoint num text = BulletPoint (BulletSize num) $ ScrapText $ [noStyle [simpleText text]]
+
+lineBreak :: Block
+lineBreak = LineBreak
+
+simpleText :: Text -> Segment
+simpleText = SimpleText
+
+codeNotation :: Text -> Segment
+codeNotation = CodeNotation
+
+link :: Maybe Text -> Url -> Segment
+link = Link
+
+noStyle :: [Segment] -> Context
+noStyle segments = Context NoStyle segments
+
+bold :: [Segment] -> Context
+bold segments = Context Bold segments
+
+italic :: [Segment] -> Context
+italic segments = Context Italic segments
+
+strikeThrough :: [Segment] -> Context
+strikeThrough segments = Context StrikeThrough segments
