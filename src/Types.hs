@@ -1,7 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Types where
 
 import           RIO
 import           RIO.Time
+import           Data.List (groupBy)
 
 -- https://scrapbox.io/help/Syntax
 
@@ -141,3 +144,46 @@ italic segments = Context Italic segments
 
 strikeThrough :: [Segment] -> Context
 strikeThrough segments = Context StrikeThrough segments
+
+-- | Smart constructor for creating 'Markdown' with given '[Block]'
+mkMarkdown :: [Block] -> Markdown
+mkMarkdown = Markdown
+
+-- | Convert given Markdown into verbose structure
+mkVerbose :: Markdown -> Markdown
+mkVerbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
+  where
+    convertToVerbose :: Block -> Block
+    convertToVerbose = \case
+        BlockQuote scrapText      -> BlockQuote $ verboseScrapText scrapText
+        BulletList scrapTexts     -> BulletList $ map verboseScrapText scrapTexts
+        BulletPoint num scrapText -> BulletPoint num (verboseScrapText scrapText)
+        Document scrapText        -> Document $ verboseScrapText scrapText
+        other                     -> other
+    verboseScrapText :: ScrapText -> ScrapText
+    verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
+    mkVerboseContext :: Context -> [Context]
+    mkVerboseContext (Context style segments) = 
+        foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
+
+-- | Convert given Markdown into unverbose structure
+unVerbose :: Markdown -> Markdown
+unVerbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
+  where
+    unVerboseBlocks :: Block -> Block
+    unVerboseBlocks = \case
+        BlockQuote scrapText      -> BlockQuote $ unVerboseScrapText scrapText
+        BulletList scrapTexts     -> BulletList $ map unVerboseScrapText scrapTexts
+        BulletPoint num scrapText -> BulletPoint num (unVerboseScrapText scrapText)
+        Document scrapText        -> Document $ unVerboseScrapText scrapText
+        other                     -> other
+    unVerboseScrapText :: ScrapText -> ScrapText
+    unVerboseScrapText (ScrapText ctxs) = ScrapText $ map concatContext $ groupBy 
+        (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
+    concatContext :: [Context] -> Context
+    concatContext [] = emptyContext
+    concatContext ctxs@((Context style _):_) = 
+        foldr (\(Context _ segments) (Context _ acc) -> Context style (segments <> acc)) emptyContext ctxs
+
+emptyContext :: Context
+emptyContext = Context NoStyle []

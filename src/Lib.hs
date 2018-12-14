@@ -4,7 +4,6 @@
 module Lib 
     ( encodePretty
     , encodeMarkdown
-    , mkMarkdown
     ) where
 
 import           RIO
@@ -20,10 +19,6 @@ encodeMarkdown :: Markdown -> [ByteString]
 encodeMarkdown (Markdown blocks) =
     concatMap (map encodeUtf8 . encodeBlock) blocks
 
--- | Smart constructor for creating 'Markdown' with given '[Block]'
-mkMarkdown :: [Block] -> Markdown
-mkMarkdown = Markdown
-
 -- Encode blocks
 encodeBlock :: Block -> [Text]
 encodeBlock = \case
@@ -33,7 +28,7 @@ encodeBlock = \case
     BulletPoint (BulletSize num) scrapText -> [T.replicate num " " <> encodeText scrapText]
     CodeBlock codeName code                -> encodeCodeBlock codeName code
     Document scrapText                     -> [encodeText scrapText]
-    Header (HeaderSize num) ctx            -> [encodeHeader num ctx]
+    Header (HeaderSize num) contents       -> [encodeHeader num contents]
     Table table                            -> encodeTable table
     Thumbnail (Url url)                    -> [blocked url]
 
