@@ -9,7 +9,6 @@ module Example
 
 import           RIO   hiding (link)
 
-import           Lib
 import           Types
 
 --------------------------------------------------------------------------------
