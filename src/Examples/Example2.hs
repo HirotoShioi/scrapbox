@@ -11,14 +11,12 @@ import           Constructors (blockQuote, bold, bulletPoint, codeNotation,
 import           Types        (Block(..), Markdown, CodeName(..), CodeSnippet(..))
 
 
--- "Syntax",
 syntax :: [Block]
 syntax = 
-    [ document [noStyle [text "Syntax"]]
+    [ document [ noStyle [text "Syntax"]]
     , thumbnail "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815"
     ]
 
--- "[* Mouse-based editing]",
 mouseBased :: [Block]
 mouseBased =
     [ header 1 $ [text "Mouse-based editing"]
@@ -32,20 +30,23 @@ mouseBased =
 internalLinks :: [Block]
 internalLinks = 
     [ document 
-        [bold 
-            [ text "Internal Links"]
-            , noStyle [text " (linking to another page on scrapbox)"]
+        [ bold [text "Internal Links"]
+        , noStyle [text " (linking to another page on scrapbox)"]
         ]
-    , bulletPoint 1 [noStyle [codeNotation "[link]", text " ⇒ ", link Nothing "Link"]]
+    , bulletPoint 1 
+        [ noStyle 
+            [ codeNotation "[link]"
+            , text " ⇒ "
+            , link Nothing "Link"
+            ]
+        ]
     ]
 
 externalLinkExample :: [Block]
 externalLinkExample =
     [ document 
-        [ bold 
-            [ text "External Links"]
-            , noStyle [text " (linking to another page on scrapbox)"
-            ]
+        [ bold [text "External Links"]
+        , noStyle [text " (linking to another page on scrapbox)"]
         ]
     , bulletPoint 1 
         [ noStyle
@@ -65,14 +66,14 @@ externalLinkExample =
 
 directImageLink :: [Block]
 directImageLink = 
-    [ document $ [bold [text "Images"]]
+    [ document $ [ bold [text "Images"]]
     , bulletPoint 1 
-        [noStyle 
+        [ noStyle 
             [ text "Direct mage link ↓"
             , codeNotation "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
             ]
         ]
-    , document [noStyle [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
+    , document [ noStyle [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
     ]
 
 clickableThumbnail :: [Block]
@@ -92,22 +93,23 @@ clickableThumbnail =
 
 linkToOther :: [Block]
 linkToOther = 
-    [ document [bold [text "Linking to other scrapbox projects"]]
+    [ document [ bold [text "Linking to other scrapbox projects"]]
     , bulletPoint 1 
-        [noStyle 
+        [ noStyle 
             [ codeNotation "[/projectname/pagename]"
             , text " ⇛ "
-            , link Nothing "/icons/check"]
+            , link Nothing "/icons/check"
             ]
+        ]
     , bulletPoint 1 
         [noStyle 
             [ codeNotation "[/projectname]"
             , text " ⇛ "
-            , link Nothing "/icons"]
+            , link Nothing "/icons"
             ]
+        ]
     ]
 
--- "[[Icons]]",
 iconsTitle :: [Block]
 iconsTitle = 
     [ document [bold [text "Icons"]]
@@ -127,20 +129,20 @@ iconsTitle =
         ]
     ]
 
--- "[[Bold text]]",
 boldTitle :: [Block]
 boldTitle = 
     [ document [bold [text "Bold text"]]
     , bulletPoint 1
-        [ noStyle [codeNotation "[[Bold]]"
-        , text " or "
-        , codeNotation "[* Bold]"
-        , text "⇒ "]
+        [ noStyle 
+            [ codeNotation "[[Bold]]"
+            , text " or "
+            , codeNotation "[* Bold]"
+            , text "⇒ "
+            ]
         , bold [text "Bold"]
         ]
     ]
 
--- "[[Italic text]]",
 italicTitle :: [Block]
 italicTitle = 
     [ document [bold [text "Italic text"]]
@@ -150,7 +152,6 @@ italicTitle =
         ]
     ]
 
--- "[[ Strikethrough text]]",
 strikeThroughTitle :: [Block]
 strikeThroughTitle = 
     [ document [bold [text " Strikethrough text"]]
@@ -164,7 +165,6 @@ strikeThroughTitle =
     , thumbnail "https://gyazo.com/00ab07461d502db91c8ae170276d1396"
     ]
 
--- "[[Bullet points]]"
 bulletPointTitle :: [Block]
 bulletPointTitle = 
     [ document [bold [text "Bullet points"]]
@@ -172,10 +172,9 @@ bulletPointTitle =
     , bulletPoint 2 [noStyle [text "Press backspace to remove the indent  / bullet point"]]
     ]
 
--- "[[Hashtags / internal links]]",
 hashtagTitle :: [Block]
 hashtagTitle = 
-    [ document [bold [text "Hashtags / internal links"]]
+    [ document [ bold [text "Hashtags / internal links"]]
     , bulletPoint 1 
         [ noStyle 
             [ codeNotation "#tag"
@@ -190,12 +189,11 @@ hashtagTitle =
         ]
     ]
 
--- "[[Block quote]]",
 blockQuoteTitle :: [Block]
 blockQuoteTitle = 
     [ document [bold [text "Block quote"]]
     , blockQuote 
-        [noStyle 
+        [ noStyle 
             [ text "> use the right arrow "
             , codeNotation ">"
             , text " at the beginning of a line to get a block quote "
@@ -203,13 +201,12 @@ blockQuoteTitle =
         ]
     ]
 
--- "[[[Code notation]]]",
 codeNotationTitle :: [Block]
 codeNotationTitle = 
     [ document [bold [link Nothing "Code notation"]]
-    , bulletPoint 1 [noStyle [text "Use backquotes or backticks, `,  to highlight code  "]]
+    , bulletPoint 1 [ noStyle [text "Use backquotes or backticks, `,  to highlight code  "]]
     , bulletPoint 1 
-        [noStyle 
+        [ noStyle 
             [ text " e.g. "
             , codeNotation "function() {  return true }"
             ]
@@ -220,7 +217,7 @@ codeBlockTitle :: [Block]
 codeBlockTitle = 
     [ document [bold [link Nothing "[Code block notation]"]]
     , document
-        [noStyle
+        [ noStyle
             [ text " Typing "
             , codeNotation "code:filename.extension"
             , text "or"
@@ -228,7 +225,7 @@ codeBlockTitle =
             , text "can be used to create a new code snippet and and display it as a block"
             ]
         ]
-    , document [noStyle [text "  Language names may be abbreviated"]]
+    , document [ noStyle [text "  Language names may be abbreviated"]]
     ]
 
 
@@ -249,13 +246,12 @@ codeContent = codeBlock "hello.js"
     , "}"
     ]
 
---    [[[Tables]]]
 tableTitle :: [Block]
 tableTitle = 
-    [ document [bold [link Nothing "Tables"]]
-    , bulletPoint 1 [noStyle [text "Type table: tablename to create a table"]]
-    , bulletPoint 1 [noStyle [text "Use tab to move to the next column, use enter to move to the next row."]]
-    , bulletPoint 1 [noStyle [text "An example:"]]
+    [ document [ bold [link Nothing "Tables"]]
+    , bulletPoint 1 [ noStyle [text "Type table: tablename to create a table"]]
+    , bulletPoint 1 [ noStyle [text "Use tab to move to the next column, use enter to move to the next row."]]
+    , bulletPoint 1 [ noStyle [text "An example:"]]
     ]
 
 -- "table:hello",
