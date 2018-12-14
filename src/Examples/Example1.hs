@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Example
+module Examples.Example1
   ( getStartedMarkdown
   , getsInterestingMd
   , onceStartedMd

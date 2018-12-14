@@ -1,10 +1,13 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase    #-}
 
 module Types where
 
+import           Data.List    (groupBy)
 import           RIO
 import           RIO.Time
-import           Data.List (groupBy)
+
+import           GHC.Generics (Generic)
 
 -- https://scrapbox.io/help/Syntax
 
@@ -16,32 +19,32 @@ data Page = Page
     , pCreatedAt :: !UTCTime
     , pUpdatedAt :: !UTCTime
     , pTitle     :: !Text
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Generic, Read, Ord)
 
 newtype TableContent = TableContent {
     getTableContent :: [[Text]]
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Generic, Read, Ord)
 
 newtype Url = Url Text
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 newtype CodeName = CodeName {
     getCodeName :: Text
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Generic, Read, Ord)
 
 newtype CodeSnippet = CodeSnippet {
     getCodeSnippet :: Text
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Markdown consist of list of 'Blocks'
 newtype Markdown = Markdown [Block]
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 newtype HeaderSize = HeaderSize Int
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 newtype BulletSize = BulletSize Int
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Blocks are contents
 data Block
@@ -63,15 +66,15 @@ data Block
     -- ^ Table
     | Thumbnail Url
     -- ^ Thumbnail
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 -- | ScrapText are consisted by list of 'Context'
 newtype ScrapText = ScrapText [Context]
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Context is an content which are associated with an 'Style'
 data Context = Context !Style !Content
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 type Content = [Segment]
 
@@ -87,7 +90,7 @@ data Style =
     -- ^ No styles
     | StrikeThrough
     -- ^ StrikeThrough style
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Segment
 data Segment =
@@ -97,7 +100,7 @@ data Segment =
     -- ^ Link, it can have href
     | SimpleText Text
     -- ^ Just an simple text
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Read, Ord)
 
 -- | StyleData
 data StyleData = StyleData
@@ -109,7 +112,7 @@ data StyleData = StyleData
     -- ^ Italic style
     , bStrikeThrough :: !Bool
     -- ^ Strike through
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Generic, Read, Ord)
 
 --------------------------------------------------------------------------------
 -- Verbose/Unverbose
@@ -129,7 +132,7 @@ mkVerbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
     mkVerboseContext :: Context -> [Context]
-    mkVerboseContext (Context style segments) = 
+    mkVerboseContext (Context style segments) =
         foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
 
 -- | Convert given Markdown into unverbose structure
@@ -144,11 +147,11 @@ unVerbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
         Document stext        -> Document $ unVerboseScrapText stext
         other                 -> other
     unVerboseScrapText :: ScrapText -> ScrapText
-    unVerboseScrapText (ScrapText ctxs) = ScrapText $ map concatContext $ groupBy 
+    unVerboseScrapText (ScrapText ctxs) = ScrapText $ map concatContext $ groupBy
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
     concatContext :: [Context] -> Context
     concatContext [] = emptyContext
-    concatContext ctxs@((Context style _):_) = 
+    concatContext ctxs@((Context style _):_) =
         foldr (\(Context _ segments) (Context _ acc) -> Context style (segments <> acc)) emptyContext ctxs
 
 emptyContext :: Context

@@ -1,4 +1,4 @@
-module Example2 where
+module Examples.Example2 where
 
 import RIO
 
