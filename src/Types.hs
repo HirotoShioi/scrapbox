@@ -33,7 +33,7 @@ newtype CodeName = CodeName {
     } deriving (Eq, Show, Generic, Read, Ord)
 
 newtype CodeSnippet = CodeSnippet {
-    getCodeSnippet :: Text
+    getCodeSnippet :: [Text]
     } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Markdown consist of list of 'Blocks'

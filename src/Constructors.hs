@@ -27,7 +27,7 @@ module Constructors
     , codeNotation
     , hashtag
     , link
-    , simpleText
+    , text
     ) where
 
 import           RIO   hiding (link)
@@ -46,19 +46,19 @@ markdown = Markdown
 --------------------------------------------------------------------------------
 
 textBlock :: Text -> Block
-textBlock text = Document $ ScrapText [noStyle [simpleText text]]
+textBlock str = Document $ ScrapText [noStyle [text str]]
 
-blockQuote :: ScrapText -> Block
-blockQuote = BlockQuote
+blockQuote :: [Context] -> Block
+blockQuote = BlockQuote . ScrapText
 
-bulletList :: [ScrapText] -> Block
-bulletList = BulletList
+bulletList :: [[Context]] -> Block
+bulletList ctxs = BulletList $ map ScrapText ctxs
 
-codeBlock :: CodeName -> CodeSnippet -> Block
-codeBlock = CodeBlock
+codeBlock :: Text -> [Text] -> Block
+codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet codeSnippet)
 
-document :: ScrapText -> Block
-document = Document
+document :: [Context] -> Block
+document = Document . ScrapText
 
 table :: TableContent -> Block
 table = Table
@@ -69,8 +69,8 @@ thumbnail url = Thumbnail (Url url)
 header :: Int -> Content -> Block
 header size contents = Header (HeaderSize size) contents
 
-bulletPoint :: Int -> ScrapText -> Block
-bulletPoint size stext = BulletPoint (BulletSize size) stext
+bulletPoint :: Int -> [Context] -> Block
+bulletPoint size ctxs = BulletPoint (BulletSize size) (ScrapText ctxs)
 
 lineBreak :: Block
 lineBreak = LineBreak
@@ -108,8 +108,8 @@ customStyle sData segments = Context (CustomStyle sData) segments
 -- Segment
 --------------------------------------------------------------------------------
 
-simpleText :: Text -> Segment
-simpleText = SimpleText
+text :: Text -> Segment
+text = SimpleText
 
 codeNotation :: Text -> Segment
 codeNotation = CodeNotation
