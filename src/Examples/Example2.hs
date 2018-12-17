@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Examples.Example2 where
+module Examples.Example2
+    ( example2
+    ) where
 
 import           RIO          hiding (link)
 
@@ -326,6 +328,8 @@ tableSection =
 section :: [Block] -> [Block]
 section bs = bs <> [lineBreak]
 
+-- | Example Markdown
+-- https://scrapbox.io/toSrapbox/Syntax
 example2 :: Markdown
 example2 = markdown $ concatMap section
     [ syntax
@@ -335,6 +339,7 @@ example2 = markdown $ concatMap section
     , directImageLink
     , clickableThumbnail
     , linkToOther
+    , iconSection
     , boldSection
     , italicSection
     , strikeThroughSection
