@@ -1,18 +1,16 @@
 module Constructors
     ( markdown
     -- * Blocks
-    , textBlock
     , bulletList
     , blockQuote
     , bulletPoint
     , codeBlock
-    , document
     , header
     , lineBreak
+    , p
+    , paragraph
     , table
     , thumbnail
-    -- * ScrapText
-    , scrapText
     -- * Context
     , context
     -- * Constructors for creating 'Context' with a style
@@ -45,9 +43,6 @@ markdown = Markdown
 -- Block
 --------------------------------------------------------------------------------
 
-textBlock :: Text -> Block
-textBlock str = Document $ ScrapText [noStyle [text str]]
-
 blockQuote :: [Context] -> Block
 blockQuote = BlockQuote . ScrapText
 
@@ -57,8 +52,11 @@ bulletList ctxs = BulletList $ map ScrapText ctxs
 codeBlock :: Text -> [Text] -> Block
 codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet codeSnippet)
 
-document :: [Context] -> Block
-document = Document . ScrapText
+paragraph :: [Context] -> Block
+paragraph = Paragraph . ScrapText
+
+p :: [Context] -> Block
+p = paragraph
 
 table :: Text -> [[Text]] -> Block
 table title contents = Table (TableName title) (TableContent contents)
@@ -74,13 +72,6 @@ bulletPoint size ctxs = BulletPoint (BulletSize size) (ScrapText ctxs)
 
 lineBreak :: Block
 lineBreak = LineBreak
-
---------------------------------------------------------------------------------
--- ScrapText
---------------------------------------------------------------------------------
-
-scrapText :: [Context] -> ScrapText
-scrapText = ScrapText
 
 --------------------------------------------------------------------------------
 -- Context

@@ -32,7 +32,7 @@ encodeBlock = \case
     BulletList contents                -> encodeBulletPoints contents
     BulletPoint (BulletSize num) stext -> [T.replicate num " " <> encodeText stext]
     CodeBlock codeName code            -> encodeCodeBlock codeName code <> encodeBlock LineBreak
-    Document stext                     -> [encodeText stext]
+    Paragraph stext                    -> [encodeText stext]
     Header num contents                -> [encodeHeader num contents]
     Table tableName tableContent       -> encodeTable tableName tableContent <> encodeBlock LineBreak
     Thumbnail (Url url)                -> [blocked url]

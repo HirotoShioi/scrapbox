@@ -10,9 +10,9 @@ module Examples.Example1
 import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeNotation,
-                               document, header, italic, lineBreak, link,
-                               markdown, noStyle, scrapText, text,
-                               strikeThrough, textBlock, thumbnail)
+                               header, italic, lineBreak, link, markdown,
+                               noStyle, p, strikeThrough, text,
+                               thumbnail)
 import           Types        (Block, Markdown)
 
 --------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ import           Types        (Block, Markdown)
 
 -- "Get started",
 getStarted :: Block
-getStarted = textBlock "Get started"
+getStarted = p [noStyle [text "Get started"]]
 
 -- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",
 startedThumbnail :: Block
@@ -29,7 +29,7 @@ startedThumbnail = thumbnail "https://gyazo.com/5f93e65a3b979ae5333aca4f32600611
 
 -- "Welcome to your new Scrapbox project!",
 welcome :: Block
-welcome = document [noStyle [text "Welcome to your new Scrapbox project!"]]
+welcome = p [noStyle [text "Welcome to your new Scrapbox project!"]]
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
@@ -48,7 +48,7 @@ pressTab = bulletPoint 2
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
 highlightText = bulletPoint 1
-    [ noStyle 
+    [ noStyle
         [ text " Highlight text to make it a "
         , link Nothing "New link"
         , text ", "
@@ -63,8 +63,8 @@ highlightText = bulletPoint 1
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block
-addLinks = bulletPoint 2 
-    [ noStyle 
+addLinks = bulletPoint 2
+    [ noStyle
         [ text "Add links while typing with a "
         , codeNotation "#"
         , text " before or brackets around "
@@ -84,9 +84,9 @@ hereIs = header 2 [text "🎯 Here is where it gets interesting "]
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
-clickNewLink = 
-    bulletPoint 1 
-        [ noStyle 
+clickNewLink =
+    bulletPoint 1
+        [ noStyle
             [ text "Click a "
             , link Nothing "New Link"
             , text " to create a new page with that title and open it."
@@ -95,8 +95,8 @@ clickNewLink =
 
 -- Click related thumbnails in the footer of any page to explore ideas you have linked.
 clickRelated :: Block
-clickRelated = textBlock "Click related thumbnails in the footer of any page to explore ideas \
-    \you have linked."
+clickRelated = p [noStyle [text "Click related thumbnails in the footer of any page to explore ideas \
+    \you have linked." ]]
 
 -- " \tPages that are directly linked or two steps away from the current page will be displayed.",
 pagesThat :: Block
@@ -107,7 +107,7 @@ pagesThat = bulletPoint 2
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
 seeImages = bulletPoint 1
-    [ noStyle 
+    [ noStyle
         [ text "See images, videos, and external links added inside "
         , codeNotation "["
         , text " brackets"
@@ -134,7 +134,7 @@ whatCan = header 1 [text "What can you put in a Scrapbox project?"]
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
 useScrapbox = bulletPoint 1
-    [noStyle 
+    [noStyle
         [ text "Use Scrapbox to outline ideas, discuss "
         , codeNotation "code blocks"
         , text ", give feedback, and brainstorm. "
@@ -186,9 +186,9 @@ youCanImmediately = bulletPoint 1 $
 -- Once you can easily and directly type your ideas while also building context ideas become more
 -- clear the more you use it. No more folders full of dead text means no more teams isolated from their own ideas.
 onceYoucan :: Block
-onceYoucan = textBlock "Once you can easily and directly type your ideas while also building \
-    \ context ideas become more clear the more you use it. No more folders full of dead text means no \
-    \more teams isolated from their own ideas."
+onceYoucan = p [noStyle [text "Once you can easily and directly type your ideas while also building \
+\ context ideas become more clear the more you use it. No more folders full of dead text means no \
+\more teams isolated from their own ideas."]]
 
 -- >  [/ What ideas in your head could your team benefit from you putting down right now? Go create
 --  your first three or so pages and add a few links. From 3 to 3,000 pages your ideas will only grow in context.]
@@ -205,8 +205,8 @@ onceYouGot = header 2 [text "📌 Once you've got the basics, here are ways to d
 
 -- " See a list of all the [https://scrapbox.io/help/Things%20you%20can%20do Things you can do] ",
 seeAList :: Block
-seeAList = document 
-    [ noStyle 
+seeAList = p
+    [ noStyle
         [ text " See a list of all the "
         , link (Just "Things you can do") "https://scrapbox.io/help/Things%20you%20can%20do"
         , text " "
@@ -220,8 +220,8 @@ includesMore = bulletPoint 1
 
 -- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
 seeSome :: Block
-seeSome = bulletPoint 1 
-    [noStyle 
+seeSome = bulletPoint 1
+    [noStyle
         [ text "See some "
         , link (Just "Example projects") "https://scrapbox.io/help/exampless"
         , text " "
@@ -235,7 +235,7 @@ includesSaas = bulletPoint 2 [noStyle [text "Includes a SaaS startup, design age
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = bulletPoint 1 
+howTos = bulletPoint 1
     [noStyle
         [ text "See "
         , link (Just "How-tos and support") "https://scrapbox.io/help/"
@@ -253,8 +253,8 @@ weWouldLove = header 1 [text "We would love to hear any questions or feedback yo
 
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block
-pleaseLet = document 
-    [noStyle 
+pleaseLet = p
+    [noStyle
         [ pleaseLetText
         , link (Just "twitter") "https://twitter.com/scrapboxapp"
         , text ", and "
@@ -267,7 +267,7 @@ pleaseLet = document
 
 -- "[/ Thank you for using Scrapbox!]",
 thankYouFor :: Block
-thankYouFor = document [italic [text "Thank you for using Scrapbox!"]]
+thankYouFor = p [italic [text "Thank you for using Scrapbox!"]]
 
 -- "[https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58]",
 thankYouThumbnail :: Block

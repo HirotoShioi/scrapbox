@@ -60,7 +60,7 @@ data Block
     -- ^ Code blocks
     | Header HeaderSize Content
     -- ^ Header
-    | Document ScrapText
+    | Paragraph ScrapText
     -- ^ Simple text
     | Table TableName TableContent -- No sure how to implement yet!!
     -- ^ Table
@@ -129,7 +129,7 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
         BlockQuote stext      -> BlockQuote $ verboseScrapText stext
         BulletList stexts     -> BulletList $ map verboseScrapText stexts
         BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
-        Document stext        -> Document $ verboseScrapText stext
+        Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
@@ -146,7 +146,7 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
         BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
         BulletList stexts     -> BulletList $ map unVerboseScrapText stexts
         BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
-        Document stext        -> Document $ unVerboseScrapText stext
+        Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText ctxs) = ScrapText $ map concatContext $ groupBy

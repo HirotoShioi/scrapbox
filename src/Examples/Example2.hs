@@ -5,16 +5,15 @@ module Examples.Example2 where
 import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeBlock,
-                               codeNotation, document, header, italic,
-                               lineBreak, link, markdown, noStyle, scrapText,
-                               strikeThrough, table, text, textBlock, thumbnail)
-import           Types        (Block (..), CodeName (..), CodeSnippet (..),
-                               Markdown)
+                               codeNotation, p, header, italic,
+                               lineBreak, link, markdown, noStyle,
+                               strikeThrough, table, text, thumbnail)
+import           Types        (Block (..), Markdown)
 
 
 syntax :: [Block]
 syntax =
-    [ document [ noStyle [text "Syntax"]]
+    [ p [ noStyle [text "Syntax"]]
     , thumbnail "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815"
     ]
 
@@ -24,7 +23,7 @@ mouseBased :: [Block]
 mouseBased =
     [ header 1 $ [text "Mouse-based editing"]
     , thumbnail "https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc"
-    , document
+    , p
         [ bold [text "Internal Links"]
         , noStyle [text " (linking to another page on scrapbox)"]
         ]
@@ -34,7 +33,7 @@ mouseBased =
 -- "\t`[link]` ⇒ [Link]
 internalLinks :: [Block]
 internalLinks =
-    [ document
+    [ p
         [ bold [text "Internal Links"]
         , noStyle [text " (linking to another page on scrapbox)"]
         ]
@@ -54,7 +53,7 @@ internalLinks =
 -- " `[Google http://google.com]` ⇒ [Google http://google.com]",
 externalLinks :: [Block]
 externalLinks =
-    [ document
+    [ p
         [ bold [text "External Links"]
         , noStyle [text " (linking to another page on scrapbox)"]
         ]
@@ -64,7 +63,7 @@ externalLinks =
             , text " ⇒ http://google.com"
             ]
         ]
-    , document [noStyle [text "or"]]
+    , p [noStyle [text "or"]]
     , bulletPoint 1
         [ noStyle
             [ codeNotation "[Google http://google.com]"
@@ -79,14 +78,14 @@ externalLinks =
 -- " [https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]",
 directImageLink :: [Block]
 directImageLink =
-    [ document $ [ bold [text "Images"]]
+    [ p $ [ bold [text "Images"]]
     , bulletPoint 1
         [ noStyle
             [ text "Direct mage link ↓"
             , codeNotation "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
             ]
         ]
-    , document [ noStyle [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
+    , p [ noStyle [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
     ]
 
 -- "[[Clickable Thumbnail Links]]",
@@ -96,8 +95,8 @@ directImageLink =
 -- "  `[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]`",
 clickableThumbnail :: [Block]
 clickableThumbnail =
-    [ document [bold [text "Clickable Thumbnail Links"]]
-    , document
+    [ p [bold [text "Clickable Thumbnail Links"]]
+    , p
         [ noStyle
             [text "t↓ "
             , codeNotation "`[http://cutedog.com https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]`"
@@ -114,7 +113,7 @@ clickableThumbnail =
 -- " `[/projectname]` ⇛ [/icons]",
 linkToOther :: [Block]
 linkToOther =
-    [ document [ bold [text "Linking to other scrapbox projects"]]
+    [ p [ bold [text "Linking to other scrapbox projects"]]
     , bulletPoint 1
         [ noStyle
             [ codeNotation "[/projectname/pagename]"
@@ -136,7 +135,7 @@ linkToOther =
 -- " `[/icons/todo.icon]` ⇛ [/icons/todo.icon]",
 iconSection :: [Block]
 iconSection =
-    [ document [bold [text "Icons"]]
+    [ p [bold [text "Icons"]]
     , bulletPoint 1
         [noStyle
             [ codeNotation "[ben.icon]"
@@ -157,7 +156,7 @@ iconSection =
 -- "\t`[[Bold]]` or `[* Bold]`⇒ [[Bold]]",
 boldSection :: [Block]
 boldSection =
-    [ document [bold [text "Bold text"]]
+    [ p [bold [text "Bold text"]]
     , bulletPoint 1
         [ noStyle
             [ codeNotation "[[Bold]]"
@@ -173,7 +172,7 @@ boldSection =
 -- "\t`[/ italic]`⇛ [/ italic]",
 italicSection :: [Block]
 italicSection =
-    [ document [bold [text "Italic text"]]
+    [ p [bold [text "Italic text"]]
     , bulletPoint 1
         [ noStyle [codeNotation "[/ italic]", text "⇛ "]
         , italic [text "italic"]
@@ -185,7 +184,7 @@ italicSection =
 -- "[https://gyazo.com/00ab07461d502db91c8ae170276d1396]",
 strikeThroughSection :: [Block]
 strikeThroughSection =
-    [ document [bold [text " Strikethrough text"]]
+    [ p [bold [text " Strikethrough text"]]
     , bulletPoint 1
         [ noStyle
             [ codeNotation "[- strikethrough]"
@@ -201,7 +200,7 @@ strikeThroughSection =
 -- " \tPress backspace to remove the indent  / bullet point",
 bulletPointSection :: [Block]
 bulletPointSection =
-    [ document [bold [text "Bullet points"]]
+    [ p [bold [text "Bullet points"]]
     , bulletPoint 1 [noStyle [text "Press space or tab on a new line to indent and create a bullet point"]]
     , bulletPoint 2 [noStyle [text "Press backspace to remove the indent  / bullet point"]]
     ]
@@ -211,7 +210,7 @@ bulletPointSection =
 -- " Add links in the middle of a sentence to branch off as you type or add tags at the end to organize.",
 hashtagSection :: [Block]
 hashtagSection =
-    [ document [ bold [text "Hashtags / internal links"]]
+    [ p [ bold [text "Hashtags / internal links"]]
     , bulletPoint 1
         [ noStyle
             [ codeNotation "#tag"
@@ -230,7 +229,7 @@ hashtagSection =
 -- "> use the right arrow `>` at the beginning of a line to get a block quote ",
 blockQuoteSection :: [Block]
 blockQuoteSection =
-    [ document [bold [text "Block quote"]]
+    [ p [bold [text "Block quote"]]
     , blockQuote
         [ noStyle
             [ text "> use the right arrow "
@@ -245,7 +244,7 @@ blockQuoteSection =
 -- " e.g. `function() {  return true }`",
 codeNotationSection :: [Block]
 codeNotationSection =
-    [ document [bold [link Nothing "Code notation"]]
+    [ p [bold [link Nothing "Code notation"]]
     , bulletPoint 1 [ noStyle [text "Use backquotes or backticks, `,  to highlight code  "]]
     , bulletPoint 1
         [ noStyle
@@ -260,8 +259,8 @@ codeNotationSection =
 -- "  Language names may be abbreviated",
 codeBlockSection :: [Block]
 codeBlockSection =
-    [ document [bold [link Nothing "[Code block notation]"]]
-    , document
+    [ p [bold [link Nothing "[Code block notation]"]]
+    , p
         [ noStyle
             [ text " Typing "
             , codeNotation "code:filename.extension"
@@ -270,13 +269,13 @@ codeBlockSection =
             , text "can be used to create a new code snippet and and display it as a block"
             ]
         ]
-    , document [ noStyle [text "  Language names may be abbreviated"]]
+    , p [ noStyle [text "  Language names may be abbreviated"]]
     , codeContent
     ]
   where
     -- " code:hello.js",
     -- " \tfunction () {",
-    -- "    alert(document.location.href)",
+    -- "    alert(p.location.href)",
     -- "    console.log(\"hello\")",
     -- "    // You can also write comments!",
     -- "  }",
@@ -285,7 +284,7 @@ codeBlockSection =
     codeContent :: Block
     codeContent = codeBlock "hello.js"
         [ "function () {"
-        , "   alert(document.location.href)"
+        , "   alert(p.location.href)"
         , "   console.log(\"hello\")"
         , "   // You can also write comments!"
         , "}"
@@ -302,7 +301,7 @@ codeBlockSection =
 -- " a\tb\tc",
 tableSection :: [Block]
 tableSection =
-    [ document [ bold [link Nothing "Tables"]]
+    [ p [ bold [link Nothing "Tables"]]
     , bulletPoint 1 [ noStyle [text "Type table: tablename to create a table"]]
     , bulletPoint 1 [ noStyle [text "Use tab to move to the next column, use enter to move to the next row."]]
     , bulletPoint 1 [ noStyle [text "An example:"]]
@@ -317,7 +316,7 @@ tableSection =
     -- "",
     -- ""
     tableExample :: Block
-    tableExample = table "hello" 
+    tableExample = table "hello"
         [ ["1", "2", "3"]
         , ["1", "2", "3"]
         , ["------", "------", "------"]
@@ -410,7 +409,7 @@ example2 = markdown $ concatMap section
 -- "  Language names may be abbreviated",
 -- " code:hello.js",
 -- " \tfunction () {",
--- "    alert(document.location.href)",
+-- "    alert(p.location.href)",
 -- "    console.log(\"hello\")",
 -- "    // You can also write comments!",
 -- "  }",
