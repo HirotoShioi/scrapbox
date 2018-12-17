@@ -13,7 +13,7 @@ import           Types    (Block (..), BulletSize (..), CodeName (..),
                            CodeSnippet (..), Content, Context (..),
                            HeaderSize (..), Markdown (..), ScrapText (..),
                            Segment (..), Style (..), StyleData (..),
-                           TableContent, Url (..))
+                           TableContent(..), Url (..), TableName(..))
 
 -- Pretty print Mark down
 encodePretty :: Markdown -> Text
@@ -31,10 +31,10 @@ encodeBlock = \case
     BlockQuote stext                   -> [">" <> encodeText stext]
     BulletList contents                -> encodeBulletPoints contents
     BulletPoint (BulletSize num) stext -> [T.replicate num " " <> encodeText stext]
-    CodeBlock codeName code            -> encodeCodeBlock codeName code
+    CodeBlock codeName code            -> encodeCodeBlock codeName code <> encodeBlock LineBreak
     Document stext                     -> [encodeText stext]
-    Header (HeaderSize num) contents   -> [encodeHeader num contents]
-    Table tableContent                 -> encodeTable tableContent
+    Header num contents                -> [encodeHeader num contents]
+    Table tableName tableContent       -> encodeTable tableName tableContent <> encodeBlock LineBreak
     Thumbnail (Url url)                -> [blocked url]
 
 -- | Encode given 'ScrapText' into text
@@ -58,14 +58,17 @@ encodeContent ctxs = foldr (\ctx acc -> encodeSegment ctx <> acc) mempty ctxs
 
 -- | Encode 'CodeBlock'
 encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]
-encodeCodeBlock (CodeName name) code = do
+encodeCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
-    let codeContent = map (\line -> " " <> line) (getCodeSnippet code)
+    let codeContent = map (\line -> " " <> line) code
     [codeName] <> codeContent
 
 -- | Encode an table
-encodeTable :: TableContent -> [Text]
-encodeTable tableContent = undefined
+encodeTable :: TableName -> TableContent -> [Text]
+encodeTable (TableName name) (TableContent content) =
+    let title = ["table:" <> name]
+        encodedTable = map (\c -> foldr (\someText acc -> "\t" <> someText <> acc) mempty c) content
+    in title <> encodedTable
 
 -- | Encode bulletpoints
 encodeBulletPoints :: [ScrapText] -> [Text]
@@ -106,7 +109,7 @@ encodeCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
     in blocked $ combinedSyntax <> (encodeContent content)
 
 -- | Encode header
-encodeHeader :: Int -> Content -> Text
-encodeHeader headerSize content =
+encodeHeader :: HeaderSize -> Content -> Text
+encodeHeader (HeaderSize headerSize) content =
     let style = StyleData headerSize False False False
     in encodeCustomStyle style content
