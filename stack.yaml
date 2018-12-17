@@ -62,6 +62,10 @@ packages:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+
+extra-deps:
+- cmark-0.5.6@sha256:5f1f2b14cfb5d129a429836b2ec742820161baa7841d2bf607551ef7edb01618
+
 nix:
   enable: true
   pure: true

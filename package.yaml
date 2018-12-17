@@ -22,8 +22,10 @@ description:         Please see the README on GitHub at <https://github.com/Hiro
 dependencies:
 - base >= 4.7 && < 5
 - bytestring
+- cmark
 - rio
 - say
+- text
 
 ghc-options:
 - -Wall
