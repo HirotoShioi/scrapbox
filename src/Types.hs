@@ -5,7 +5,6 @@ module Types where
 
 import           Data.List    (groupBy)
 import           RIO
-import           RIO.Time     (UTCTime)
 
 import           GHC.Generics (Generic)
 
@@ -16,10 +15,28 @@ import           GHC.Generics (Generic)
 -- | Data structure of an scrapbox page in JSON format
 data Page = Page
     { pContent   :: !Markdown
-    , pCreatedAt :: !UTCTime
-    , pUpdatedAt :: !UTCTime
     , pTitle     :: !Text
     } deriving (Eq, Show, Generic, Read, Ord)
+
+-- | Markdown consist of list of 'Blocks'
+newtype Markdown = Markdown [Block]
+    deriving (Eq, Show, Generic, Read, Ord)
+
+--------------------------------------------------------------------------------
+-- Elements that are used in Block
+--------------------------------------------------------------------------------
+
+newtype BulletSize = BulletSize Int
+    deriving (Eq, Show, Generic, Read, Ord)
+
+newtype CodeName = CodeName Text
+    deriving (Eq, Show, Generic, Read, Ord)
+
+newtype CodeSnippet = CodeSnippet [Text]
+    deriving (Eq, Show, Generic, Read, Ord)
+
+newtype HeaderSize = HeaderSize Int
+    deriving (Eq, Show, Generic, Read, Ord)
 
 newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
@@ -30,43 +47,31 @@ newtype TableContent = TableContent [[Text]]
 newtype Url = Url Text
     deriving (Eq, Show, Generic, Read, Ord)
 
-newtype CodeName = CodeName Text
-    deriving (Eq, Show, Generic, Read, Ord)
-
-newtype CodeSnippet = CodeSnippet [Text]
-    deriving (Eq, Show, Generic, Read, Ord)
-
--- | Markdown consist of list of 'Blocks'
-newtype Markdown = Markdown [Block]
-    deriving (Eq, Show, Generic, Read, Ord)
-
-newtype HeaderSize = HeaderSize Int
-    deriving (Eq, Show, Generic, Read, Ord)
-
-newtype BulletSize = BulletSize Int
-    deriving (Eq, Show, Generic, Read, Ord)
-
 -- | Blocks are contents
 data Block
     = LineBreak
     -- ^ Simply breaks a line
-    | BlockQuote ScrapText
+    | BlockQuote !ScrapText
     -- ^ BlockQuote like markdown
-    | BulletPoint BulletSize ScrapText
+    | BulletPoint !BulletSize !ScrapText
     -- ^ Bulletpoint styled line
-    | BulletList [ScrapText]
+    | BulletList ![ScrapText]
     -- ^ Bullet points
-    | CodeBlock CodeName CodeSnippet
+    | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
-    | Header HeaderSize Content
+    | Header !HeaderSize !Content
     -- ^ Header
-    | Paragraph ScrapText
+    | Paragraph !ScrapText
     -- ^ Simple text
-    | Table TableName TableContent -- No sure how to implement yet!!
+    | Table !TableName !TableContent -- No sure how to implement yet!!
     -- ^ Table
-    | Thumbnail Url
+    | Thumbnail !Url
     -- ^ Thumbnail
     deriving (Eq, Show, Generic, Read, Ord)
+
+--------------------------------------------------------------------------------
+-- ScrapText
+--------------------------------------------------------------------------------
 
 -- | ScrapText are consisted by list of 'Context'
 newtype ScrapText = ScrapText [Context]
@@ -94,13 +99,13 @@ data Style =
 
 -- | Segment
 data Segment =
-      CodeNotation Text
+      CodeNotation !Text
     -- ^ CodeNotation
-    | HashTag Text
+    | HashTag !Text
     -- ^ Hashtag
-    | Link (Maybe Text) Url
+    | Link !(Maybe Text) !Url
     -- ^ Link, it can have href
-    | SimpleText Text
+    | SimpleText !Text
     -- ^ Just an simple text
     deriving (Eq, Show, Generic, Read, Ord)
 
