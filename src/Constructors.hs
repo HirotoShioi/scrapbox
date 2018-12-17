@@ -60,8 +60,8 @@ codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet code
 document :: [Context] -> Block
 document = Document . ScrapText
 
-table :: TableContent -> Block
-table = Table
+table :: Text -> [[Text]] -> Block
+table title contents = Table (TableName title) (TableContent contents)
 
 thumbnail :: Text -> Block
 thumbnail url = Thumbnail (Url url)

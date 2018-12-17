@@ -21,20 +21,20 @@ data Page = Page
     , pTitle     :: !Text
     } deriving (Eq, Show, Generic, Read, Ord)
 
-newtype TableContent = TableContent {
-    getTableContent :: [[Text]]
-    } deriving (Eq, Show, Generic, Read, Ord)
+newtype TableName = TableName Text
+    deriving (Eq, Show, Generic, Read, Ord)
+
+newtype TableContent = TableContent [[Text]]
+    deriving (Eq, Show, Generic, Read, Ord)
 
 newtype Url = Url Text
     deriving (Eq, Show, Generic, Read, Ord)
 
-newtype CodeName = CodeName {
-    getCodeName :: Text
-    } deriving (Eq, Show, Generic, Read, Ord)
+newtype CodeName = CodeName Text
+    deriving (Eq, Show, Generic, Read, Ord)
 
-newtype CodeSnippet = CodeSnippet {
-    getCodeSnippet :: [Text]
-    } deriving (Eq, Show, Generic, Read, Ord)
+newtype CodeSnippet = CodeSnippet [Text]
+    deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Markdown consist of list of 'Blocks'
 newtype Markdown = Markdown [Block]
@@ -62,7 +62,7 @@ data Block
     -- ^ Header
     | Document ScrapText
     -- ^ Simple text
-    | Table TableContent -- No sure how to implement yet!!
+    | Table TableName TableContent -- No sure how to implement yet!!
     -- ^ Table
     | Thumbnail Url
     -- ^ Thumbnail
@@ -121,8 +121,8 @@ data StyleData = StyleData
 --------------------------------------------------------------------------------
 
 -- | Convert given Markdown into verbose structure
-mkVerbose :: Markdown -> Markdown
-mkVerbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
+verbose :: Markdown -> Markdown
+verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
   where
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
@@ -138,8 +138,8 @@ mkVerbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
         foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
 
 -- | Convert given Markdown into unverbose structure
-unVerbose :: Markdown -> Markdown
-unVerbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
+unverbose :: Markdown -> Markdown
+unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
   where
     unVerboseBlocks :: Block -> Block
     unVerboseBlocks = \case
