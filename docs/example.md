@@ -1,6 +1,6 @@
 # Diary
 
-Today, I went to an `park`, with my _dog_ and found a **bone** under the tree.
+Today, I went to an `park` with my _dog_ and found a **bone** under the tree.
 
 ## Code
 
@@ -28,6 +28,6 @@ This is my scrapbox link [`Testing` **text** _extraction_](https://scrapbox.io/t
 
 ## Blockquote
 
-This is an quote from famous scientist
+This is an quote from famous artist
 
 > I've found out that the winter in `Japan` is very **very** cold

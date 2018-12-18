@@ -16,11 +16,23 @@ test = do
     let parsed = commonmarkToNode options markDown
     return parsed
 
+testHeader :: IO Node
+testHeader = do
+    markDown <- readFileUtf8 "./docs/headers.md"
+    let options = [optSafe, optHardBreaks]
+    let parsed = commonmarkToNode options markDown
+    return parsed
+
+--- It would be nice if these functions are wrapped in Either like this:
+--  newtype Parser a = Parser (Either ParserException a)
+
+-- | Convert 'Node' into list of 'Block'
+-- Still unfinished
 toBlocks :: Node -> [Block]
 toBlocks (Node _ nodeType contents) = case nodeType of
     PARAGRAPH                    -> [Paragraph $ ScrapText $ concatMap toContext contents, LineBreak]
     DOCUMENT                     -> concatMap toBlocks contents
-    HEADING headerNum            -> [Header (HeaderSize 2) (concatMap toSegments contents)]
+    HEADING headerNum            -> [toHeader headerNum contents]
     EMPH                         -> [Paragraph $ ScrapText [Context Italic (concatMap toSegments contents)]]
     STRONG                       -> [Paragraph $ ScrapText [Context Bold (concatMap toSegments contents)]]
     TEXT textContent             -> [Paragraph $ ScrapText [Context NoStyle [SimpleText textContent]]]
@@ -39,15 +51,18 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     CUSTOM_BLOCK onEnter onExit  -> undefined -- ??
     THEMATIC_BREAK               -> undefined -- ??
 
+-- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]
 toSegments (Node _ nodeType contents) = case nodeType of
     TEXT textContent -> [SimpleText textContent]
     CODE codeContent -> [CodeNotation codeContent]
     LINK url title   -> [toLink contents url title]
     IMAGE url title  -> [toLink contents url title]
-    _                -> concatMap toSegments contents -- Potentially cause infinite loop?
+    -- Potentially cause infinite loop?
+    _                -> concatMap toSegments contents
 
--- Need state monad to inherit style
+-- | Convert 'Node' into list of 'Context'
+-- Need state monad to inherit style from parent node
 toContext :: Node -> [Context]
 toContext (Node _ nodeType contents) = case nodeType of
     EMPH             -> [Context Italic (concatMap toSegments contents)]
@@ -56,7 +71,8 @@ toContext (Node _ nodeType contents) = case nodeType of
     CODE codeContent -> [Context NoStyle [CodeNotation codeContent]]
     LINK url title   -> [Context NoStyle [toLink contents url title]]
     IMAGE url title  -> [Context NoStyle [toLink contents url title]]
-    _                -> concatMap toContext contents -- Potentially cause infinite loop?
+    -- Potentially cause infinite loop?
+    _                -> concatMap toContext contents
 
 toScrapText :: Node -> ScrapText
 toScrapText node = ScrapText $ toContext node
@@ -77,9 +93,22 @@ toCodeBlock codeInfo code
     | T.null codeInfo = CodeBlock (CodeName "code") (CodeSnippet code)
     | otherwise       = CodeBlock (CodeName codeInfo) (CodeSnippet code)
 
+toHeader :: Int -> [Node] -> Block
+toHeader headerNum nodes = 
+    let headerSize = 
+          case headerNum of
+              1 -> 4
+              2 -> 3
+              3 -> 2
+              4 -> 1
+              _ -> 1
+    in Header (HeaderSize headerSize) $ concatMap toSegments nodes
+
 extractTextFromNodes :: [Node] -> Text
 extractTextFromNodes nodes = foldr
-    (\(Node _ nodeType nodes') acc -> extractText nodeType <> extractTextFromNodes nodes' <> acc) mempty nodes
+    (\(Node _ nodeType nodes') acc 
+        -> extractText nodeType <> extractTextFromNodes nodes' <> acc
+    ) mempty nodes
   where
     extractText :: NodeType -> Text
     extractText = \case
