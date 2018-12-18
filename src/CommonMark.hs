@@ -1,7 +1,11 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommonMark where
+module CommonMark 
+    ( test
+    , testHeader
+    , toBlocks
+    ) where
 
 import           RIO
 
@@ -23,14 +27,34 @@ testHeader = do
     let parsed = commonmarkToNode options markDown
     return parsed
 
+-- Reminder: This module is not intended to auto fix the invalid sytaxes
+-- (i.e. This is not an AI that auto completes given common mark text)
+--
+-- So if you provide an invalid common mark, you're going to get invalid scrapbox
+-- page
+
 --- It would be nice if these functions are wrapped in Either like this:
 --  newtype Parser a = Parser (Either ParserException a)
 
 -- | Convert 'Node' into list of 'Block'
+--
 -- Still unfinished
+-- 
+-- Need to pay attention on the implementation of these NodeTypes
+-- BLOCK_QUOTE
+-- CODE_BLOCK
+-- DOCUMENT
+-- HEADING
+-- LINEBREAK
+-- LIST
+-- PARAGRAPH
+-- SOFTBREAK
+--
+-- Others like STRONG and TEXT have PARAGRAPH as an parent node so it is very important
+-- that the toContext is implemented correctly.
 toBlocks :: Node -> [Block]
 toBlocks (Node _ nodeType contents) = case nodeType of
-    PARAGRAPH                    -> [Paragraph $ ScrapText $ concatMap toContext contents, LineBreak]
+    PARAGRAPH                    -> toParagraph contents
     DOCUMENT                     -> concatMap toBlocks contents
     HEADING headerNum            -> [toHeader headerNum contents]
     EMPH                         -> [Paragraph $ ScrapText [Context Italic (concatMap toSegments contents)]]
@@ -42,7 +66,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     ITEM                         -> concatMap toBlocks contents
     SOFTBREAK                    -> [LineBreak]
     LINEBREAK                    -> [LineBreak]
-    LINK url title               -> [Paragraph $ ScrapText [Context NoStyle [Link (Just title) (Url url)]]]
+    LINK url title               -> [Paragraph $ ScrapText [Context NoStyle [toLink contents url title]]]
     HTML_BLOCK htmlContent       -> [CodeBlock (CodeName "html") (CodeSnippet htmlContent)]
     IMAGE url _                  -> [Thumbnail (Url url)]
     HTML_INLINE htmlContent      -> [CodeBlock (CodeName "html") (CodeSnippet htmlContent)]
@@ -61,18 +85,49 @@ toSegments (Node _ nodeType contents) = case nodeType of
     -- Potentially cause infinite loop?
     _                -> concatMap toSegments contents
 
+-- | Convert list of 'Node' into list of 'Blocks'
+toParagraph :: [Node] -> [Block]
+toParagraph nodes = 
+    let blocks = concatMap toBlocks nodes
+        consolidatedBlocks = concatParagraph blocks
+        withBreaks         = addBreaks consolidatedBlocks
+    in withBreaks
+  where
+    -- Concatenate 'Paragraph' blocks
+    concatParagraph :: [Block] -> [Block]
+    concatParagraph []  = []
+    concatParagraph [n] = [n]
+    concatParagraph ((Paragraph stext1) : (Paragraph stext2) : rest) =
+        let concatedParagraph = Paragraph $ concatSText stext1 stext2
+        in concatParagraph $ [concatedParagraph] <> rest
+    concatParagraph (a:b:rest) = a : b : concatParagraph rest
+
+    -- Concatenate 'ScrapText'
+    concatSText :: ScrapText -> ScrapText -> ScrapText
+    concatSText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $ ctx1 <> ctx2)
+
+    -- Add breaks after Paragraph block
+    -- Perhaps add this as an option when rendering?
+    addBreaks :: [Block] -> [Block]
+    addBreaks []  = []
+    addBreaks (Paragraph stext:rest) = (Paragraph stext : LineBreak : addBreaks rest)
+    addBreaks (a:as)                 = (a : addBreaks as)
+
 -- | Convert 'Node' into list of 'Context'
 -- Need state monad to inherit style from parent node
 toContext :: Node -> [Context]
-toContext (Node _ nodeType contents) = case nodeType of
-    EMPH             -> [Context Italic (concatMap toSegments contents)]
-    STRONG           -> [Context Bold (concatMap toSegments contents)]
-    TEXT textContent -> [Context NoStyle [SimpleText textContent]]
-    CODE codeContent -> [Context NoStyle [CodeNotation codeContent]]
-    LINK url title   -> [Context NoStyle [toLink contents url title]]
-    IMAGE url title  -> [Context NoStyle [toLink contents url title]]
-    -- Potentially cause infinite loop?
-    _                -> concatMap toContext contents
+toContext = concatContext . convertToContext
+  where
+    convertToContext :: Node -> [Context]
+    convertToContext (Node _ nodeType contents) = case nodeType of
+        EMPH             -> [Context Italic (concatMap toSegments contents)]
+        STRONG           -> [Context Bold (concatMap toSegments contents)]
+        TEXT textContent -> [Context NoStyle [SimpleText textContent]]
+        CODE codeContent -> [Context NoStyle [CodeNotation codeContent]]
+        LINK url title   -> [Context NoStyle [toLink contents url title]]
+        IMAGE url title  -> [Context NoStyle [toLink contents url title]]
+        -- Potentially cause infinite loop?
+        _                -> concatMap toContext contents
 
 toScrapText :: Node -> ScrapText
 toScrapText node = ScrapText $ toContext node
@@ -96,6 +151,7 @@ toCodeBlock codeInfo code
 toHeader :: Int -> [Node] -> Block
 toHeader headerNum nodes = 
     let headerSize = 
+    -- Headers in scrapbox are opposite of what common markdowns are
           case headerNum of
               1 -> 4
               2 -> 3
@@ -114,4 +170,5 @@ extractTextFromNodes nodes = foldr
     extractText = \case
         TEXT text -> text
         CODE code -> code
-        _         -> mempty -- Just throw an error?
+        -- For now, we're going to ignore everything else
+        _         -> mempty
