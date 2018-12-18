@@ -60,7 +60,7 @@ encodeContent ctxs = foldr (\ctx acc -> encodeSegment ctx <> acc) mempty ctxs
 encodeCodeBlock :: CodeName -> CodeSnippet -> [Text]
 encodeCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
-    let codeContent = map (\line -> " " <> line) code
+    let codeContent = map (\line -> " " <> line) (T.lines code)
     [codeName] <> codeContent
 
 -- | Encode an table

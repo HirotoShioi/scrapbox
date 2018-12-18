@@ -32,7 +32,7 @@ newtype BulletSize = BulletSize Int
 newtype CodeName = CodeName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
-newtype CodeSnippet = CodeSnippet [Text]
+newtype CodeSnippet = CodeSnippet Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 newtype HeaderSize = HeaderSize Int

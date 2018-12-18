@@ -24,7 +24,7 @@ Here are list of things you can do in the **weekend**
 
 #### Links
 
-This is my scrapbox link [`Test`](https://scrapbox.io/toSrapbox/Markdown_cheetsheet "Google")
+This is my scrapbox link [`Testing` **text** _extraction_](https://scrapbox.io/toSrapbox/Markdown_cheetsheet)
 
 ## Blockquote
 
