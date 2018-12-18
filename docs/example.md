@@ -19,8 +19,9 @@ function () {
 Here are list of things you can do in the **weekend**
 
 - Sleep
-- Talk an walk
+- Take an walk
 - Listen to some musics
+- Sleep again!
 
 #### Links
 
