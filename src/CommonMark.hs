@@ -1,16 +1,21 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommonMark 
+module CommonMark
     ( test
     , testHeader
     , toBlocks
+    , commonmarkToMarkdown
+    , commonmarkToScrapbox
     ) where
 
-import           RIO
+import           RIO hiding (link)
 
 import           CMark
 import qualified RIO.Text as T
+
+import           Constructors
+import           Render
 import           Types
 
 test :: IO Node
@@ -27,6 +32,7 @@ testHeader = do
     let parsed = commonmarkToNode options markDown
     return parsed
 
+
 -- Reminder: This module is not intended to auto fix the invalid sytaxes
 -- (i.e. This is not an AI that auto completes given common mark text)
 --
@@ -36,10 +42,21 @@ testHeader = do
 --- It would be nice if these functions are wrapped in Either like this:
 --  newtype Parser a = Parser (Either ParserException a)
 
+-- | Convert given common mark into 'Markdown'
+commonmarkToMarkdown :: Text -> Markdown
+commonmarkToMarkdown cmark =
+    let options = [optSafe, optHardBreaks]
+        parsed = commonmarkToNode options cmark
+    in markdown $ toBlocks parsed
+
+-- | Convert given common mark into Scrapbox markdown format
+commonmarkToScrapbox :: Text -> Text
+commonmarkToScrapbox = renderPretty . commonmarkToMarkdown
+
 -- | Convert 'Node' into list of 'Block'
 --
 -- Still unfinished
--- 
+--
 -- Need to pay attention on the implementation of these NodeTypes
 -- BLOCK_QUOTE
 -- CODE_BLOCK
@@ -57,20 +74,20 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     PARAGRAPH                    -> toParagraph contents
     DOCUMENT                     -> concatMap toBlocks contents
     HEADING headerNum            -> [toHeader headerNum contents]
-    EMPH                         -> [Paragraph $ ScrapText [Context Italic (concatMap toSegments contents)]]
-    STRONG                       -> [Paragraph $ ScrapText [Context Bold (concatMap toSegments contents)]]
-    TEXT textContent             -> [Paragraph $ ScrapText [Context NoStyle [SimpleText textContent]]]
-    CODE codeContent             -> [Paragraph $ ScrapText [Context NoStyle [CodeNotation codeContent]]]
+    EMPH                         -> [paragraph [italic (concatMap toSegments contents)]]
+    STRONG                       -> [paragraph [bold (concatMap toSegments contents)]]
+    TEXT textContent             -> [paragraph [noStyle [text textContent]]]
+    CODE codeContent             -> [paragraph [noStyle [codeNotation codeContent]]]
     CODE_BLOCK codeInfo code     -> [toCodeBlock codeInfo code]
-    LIST _                       -> [BulletList $ map toScrapText contents]
+    LIST _                       -> [bulletList $ map toContext contents]
     ITEM                         -> concatMap toBlocks contents
-    SOFTBREAK                    -> [LineBreak]
-    LINEBREAK                    -> [LineBreak]
-    LINK url title               -> [Paragraph $ ScrapText [Context NoStyle [toLink contents url title]]]
-    HTML_BLOCK htmlContent       -> [CodeBlock (CodeName "html") (CodeSnippet htmlContent)]
-    IMAGE url _                  -> [Thumbnail (Url url)]
-    HTML_INLINE htmlContent      -> [CodeBlock (CodeName "html") (CodeSnippet htmlContent)]
-    BLOCK_QUOTE                  -> [BlockQuote $ ScrapText $ concatMap toContext contents]
+    SOFTBREAK                    -> [lineBreak]
+    LINEBREAK                    -> [lineBreak]
+    LINK url title               -> [paragraph [noStyle [toLink contents url title]]]
+    HTML_BLOCK htmlContent       -> [codeBlock "html" htmlContent]
+    IMAGE url _                  -> [thumbnail url]
+    HTML_INLINE htmlContent      -> [codeBlock "html" htmlContent]
+    BLOCK_QUOTE                  -> [blockQuote $ concatMap toContext contents]
     CUSTOM_INLINE onEnter onExit -> undefined -- ??
     CUSTOM_BLOCK onEnter onExit  -> undefined -- ??
     THEMATIC_BREAK               -> undefined -- ??
@@ -78,8 +95,8 @@ toBlocks (Node _ nodeType contents) = case nodeType of
 -- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]
 toSegments (Node _ nodeType contents) = case nodeType of
-    TEXT textContent -> [SimpleText textContent]
-    CODE codeContent -> [CodeNotation codeContent]
+    TEXT textContent -> [text textContent]
+    CODE codeContent -> [codeNotation codeContent]
     LINK url title   -> [toLink contents url title]
     IMAGE url title  -> [toLink contents url title]
     -- Potentially cause infinite loop?
@@ -87,7 +104,7 @@ toSegments (Node _ nodeType contents) = case nodeType of
 
 -- | Convert list of 'Node' into list of 'Blocks'
 toParagraph :: [Node] -> [Block]
-toParagraph nodes = 
+toParagraph nodes =
     let blocks = concatMap toBlocks nodes
         consolidatedBlocks = concatParagraph blocks
         withBreaks         = addBreaks consolidatedBlocks
@@ -98,13 +115,9 @@ toParagraph nodes =
     concatParagraph []  = []
     concatParagraph [n] = [n]
     concatParagraph ((Paragraph stext1) : (Paragraph stext2) : rest) =
-        let concatedParagraph = Paragraph $ concatSText stext1 stext2
+        let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
     concatParagraph (a:b:rest) = a : b : concatParagraph rest
-
-    -- Concatenate 'ScrapText'
-    concatSText :: ScrapText -> ScrapText -> ScrapText
-    concatSText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $ ctx1 <> ctx2)
 
     -- Add breaks after Paragraph block
     -- Perhaps add this as an option when rendering?
@@ -120,17 +133,14 @@ toContext = concatContext . convertToContext
   where
     convertToContext :: Node -> [Context]
     convertToContext (Node _ nodeType contents) = case nodeType of
-        EMPH             -> [Context Italic (concatMap toSegments contents)]
-        STRONG           -> [Context Bold (concatMap toSegments contents)]
-        TEXT textContent -> [Context NoStyle [SimpleText textContent]]
-        CODE codeContent -> [Context NoStyle [CodeNotation codeContent]]
-        LINK url title   -> [Context NoStyle [toLink contents url title]]
-        IMAGE url title  -> [Context NoStyle [toLink contents url title]]
+        EMPH             -> [italic (concatMap toSegments contents)]
+        STRONG           -> [bold (concatMap toSegments contents)]
+        TEXT textContent -> [noStyle [text textContent]]
+        CODE codeContent -> [noStyle [codeNotation codeContent]]
+        LINK url title   -> [noStyle [toLink contents url title]]
+        IMAGE url title  -> [noStyle [toLink contents url title]]
         -- Potentially cause infinite loop?
         _                -> concatMap toContext contents
-
-toScrapText :: Node -> ScrapText
-toScrapText node = ScrapText $ toContext node
 
 toLink :: [Node] -> CMark.Url -> Title -> Segment
 toLink nodes url title
@@ -140,17 +150,17 @@ toLink nodes url title
   where
     mkLink :: CMark.Url -> Text -> Segment
     mkLink url' title'
-        | T.null title' = Link Nothing (Url url')
-        | otherwise     = Link (Just title') (Url url')
+        | T.null title' = link Nothing url'
+        | otherwise     = link (Just title') url'
 
 toCodeBlock :: Text -> Text -> Block
 toCodeBlock codeInfo code
-    | T.null codeInfo = CodeBlock (CodeName "code") (CodeSnippet code)
-    | otherwise       = CodeBlock (CodeName codeInfo) (CodeSnippet code)
+    | T.null codeInfo = codeBlock "code" code
+    | otherwise       = codeBlock codeInfo code
 
 toHeader :: Int -> [Node] -> Block
-toHeader headerNum nodes = 
-    let headerSize = 
+toHeader headerNum nodes =
+    let headerSize =
     -- Headers in scrapbox are opposite of what common markdowns are
           case headerNum of
               1 -> 4
@@ -162,13 +172,13 @@ toHeader headerNum nodes =
 
 extractTextFromNodes :: [Node] -> Text
 extractTextFromNodes nodes = foldr
-    (\(Node _ nodeType nodes') acc 
+    (\(Node _ nodeType nodes') acc
         -> extractText nodeType <> extractTextFromNodes nodes' <> acc
     ) mempty nodes
   where
     extractText :: NodeType -> Text
     extractText = \case
-        TEXT text -> text
-        CODE code -> code
+        TEXT textContent -> textContent
+        CODE codeContent -> codeContent
         -- For now, we're going to ignore everything else
         _         -> mempty
