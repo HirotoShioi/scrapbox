@@ -220,5 +220,5 @@ applyLinebreak :: [Block] -> [Block]
 applyLinebreak []                               = []
 applyLinebreak [b]                              = [b]
 applyLinebreak (b:(Header hsize hcontent):rest) = 
-    b : LineBreak : (Header hsize hcontent) : applyLinebreak rest
+    b : LineBreak : applyLinebreak ((Header hsize hcontent) : rest)
 applyLinebreak (b: rest)                        = b : applyLinebreak rest
