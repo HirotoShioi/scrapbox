@@ -198,9 +198,9 @@ toBulletList :: [Node] -> Block
 toBulletList contents = bulletList $ filter (/= LineBreak) $ concatMap toBlocks contents
 
 -- Notes:
--- Parser does not indicate where the linebreaks had occured
+-- Cmark parser does not indicate where the linebreaks had occured
 -- The only way to implement it is by using the informations of 'PosInfo'
--- so we can compute the distance between the contents/sections and calculate how many
--- line breaks are needed,
+-- which means we compute the distance between the contents/sections and calculate how many
+-- line breaks are needed.
 -- 
 -- This will be implemented in the next PR
