@@ -4,6 +4,8 @@
 module CommonMark
     ( test
     , testHeader
+    , testWith
+    , testNestedList    
     , toBlocks
     , commonmarkToMarkdown
     , commonmarkToScrapbox
@@ -18,20 +20,23 @@ import           Constructors
 import           Render
 import           Types
 
+-- | Test data for example.md
 test :: IO Node
-test = do
-    markDown <- readFileUtf8 "./docs/example.md"
-    let options = [optSafe, optHardBreaks]
-    let parsed = commonmarkToNode options markDown
-    return parsed
+test = testWith "./docs/example.md"
 
+-- | Test data for Header
 testHeader :: IO Node
-testHeader = do
-    markDown <- readFileUtf8 "./docs/headers.md"
+testHeader = testWith "./docs/headers.md"
+
+testNestedList :: IO Node
+testNestedList = testWith "./docs/nestedList.md"
+
+testWith :: FilePath -> IO Node
+testWith filePath = do 
+    markDown <- readFileUtf8 filePath
     let options = [optSafe, optHardBreaks]
     let parsed = commonmarkToNode options markDown
     return parsed
-
 
 -- Reminder: This module is not intended to auto fix the invalid sytaxes
 -- (i.e. This is not an AI that auto completes given common mark text)
@@ -79,7 +84,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     TEXT textContent             -> [paragraph [noStyle [text textContent]]]
     CODE codeContent             -> [paragraph [noStyle [codeNotation codeContent]]]
     CODE_BLOCK codeInfo code     -> [toCodeBlock codeInfo code]
-    LIST _                       -> [bulletList $ map toContext contents]
+    LIST _                       -> [toBulletList contents]
     ITEM                         -> concatMap toBlocks contents
     SOFTBREAK                    -> [lineBreak]
     LINEBREAK                    -> [lineBreak]
@@ -120,7 +125,7 @@ toParagraph nodes =
     concatParagraph (a:b:rest) = a : b : concatParagraph rest
 
     -- Add breaks after Paragraph block
-    -- Perhaps add this as an option when rendering?
+    -- Will fix this
     addBreaks :: [Block] -> [Block]
     addBreaks []  = []
     addBreaks (Paragraph stext:rest) = (Paragraph stext : LineBreak : addBreaks rest)
@@ -142,6 +147,7 @@ toContext = concatContext . convertToContext
         -- Potentially cause infinite loop?
         _                -> concatMap toContext contents
 
+-- | Convert given LINK into 'Segment'
 toLink :: [Node] -> CMark.Url -> Title -> Segment
 toLink nodes url title
     | T.null title = mkLink url (extractTextFromNodes nodes)
@@ -153,11 +159,13 @@ toLink nodes url title
         | T.null title' = link Nothing url'
         | otherwise     = link (Just title') url'
 
+-- | Convert codeblocks
 toCodeBlock :: Text -> Text -> Block
 toCodeBlock codeInfo code
     | T.null codeInfo = codeBlock "code" code
     | otherwise       = codeBlock codeInfo code
 
+-- | Convert HEADER into Header
 toHeader :: Int -> [Node] -> Block
 toHeader headerNum nodes =
     let headerSize =
@@ -170,6 +178,7 @@ toHeader headerNum nodes =
               _ -> 1
     in Header (HeaderSize headerSize) $ concatMap toSegments nodes
 
+-- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
 extractTextFromNodes nodes = foldr
     (\(Node _ nodeType nodes') acc
@@ -182,3 +191,16 @@ extractTextFromNodes nodes = foldr
         CODE codeContent -> codeContent
         -- For now, we're going to ignore everything else
         _         -> mempty
+
+-- | Filter out LineBreak
+-- Potentially can cause bugs, will fix this!
+toBulletList :: [Node] -> Block
+toBulletList contents = bulletList $ filter (/= LineBreak) $ concatMap toBlocks contents
+
+-- Notes:
+-- Parser does not indicate where the linebreaks had occured
+-- The only way to implement it is by using the informations of 'PosInfo'
+-- so we can compute the distance between the contents/sections and calculate how many
+-- line breaks are needed,
+-- 
+-- This will be implemented in the next PR

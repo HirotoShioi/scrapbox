@@ -56,8 +56,9 @@ data Block
     -- ^ BlockQuote like markdown
     | BulletPoint !BulletSize !ScrapText
     -- ^ Bulletpoint styled line
-    | BulletList ![ScrapText]
+    | BulletList ![Block]
     -- ^ Bullet points
+    -- 'Block' for now, but it can be more type safe (although would be verbose)
     | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
     | Header !HeaderSize !Content
@@ -133,7 +134,7 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
         BlockQuote stext      -> BlockQuote $ verboseScrapText stext
-        BulletList stexts     -> BulletList $ map verboseScrapText stexts
+        BulletList stexts     -> BulletList $ map convertToVerbose stexts
         BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
@@ -150,7 +151,7 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
     unVerboseBlocks :: Block -> Block
     unVerboseBlocks = \case
         BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
-        BulletList stexts     -> BulletList $ map unVerboseScrapText stexts
+        BulletList stexts     -> BulletList $ map unVerboseBlocks stexts
         BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other

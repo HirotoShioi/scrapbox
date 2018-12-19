@@ -71,8 +71,8 @@ renderTable (TableName name) (TableContent content) =
     in title <> renderdTable
 
 -- | render bulletpoints
-renderBulletPoints :: [ScrapText] -> [Text]
-renderBulletPoints stexts = map (\stext -> "\t" <> renderText stext) stexts
+renderBulletPoints :: [Block] -> [Text]
+renderBulletPoints blocks = concatMap (\block -> map (\text -> "\t" <> text) $ renderBlock block) blocks
 
 -- | Add an block to a given renderd text
 blocked :: Text -> Text
