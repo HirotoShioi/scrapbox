@@ -21,6 +21,10 @@ import           Constructors
 import           Render
 import           Types
 
+--------------------------------------------------------------------------------
+-- Test files
+--------------------------------------------------------------------------------
+
 -- | Test data for example.md
 test :: IO Node
 test = testWith "./docs/example.md"
@@ -38,6 +42,16 @@ testWith filePath = do
     let options = [optSafe, optHardBreaks]
     let parsed = commonmarkToNode options markDown
     return parsed
+
+--------------------------------------------------------------------------------
+-- Exposed interface
+--------------------------------------------------------------------------------
+
+data ParseOption
+    = Default
+    -- ^ Will convert CommonMark to ScrapBox format as is
+    | SectionHeader
+    -- ^ Will apply LineBreaks for headers
 
 -- Reminder: This module is not intended to auto fix the invalid sytaxes
 -- (i.e. This is not an AI that auto completes given common mark text)
@@ -59,13 +73,13 @@ commonmarkToMarkdown parseOption cmark =
 commonmarkToScrapbox :: ParseOption -> Text -> Text
 commonmarkToScrapbox parseOption cmark = renderPretty $ commonmarkToMarkdown parseOption cmark
 
-data ParseOption
-    = Default
-    | HardLineBreak
-
 parseNode :: ParseOption -> Node -> Markdown
 parseNode Default node       = markdown $ toBlocks node
-parseNode HardLineBreak node = markdown $ applyHardLinebreak $ toBlocks node
+parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node
+
+--------------------------------------------------------------------------------
+-- Conversion from Node to Block
+--------------------------------------------------------------------------------
 
 -- | Convert 'Node' into list of 'Block'
 --
@@ -197,9 +211,14 @@ extractTextFromNodes nodes = foldr
 toBulletList :: [Node] -> Block
 toBulletList contents = bulletList $ concatMap toBlocks contents
 
--- Add breaks after Paragraph block
-applyHardLinebreak :: [Block] -> [Block]
-applyHardLinebreak []  = []
-applyHardLinebreak (block:rest) = case block of
-    Paragraph stext     -> Paragraph stext : LineBreak : applyHardLinebreak rest
-    others              -> others : applyHardLinebreak rest
+-- | Apply LineBreak between Header section
+--
+-- [Header, b1, b2, b3, Header, b4, b5, b6, Header] 
+-- => 
+-- [Header, b1, b2, b3, LineBreak, Header, b4, b5, b6, LineBreak, Header]
+applyLinebreak :: [Block] -> [Block]
+applyLinebreak []                               = []
+applyLinebreak [b]                              = [b]
+applyLinebreak (b:(Header hsize hcontent):rest) = 
+    b : LineBreak : (Header hsize hcontent) : applyLinebreak rest
+applyLinebreak (b: rest)                        = b : applyLinebreak rest
