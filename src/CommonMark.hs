@@ -5,10 +5,11 @@ module CommonMark
     ( test
     , testHeader
     , testWith
-    , testNestedList    
-    , toBlocks
+    , testNestedList
+    , parseNode
     , commonmarkToMarkdown
     , commonmarkToScrapbox
+    , ParseOption(..)
     ) where
 
 import           RIO hiding (link)
@@ -48,15 +49,23 @@ testWith filePath = do
 --  newtype Parser a = Parser (Either ParserException a)
 
 -- | Convert given common mark into 'Markdown'
-commonmarkToMarkdown :: Text -> Markdown
-commonmarkToMarkdown cmark =
+commonmarkToMarkdown :: ParseOption -> Text -> Markdown
+commonmarkToMarkdown parseOption cmark =
     let options = [optSafe, optHardBreaks]
-        parsed = commonmarkToNode options cmark
-    in markdown $ toBlocks parsed
+        node = commonmarkToNode options cmark
+    in parseNode parseOption node
 
 -- | Convert given common mark into Scrapbox markdown format
-commonmarkToScrapbox :: Text -> Text
-commonmarkToScrapbox = renderPretty . commonmarkToMarkdown
+commonmarkToScrapbox :: ParseOption -> Text -> Text
+commonmarkToScrapbox parseOption cmark = renderPretty $ commonmarkToMarkdown parseOption cmark
+
+data ParseOption
+    = Default
+    | HardLineBreak
+
+parseNode :: ParseOption -> Node -> Markdown
+parseNode Default node       = markdown $ toBlocks node
+parseNode HardLineBreak node = markdown $ applyHardLinebreak $ toBlocks node
 
 -- | Convert 'Node' into list of 'Block'
 --
@@ -112,8 +121,7 @@ toParagraph :: [Node] -> [Block]
 toParagraph nodes =
     let blocks = concatMap toBlocks nodes
         consolidatedBlocks = concatParagraph blocks
-        withBreaks         = addBreaks consolidatedBlocks
-    in withBreaks
+    in consolidatedBlocks
   where
     -- Concatenate 'Paragraph' blocks
     concatParagraph :: [Block] -> [Block]
@@ -123,13 +131,6 @@ toParagraph nodes =
         let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
     concatParagraph (a:b:rest) = a : b : concatParagraph rest
-
-    -- Add breaks after Paragraph block
-    -- Will fix this
-    addBreaks :: [Block] -> [Block]
-    addBreaks []  = []
-    addBreaks (Paragraph stext:rest) = (Paragraph stext : LineBreak : addBreaks rest)
-    addBreaks (a:as)                 = (a : addBreaks as)
 
 -- | Convert 'Node' into list of 'Context'
 -- Need state monad to inherit style from parent node
@@ -192,15 +193,13 @@ extractTextFromNodes nodes = foldr
         -- For now, we're going to ignore everything else
         _         -> mempty
 
--- | Filter out LineBreak
--- Potentially can cause bugs, will fix this!
+-- | Construct bulletlist
 toBulletList :: [Node] -> Block
-toBulletList contents = bulletList $ filter (/= LineBreak) $ concatMap toBlocks contents
+toBulletList contents = bulletList $ concatMap toBlocks contents
 
--- Notes:
--- Cmark parser does not indicate where the linebreaks had occured
--- The only way to implement it is by using the informations of 'PosInfo'
--- which means we compute the distance between the contents/sections and calculate how many
--- line breaks are needed.
--- 
--- This will be implemented in the next PR
+-- Add breaks after Paragraph block
+applyHardLinebreak :: [Block] -> [Block]
+applyHardLinebreak []  = []
+applyHardLinebreak (block:rest) = case block of
+    Paragraph stext     -> Paragraph stext : LineBreak : applyHardLinebreak rest
+    others              -> others : applyHardLinebreak rest
