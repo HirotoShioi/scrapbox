@@ -284,7 +284,7 @@ codeBlockSection =
     -- "",
     --     CodeBlock codeName code            -> encodeCodeBlock codeName code
     codeContent :: Block
-    codeContent = codeBlock "hello.js"
+    codeContent = codeBlock "hello.js" $ mconcat
         [ "function () {"
         , "   alert(p.location.href)"
         , "   console.log(\"hello\")"

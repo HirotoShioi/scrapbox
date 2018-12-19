@@ -19,6 +19,7 @@ data Page = Page
     } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Markdown consist of list of 'Blocks'
+-- Need title!
 newtype Markdown = Markdown [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -32,7 +33,7 @@ newtype BulletSize = BulletSize Int
 newtype CodeName = CodeName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
-newtype CodeSnippet = CodeSnippet [Text]
+newtype CodeSnippet = CodeSnippet Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 newtype HeaderSize = HeaderSize Int
@@ -55,8 +56,9 @@ data Block
     -- ^ BlockQuote like markdown
     | BulletPoint !BulletSize !ScrapText
     -- ^ Bulletpoint styled line
-    | BulletList ![ScrapText]
+    | BulletList ![Block]
     -- ^ Bullet points
+    -- 'Block' for now, but it can be more type safe (although would be verbose)
     | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
     | Header !HeaderSize !Content
@@ -132,7 +134,7 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
         BlockQuote stext      -> BlockQuote $ verboseScrapText stext
-        BulletList stexts     -> BulletList $ map verboseScrapText stexts
+        BulletList stexts     -> BulletList $ map convertToVerbose stexts
         BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
@@ -149,17 +151,24 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
     unVerboseBlocks :: Block -> Block
     unVerboseBlocks = \case
         BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
-        BulletList stexts     -> BulletList $ map unVerboseScrapText stexts
+        BulletList stexts     -> BulletList $ map unVerboseBlocks stexts
         BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
     unVerboseScrapText :: ScrapText -> ScrapText
-    unVerboseScrapText (ScrapText ctxs) = ScrapText $ map concatContext $ groupBy
+    unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
-    concatContext :: [Context] -> Context
-    concatContext [] = emptyContext
-    concatContext ctxs@((Context style _):_) =
-        foldr (\(Context _ segments) (Context _ acc) -> Context style (segments <> acc)) emptyContext ctxs
+
+concatContext :: [Context] -> [Context]
+concatContext [] = []
+concatContext [ctx] = [ctx]
+concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
+    | style1 == style2 = concatContext (Context style1 (ctx1 <> ctx2) : rest)
+    | otherwise        = (c1 : c2 : concatContext rest)
+
+-- Concatenate 'ScrapText'
+concatScrapText :: ScrapText -> ScrapText -> ScrapText
+concatScrapText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $ ctx1 <> ctx2)
 
 emptyContext :: Context
 emptyContext = Context NoStyle []

@@ -46,10 +46,10 @@ markdown = Markdown
 blockQuote :: [Context] -> Block
 blockQuote = BlockQuote . ScrapText
 
-bulletList :: [[Context]] -> Block
-bulletList ctxs = BulletList $ map ScrapText ctxs
+bulletList :: [Block] -> Block
+bulletList = BulletList
 
-codeBlock :: Text -> [Text] -> Block
+codeBlock :: Text -> Text -> Block
 codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet codeSnippet)
 
 paragraph :: [Context] -> Block
