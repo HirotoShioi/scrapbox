@@ -19,6 +19,7 @@ import           RIO hiding (link)
 
 import           CMark
 import qualified RIO.Text as T
+import           Data.List.Split (splitWhen)
 
 import           Constructors
 import           Render
@@ -235,27 +236,28 @@ parseParagraph nodes = if isTable nodes
          && hasSymbols nodes
     hasSymbols :: [Node] -> Bool
     hasSymbols nodes' = 
-        let filteredNodes   = filter (\(Node _ nodetype _) -> nodetype /= SOFTBREAK) nodes'
-            extractedTexts  = map (\node -> extractTextFromNodes [node]) filteredNodes
+        let filteredNodes   = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
+            extractedTexts  = map (\node -> extractTextFromNodes node) filteredNodes
         in and $ map (T.any (== '|')) extractedTexts
 
     -- | I feel so awful implementing this ToT
     -- Should replace with an proper parser for roboustness
     toTable :: [Node] -> Block
     toTable nodes' = 
-        let filteredNodes     = filter (\(Node _ nodetype _) -> nodetype /= SOFTBREAK) nodes'
+        let filteredNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
             th                = take 1 filteredNodes
             rest              = drop 2 filteredNodes
             elemNum           = getElemNum th
-            extractedTexts    = map (\node -> extractTextFromNodes [node]) (th <> rest)
+            extractedTexts    = map (\node -> extractTextFromNodes node) (th <> rest)
             splitted          = map (\t -> T.split ( == '|') t) extractedTexts
             extractedElems    = map (take elemNum . drop 1) splitted
             whiteSpaceRemoved = (map . map) T.strip extractedElems
         in table "table" whiteSpaceRemoved
 
-    getElemNum :: [Node] -> Int
+    -- Buggy
+    getElemNum :: [[Node]] -> Int
     getElemNum th' =
-        let headerElems = T.split (== '|') $ extractTextFromNodes th'
+        let headerElems = T.split (== '|') $ extractTextFromNodes (concat th')
         in length headerElems - 2
 
     -- | Convert list of 'Node' into list of 'Blocks'
