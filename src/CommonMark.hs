@@ -107,7 +107,7 @@ parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node
 -- Others like STRONG and TEXT have PARAGRAPH as an parent node so it is very important
 -- that the toContext is implemented correctly.
 toBlocks :: Node -> [Block]
-toBlocks (Node _ nodeType contents) = case nodeType of
+toBlocks (Node mPos nodeType contents) = case nodeType of
     PARAGRAPH                    -> parseParagraph contents
     DOCUMENT                     -> concatMap toBlocks contents
     HEADING headerNum            -> [toHeader headerNum contents]
@@ -126,9 +126,11 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     IMAGE url _                  -> [thumbnail url]
     HTML_INLINE htmlContent      -> [codeBlock "html" htmlContent]
     BLOCK_QUOTE                  -> [blockQuote $ concatMap toContext contents]
-    CUSTOM_INLINE onEnter onExit -> undefined -- ??
-    CUSTOM_BLOCK onEnter onExit  -> undefined -- ??
-    THEMATIC_BREAK               -> undefined -- ??
+
+    -- Need to investigate what these actually are
+    CUSTOM_INLINE onEnter onExit -> error $ "CUSTOM_INLINE not yet implemented: " <> show mPos
+    CUSTOM_BLOCK onEnter onExit  -> error $ "CUSTOM_BLOCK not yet implemented: " <> show mPos
+    THEMATIC_BREAK               -> error $ "THEMATIC not yet implemented: " <> show mPos
 
 -- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]
@@ -137,7 +139,6 @@ toSegments (Node _ nodeType contents) = case nodeType of
     CODE codeContent -> [codeNotation codeContent]
     LINK url title   -> [toLink contents url title]
     IMAGE url title  -> [toLink contents url title]
-    -- Potentially cause infinite loop?
     _                -> concatMap toSegments contents
 
 -- | Convert 'Node' into list of 'Context'
@@ -153,7 +154,6 @@ toContext = concatContext . convertToContext
         CODE codeContent -> [noStyle [codeNotation codeContent]]
         LINK url title   -> [noStyle [toLink contents url title]]
         IMAGE url title  -> [noStyle [toLink contents url title]]
-        -- Potentially cause infinite loop?
         _                -> concatMap toContext contents
 
 -- | Convert given LINK into 'Segment'
