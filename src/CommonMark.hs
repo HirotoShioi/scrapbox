@@ -119,7 +119,8 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     LIST _                       -> [toBulletList contents]
     ITEM                         -> concatMap toBlocks contents
     SOFTBREAK                    -> [lineBreak]
-    LINEBREAK                    -> [lineBreak]
+     --workaround need to pay attention
+    LINEBREAK                    -> [paragraph [noStyle [text "\n"]]]
     LINK url title               -> [paragraph [noStyle [toLink contents url title]]]
     HTML_BLOCK htmlContent       -> [codeBlock "html" htmlContent]
     IMAGE url _                  -> [thumbnail url]
