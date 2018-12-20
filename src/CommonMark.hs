@@ -6,6 +6,7 @@ module CommonMark
     , testHeader
     , testWith
     , testNestedList
+    , testTable
     -- * Parser
     , parseNode
     , commonmarkToMarkdown
@@ -37,6 +38,9 @@ testHeader = testWith "./docs/headers.md"
 
 testNestedList :: IO Node
 testNestedList = testWith "./docs/nestedList.md"
+
+testTable :: IO Node
+testTable = testWith "./docs/table.md"
 
 testWith :: FilePath -> IO Node
 testWith filePath = do 
@@ -101,7 +105,7 @@ parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node
 -- that the toContext is implemented correctly.
 toBlocks :: Node -> [Block]
 toBlocks (Node _ nodeType contents) = case nodeType of
-    PARAGRAPH                    -> toParagraph contents
+    PARAGRAPH                    -> parseParagraph contents
     DOCUMENT                     -> concatMap toBlocks contents
     HEADING headerNum            -> [toHeader headerNum contents]
     EMPH                         -> [paragraph [italic (concatMap toSegments contents)]]
@@ -131,22 +135,6 @@ toSegments (Node _ nodeType contents) = case nodeType of
     IMAGE url title  -> [toLink contents url title]
     -- Potentially cause infinite loop?
     _                -> concatMap toSegments contents
-
--- | Convert list of 'Node' into list of 'Blocks'
-toParagraph :: [Node] -> [Block]
-toParagraph nodes =
-    let blocks = concatMap toBlocks nodes
-        consolidatedBlocks = concatParagraph blocks
-    in consolidatedBlocks
-  where
-    -- Concatenate 'Paragraph' blocks
-    concatParagraph :: [Block] -> [Block]
-    concatParagraph []  = []
-    concatParagraph [n] = [n]
-    concatParagraph ((Paragraph stext1) : (Paragraph stext2) : rest) =
-        let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
-        in concatParagraph $ [concatedParagraph] <> rest
-    concatParagraph (a:b:rest) = a : b : concatParagraph rest
 
 -- | Convert 'Node' into list of 'Context'
 -- Need state monad to inherit style from parent node
@@ -224,3 +212,64 @@ applyLinebreak [b]                              = [b]
 applyLinebreak (b:(Header hsize hcontent):rest) = 
     b : LineBreak : applyLinebreak ((Header hsize hcontent) : rest)
 applyLinebreak (b: rest)                        = b : applyLinebreak rest
+
+--------------------------------------------------------------------------------
+-- Paragraph parsing logic
+--------------------------------------------------------------------------------
+
+-- | Parse nodes and produce either an 'Table' or 'Paragraph
+--
+-- CMark parses Table as an list of Paragraphs
+-- So we need to parse it on our own.
+--
+-- Hiding functions it so that they will not be misused.
+parseParagraph :: [Node] -> [Block]
+parseParagraph nodes = if isTable nodes
+    then [toTable nodes]
+    else toParagraph nodes
+  where
+    isTable :: [Node] -> Bool
+    isTable nodes' = 
+            any (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
+         && length nodes >= 2 -- Table needs at least a header and seperator to be valid
+         && hasSymbols nodes
+    hasSymbols :: [Node] -> Bool
+    hasSymbols nodes' = 
+        let filteredNodes   = filter (\(Node _ nodetype _) -> nodetype /= SOFTBREAK) nodes'
+            extractedTexts  = map (\node -> extractTextFromNodes [node]) filteredNodes
+        in and $ map (T.any (== '|')) extractedTexts
+
+    -- | I feel so awful implementing this ToT
+    -- Should replace with an proper parser for roboustness
+    toTable :: [Node] -> Block
+    toTable nodes' = 
+        let filteredNodes     = filter (\(Node _ nodetype _) -> nodetype /= SOFTBREAK) nodes'
+            th                = take 1 filteredNodes
+            rest              = drop 2 filteredNodes
+            elemNum           = getElemNum th
+            extractedTexts    = map (\node -> extractTextFromNodes [node]) (th <> rest)
+            splitted          = map (\t -> T.split ( == '|') t) extractedTexts
+            extractedElems    = map (take elemNum . drop 1) splitted
+            whiteSpaceRemoved = (map . map) T.strip extractedElems
+        in table "table" whiteSpaceRemoved
+
+    getElemNum :: [Node] -> Int
+    getElemNum th' =
+        let headerElems = T.split (== '|') $ extractTextFromNodes th'
+        in length headerElems - 2
+
+    -- | Convert list of 'Node' into list of 'Blocks'
+    toParagraph :: [Node] -> [Block]
+    toParagraph nodes' =
+        let blocks = concatMap toBlocks nodes'
+            consolidatedBlocks = concatParagraph blocks
+        in consolidatedBlocks
+
+    -- | Concatenate 'Paragraph' blocks
+    concatParagraph :: [Block] -> [Block]
+    concatParagraph []  = []
+    concatParagraph [n] = [n]
+    concatParagraph ((Paragraph stext1) : (Paragraph stext2) : rest) =
+        let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
+        in concatParagraph $ [concatedParagraph] <> rest
+    concatParagraph (a:b:rest) = a : b : concatParagraph rest
