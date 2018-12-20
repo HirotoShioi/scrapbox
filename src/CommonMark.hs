@@ -37,9 +37,11 @@ test = testWith "./docs/example.md"
 testHeader :: IO Node
 testHeader = testWith "./docs/headers.md"
 
+-- | Test data for nested List
 testNestedList :: IO Node
 testNestedList = testWith "./docs/nestedList.md"
 
+-- | Test table
 testTable :: IO Node
 testTable = testWith "./docs/table.md"
 
@@ -234,6 +236,7 @@ parseParagraph nodes = if isTable nodes
             any (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
          && length nodes >= 2 -- Table needs at least a header and seperator to be valid
          && hasSymbols nodes
+    -- Each of the element should have '|' symbol to be an valid table
     hasSymbols :: [Node] -> Bool
     hasSymbols nodes' = 
         let filteredNodes   = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
@@ -245,19 +248,19 @@ parseParagraph nodes = if isTable nodes
     toTable :: [Node] -> Block
     toTable nodes' = 
         let filteredNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            th                = take 1 filteredNodes
+            th                = concat $ take 1 filteredNodes
             rest              = drop 2 filteredNodes
             elemNum           = getElemNum th
-            extractedTexts    = map (\node -> extractTextFromNodes node) (th <> rest)
+            extractedTexts    = map (\node -> extractTextFromNodes node) ([th] <> rest)
             splitted          = map (\t -> T.split ( == '|') t) extractedTexts
             extractedElems    = map (take elemNum . drop 1) splitted
-            whiteSpaceRemoved = (map . map) T.strip extractedElems
-        in table "table" whiteSpaceRemoved
+            sanitizedContent  = (map . map) T.strip extractedElems
+        in table "table" sanitizedContent
 
     -- Buggy
-    getElemNum :: [[Node]] -> Int
+    getElemNum :: [Node] -> Int
     getElemNum th' =
-        let headerElems = T.split (== '|') $ extractTextFromNodes (concat th')
+        let headerElems = T.split (== '|') $ extractTextFromNodes th'
         in length headerElems - 2
 
     -- | Convert list of 'Node' into list of 'Blocks'
