@@ -58,7 +58,7 @@ data Block
     -- ^ Bulletpoint styled line
     | BulletList ![Block]
     -- ^ Bullet points
-    -- 'Block' for now, but it can be more type safe (although would be verbose)
+    -- 'Block' for now, but it can be more type safe (although would become verbose)
     | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
     | Header !HeaderSize !Content

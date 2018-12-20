@@ -5,10 +5,13 @@ module CommonMark
     ( test
     , testHeader
     , testWith
-    , testNestedList    
-    , toBlocks
+    , testNestedList
+    -- * Parser
+    , parseNode
     , commonmarkToMarkdown
     , commonmarkToScrapbox
+    -- * Parse option
+    , ParseOption(..)
     ) where
 
 import           RIO hiding (link)
@@ -19,6 +22,10 @@ import qualified RIO.Text as T
 import           Constructors
 import           Render
 import           Types
+
+--------------------------------------------------------------------------------
+-- Test files
+--------------------------------------------------------------------------------
 
 -- | Test data for example.md
 test :: IO Node
@@ -38,6 +45,16 @@ testWith filePath = do
     let parsed = commonmarkToNode options markDown
     return parsed
 
+--------------------------------------------------------------------------------
+-- Exposed interface
+--------------------------------------------------------------------------------
+
+data ParseOption
+    = Default
+    -- ^ Will convert CommonMark to ScrapBox format as is
+    | SectionHeader
+    -- ^ Will apply LineBreaks for headers
+
 -- Reminder: This module is not intended to auto fix the invalid sytaxes
 -- (i.e. This is not an AI that auto completes given common mark text)
 --
@@ -48,15 +65,23 @@ testWith filePath = do
 --  newtype Parser a = Parser (Either ParserException a)
 
 -- | Convert given common mark into 'Markdown'
-commonmarkToMarkdown :: Text -> Markdown
-commonmarkToMarkdown cmark =
+commonmarkToMarkdown :: ParseOption -> Text -> Markdown
+commonmarkToMarkdown parseOption cmark =
     let options = [optSafe, optHardBreaks]
-        parsed = commonmarkToNode options cmark
-    in markdown $ toBlocks parsed
+        node = commonmarkToNode options cmark
+    in parseNode parseOption node
 
 -- | Convert given common mark into Scrapbox markdown format
-commonmarkToScrapbox :: Text -> Text
-commonmarkToScrapbox = renderPretty . commonmarkToMarkdown
+commonmarkToScrapbox :: ParseOption -> Text -> Text
+commonmarkToScrapbox parseOption cmark = renderPretty $ commonmarkToMarkdown parseOption cmark
+
+parseNode :: ParseOption -> Node -> Markdown
+parseNode Default node       = markdown $ toBlocks node
+parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node
+
+--------------------------------------------------------------------------------
+-- Conversion from Node to Block
+--------------------------------------------------------------------------------
 
 -- | Convert 'Node' into list of 'Block'
 --
@@ -112,8 +137,7 @@ toParagraph :: [Node] -> [Block]
 toParagraph nodes =
     let blocks = concatMap toBlocks nodes
         consolidatedBlocks = concatParagraph blocks
-        withBreaks         = addBreaks consolidatedBlocks
-    in withBreaks
+    in consolidatedBlocks
   where
     -- Concatenate 'Paragraph' blocks
     concatParagraph :: [Block] -> [Block]
@@ -123,13 +147,6 @@ toParagraph nodes =
         let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
     concatParagraph (a:b:rest) = a : b : concatParagraph rest
-
-    -- Add breaks after Paragraph block
-    -- Will fix this
-    addBreaks :: [Block] -> [Block]
-    addBreaks []  = []
-    addBreaks (Paragraph stext:rest) = (Paragraph stext : LineBreak : addBreaks rest)
-    addBreaks (a:as)                 = (a : addBreaks as)
 
 -- | Convert 'Node' into list of 'Context'
 -- Need state monad to inherit style from parent node
@@ -192,15 +209,18 @@ extractTextFromNodes nodes = foldr
         -- For now, we're going to ignore everything else
         _         -> mempty
 
--- | Filter out LineBreak
--- Potentially can cause bugs, will fix this!
+-- | Construct bulletlist
 toBulletList :: [Node] -> Block
-toBulletList contents = bulletList $ filter (/= LineBreak) $ concatMap toBlocks contents
+toBulletList contents = bulletList $ concatMap toBlocks contents
 
--- Notes:
--- Cmark parser does not indicate where the linebreaks had occured
--- The only way to implement it is by using the informations of 'PosInfo'
--- which means we compute the distance between the contents/sections and calculate how many
--- line breaks are needed.
--- 
--- This will be implemented in the next PR
+-- | Apply LineBreak between Header section
+--
+-- [Header, b1, b2, b3, Header, b4, b5, b6, Header] 
+-- => 
+-- [Header, b1, b2, b3, LineBreak, Header, b4, b5, b6, LineBreak, Header]
+applyLinebreak :: [Block] -> [Block]
+applyLinebreak []                               = []
+applyLinebreak [b]                              = [b]
+applyLinebreak (b:(Header hsize hcontent):rest) = 
+    b : LineBreak : applyLinebreak ((Header hsize hcontent) : rest)
+applyLinebreak (b: rest)                        = b : applyLinebreak rest
