@@ -6,9 +6,11 @@ module CommonMark
     , testHeader
     , testWith
     , testNestedList
+    -- * Parser
     , parseNode
     , commonmarkToMarkdown
     , commonmarkToScrapbox
+    -- * Parse option
     , ParseOption(..)
     ) where
 
