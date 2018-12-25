@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommonMark
+module CommonMark.Parser
     ( test
     , testHeader
     , testWith
@@ -15,16 +15,16 @@ module CommonMark
     , ParseOption(..)
     ) where
 
-import           RIO hiding (link)
+import           RIO              hiding (link)
 
 import           CMark
-import qualified RIO.Text as T
-import           Data.List.Split (splitWhen)
+import           Data.List.Split  (splitWhen)
+import qualified RIO.Text         as T
 
+import           CommonMark.Table (parseTable, commonTableToTable)
 import           Constructors
 import           Render
 import           Types
-
 --------------------------------------------------------------------------------
 -- Test files
 --------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ testTable :: IO Node
 testTable = testWith "./docs/table.md"
 
 testWith :: FilePath -> IO Node
-testWith filePath = do 
+testWith filePath = do
     markDown <- readFileUtf8 filePath
     let options = [optSafe, optHardBreaks]
     let parsed = commonmarkToNode options markDown
@@ -207,13 +207,13 @@ toBulletList contents = bulletList $ concatMap toBlocks contents
 
 -- | Apply LineBreak between Header section
 --
--- [Header, b1, b2, b3, Header, b4, b5, b6, Header] 
--- => 
+-- [Header, b1, b2, b3, Header, b4, b5, b6, Header]
+-- =>
 -- [Header, b1, b2, b3, LineBreak, Header, b4, b5, b6, LineBreak, Header]
 applyLinebreak :: [Block] -> [Block]
 applyLinebreak []                               = []
 applyLinebreak [b]                              = [b]
-applyLinebreak (b:(Header hsize hcontent):rest) = 
+applyLinebreak (b:(Header hsize hcontent):rest) =
     b : LineBreak : applyLinebreak ((Header hsize hcontent) : rest)
 applyLinebreak (b: rest)                        = b : applyLinebreak rest
 
@@ -229,40 +229,31 @@ applyLinebreak (b: rest)                        = b : applyLinebreak rest
 -- Hiding functions it so that they will not be misused.
 parseParagraph :: [Node] -> [Block]
 parseParagraph nodes = if isTable nodes
-    then [toTable nodes]
+    then toTable nodes
     else toParagraph nodes
   where
     isTable :: [Node] -> Bool
-    isTable nodes' = 
+    isTable nodes' =
             any (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
          && length nodes >= 2 -- Table needs at least a header and seperator to be valid
          && hasSymbols nodes
     -- Each of the element should have '|' symbol to be an valid table
     hasSymbols :: [Node] -> Bool
-    hasSymbols nodes' = 
+    hasSymbols nodes' =
         let filteredNodes   = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
             extractedTexts  = map (\node -> extractTextFromNodes node) filteredNodes
         in and $ map (T.any (== '|')) extractedTexts
 
     -- | I feel so awful implementing this ToT
     -- Should replace with an proper parser for roboustness
-    toTable :: [Node] -> Block
-    toTable nodes' = 
+    toTable :: [Node] -> [Block]
+    toTable nodes' = do
         let filteredNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            th                = concat $ take 1 filteredNodes
-            rest              = drop 2 filteredNodes
-            elemNum           = getElemNum th
-            extractedTexts    = map (\node -> extractTextFromNodes node) ([th] <> rest)
-            splitted          = map (\t -> T.split ( == '|') t) extractedTexts
-            extractedElems    = map (take elemNum . drop 1) splitted
-            sanitizedContent  = (map . map) T.strip extractedElems
-        in table "table" sanitizedContent
-
-    -- Buggy
-    getElemNum :: [Node] -> Int
-    getElemNum th' =
-        let headerElems = T.split (== '|') $ extractTextFromNodes th'
-        in length headerElems - 2
+            nodeTexts         = map extractTextFromNodes filteredNodes
+            eTable            = parseTable nodeTexts
+        case eTable of
+            Left _ -> map (\content-> paragraph [noStyle [text content]]) nodeTexts
+            Right tableContent     -> [commonTableToTable tableContent]
 
     -- | Convert list of 'Node' into list of 'Blocks'
     toParagraph :: [Node] -> [Block]
