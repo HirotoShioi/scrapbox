@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommonMark.Parser
+module CommonMark.Lib
     ( test
     , testHeader
     , testWith
@@ -15,16 +15,18 @@ module CommonMark.Parser
     , ParseOption(..)
     ) where
 
-import           RIO              hiding (link)
+import           RIO                    hiding (link)
 
 import           CMark
-import           Data.List.Split  (splitWhen)
-import qualified RIO.Text         as T
+import           Data.List.Split        (splitWhen)
+import qualified RIO.Text               as T
 
-import           CommonMark.Table (parseTable, commonTableToTable)
 import           Constructors
 import           Render
 import           Types
+
+import           CommonMark.TableParser (commonTableToTable, parseTable)
+
 --------------------------------------------------------------------------------
 -- Test files
 --------------------------------------------------------------------------------

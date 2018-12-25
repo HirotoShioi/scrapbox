@@ -1,24 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommonMark.Table 
+module CommonMark.TableParser
     ( commonTableToTable
     , parseTable
     ) where
 
 import           RIO
 
-import           Data.Attoparsec.Text      (Parser)
+import           Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as P
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Prelude              (String)
 
-import Types
+import           Types
 
 data CommonTable = CommonTable [Column]
     deriving Show
 
-data Column = Column 
+data Column = Column
     { getColumn :: [Text]
     } deriving (Show)
 
@@ -61,5 +61,5 @@ parseTable texts =
             (P.parseOnly columnParser t)
 
 commonTableToTable :: CommonTable -> Block
-commonTableToTable (CommonTable columns) = 
+commonTableToTable (CommonTable columns) =
     Table (TableName "table") (TableContent (map getColumn columns))

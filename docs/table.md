@@ -2,7 +2,7 @@
 
 This is an example of an table:
 
-| a 	| b 	| c 	|d |
+| a 	| b 	| c 	|
 |---	|---	|---	|- |
 |a|a|a|
 | 1 	| 2 	| 3 	| | 
