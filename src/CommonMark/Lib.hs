@@ -20,7 +20,7 @@ import qualified RIO.Text               as T
 
 import           Constructors           (blockQuote, bold, bulletList,
                                          codeBlock, codeNotation, header,
-                                         italic, lineBreak, link, markdown,
+                                         italic, link, markdown,
                                          noStyle, paragraph, text, thumbnail)
 import           Render                 (renderPretty)
 import           Types                  (Block (..), Context (..),
@@ -96,7 +96,7 @@ toBlocks (Node mPos nodeType contents) = case nodeType of
     CODE_BLOCK codeInfo code     -> [toCodeBlock codeInfo code]
     LIST _                       -> [toBulletList contents]
     ITEM                         -> concatMap toBlocks contents
-    SOFTBREAK                    -> [lineBreak]
+    SOFTBREAK                    -> [paragraph [noStyle [text "\t"]]]
      --workaround need to pay attention
     LINEBREAK                    -> [paragraph [noStyle [text "\n"]]]
     LINK url title               -> [paragraph [noStyle [toLink contents url title]]]
@@ -228,7 +228,7 @@ parseParagraph nodes = if isTable nodes
         let splittedNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
             nodeTexts         = map extractTextFromNodes splittedNodes
         either
-            (\_ -> map (\content-> paragraph [noStyle [text content]]) nodeTexts)
+            (\_ -> toParagraph nodes')
             (\tableContent -> [commonMarkTableToTable tableContent])
             (parseTable nodeTexts)
 

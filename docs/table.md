@@ -4,7 +4,7 @@ This is an example of an table:
 
 | a 	| b 	| c 	|d |
 |---	|---	|---	|- |
-|s | m | l | xl
+|s | m | l | xl |
 | 1 	| 2 	| 3 	| | 
 | < 	| > 	| = 	| |
 
