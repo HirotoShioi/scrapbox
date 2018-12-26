@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module CommonMark.TableParser
-    ( commonTableToTable
+    ( commonMarkTableToTable
     , parseTable
     ) where
 
@@ -13,14 +13,16 @@ import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Prelude              (String)
 
-import           Types
+import           Constructors         (table)
+import           Types                (Block (..))
 
-data CommonTable = CommonTable [Column]
-    deriving Show
+newtype CommonMarkTable = CommonMarkTable
+    { getCommomMarkTable :: [Column]
+    } deriving Show
 
-data Column = Column
+newtype Column = Column
     { getColumn :: [Text]
-    } deriving (Show)
+    } deriving Show
 
 columnParser :: Parser Column
 columnParser = do
@@ -28,12 +30,13 @@ columnParser = do
     go mempty rest
   where
     -- Seems like it's Either monad but I need an function which converts
-    -- Either to Parser
+    -- Either to Parser (natural transformation?)
     go :: [Text] -> Text -> Parser Column
     go currList curr = do
         either
             (\err -> fail err)
             (\(currList', rest') -> do
+                -- If symbolCount is less than required amount then the process is done
                 let symbolCount = T.length $ T.filter (== '|') rest'
                 if T.null rest' || symbolCount < 2
                     then return $ Column currList'
@@ -48,18 +51,18 @@ columnParser = do
         rest    <- P.takeText
         return $ ((currList ++ [element]), rest)
 
-parseTable :: [Text] -> Either String CommonTable
+parseTable :: [Text] -> Either String CommonMarkTable
 parseTable texts =
     let header = take 1 texts
         rest   = drop 2 texts
-    in go (CommonTable mempty) (header <> rest)
+    in go (CommonMarkTable mempty) (header <> rest)
   where
-    go :: CommonTable -> [Text] -> Either String CommonTable
-    go table []                      = return table
-    go (CommonTable currList) (t:ts) = do
+    go :: CommonMarkTable -> [Text] -> Either String CommonMarkTable
+    go commonMarkTable []                = return commonMarkTable
+    go (CommonMarkTable currList) (t:ts) = do
         column <- P.parseOnly columnParser t
-        go (CommonTable (currList <> [column])) ts
+        go (CommonMarkTable (currList <> [column])) ts
 
-commonTableToTable :: CommonTable -> Block
-commonTableToTable (CommonTable columns) =
-    Table (TableName "table") (TableContent (map getColumn columns))
+commonMarkTableToTable :: CommonMarkTable -> Block
+commonMarkTableToTable (CommonMarkTable columns) =
+    table "table" (map getColumn columns)

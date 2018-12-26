@@ -3,8 +3,9 @@
 
 module Types where
 
-import           Data.List    (groupBy)
 import           RIO
+
+import           Data.List    (groupBy)
 
 import           GHC.Generics (Generic)
 
