@@ -223,12 +223,10 @@ parseParagraph nodes = if isTable nodes
             extractedTexts  = map (\node -> extractTextFromNodes node) filteredNodes
         in all (T.any (== '|')) extractedTexts
 
-    -- | I feel so awful implementing this ToT
-    -- Should replace with an proper parser for roboustness
     toTable :: [Node] -> [Block]
     toTable nodes' = do
-        let filteredNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            nodeTexts         = map extractTextFromNodes filteredNodes
+        let splittedNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
+            nodeTexts         = map extractTextFromNodes splittedNodes
         either
             (\_ -> map (\content-> paragraph [noStyle [text content]]) nodeTexts)
             (\tableContent -> [commonMarkTableToTable tableContent])

@@ -31,7 +31,7 @@ module Constructors
 import           RIO   hiding (link)
 
 import           Types (Block (..), BulletSize (..), CodeName (..),
-                        CodeSnippet (..), Content (..), Context (..),
+                        CodeSnippet (..), Content, Context (..),
                         HeaderSize (..), Markdown (..), ScrapText (..),
                         Segment (..), Style (..), StyleData (..),
                         TableContent (..), TableName (..), Url (..))

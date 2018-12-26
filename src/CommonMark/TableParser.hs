@@ -14,7 +14,7 @@ import qualified Data.Text            as T
 import           Prelude              (String)
 
 import           Constructors         (table)
-import           Types                (Block (..))
+import           Types                (Block)
 
 newtype CommonMarkTable = CommonMarkTable
     { getCommomMarkTable :: [Column]
