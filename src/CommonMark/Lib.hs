@@ -7,7 +7,9 @@ module CommonMark.Lib
     , commonmarkToMarkdown
     , commonmarkToScrapbox
     -- * Parse option
-    , ParseOption(..)
+    , ParseOption
+    , optDefault
+    , optSectionHeader
     ) where
 
 import           RIO                    hiding (link)
@@ -30,7 +32,7 @@ import           Types                  (Block (..), Context (..),
 import           CommonMark.TableParser (commonMarkTableToTable, parseTable)
 
 --------------------------------------------------------------------------------
--- Exposed interface
+-- Options
 --------------------------------------------------------------------------------
 
 -- | Parser option which user can provide
@@ -39,6 +41,16 @@ data ParseOption
     -- ^ Will convert CommonMark to ScrapBox format as is
     | SectionHeader
     -- ^ Will add linebreak before header to make it easier to see
+
+optDefault :: ParseOption
+optDefault = Default
+
+optSectionHeader :: ParseOption
+optSectionHeader = SectionHeader
+
+--------------------------------------------------------------------------------
+-- Exposed interface
+--------------------------------------------------------------------------------
 
 -- Reminder: This module is not intended to auto fix the invalid sytaxes
 -- (i.e. This is not an AI that auto completes given common mark text)
