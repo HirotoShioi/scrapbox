@@ -1,66 +1,44 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommonMark
-    ( test
-    , testHeader
-    , testWith
-    , testNestedList
-    , testTable
-    -- * Parser
-    , parseNode
+module CommonMark.Lib
+    ( -- * Parser
+      parseNode
     , commonmarkToMarkdown
     , commonmarkToScrapbox
     -- * Parse option
     , ParseOption(..)
     ) where
 
-import           RIO hiding (link)
+import           RIO                    hiding (link)
 
-import           CMark
-import qualified RIO.Text as T
-import           Data.List.Split (splitWhen)
+import           CMark                  (Node (..), NodeType (..), Title, Url,
+                                         commonmarkToNode, optHardBreaks,
+                                         optSafe)
+import           Data.List.Split        (splitWhen)
+import qualified RIO.Text               as T
 
-import           Constructors
-import           Render
-import           Types
+import           Constructors           (blockQuote, bold, bulletList,
+                                         codeBlock, codeNotation, header,
+                                         italic, link, markdown,
+                                         noStyle, paragraph, text, thumbnail)
+import           Render                 (renderPretty)
+import           Types                  (Block (..), Context (..),
+                                         Markdown (..), Segment, concatContext,
+                                         concatScrapText)
 
---------------------------------------------------------------------------------
--- Test files
---------------------------------------------------------------------------------
-
--- | Test data for example.md
-test :: IO Node
-test = testWith "./docs/example.md"
-
--- | Test data for Header
-testHeader :: IO Node
-testHeader = testWith "./docs/headers.md"
-
--- | Test data for nested List
-testNestedList :: IO Node
-testNestedList = testWith "./docs/nestedList.md"
-
--- | Test table
-testTable :: IO Node
-testTable = testWith "./docs/table.md"
-
-testWith :: FilePath -> IO Node
-testWith filePath = do 
-    markDown <- readFileUtf8 filePath
-    let options = [optSafe, optHardBreaks]
-    let parsed = commonmarkToNode options markDown
-    return parsed
+import           CommonMark.TableParser (commonMarkTableToTable, parseTable)
 
 --------------------------------------------------------------------------------
 -- Exposed interface
 --------------------------------------------------------------------------------
 
+-- | Parser option which user can provide
 data ParseOption
     = Default
     -- ^ Will convert CommonMark to ScrapBox format as is
     | SectionHeader
-    -- ^ Will apply LineBreaks for headers
+    -- ^ Will add linebreak before header to make it easier to see
 
 -- Reminder: This module is not intended to auto fix the invalid sytaxes
 -- (i.e. This is not an AI that auto completes given common mark text)
@@ -87,7 +65,7 @@ parseNode Default node       = markdown $ toBlocks node
 parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node
 
 --------------------------------------------------------------------------------
--- Conversion from Node to Block
+-- Conversion logic from Node to Block
 --------------------------------------------------------------------------------
 
 -- | Convert 'Node' into list of 'Block'
@@ -118,7 +96,7 @@ toBlocks (Node mPos nodeType contents) = case nodeType of
     CODE_BLOCK codeInfo code     -> [toCodeBlock codeInfo code]
     LIST _                       -> [toBulletList contents]
     ITEM                         -> concatMap toBlocks contents
-    SOFTBREAK                    -> [lineBreak]
+    SOFTBREAK                    -> [paragraph [noStyle [text "\t"]]]
      --workaround need to pay attention
     LINEBREAK                    -> [paragraph [noStyle [text "\n"]]]
     LINK url title               -> [paragraph [noStyle [toLink contents url title]]]
@@ -185,7 +163,7 @@ toHeader headerNum nodes =
               3 -> 2
               4 -> 1
               _ -> 1
-    in Header (HeaderSize headerSize) $ concatMap toSegments nodes
+    in header headerSize $ concatMap toSegments nodes
 
 -- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
@@ -207,13 +185,13 @@ toBulletList contents = bulletList $ concatMap toBlocks contents
 
 -- | Apply LineBreak between Header section
 --
--- [Header, b1, b2, b3, Header, b4, b5, b6, Header] 
--- => 
+-- [Header, b1, b2, b3, Header, b4, b5, b6, Header]
+-- =>
 -- [Header, b1, b2, b3, LineBreak, Header, b4, b5, b6, LineBreak, Header]
 applyLinebreak :: [Block] -> [Block]
 applyLinebreak []                               = []
 applyLinebreak [b]                              = [b]
-applyLinebreak (b:(Header hsize hcontent):rest) = 
+applyLinebreak (b:(Header hsize hcontent):rest) =
     b : LineBreak : applyLinebreak ((Header hsize hcontent) : rest)
 applyLinebreak (b: rest)                        = b : applyLinebreak rest
 
@@ -229,40 +207,30 @@ applyLinebreak (b: rest)                        = b : applyLinebreak rest
 -- Hiding functions it so that they will not be misused.
 parseParagraph :: [Node] -> [Block]
 parseParagraph nodes = if isTable nodes
-    then [toTable nodes]
+    then toTable nodes
     else toParagraph nodes
   where
     isTable :: [Node] -> Bool
-    isTable nodes' = 
+    isTable nodes' =
             any (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
          && length nodes >= 2 -- Table needs at least a header and seperator to be valid
          && hasSymbols nodes
+
     -- Each of the element should have '|' symbol to be an valid table
     hasSymbols :: [Node] -> Bool
-    hasSymbols nodes' = 
+    hasSymbols nodes' =
         let filteredNodes   = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
             extractedTexts  = map (\node -> extractTextFromNodes node) filteredNodes
-        in and $ map (T.any (== '|')) extractedTexts
+        in all (T.any (== '|')) extractedTexts
 
-    -- | I feel so awful implementing this ToT
-    -- Should replace with an proper parser for roboustness
-    toTable :: [Node] -> Block
-    toTable nodes' = 
-        let filteredNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            th                = concat $ take 1 filteredNodes
-            rest              = drop 2 filteredNodes
-            elemNum           = getElemNum th
-            extractedTexts    = map (\node -> extractTextFromNodes node) ([th] <> rest)
-            splitted          = map (\t -> T.split ( == '|') t) extractedTexts
-            extractedElems    = map (take elemNum . drop 1) splitted
-            sanitizedContent  = (map . map) T.strip extractedElems
-        in table "table" sanitizedContent
-
-    -- Buggy
-    getElemNum :: [Node] -> Int
-    getElemNum th' =
-        let headerElems = T.split (== '|') $ extractTextFromNodes th'
-        in length headerElems - 2
+    toTable :: [Node] -> [Block]
+    toTable nodes' = do
+        let splittedNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
+            nodeTexts         = map extractTextFromNodes splittedNodes
+        either
+            (\_ -> toParagraph nodes')
+            (\tableContent -> [commonMarkTableToTable tableContent])
+            (parseTable nodeTexts)
 
     -- | Convert list of 'Node' into list of 'Blocks'
     toParagraph :: [Node] -> [Block]
@@ -278,4 +246,4 @@ parseParagraph nodes = if isTable nodes
     concatParagraph ((Paragraph stext1) : (Paragraph stext2) : rest) =
         let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
-    concatParagraph (a:b:rest) = a : b : concatParagraph rest
+    concatParagraph (a : b : rest) = a : b : concatParagraph rest

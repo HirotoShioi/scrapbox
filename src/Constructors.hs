@@ -30,7 +30,11 @@ module Constructors
 
 import           RIO   hiding (link)
 
-import           Types
+import           Types (Block (..), BulletSize (..), CodeName (..),
+                        CodeSnippet (..), Content, Context (..),
+                        HeaderSize (..), Markdown (..), ScrapText (..),
+                        Segment (..), Style (..), StyleData (..),
+                        TableContent (..), TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart constructors

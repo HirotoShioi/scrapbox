@@ -4,6 +4,7 @@
 module Render
     ( renderPretty
     , renderRaw
+    , writeMarkdown
     ) where
 
 import           RIO
@@ -13,9 +14,13 @@ import           Types    (Block (..), BulletSize (..), CodeName (..),
                            CodeSnippet (..), Content, Context (..),
                            HeaderSize (..), Markdown (..), ScrapText (..),
                            Segment (..), Style (..), StyleData (..),
-                           TableContent(..), Url (..), TableName(..))
+                           TableContent (..), TableName (..), Url (..))
 
--- Pretty print Mark down
+--------------------------------------------------------------------------------
+-- Exposed interface
+--------------------------------------------------------------------------------
+
+-- | Pretty print Markdown
 renderPretty :: Markdown -> Text
 renderPretty (Markdown blocks) = T.unlines $ concatMap renderBlock blocks
 
@@ -24,7 +29,17 @@ renderRaw :: Markdown -> [ByteString]
 renderRaw (Markdown blocks) =
     concatMap (map encodeUtf8 . renderBlock) blocks
 
--- render blocks
+-- | Write markdown to given path
+writeMarkdown :: FilePath -> Markdown -> IO ()
+writeMarkdown path (Markdown blocks) = do
+    let renderedMarkdown = T.unlines $ concatMap renderBlock blocks
+    writeFileUtf8 path renderedMarkdown
+
+--------------------------------------------------------------------------------
+-- Rendering logics
+--------------------------------------------------------------------------------
+
+-- Render blocks
 renderBlock :: Block -> [Text]
 renderBlock = \case
     LineBreak                          -> [""]
