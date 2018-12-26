@@ -7,9 +7,9 @@ module Examples.Example2
 import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeBlock,
-                               codeNotation, p, header, italic,
-                               lineBreak, link, markdown, noStyle,
-                               strikeThrough, table, text, thumbnail)
+                               codeNotation, header, italic, lineBreak, link,
+                               markdown, noStyle, p, strikeThrough, table, text,
+                               thumbnail)
 import           Types        (Block (..), Markdown)
 
 

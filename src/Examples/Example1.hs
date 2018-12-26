@@ -11,8 +11,7 @@ import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeNotation,
                                header, italic, lineBreak, link, markdown,
-                               noStyle, p, strikeThrough, text,
-                               thumbnail)
+                               noStyle, p, strikeThrough, text, thumbnail)
 import           Types        (Block, Markdown)
 
 --------------------------------------------------------------------------------

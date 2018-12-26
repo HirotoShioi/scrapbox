@@ -14,8 +14,8 @@ import           GHC.Generics (Generic)
 
 -- | Data structure of an scrapbox page in JSON format
 data Page = Page
-    { pContent   :: !Markdown
-    , pTitle     :: !Text
+    { pContent :: !Markdown
+    , pTitle   :: !Text
     } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Markdown consist of list of 'Blocks'

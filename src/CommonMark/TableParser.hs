@@ -27,8 +27,10 @@ columnParser = do
     rest <- P.takeText
     go mempty rest
   where
+    -- Seems like it's Either monad but I need an function which converts
+    -- Either to Parser
     go :: [Text] -> Text -> Parser Column
-    go currList curr =
+    go currList curr = do
         either
             (\err -> fail err)
             (\(currList', rest') -> do
@@ -54,11 +56,9 @@ parseTable texts =
   where
     go :: CommonTable -> [Text] -> Either String CommonTable
     go table []                      = return table
-    go (CommonTable currList) (t:ts) =
-        either
-            (\a -> Left a) -- ????????
-            (\column -> go (CommonTable (currList <> [column])) ts)
-            (P.parseOnly columnParser t)
+    go (CommonTable currList) (t:ts) = do
+        column <- P.parseOnly columnParser t
+        go (CommonTable (currList <> [column])) ts
 
 commonTableToTable :: CommonTable -> Block
 commonTableToTable (CommonTable columns) =
