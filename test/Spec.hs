@@ -102,7 +102,7 @@ codeNotationSpec = do
                         (CodeNotation codeText) <- getCodeNotationText segment
                         return codeText
                     )
-        prop "should have exactly 1 block, context, and segment" $
+        prop "should not have any other segments except for code section" $
             \(codeNotation :: CodeNotationSegment) -> do
                 let (Markdown content) = parseMarkdown codeNotation
                 checkMaybe
