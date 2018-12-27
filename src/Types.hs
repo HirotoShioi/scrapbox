@@ -176,17 +176,9 @@ emptyContext = Context NoStyle []
 
 -- | Predicate to check if given 'Block' is an 'Header' block
 isHeader :: Block -> Bool
-isHeader = isJust . getHeader
-
--- | Get 'Header'
-getHeader :: Block -> Maybe Block
-getHeader header@(Header _ _) = Just header
-getHeader _                   = Nothing
+isHeader (Header _ _) = True
+isHeader _            = False
 
 isBlockQuote :: Block -> Bool
 isBlockQuote (BlockQuote _) = True
 isBlockQuote _              = False
-
-getBlockQuote :: Block -> Maybe Block
-getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
-getBlockQuote _                         = Nothing

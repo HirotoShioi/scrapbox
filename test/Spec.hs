@@ -12,8 +12,7 @@ import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
 import           Render                (renderContent, renderText)
 import           Types                 (Block (..), HeaderSize (..),
-                                        Markdown (..), getHeader, isBlockQuote,
-                                        isHeader, getBlockQuote)
+                                        Markdown (..), isBlockQuote, isHeader)
 
 main :: IO ()
 main = hspec $ do
@@ -23,6 +22,11 @@ commonMarkSpec :: Spec
 commonMarkSpec = describe "Common mark" $ do
     headerTextSpec
     blockQuoteSpec
+
+-- | Get 'Header'
+getHeader :: Block -> Maybe Block
+getHeader header@(Header _ _) = Just header
+getHeader _                   = Nothing
 
 --------------------------------------------------------------------------------
 -- Header
@@ -116,13 +120,13 @@ instance CommonMarkdown HeaderText where
 
 blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ modifyMaxSuccess (const 1000) $ do
-    prop "should be able parse block quote text" $
+    prop "should be able parse block quote text as BlockQuote" $
         \(blockQuote :: BlockQuoteText) -> do
             let (Markdown content) = parseMarkdown blockQuote
             checkMaybe
                 (\blockContent -> isBlockQuote blockContent)
                 (headMaybe content)
-    
+
     prop "should preserve its content" $
         \(blockQuote :: BlockQuoteText) -> do
             let (Markdown content) = parseMarkdown blockQuote
@@ -143,6 +147,11 @@ instance CommonMarkdown BlockQuoteText where
 
 instance Arbitrary BlockQuoteText where
     arbitrary = BlockQuoteText <$> genPrintableText
+
+-- Should this function be here?
+getBlockQuote :: Block -> Maybe Block
+getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
+getBlockQuote _                         = Nothing
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -165,5 +174,6 @@ genPrintableText = fromString <$> genRandomString
 parseMarkdown :: CommonMarkdown a => a -> Markdown
 parseMarkdown = commonmarkToMarkdown optDefault . render
 
+-- Maybe not Bool but something else?
 checkMaybe :: (a -> Bool) -> Maybe a -> Bool
-checkMaybe pre mSomething = maybe False (\something -> pre something) mSomething
+checkMaybe pre mSomething = maybe False pre mSomething
