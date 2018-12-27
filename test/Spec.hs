@@ -4,6 +4,7 @@
 
 import           RIO
 import           RIO.List              (headMaybe)
+import qualified RIO.Text              as T
 
 import           Test.Hspec            (Spec, describe, hspec)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -11,17 +12,19 @@ import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
 
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
 import           Render                (renderContent, renderText)
-import           Types                 (Block (..), HeaderSize (..),
-                                        Markdown (..), isBlockQuote, isHeader)
+import           Types                 (Block (..), CodeSnippet (..),
+                                        HeaderSize (..), Markdown (..),
+                                        isBlockQuote, isCodeBlock, isHeader)
 
 main :: IO ()
 main = hspec $ do
     commonMarkSpec
 
 commonMarkSpec :: Spec
-commonMarkSpec = describe "Common mark" $ do
+commonMarkSpec = describe "Common mark" $ modifyMaxSuccess (const 200) $ do
     headerTextSpec
     blockQuoteSpec
+    codeBlockSpec
 
 -- | Get 'Header'
 getHeader :: Block -> Maybe Block
@@ -34,8 +37,8 @@ getHeader _                   = Nothing
 
 -- | Test spec for Header text
 headerTextSpec :: Spec
-headerTextSpec = describe "Header text" $ modifyMaxSuccess (const 1000) $ do
-    prop "should be able to parse header text as header" $
+headerTextSpec = describe "Header text" $ do
+    prop "should be able to parse header text as Header" $
         \(headerText :: HeaderText) -> do
             let (Markdown content) = parseMarkdown headerText
             checkMaybe
@@ -119,7 +122,7 @@ instance CommonMarkdown HeaderText where
 --------------------------------------------------------------------------------
 
 blockQuoteSpec :: Spec
-blockQuoteSpec = describe "BlockQuote text" $ modifyMaxSuccess (const 1000) $ do
+blockQuoteSpec = describe "BlockQuote text" $ do
     prop "should be able parse block quote text as BlockQuote" $
         \(blockQuote :: BlockQuoteText) -> do
             let (Markdown content) = parseMarkdown blockQuote
@@ -154,6 +157,43 @@ getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
 getBlockQuote _                         = Nothing
 
 --------------------------------------------------------------------------------
+-- CodeBlock
+--------------------------------------------------------------------------------
+
+newtype CodeBlockSection = CodeBlockSection
+    { getCodeBlockContent :: [Text]
+    } deriving Show
+
+instance CommonMarkdown CodeBlockSection where
+    render (CodeBlockSection codes) = T.unlines $ ["```"] <> codes <> ["```"]
+
+instance Arbitrary CodeBlockSection where
+    arbitrary = CodeBlockSection <$> listOf1 genPrintableText
+
+getCodeBlock :: Block -> Maybe Block
+getCodeBlock codeBlock@(CodeBlock _ _) = Just codeBlock
+getCodeBlock _                         = Nothing
+
+codeBlockSpec :: Spec
+codeBlockSpec = describe "Code block" $ do
+    prop "should parse code block content as CodeBlock" $
+        \(codeBlock :: CodeBlockSection) -> do
+            let (Markdown content) = parseMarkdown codeBlock
+            checkMaybe
+                (\blockContent -> isCodeBlock blockContent)
+                (headMaybe content)
+    prop "should preserve its content" $
+        \(codeBlock :: CodeBlockSection) -> do
+            let (Markdown content) = parseMarkdown codeBlock
+            checkMaybe
+                (\codeContent -> codeContent == T.unlines (getCodeBlockContent codeBlock))
+                (do
+                    blockContent <- headMaybe content
+                    (CodeBlock _ (CodeSnippet snippet)) <- getCodeBlock blockContent
+                    return snippet
+                )
+
+--------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
 
@@ -165,7 +205,7 @@ class CommonMarkdown a where
 -- this is needed as some characters like
 -- '`' and `>` will be parsed as blockquote, code notation, etc.
 genPrintableText :: Gen Text
-genPrintableText = fromString <$> genRandomString
+genPrintableText = (fromString . unwords) <$> listOf1 genRandomString
   where
     genRandomString :: Gen String
     genRandomString = listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
