@@ -7,8 +7,6 @@ import           RIO
 
 import           Data.List    (groupBy)
 
-import           GHC.Generics (Generic)
-
 -- https://scrapbox.io/help/Syntax
 
 -- TODO: Make naming more easy to understand/ makes sense

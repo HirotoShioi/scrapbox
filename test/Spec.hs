@@ -115,16 +115,17 @@ instance CommonMarkdown HeaderText where
 parseMarkdown :: CommonMarkdown a => a -> Markdown
 parseMarkdown = commonmarkToMarkdown optDefault . render
 
--- | Typeclass in which is used to render given datatype into common markdown format.
-class CommonMarkdown a where
-    render     :: a -> Text
-
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
 
+-- | Typeclass in which is used to render given datatype into common markdown format.
+class CommonMarkdown a where
+    render     :: a -> Text
+
 -- | Generate arbitrary Text
--- this is needed as some characters like '`' and `>` will be parsed as blockquote, code notation, etc.
+-- this is needed as some characters like 
+-- '`' and `>` will be parsed as blockquote, code notation, etc.
 genPrintableText :: Gen Text
 genPrintableText = fromString <$> genRandomString
   where
