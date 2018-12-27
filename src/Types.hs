@@ -182,3 +182,11 @@ isHeader = isJust . getHeader
 getHeader :: Block -> Maybe Block
 getHeader header@(Header _ _) = Just header
 getHeader _                   = Nothing
+
+isBlockQuote :: Block -> Bool
+isBlockQuote (BlockQuote _) = True
+isBlockQuote _              = False
+
+getBlockQuote :: Block -> Maybe Block
+getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
+getBlockQuote _                         = Nothing

@@ -10,9 +10,10 @@ import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
 
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
-import           Render                (renderContent)
-import           Types                 (HeaderSize (..), Markdown (..),
-                                        getHeader, isHeader, Block(..))
+import           Render                (renderContent, renderText)
+import           Types                 (Block (..), HeaderSize (..),
+                                        Markdown (..), getHeader, isBlockQuote,
+                                        isHeader, getBlockQuote)
 
 main :: IO ()
 main = hspec $ do
@@ -21,6 +22,7 @@ main = hspec $ do
 commonMarkSpec :: Spec
 commonMarkSpec = describe "Common mark" $ do
     headerTextSpec
+    blockQuoteSpec
 
 --------------------------------------------------------------------------------
 -- Header
@@ -29,7 +31,7 @@ commonMarkSpec = describe "Common mark" $ do
 -- | Test spec for Header text
 headerTextSpec :: Spec
 headerTextSpec = describe "Header text" $ modifyMaxSuccess (const 1000) $ do
-    prop "should be able to render header text as header" $
+    prop "should be able to parse header text as header" $
         \(headerText :: HeaderText) -> do
             let (Markdown content) = parseMarkdown headerText
             checkMaybe
@@ -56,9 +58,6 @@ headerTextSpec = describe "Header text" $ modifyMaxSuccess (const 1000) $ do
                     (Header _ headerContent) <- getHeader blockContent
                     return $ renderContent headerContent
                 )
-  where
-    checkMaybe :: (a -> Bool) -> Maybe a -> Bool
-    checkMaybe pre mSomething = maybe False (\something -> pre something) mSomething
 
 -- | Data type for common mark Header
 data HeaderText
@@ -111,9 +110,39 @@ instance CommonMarkdown HeaderText where
         H5 textContent -> "##### " <> textContent
         H6 textContent -> "###### " <> textContent
 
--- | Parse given datatype into Markdown
-parseMarkdown :: CommonMarkdown a => a -> Markdown
-parseMarkdown = commonmarkToMarkdown optDefault . render
+--------------------------------------------------------------------------------
+-- BlockQuote
+--------------------------------------------------------------------------------
+
+blockQuoteSpec :: Spec
+blockQuoteSpec = describe "BlockQuote text" $ modifyMaxSuccess (const 1000) $ do
+    prop "should be able parse block quote text" $
+        \(blockQuote :: BlockQuoteText) -> do
+            let (Markdown content) = parseMarkdown blockQuote
+            checkMaybe
+                (\blockContent -> isBlockQuote blockContent)
+                (headMaybe content)
+    
+    prop "should preserve its content" $
+        \(blockQuote :: BlockQuoteText) -> do
+            let (Markdown content) = parseMarkdown blockQuote
+            checkMaybe
+                (\quoteText -> quoteText == getBlockQuoteText blockQuote)
+                (do
+                    blockContent       <- headMaybe content
+                    (BlockQuote stext) <- getBlockQuote blockContent
+                    return $ renderText stext
+                    )
+
+newtype BlockQuoteText = BlockQuoteText
+    { getBlockQuoteText :: Text
+    } deriving Show
+
+instance CommonMarkdown BlockQuoteText where
+    render (BlockQuoteText txt) = ">" <> txt
+
+instance Arbitrary BlockQuoteText where
+    arbitrary = BlockQuoteText <$> genPrintableText
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -124,10 +153,17 @@ class CommonMarkdown a where
     render     :: a -> Text
 
 -- | Generate arbitrary Text
--- this is needed as some characters like 
+-- this is needed as some characters like
 -- '`' and `>` will be parsed as blockquote, code notation, etc.
 genPrintableText :: Gen Text
 genPrintableText = fromString <$> genRandomString
   where
     genRandomString :: Gen String
     genRandomString = listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+
+-- | Parse given datatype into Markdown
+parseMarkdown :: CommonMarkdown a => a -> Markdown
+parseMarkdown = commonmarkToMarkdown optDefault . render
+
+checkMaybe :: (a -> Bool) -> Maybe a -> Bool
+checkMaybe pre mSomething = maybe False (\something -> pre something) mSomething
