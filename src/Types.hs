@@ -7,8 +7,6 @@ import           RIO
 
 import           Data.List    (groupBy)
 
-import           GHC.Generics (Generic)
-
 -- https://scrapbox.io/help/Syntax
 
 -- TODO: Make naming more easy to understand/ makes sense
@@ -160,6 +158,7 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
     unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
 
+-- | Concatinate given contexts which has same style
 concatContext :: [Context] -> [Context]
 concatContext [] = []
 concatContext [ctx] = [ctx]
@@ -171,5 +170,15 @@ concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
 concatScrapText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $ ctx1 <> ctx2)
 
+-- | Context with no content
 emptyContext :: Context
 emptyContext = Context NoStyle []
+
+-- | Predicate to check if given 'Block' is an 'Header' block
+isHeader :: Block -> Bool
+isHeader = isJust . getHeader
+
+-- | Get 'Header'
+getHeader :: Block -> Maybe Block
+getHeader header@(Header _ _) = Just header
+getHeader _                   = Nothing
