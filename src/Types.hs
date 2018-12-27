@@ -186,3 +186,11 @@ isBlockQuote _              = False
 isCodeBlock :: Block -> Bool
 isCodeBlock (CodeBlock _ _) = True
 isCodeBlock _               = False
+
+isParagraph :: Block -> Bool
+isParagraph (Paragraph _) = True
+isParagraph _             = False
+
+isCodeNotation :: Segment -> Bool
+isCodeNotation (CodeNotation _) = True
+isCodeNotation _                = False

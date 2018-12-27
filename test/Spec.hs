@@ -13,23 +13,123 @@ import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
 import           Render                (renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
-                                        HeaderSize (..), Markdown (..),
-                                        isBlockQuote, isCodeBlock, isHeader)
+                                        Context (..), HeaderSize (..),
+                                        Markdown (..), ScrapText (..),
+                                        Segment (..), isBlockQuote, isCodeBlock,
+                                        isCodeNotation, isHeader, isParagraph)
 
 main :: IO ()
 main = hspec $ do
     commonMarkSpec
 
 commonMarkSpec :: Spec
-commonMarkSpec = describe "Common mark" $ modifyMaxSuccess (const 200) $ do
+commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
+    paragraphSpec
+    codeNotationSpec
     headerTextSpec
     blockQuoteSpec
     codeBlockSpec
 
--- | Get 'Header'
-getHeader :: Block -> Maybe Block
-getHeader header@(Header _ _) = Just header
-getHeader _                   = Nothing
+--------------------------------------------------------------------------------
+-- Paragraph
+--------------------------------------------------------------------------------
+
+newtype ParagraphSection = ParagraphSection {
+    getParagraphSection :: Text
+    } deriving Show
+
+instance CommonMarkdown ParagraphSection where
+    render (ParagraphSection txt) = txt
+
+instance Arbitrary ParagraphSection where
+    arbitrary = ParagraphSection <$> genPrintableText
+
+paragraphSpec :: Spec
+paragraphSpec = describe "Paragraph" $ do
+    prop "should be able to parse paragraph as Paragraph" $
+        \(paragraph :: ParagraphSection) -> do
+            let (Markdown content) = parseMarkdown paragraph
+            checkMaybe
+                (\blockContent -> isParagraph blockContent)
+                (headMaybe content)
+
+    prop "should preserve its content" $
+        \(paragraph :: ParagraphSection) -> do
+            let (Markdown content) = parseMarkdown paragraph
+            checkMaybe
+                (\paragraphText -> paragraphText == (getParagraphSection paragraph))
+                (do
+                    blockContent 　　　<- headMaybe content
+                    (Paragraph stext) <- getParagraph blockContent
+                    return $ renderText stext
+                )
+
+getParagraph :: Block -> Maybe Block
+getParagraph paragraph@(Paragraph _) = Just paragraph
+getParagraph _                       = Nothing
+
+--------------------------------------------------------------------------------
+-- CodeNotation
+--------------------------------------------------------------------------------
+
+newtype CodeNotationSegment = CodeNotationSegment
+    { getCodeNotationSegment :: Text
+    } deriving Show
+
+instance CommonMarkdown CodeNotationSegment where
+    render (CodeNotationSegment txt) = "`" <> txt <> "`"
+
+instance Arbitrary CodeNotationSegment where
+    arbitrary = CodeNotationSegment <$> genPrintableText
+
+codeNotationSpec :: Spec
+codeNotationSpec = do
+    describe "Code notation" $ do
+        prop "should be able to parser code section as CodeNotation" $
+            \(codeNotation :: CodeNotationSegment) -> do
+                let (Markdown content) = parseMarkdown codeNotation
+                checkMaybe
+                    (\segment -> isCodeNotation segment)
+                    (getHeadSegment content)
+
+        prop "should preserve its content" $
+            \(codeNotation :: CodeNotationSegment) -> do
+                let (Markdown content) = parseMarkdown codeNotation
+                checkMaybe
+                    (\codeText -> codeText == getCodeNotationSegment codeNotation)
+                    (do
+                        segment                 <- getHeadSegment content
+                        (CodeNotation codeText) <- getCodeNotationText segment
+                        return codeText
+                    )
+        prop "should have exactly 1 block, context, and segment" $
+            \(codeNotation :: CodeNotationSegment) -> do
+                let (Markdown content) = parseMarkdown codeNotation
+                checkMaybe
+                    (\(content', ctxs, segments) -> 
+                        and [ length content' == 1
+                            , length ctxs == 1
+                            , length segments == 1
+                            ]
+                    )
+                    (do
+                        blockContent                 <- headMaybe content
+                        (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+                        (Context _ segments)         <- headMaybe ctxs   
+                        return (content, ctxs, segments)       
+                    )
+  where
+    getCodeNotationText :: Segment -> Maybe Segment
+    getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
+    getCodeNotationText _                             = Nothing
+
+getHeadSegment :: [Block] -> Maybe Segment
+getHeadSegment blocks = do
+    blockContent                 <- headMaybe blocks
+    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+    (Context _ segments)         <- headMaybe ctxs
+    segment                      <- headMaybe segments
+    return segment
 
 --------------------------------------------------------------------------------
 -- Header
@@ -65,6 +165,20 @@ headerTextSpec = describe "Header text" $ do
                     (Header _ headerContent) <- getHeader blockContent
                     return $ renderContent headerContent
                 )
+  where
+    getHeader :: Block -> Maybe Block
+    getHeader header@(Header _ _) = Just header
+    getHeader _                   = Nothing
+
+    -- Check if given headerSize is same size
+    isSameHeaderSize :: HeaderSize -> HeaderText -> Bool
+    isSameHeaderSize (HeaderSize 4) (H1 _) = True
+    isSameHeaderSize (HeaderSize 3) (H2 _) = True
+    isSameHeaderSize (HeaderSize 2) (H3 _) = True
+    isSameHeaderSize (HeaderSize 1) (H4 _) = True
+    isSameHeaderSize (HeaderSize 1) (H5 _) = True
+    isSameHeaderSize (HeaderSize 1) (H6 _) = True
+    isSameHeaderSize _ _                   = False
 
 -- | Data type for common mark Header
 data HeaderText
@@ -75,16 +189,6 @@ data HeaderText
     | H5 Text
     | H6 Text
     deriving Show
-
--- | Check if given headerSize is same size
-isSameHeaderSize :: HeaderSize -> HeaderText -> Bool
-isSameHeaderSize (HeaderSize 4) (H1 _) = True
-isSameHeaderSize (HeaderSize 3) (H2 _) = True
-isSameHeaderSize (HeaderSize 2) (H3 _) = True
-isSameHeaderSize (HeaderSize 1) (H4 _) = True
-isSameHeaderSize (HeaderSize 1) (H5 _) = True
-isSameHeaderSize (HeaderSize 1) (H6 _) = True
-isSameHeaderSize _ _                   = False
 
 -- | Get the content of the 'HeaderText'
 getHeaderTextContent :: HeaderText -> Text
@@ -140,6 +244,12 @@ blockQuoteSpec = describe "BlockQuote text" $ do
                     (BlockQuote stext) <- getBlockQuote blockContent
                     return $ renderText stext
                     )
+  where
+    -- Should this function be here?
+    getBlockQuote :: Block -> Maybe Block
+    getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
+    getBlockQuote _                         = Nothing
+
 
 newtype BlockQuoteText = BlockQuoteText
     { getBlockQuoteText :: Text
@@ -150,11 +260,6 @@ instance CommonMarkdown BlockQuoteText where
 
 instance Arbitrary BlockQuoteText where
     arbitrary = BlockQuoteText <$> genPrintableText
-
--- Should this function be here?
-getBlockQuote :: Block -> Maybe Block
-getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
-getBlockQuote _                         = Nothing
 
 --------------------------------------------------------------------------------
 -- CodeBlock
@@ -169,10 +274,6 @@ instance CommonMarkdown CodeBlockSection where
 
 instance Arbitrary CodeBlockSection where
     arbitrary = CodeBlockSection <$> listOf1 genPrintableText
-
-getCodeBlock :: Block -> Maybe Block
-getCodeBlock codeBlock@(CodeBlock _ _) = Just codeBlock
-getCodeBlock _                         = Nothing
 
 codeBlockSpec :: Spec
 codeBlockSpec = describe "Code block" $ do
@@ -192,6 +293,10 @@ codeBlockSpec = describe "Code block" $ do
                     (CodeBlock _ (CodeSnippet snippet)) <- getCodeBlock blockContent
                     return snippet
                 )
+  where
+    getCodeBlock :: Block -> Maybe Block
+    getCodeBlock codeBlock@(CodeBlock _ _) = Just codeBlock
+    getCodeBlock _                         = Nothing
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
