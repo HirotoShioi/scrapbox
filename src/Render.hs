@@ -2,11 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Render
-    ( renderPretty
+    ( -- * Exposed interface
+      renderPretty
     , renderRaw
     , writeMarkdown
     -- * For testing
     , renderContent
+    , renderText
     ) where
 
 import           RIO
