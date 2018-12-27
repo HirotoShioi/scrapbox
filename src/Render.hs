@@ -5,6 +5,8 @@ module Render
     ( renderPretty
     , renderRaw
     , writeMarkdown
+    -- * For testing
+    , renderContent
     ) where
 
 import           RIO

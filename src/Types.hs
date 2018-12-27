@@ -173,3 +173,15 @@ concatScrapText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $
 
 emptyContext :: Context
 emptyContext = Context NoStyle []
+
+isHeader :: Block -> Bool
+isHeader (Header _ _) = True
+isHeader _            = False
+
+getHeaderSize :: Block -> Maybe HeaderSize
+getHeaderSize (Header num _) = Just num
+getHeaderSize _              = Nothing
+
+getHeaderContent :: Block -> Maybe Content
+getHeaderContent (Header _ content) = Just content
+getHeaderContent _                  = Nothing
