@@ -182,3 +182,7 @@ isHeader _            = False
 isBlockQuote :: Block -> Bool
 isBlockQuote (BlockQuote _) = True
 isBlockQuote _              = False
+
+isCodeBlock :: Block -> Bool
+isCodeBlock (CodeBlock _ _) = True
+isCodeBlock _               = False
