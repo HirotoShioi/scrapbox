@@ -401,22 +401,22 @@ instance CommonMarkdown TableSection where
         let between          = renderBetween rowNum
         let renderedContents = renderTableContent contents
         T.unlines $ [renderedHeader] <> [between] <> renderedContents
-        where
-            renderColumn :: [Text] -> Text
-            renderColumn contents' = go "| " contents'
-            go :: Text -> [Text] -> Text
-            go curr []     = curr
-            go curr [n]    = go (curr <> n <> " | ") []
-            go curr (a:as) = go (curr <> a <> " | ")  as
+      where
+        renderColumn :: [Text] -> Text
+        renderColumn contents' = go "| " contents'
+        go :: Text -> [Text] -> Text
+        go curr []     = curr
+        go curr [n]    = go (curr <> n <> " | ") []
+        go curr (a:as) = go (curr <> a <> " | ")  as
 
-            renderBetween :: Int -> Text
-            renderBetween rowNum' = go' "|- " rowNum'
-            go' :: Text -> Int -> Text
-            go' curr 1   = curr <> " |"
-            go' curr num = go' (curr <> " |- ") (num - 1)
+        renderBetween :: Int -> Text
+        renderBetween rowNum' = go' "|- " rowNum'
+        go' :: Text -> Int -> Text
+        go' curr 1   = curr <> " |"
+        go' curr num = go' (curr <> " |- ") (num - 1)
 
-            renderTableContent :: [[Text]] -> [Text]
-            renderTableContent tables = map renderColumn tables
+        renderTableContent :: [[Text]] -> [Text]
+        renderTableContent tables = map renderColumn tables
 
 instance Arbitrary TableSection where
     arbitrary = do
