@@ -28,3 +28,9 @@ Latte
 | \`\`\`javascript<br /><br /><br />\`\`\` | YES | YES | |
 | gist |   | `[gist:id]` inject | |
 | secret gist |   |    | |
+
+| a 	|  	| c 	|  |
+|-	|-	|-	|- |
+|s | m | l | xl |
+| 1 	| 2 	| 3 	| | 
+| < 	| > 	| = 	| |
