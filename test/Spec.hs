@@ -11,12 +11,14 @@ import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
 
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
-import           Render                (renderContent, renderText, renderBlock)
+import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Context (..), HeaderSize (..),
                                         Markdown (..), ScrapText (..),
-                                        Segment (..), isBlockQuote, isCodeBlock,
-                                        isCodeNotation, isHeader, isParagraph, isBulletList)
+                                        Segment (..), Url (..), isBlockQuote,
+                                        isBulletList, isCodeBlock,
+                                        isCodeNotation, isHeader, isParagraph,
+                                        isThumbnail)
 
 main :: IO ()
 main = hspec $ do
@@ -31,6 +33,7 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     codeBlockSpec
     unorderedListSpec
     orderedListSpec
+    imageSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -108,17 +111,17 @@ codeNotationSpec = do
             \(codeNotation :: CodeNotationSegment) -> do
                 let (Markdown content) = parseMarkdown codeNotation
                 checkMaybe
-                    (\(content', ctxs, segments) -> 
+                    (\(content', ctxs, segments) ->
                         and [ length content' == 1
-                            , length ctxs == 1
+                            , length ctxs     == 1
                             , length segments == 1
                             ]
                     )
                     (do
                         blockContent                 <- headMaybe content
                         (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-                        (Context _ segments)         <- headMaybe ctxs   
-                        return (content, ctxs, segments)       
+                        (Context _ segments)         <- headMaybe ctxs
+                        return (content, ctxs, segments)
                     )
   where
     getCodeNotationText :: Segment -> Maybe Segment
@@ -350,7 +353,7 @@ instance Arbitrary OrderedList where
     arbitrary = OrderedList <$> listOf1 genPrintableText
 
 instance CommonMarkdown OrderedList where
-    render (OrderedList list) = T.unlines $ 
+    render (OrderedList list) = T.unlines $
         zipWith (\num someText -> tshow num <> ". " <> someText) [1..] list
 
 orderedListSpec :: Spec
@@ -361,7 +364,7 @@ orderedListSpec = describe "Ordered list" $ do
             checkMaybe
                 (\blockContent -> isBulletList blockContent)
                 (headMaybe content)
-        
+
     prop "should preserve its content" $
         \(orderedList :: OrderedList) -> do
             let (Markdown content) = parseMarkdown orderedList
@@ -372,6 +375,47 @@ orderedListSpec = describe "Ordered list" $ do
                     (BulletList lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
                 )
+
+--------------------------------------------------------------------------------
+-- Images
+--------------------------------------------------------------------------------
+
+data ImageSection = ImageSection
+    { imageTitle :: !Text
+    , imageLink  :: !ImageLink
+    } deriving Show
+
+type ImageLink = Text
+
+instance CommonMarkdown ImageSection where
+    render (ImageSection title someLink) = "![" <> title <> "](" <> someLink <> ")"
+
+instance Arbitrary ImageSection where
+    arbitrary = ImageSection <$> genRandomText <*> genPrintableUrl
+
+imageSpec :: Spec
+imageSpec = do
+    describe "Image" $ do
+        prop "should parse image as Image" $
+            \(imageSection :: ImageSection) -> do
+                let (Markdown content) = parseMarkdown imageSection
+                checkMaybe
+                    (\blockContent -> isThumbnail blockContent)
+                    (headMaybe content)
+        prop "should preserve its link" $
+            \(imageSection :: ImageSection) -> do
+                let (Markdown content) = parseMarkdown imageSection
+                checkMaybe
+                    (\(Url url) -> url == imageLink imageSection)
+                    (do
+                        blockContent    <- headMaybe content
+                        (Thumbnail url) <- getImage blockContent
+                        return url
+                    )
+  where
+    getImage :: Block -> Maybe Block
+    getImage thumbnail@(Thumbnail _) = Just thumbnail
+    getImage _                       = Nothing
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -385,10 +429,16 @@ class CommonMarkdown a where
 -- this is needed as some characters like
 -- '`' and `>` will be parsed as blockquote, code notation, etc.
 genPrintableText :: Gen Text
-genPrintableText = (fromString . unwords) <$> listOf1 genRandomString
-  where
-    genRandomString :: Gen String
-    genRandomString = listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+genPrintableText = T.unwords <$> listOf1 genRandomText
+
+genRandomText :: Gen Text
+genRandomText = (fmap fromString) <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+
+genPrintableUrl :: Gen Text
+genPrintableUrl = do
+    end        <- elements [".org", ".edu", ".com", ".co.jp"]
+    randomSite <- genRandomText
+    return $ "http://www." <> randomSite <> end
 
 -- | Parse given datatype into Markdown
 parseMarkdown :: CommonMarkdown a => a -> Markdown
