@@ -53,17 +53,15 @@ paragraphSpec :: Spec
 paragraphSpec = describe "Paragraph" $ do
     prop "should be able to parse paragraph as Paragraph" $
         \(paragraph :: ParagraphSection) -> do
-            let (Markdown content) = parseMarkdown paragraph
-            checkMaybe
+            checkMarkdown paragraph
                 (\blockContent -> isParagraph blockContent)
-                (headMaybe content)
+                (\content -> headMaybe content)
 
     prop "should preserve its content" $
         \(paragraph :: ParagraphSection) -> do
-            let (Markdown content) = parseMarkdown paragraph
-            checkMaybe
+            checkMarkdown paragraph
                 (\paragraphText -> paragraphText == (getParagraphSection paragraph))
-                (do
+                (\content -> do
                     blockContent 　　　<- headMaybe content
                     (Paragraph stext) <- getParagraph blockContent
                     return $ renderText stext
@@ -92,32 +90,29 @@ codeNotationSpec = do
     describe "Code notation" $ do
         prop "should be able to parser code section as CodeNotation" $
             \(codeNotation :: CodeNotationSegment) -> do
-                let (Markdown content) = parseMarkdown codeNotation
-                checkMaybe
+                checkMarkdown codeNotation
                     (\segment -> isCodeNotation segment)
-                    (getHeadSegment content)
+                    (getHeadSegment)
 
         prop "should preserve its content" $
             \(codeNotation :: CodeNotationSegment) -> do
-                let (Markdown content) = parseMarkdown codeNotation
-                checkMaybe
+                checkMarkdown codeNotation
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
-                    (do
+                    (\content -> do
                         segment                 <- getHeadSegment content
                         (CodeNotation codeText) <- getCodeNotationText segment
                         return codeText
                     )
         prop "should not have any other segments except for code section" $
             \(codeNotation :: CodeNotationSegment) -> do
-                let (Markdown content) = parseMarkdown codeNotation
-                checkMaybe
+                checkMarkdown codeNotation
                     (\(content', ctxs, segments) ->
                         and [ length content' == 1
                             , length ctxs     == 1
                             , length segments == 1
                             ]
                     )
-                    (do
+                    (\content -> do
                         blockContent                 <- headMaybe content
                         (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
                         (Context _ segments)         <- headMaybe ctxs
@@ -145,27 +140,24 @@ headerTextSpec :: Spec
 headerTextSpec = describe "Header text" $ do
     prop "should be able to parse header text as Header" $
         \(headerText :: HeaderText) -> do
-            let (Markdown content) = parseMarkdown headerText
-            checkMaybe
+            checkMarkdown headerText
                 (\blockContent -> isHeader blockContent)
-                (headMaybe content)
+                (\content -> headMaybe content)
 
     prop "should preserve header size" $
         \(headerText :: HeaderText) -> do
-            let (Markdown content) = parseMarkdown headerText
-            checkMaybe
+            checkMarkdown headerText
                 (\headerSize -> isSameHeaderSize headerSize headerText)
-                (do
+                (\content -> do
                     blockContent          <- headMaybe content
                     (Header headerSize _) <- getHeader blockContent
                     return headerSize
                 )
     prop "should preserve its content" $
         \(headerText :: HeaderText) -> do
-            let (Markdown content) = parseMarkdown headerText
-            checkMaybe
+            checkMarkdown headerText
                 (\headerContent -> headerContent == getHeaderTextContent headerText)
-                (do
+                (\content -> do
                     blockContent             <- headMaybe content
                     (Header _ headerContent) <- getHeader blockContent
                     return $ renderContent headerContent
@@ -234,21 +226,19 @@ blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
     prop "should be able parse block quote text as BlockQuote" $
         \(blockQuote :: BlockQuoteText) -> do
-            let (Markdown content) = parseMarkdown blockQuote
-            checkMaybe
+            checkMarkdown blockQuote
                 (\blockContent -> isBlockQuote blockContent)
-                (headMaybe content)
+                (\content -> headMaybe content)
 
     prop "should preserve its content" $
         \(blockQuote :: BlockQuoteText) -> do
-            let (Markdown content) = parseMarkdown blockQuote
-            checkMaybe
+            checkMarkdown blockQuote
                 (\quoteText -> quoteText == getBlockQuoteText blockQuote)
-                (do
+                (\content -> do
                     blockContent       <- headMaybe content
                     (BlockQuote stext) <- getBlockQuote blockContent
                     return $ renderText stext
-                    )
+                )
   where
     -- Should this function be here?
     getBlockQuote :: Block -> Maybe Block
@@ -284,16 +274,14 @@ codeBlockSpec :: Spec
 codeBlockSpec = describe "Code block" $ do
     prop "should parse code block content as CodeBlock" $
         \(codeBlock :: CodeBlockSection) -> do
-            let (Markdown content) = parseMarkdown codeBlock
-            checkMaybe
+            checkMarkdown codeBlock
                 (\blockContent -> isCodeBlock blockContent)
-                (headMaybe content)
+                (\content -> headMaybe content)
     prop "should preserve its content" $
         \(codeBlock :: CodeBlockSection) -> do
-            let (Markdown content) = parseMarkdown codeBlock
-            checkMaybe
+            checkMarkdown codeBlock
                 (\codeContent -> codeContent == T.unlines (getCodeBlockContent codeBlock))
-                (do
+                (\content -> do
                     blockContent <- headMaybe content
                     (CodeBlock _ (CodeSnippet snippet)) <- getCodeBlock blockContent
                     return snippet
@@ -321,17 +309,15 @@ unorderedListSpec :: Spec
 unorderedListSpec = describe "Unordered list" $ do
     prop "should parse unordered list as BulletList" $
         \(unorderedList :: UnorderedList) -> do
-            let (Markdown content) = parseMarkdown unorderedList
-            checkMaybe
+            checkMarkdown unorderedList
                 (\blockContent -> isBulletList blockContent)
-                (headMaybe content)
+                (\content -> headMaybe content)
 
     prop "should preserve its content" $
         \(unorderedList :: UnorderedList) -> do
-            let (Markdown content) = parseMarkdown unorderedList
-            checkMaybe
+            checkMarkdown unorderedList
                 (\renderedTexts -> renderedTexts == (getUnorderedList unorderedList))
-                (do
+                (\content -> do
                     blockContent       <- headMaybe content
                     (BulletList lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
@@ -360,17 +346,15 @@ orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
     prop "should parse ordered list as BulletList" $
         \(orderedList :: OrderedList) -> do
-            let (Markdown content) = parseMarkdown orderedList
-            checkMaybe
+            checkMarkdown orderedList
                 (\blockContent -> isBulletList blockContent)
-                (headMaybe content)
+                (\content -> headMaybe content)
 
     prop "should preserve its content" $
         \(orderedList :: OrderedList) -> do
-            let (Markdown content) = parseMarkdown orderedList
-            checkMaybe
+            checkMarkdown orderedList
                 (\renderedTexts -> renderedTexts == (getOrderedList orderedList))
-                (do
+                (\content -> do
                     blockContent       <- headMaybe content
                     (BulletList lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
@@ -398,16 +382,14 @@ imageSpec = do
     describe "Image" $ do
         prop "should parse image as Image" $
             \(imageSection :: ImageSection) -> do
-                let (Markdown content) = parseMarkdown imageSection
-                checkMaybe
+                checkMarkdown imageSection
                     (\blockContent -> isThumbnail blockContent)
-                    (headMaybe content)
+                    (\content -> headMaybe content)
         prop "should preserve its link" $
             \(imageSection :: ImageSection) -> do
-                let (Markdown content) = parseMarkdown imageSection
-                checkMaybe
+                checkMarkdown imageSection
                     (\(Url url) -> url == imageLink imageSection)
-                    (do
+                    (\content -> do
                         blockContent    <- headMaybe content
                         (Thumbnail url) <- getImage blockContent
                         return url
@@ -423,7 +405,7 @@ imageSpec = do
 
 -- | Typeclass in which is used to render given datatype into common markdown format.
 class CommonMarkdown a where
-    render     :: a -> Text
+    render :: a -> Text
 
 -- | Generate arbitrary Text
 -- this is needed as some characters like
@@ -444,6 +426,7 @@ genPrintableUrl = do
 parseMarkdown :: CommonMarkdown a => a -> Markdown
 parseMarkdown = commonmarkToMarkdown optDefault . render
 
--- Maybe not Bool but something else?
-checkMaybe :: (a -> Bool) -> Maybe a -> Bool
-checkMaybe pre mSomething = maybe False pre mSomething
+checkMarkdown :: (CommonMarkdown a) => a -> (b -> Bool) -> ([Block] -> Maybe b) -> Bool
+checkMarkdown markdown pre mSomething = do
+    let (Markdown content) = parseMarkdown markdown
+    maybe False pre (mSomething content)
