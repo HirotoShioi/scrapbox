@@ -198,3 +198,7 @@ isCodeNotation _                = False
 isBulletList :: Block -> Bool
 isBulletList (BulletList _) = True
 isBulletList _              = False
+
+isThumbnail :: Block -> Bool
+isThumbnail (Thumbnail _) = True
+isThumbnail _             = False
