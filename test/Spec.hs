@@ -3,7 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 import           RIO
-import           RIO.List              (headMaybe)
+import           RIO.List              (headMaybe, zipWith)
 import qualified RIO.Text              as T
 
 import           Test.Hspec            (Spec, describe, hspec)
@@ -11,12 +11,12 @@ import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
 
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
-import           Render                (renderContent, renderText)
+import           Render                (renderContent, renderText, renderBlock)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Context (..), HeaderSize (..),
                                         Markdown (..), ScrapText (..),
                                         Segment (..), isBlockQuote, isCodeBlock,
-                                        isCodeNotation, isHeader, isParagraph)
+                                        isCodeNotation, isHeader, isParagraph, isBulletList)
 
 main :: IO ()
 main = hspec $ do
@@ -29,6 +29,8 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     headerTextSpec
     blockQuoteSpec
     codeBlockSpec
+    unorderedListSpec
+    orderedListSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -297,6 +299,79 @@ codeBlockSpec = describe "Code block" $ do
     getCodeBlock :: Block -> Maybe Block
     getCodeBlock codeBlock@(CodeBlock _ _) = Just codeBlock
     getCodeBlock _                         = Nothing
+
+--------------------------------------------------------------------------------
+-- Unordered list
+--------------------------------------------------------------------------------
+
+newtype UnorderedList = UnorderedList
+    { getUnorderedList :: [Text]
+    } deriving Show
+
+instance CommonMarkdown UnorderedList where
+    render (UnorderedList list) = T.unlines $ map (\element -> "- " <> element) list
+
+instance Arbitrary UnorderedList where
+    arbitrary = UnorderedList <$> listOf1 genPrintableText
+
+unorderedListSpec :: Spec
+unorderedListSpec = describe "Unordered list" $ do
+    prop "should parse unordered list as BulletList" $
+        \(unorderedList :: UnorderedList) -> do
+            let (Markdown content) = parseMarkdown unorderedList
+            checkMaybe
+                (\blockContent -> isBulletList blockContent)
+                (headMaybe content)
+
+    prop "should preserve its content" $
+        \(unorderedList :: UnorderedList) -> do
+            let (Markdown content) = parseMarkdown unorderedList
+            checkMaybe
+                (\renderedTexts -> renderedTexts == (getUnorderedList unorderedList))
+                (do
+                    blockContent       <- headMaybe content
+                    (BulletList lists) <- getBulletList blockContent
+                    return $ concatMap renderBlock lists
+                )
+
+getBulletList :: Block -> Maybe Block
+getBulletList bulletList@(BulletList _) = Just bulletList
+getBulletList _                         = Nothing
+
+--------------------------------------------------------------------------------
+-- Ordered list
+--------------------------------------------------------------------------------
+
+newtype OrderedList = OrderedList
+    { getOrderedList :: [Text]
+    } deriving Show
+
+instance Arbitrary OrderedList where
+    arbitrary = OrderedList <$> listOf1 genPrintableText
+
+instance CommonMarkdown OrderedList where
+    render (OrderedList list) = T.unlines $ 
+        zipWith (\num someText -> tshow num <> ". " <> someText) [1..] list
+
+orderedListSpec :: Spec
+orderedListSpec = describe "Ordered list" $ do
+    prop "should parse ordered list as BulletList" $
+        \(orderedList :: OrderedList) -> do
+            let (Markdown content) = parseMarkdown orderedList
+            checkMaybe
+                (\blockContent -> isBulletList blockContent)
+                (headMaybe content)
+        
+    prop "should preserve its content" $
+        \(orderedList :: OrderedList) -> do
+            let (Markdown content) = parseMarkdown orderedList
+            checkMaybe
+                (\renderedTexts -> renderedTexts == (getOrderedList orderedList))
+                (do
+                    blockContent       <- headMaybe content
+                    (BulletList lists) <- getBulletList blockContent
+                    return $ concatMap renderBlock lists
+                )
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
