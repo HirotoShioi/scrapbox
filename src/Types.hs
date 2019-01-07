@@ -194,3 +194,7 @@ isParagraph _             = False
 isCodeNotation :: Segment -> Bool
 isCodeNotation (CodeNotation _) = True
 isCodeNotation _                = False
+
+isBulletList :: Block -> Bool
+isBulletList (BulletList _) = True
+isBulletList _              = False

@@ -7,6 +7,7 @@ module Render
     , renderRaw
     , writeMarkdown
     -- * For testing
+    , renderBlock
     , renderContent
     , renderText
     ) where
