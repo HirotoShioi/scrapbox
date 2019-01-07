@@ -309,7 +309,7 @@ newtype UnorderedList = UnorderedList
     } deriving Show
 
 instance CommonMarkdown UnorderedList where
-    render (UnorderedList bulletLists) = T.unlines $ map (\element -> "- " <> element) bulletLists
+    render (UnorderedList list) = T.unlines $ map (\element -> "- " <> element) list
 
 instance Arbitrary UnorderedList where
     arbitrary = UnorderedList <$> listOf1 genPrintableText
@@ -350,8 +350,8 @@ instance Arbitrary OrderedList where
     arbitrary = OrderedList <$> listOf1 genPrintableText
 
 instance CommonMarkdown OrderedList where
-    render (OrderedList lists) = T.unlines $ 
-        zipWith (\num someText -> tshow num <> ". " <> someText) [1..] lists
+    render (OrderedList list) = T.unlines $ 
+        zipWith (\num someText -> tshow num <> ". " <> someText) [1..] list
 
 orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
