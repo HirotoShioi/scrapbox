@@ -7,6 +7,7 @@ cache:
     - $HOME/.cabal/store
     - $HOME/.stack
     - $TRAVIS_BUILD_DIR/.stack-work
+    - $HOME/.nix-profile
 
 cabal: "2.4"
 env:
@@ -95,6 +96,8 @@ install:
       stack --numeric-version
       stack --hpack-numeric-version
       ghc --version
+
+      curl https://nixos.org/nix/install | sh
       ;;
   esac
   set +ex
