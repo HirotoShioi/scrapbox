@@ -98,6 +98,7 @@ install:
       ghc --version
 
       travis_retry curl https://nixos.org/nix/install | sh
+      . $HOME/.nix-profile/etc/profile.d/nix.sh
       ;;
   esac
   set +ex
