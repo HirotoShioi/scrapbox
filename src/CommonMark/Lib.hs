@@ -119,8 +119,8 @@ toBlocks (Node mPos nodeType contents) = case nodeType of
 
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
-    CUSTOM_INLINE onEnter onExit -> parseParagraph contents
-    CUSTOM_BLOCK onEnter onExit  -> parseParagraph contents
+    CUSTOM_INLINE _ _            -> parseParagraph contents
+    CUSTOM_BLOCK _ _             -> parseParagraph contents
     THEMATIC_BREAK               -> [paragraph [noStyle [text "\n"]]]
 
 -- | Convert 'Node' into list of 'Segment'
