@@ -202,3 +202,7 @@ isBulletList _              = False
 isThumbnail :: Block -> Bool
 isThumbnail (Thumbnail _) = True
 isThumbnail _             = False
+
+isTable :: Block -> Bool
+isTable (Table _ _) = True
+isTable _           = False

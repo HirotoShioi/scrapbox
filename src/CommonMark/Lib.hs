@@ -117,10 +117,11 @@ toBlocks (Node mPos nodeType contents) = case nodeType of
     HTML_INLINE htmlContent      -> [codeBlock "html" htmlContent]
     BLOCK_QUOTE                  -> [blockQuote $ concatMap toContext contents]
 
-    -- Need to investigate what these actually are
-    CUSTOM_INLINE onEnter onExit -> error $ "CUSTOM_INLINE not yet implemented: " <> show mPos
-    CUSTOM_BLOCK onEnter onExit  -> error $ "CUSTOM_BLOCK not yet implemented: " <> show mPos
-    THEMATIC_BREAK               -> error $ "THEMATIC not yet implemented: " <> show mPos
+    -- I have on idea what these are,
+    -- Use placeholder for now. Need to investigate what these actually are
+    CUSTOM_INLINE _ _            -> parseParagraph contents
+    CUSTOM_BLOCK _ _             -> parseParagraph contents
+    THEMATIC_BREAK               -> [paragraph [noStyle [text "\n"]]]
 
 -- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]

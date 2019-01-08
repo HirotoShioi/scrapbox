@@ -8,17 +8,18 @@ import qualified RIO.Text              as T
 
 import           Test.Hspec            (Spec, describe, hspec)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck       (Arbitrary (..), Gen, elements, listOf1)
+import           Test.QuickCheck       (Arbitrary (..), Gen, choose, elements,
+                                        listOf1, vectorOf)
 
 import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
 import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Context (..), HeaderSize (..),
                                         Markdown (..), ScrapText (..),
-                                        Segment (..), Url (..), isBlockQuote,
-                                        isBulletList, isCodeBlock,
-                                        isCodeNotation, isHeader, isParagraph,
-                                        isThumbnail)
+                                        Segment (..), TableContent (..),
+                                        Url (..), isBlockQuote, isBulletList,
+                                        isCodeBlock, isCodeNotation, isHeader,
+                                        isParagraph, isTable, isThumbnail)
 
 main :: IO ()
 main = hspec $ do
@@ -34,6 +35,7 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     unorderedListSpec
     orderedListSpec
     imageSpec
+    tableSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -53,9 +55,7 @@ paragraphSpec :: Spec
 paragraphSpec = describe "Paragraph" $ do
     prop "should be able to parse paragraph as Paragraph" $
         \(paragraph :: ParagraphSection) -> do
-            checkMarkdown paragraph
-                (\blockContent -> isParagraph blockContent)
-                (\content -> headMaybe content)
+            checkMarkdown paragraph isParagraph headMaybe
 
     prop "should preserve its content" $
         \(paragraph :: ParagraphSection) -> do
@@ -90,9 +90,7 @@ codeNotationSpec = do
     describe "Code notation" $ do
         prop "should be able to parser code section as CodeNotation" $
             \(codeNotation :: CodeNotationSegment) -> do
-                checkMarkdown codeNotation
-                    (\segment -> isCodeNotation segment)
-                    (getHeadSegment)
+                checkMarkdown codeNotation isCodeNotation getHeadSegment
 
         prop "should preserve its content" $
             \(codeNotation :: CodeNotationSegment) -> do
@@ -140,9 +138,7 @@ headerTextSpec :: Spec
 headerTextSpec = describe "Header text" $ do
     prop "should be able to parse header text as Header" $
         \(headerText :: HeaderText) -> do
-            checkMarkdown headerText
-                (\blockContent -> isHeader blockContent)
-                (\content -> headMaybe content)
+            checkMarkdown headerText isHeader headMaybe
 
     prop "should preserve header size" $
         \(headerText :: HeaderText) -> do
@@ -226,9 +222,7 @@ blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
     prop "should be able parse block quote text as BlockQuote" $
         \(blockQuote :: BlockQuoteText) -> do
-            checkMarkdown blockQuote
-                (\blockContent -> isBlockQuote blockContent)
-                (\content -> headMaybe content)
+            checkMarkdown blockQuote isBlockQuote headMaybe
 
     prop "should preserve its content" $
         \(blockQuote :: BlockQuoteText) -> do
@@ -274,9 +268,7 @@ codeBlockSpec :: Spec
 codeBlockSpec = describe "Code block" $ do
     prop "should parse code block content as CodeBlock" $
         \(codeBlock :: CodeBlockSection) -> do
-            checkMarkdown codeBlock
-                (\blockContent -> isCodeBlock blockContent)
-                (\content -> headMaybe content)
+            checkMarkdown codeBlock isCodeBlock headMaybe
     prop "should preserve its content" $
         \(codeBlock :: CodeBlockSection) -> do
             checkMarkdown codeBlock
@@ -309,9 +301,7 @@ unorderedListSpec :: Spec
 unorderedListSpec = describe "Unordered list" $ do
     prop "should parse unordered list as BulletList" $
         \(unorderedList :: UnorderedList) -> do
-            checkMarkdown unorderedList
-                (\blockContent -> isBulletList blockContent)
-                (\content -> headMaybe content)
+            checkMarkdown unorderedList isBulletList headMaybe
 
     prop "should preserve its content" $
         \(unorderedList :: UnorderedList) -> do
@@ -346,9 +336,7 @@ orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
     prop "should parse ordered list as BulletList" $
         \(orderedList :: OrderedList) -> do
-            checkMarkdown orderedList
-                (\blockContent -> isBulletList blockContent)
-                (\content -> headMaybe content)
+            checkMarkdown orderedList isBulletList headMaybe
 
     prop "should preserve its content" $
         \(orderedList :: OrderedList) -> do
@@ -382,9 +370,7 @@ imageSpec = do
     describe "Image" $ do
         prop "should parse image as Image" $
             \(imageSection :: ImageSection) -> do
-                checkMarkdown imageSection
-                    (\blockContent -> isThumbnail blockContent)
-                    (\content -> headMaybe content)
+                checkMarkdown imageSection isThumbnail headMaybe
         prop "should preserve its link" $
             \(imageSection :: ImageSection) -> do
                 checkMarkdown imageSection
@@ -398,6 +384,56 @@ imageSpec = do
     getImage :: Block -> Maybe Block
     getImage thumbnail@(Thumbnail _) = Just thumbnail
     getImage _                       = Nothing
+
+--------------------------------------------------------------------------------
+-- Table
+--------------------------------------------------------------------------------
+
+data TableSection = TableSection
+    { tableHeader  :: ![Text]
+    , tableContent :: ![[Text]]
+    } deriving Show
+
+instance CommonMarkdown TableSection where
+    render (TableSection header contents) = do
+        let renderedHeader   = renderColumn header
+        let between          = renderBetween' (length header)
+        let renderedContents = renderTableContent contents
+        T.unlines $ [renderedHeader] <> [between] <> renderedContents
+      where
+        renderColumn :: [Text] -> Text
+        renderColumn contents' = foldl' (\acc a -> acc <> a <> " | ") "| " contents'
+
+        renderBetween' :: Int -> Text
+        renderBetween' rowNum' = T.replicate rowNum' "|- " <> "|"
+
+        renderTableContent :: [[Text]] -> [Text]
+        renderTableContent tables = map renderColumn tables
+
+instance Arbitrary TableSection where
+    arbitrary = do
+        rowNum   <- choose (2,10)
+        header   <- vectorOf rowNum genRandomText
+        contents <- listOf1 $ vectorOf rowNum genRandomText
+        return $ TableSection header contents
+
+tableSpec :: Spec
+tableSpec = describe "Table" $ do
+    prop "should parse tabel as Table" $
+        \(table :: TableSection) -> checkMarkdown table isTable headMaybe
+    prop "should preserve its content" $
+        \(table :: TableSection) -> do
+            checkMarkdown table
+                (\(TableContent contents) -> contents == [tableHeader table] <> tableContent table)
+                (\content -> do
+                    blockContent     <- headMaybe content
+                    (Table _ tables) <- getTable blockContent
+                    return tables
+                )
+  where
+    getTable :: Block -> Maybe Block
+    getTable table@(Table _ _) = Just table
+    getTable _                 = Nothing
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
