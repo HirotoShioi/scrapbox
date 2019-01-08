@@ -97,7 +97,7 @@ parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node
 -- Others like STRONG and TEXT have PARAGRAPH as an parent node so it is very important
 -- that the toContext is implemented correctly.
 toBlocks :: Node -> [Block]
-toBlocks (Node mPos nodeType contents) = case nodeType of
+toBlocks (Node _ nodeType contents) = case nodeType of
     PARAGRAPH                    -> parseParagraph contents
     DOCUMENT                     -> concatMap toBlocks contents
     HEADING headerNum            -> [toHeader headerNum contents]
