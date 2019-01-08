@@ -68,9 +68,6 @@ install:
 - |
   set -ex
   case "$BUILD" in
-    style)
-      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s -- --version
-      ;;
     cabal)
       mkdir -p $HOME/.cabal/bin
       
@@ -103,9 +100,6 @@ script:
 - |
   set -ex
   case "$BUILD" in
-    style)
-      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s .
-      ;;
     cabal)
       cabal new-update
       cabal new-test all
