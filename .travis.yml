@@ -97,7 +97,7 @@ install:
       stack --hpack-numeric-version
       ghc --version
 
-      curl https://nixos.org/nix/install | sh
+      travis_retry curl https://nixos.org/nix/install | sh
       ;;
   esac
   set +ex
