@@ -390,40 +390,32 @@ imageSpec = do
 --------------------------------------------------------------------------------
 
 data TableSection = TableSection
-    { tableRow     :: !Int
-    , tableHeader  :: ![Text]
+    { tableHeader  :: ![Text]
     , tableContent :: ![[Text]]
     } deriving Show
 
 instance CommonMarkdown TableSection where
-    render (TableSection rowNum header contents) = do
+    render (TableSection header contents) = do
         let renderedHeader   = renderColumn header
-        let between          = renderBetween rowNum
+        let between          = renderBetween' (length header)
         let renderedContents = renderTableContent contents
         T.unlines $ [renderedHeader] <> [between] <> renderedContents
       where
         renderColumn :: [Text] -> Text
-        renderColumn contents' = go "| " contents'
-        go :: Text -> [Text] -> Text
-        go curr []     = curr
-        go curr [n]    = go (curr <> n <> " | ") []
-        go curr (a:as) = go (curr <> a <> " | ")  as
+        renderColumn contents' = foldl' (\acc a -> acc <> a <> " | ") "| " contents'
 
-        renderBetween :: Int -> Text
-        renderBetween rowNum' = go' "|- " rowNum'
-        go' :: Text -> Int -> Text
-        go' curr 1   = curr <> " |"
-        go' curr num = go' (curr <> " |- ") (num - 1)
+        renderBetween' :: Int -> Text
+        renderBetween' rowNum' = T.replicate rowNum' "|- " <> "|"
 
         renderTableContent :: [[Text]] -> [Text]
         renderTableContent tables = map renderColumn tables
 
 instance Arbitrary TableSection where
     arbitrary = do
-        rowNum <- choose (1,3)
-        header <- vectorOf rowNum genRandomText
+        rowNum   <- choose (2,10)
+        header   <- vectorOf rowNum genRandomText
         contents <- listOf1 $ vectorOf rowNum genRandomText
-        return $ TableSection rowNum header contents
+        return $ TableSection header contents
 
 tableSpec :: Spec
 tableSpec = describe "Table" $ do
