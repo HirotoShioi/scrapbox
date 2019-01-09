@@ -16,11 +16,12 @@ import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Context (..), HeaderSize (..),
                                         Markdown (..), ScrapText (..),
-                                        Segment (..), TableContent (..),
-                                        Url (..), isBlockQuote, isBulletList,
-                                        isCodeBlock, isCodeNotation, isHeader,
-                                        isLink, isParagraph, isTable,
-                                        isThumbnail, isSimpleText)
+                                        Segment (..), Style (..),
+                                        TableContent (..), Url (..),
+                                        isBlockQuote, isBulletList, isCodeBlock,
+                                        isCodeNotation, isHeader, isLink,
+                                        isParagraph, isSimpleText, isTable,
+                                        isThumbnail)
 
 main :: IO ()
 main = hspec $ do
@@ -42,6 +43,9 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     linkSpec
     codeNotationSpec
     plainTextSpec
+
+    -- Style
+    boldTextSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -491,7 +495,7 @@ instance Arbitrary SimpleTextSegment where
 plainTextSpec :: Spec
 plainTextSpec = describe "Plain text" $ do
     prop "should parse plain text as SimpleText" $
-        \(simpleTextSegment :: SimpleTextSegment) -> 
+        \(simpleTextSegment :: SimpleTextSegment) ->
             checkMarkdown simpleTextSegment isSimpleText getHeadSegment
 
     prop "should preserve its content" $
@@ -509,6 +513,40 @@ plainTextSpec = describe "Plain text" $ do
     getSimpleText :: Segment -> Maybe Segment
     getSimpleText simpleTextSegment@(SimpleText _) = Just simpleTextSegment
     getSimpleText _                                = Nothing
+
+----------------------------------------------------------------------------------------------------
+-- Styles
+----------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- Bold text
+--------------------------------------------------------------------------------
+
+newtype BoldText = BoldText {
+    getBoldText :: Text
+    } deriving Show
+
+instance CommonMarkdown BoldText where
+    render (BoldText txt) = "**" <> txt <> "**"
+
+instance Arbitrary BoldText where
+    arbitrary = BoldText <$> genPrintableText
+
+boldTextSpec :: Spec
+boldTextSpec = describe "Bold text" $ do
+    prop "should parse bold text as Bold" $
+        \(boldText :: BoldText) ->
+            checkMarkdown boldText (\(Context style _) -> style == Bold) getHeadContext
+    prop "should preserve its content" $
+        \(boldText :: BoldText) ->
+            checkMarkdown boldText
+                (\(SimpleText txt) -> txt == getBoldText boldText)
+                (\content -> do
+                    segment <- getHeadSegment content
+                    if isSimpleText segment
+                        then Just segment
+                        else Nothing
+                )
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -541,7 +579,7 @@ parseMarkdown = commonmarkToMarkdown optDefault . render
 
 -- | General function used to test if given 'CommonMarkdown' can be properly parsed
 -- and extract the expected element
-checkMarkdown :: (CommonMarkdown a) 
+checkMarkdown :: (CommonMarkdown a)
               => a
               -> (parsedContent -> Bool)
               -> ([Block] -> Maybe parsedContent)
@@ -549,6 +587,12 @@ checkMarkdown :: (CommonMarkdown a)
 checkMarkdown markdown pre extractionFunc = do
     let (Markdown content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
+
+getHeadContext :: [Block] -> Maybe Context
+getHeadContext blocks = do
+    blockContent                 <- headMaybe blocks
+    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+    headMaybe ctxs
 
 -- | Extract heed segment of a given list of blocks
 getHeadSegment :: [Block] -> Maybe Segment
