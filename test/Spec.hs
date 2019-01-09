@@ -28,6 +28,7 @@ main = hspec $ do
 
 commonMarkSpec :: Spec
 commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
+    -- Blocks
     paragraphSpec
     headerTextSpec
     blockQuoteSpec
@@ -36,6 +37,7 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     orderedListSpec
     imageSpec
     tableSpec
+    -- Segments
     linkSpec
     codeNotationSpec
 
@@ -488,10 +490,14 @@ genPrintableUrl = do
 parseMarkdown :: CommonMarkdown a => a -> Markdown
 parseMarkdown = commonmarkToMarkdown optDefault . render
 
-checkMarkdown :: (CommonMarkdown a) => a -> (b -> Bool) -> ([Block] -> Maybe b) -> Bool
-checkMarkdown markdown pre mSomething = do
+checkMarkdown :: (CommonMarkdown a) 
+              => a
+              -> (parsedContent -> Bool)
+              -> ([Block] -> Maybe parsedContent)
+              -> Bool
+checkMarkdown markdown pre extractionFunc = do
     let (Markdown content) = parseMarkdown markdown
-    maybe False pre (mSomething content)
+    maybe False pre (extractionFunc content)
 
 getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
