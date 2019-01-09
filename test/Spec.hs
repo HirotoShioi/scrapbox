@@ -20,7 +20,7 @@ import           Types                 (Block (..), CodeSnippet (..),
                                         Url (..), isBlockQuote, isBulletList,
                                         isCodeBlock, isCodeNotation, isHeader,
                                         isLink, isParagraph, isTable,
-                                        isThumbnail)
+                                        isThumbnail, isSimpleText)
 
 main :: IO ()
 main = hspec $ do
@@ -37,9 +37,11 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     orderedListSpec
     imageSpec
     tableSpec
+
     -- Segments
     linkSpec
     codeNotationSpec
+    plainTextSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -427,7 +429,7 @@ linkSpec = describe "Links" $ do
                     getLink segment
                 )
     prop "should not have any other segments except for code section" $
-        \(linkSegment :: LinkSegment) -> segmentTest linkSegment
+        \(linkSegment :: LinkSegment) -> testSegment linkSegment
   where
     getLink :: Segment -> Maybe Segment
     getLink linkSegment@(Link _ _) = Just linkSegment
@@ -465,11 +467,48 @@ codeNotationSpec = do
                         return codeText
                     )
         prop "should not have any other segments except for code section" $
-            \(codeNotation :: CodeNotationSegment) -> segmentTest codeNotation
+            \(codeNotation :: CodeNotationSegment) -> testSegment codeNotation
   where
     getCodeNotationText :: Segment -> Maybe Segment
     getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
     getCodeNotationText _                             = Nothing
+
+--------------------------------------------------------------------------------
+-- SimpleText segment
+--------------------------------------------------------------------------------
+
+-- | Simple text segment
+newtype SimpleTextSegment = SimpleTextSegment {
+    getSimpleTextSegment :: Text
+    } deriving Show
+
+instance CommonMarkdown SimpleTextSegment where
+    render (SimpleTextSegment txt) = txt
+
+instance Arbitrary SimpleTextSegment where
+    arbitrary = SimpleTextSegment <$> genPrintableText
+
+plainTextSpec :: Spec
+plainTextSpec = describe "Plain text" $ do
+    prop "should parse plain text as SimpleText" $
+        \(simpleTextSegment :: SimpleTextSegment) -> 
+            checkMarkdown simpleTextSegment isSimpleText getHeadSegment
+
+    prop "should preserve its content" $
+        \(simpleTextSegment :: SimpleTextSegment) ->
+            checkMarkdown simpleTextSegment
+            (\(SimpleText txt) -> txt == getSimpleTextSegment simpleTextSegment)
+            (\content -> do
+                segment                 <- getHeadSegment content
+                getSimpleText segment
+            )
+
+    prop "should not have any other segments except for plain text" $
+        \(simpleTextSegment :: SimpleTextSegment) -> testSegment simpleTextSegment
+  where
+    getSimpleText :: Segment -> Maybe Segment
+    getSimpleText simpleTextSegment@(SimpleText _) = Just simpleTextSegment
+    getSimpleText _                                = Nothing
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -521,8 +560,8 @@ getHeadSegment blocks = do
     return segment
 
 -- | General test case to check whether the segment was parsed properly
-segmentTest :: (CommonMarkdown section) => section -> Bool
-segmentTest someSegment = do
+testSegment :: (CommonMarkdown section) => section -> Bool
+testSegment someSegment = do
     checkMarkdown someSegment
         (\(content', ctxs, segments) ->
             and [ length content' == 1
