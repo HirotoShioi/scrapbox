@@ -389,6 +389,7 @@ tableSpec = describe "Table" $ do
 -- Link
 --------------------------------------------------------------------------------
 
+-- | Link segment
 data LinkSegment = LinkSegment
     { linkName :: !Text
     , linkUrl  :: !Text
@@ -430,6 +431,7 @@ linkSpec = describe "Links" $ do
 -- CodeNotation
 --------------------------------------------------------------------------------
 
+-- | Code notation segment
 newtype CodeNotationSegment = CodeNotationSegment
     { getCodeNotationSegment :: Text
     } deriving Show
@@ -477,9 +479,11 @@ class CommonMarkdown a where
 genPrintableText :: Gen Text
 genPrintableText = T.unwords <$> listOf1 genRandomText
 
+-- | Generate random text
 genRandomText :: Gen Text
 genRandomText = (fmap fromString) <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
+-- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
     end        <- elements [".org", ".edu", ".com", ".co.jp"]
@@ -490,6 +494,8 @@ genPrintableUrl = do
 parseMarkdown :: CommonMarkdown a => a -> Markdown
 parseMarkdown = commonmarkToMarkdown optDefault . render
 
+-- | General function used to test if given 'CommonMarkdown' can be properly parsed
+-- and extract the expected element
 checkMarkdown :: (CommonMarkdown a) 
               => a
               -> (parsedContent -> Bool)
@@ -499,6 +505,7 @@ checkMarkdown markdown pre extractionFunc = do
     let (Markdown content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
 
+-- | Extract heed segment of a given list of blocks
 getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
     blockContent                 <- headMaybe blocks
@@ -507,6 +514,7 @@ getHeadSegment blocks = do
     segment                      <- headMaybe segments
     return segment
 
+-- | General test case to check whether the segment was parsed properly
 segmentTest :: (CommonMarkdown section) => section -> Bool
 segmentTest someSegment = do
     checkMarkdown someSegment
