@@ -57,14 +57,15 @@ renderBlock = \case
     Table tableName tableContent       -> renderTable tableName tableContent <> renderBlock LineBreak
     Thumbnail (Url url)                -> [blocked url]
 
--- | render given 'ScrapText' into text
+-- | render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
 renderText (ScrapText ctxs) = foldr (\scrap acc-> renderScrapText scrap <> acc) mempty ctxs
 
--- | render given 'Scrap' into text
+-- | render given 'Context' into 'Text'
 renderScrapText :: Context -> Text
 renderScrapText (Context style content) = renderWithStyle style content
 
+-- | render given 'Content' to 'Text'
 renderContent :: Content -> Text
 renderContent ctxs = foldr (\ctx acc -> renderSegment ctx <> acc) mempty ctxs
   where
@@ -76,14 +77,14 @@ renderContent ctxs = foldr (\ctx acc -> renderSegment ctx <> acc) mempty ctxs
         Link Nothing (Url url)         -> blocked url
         SimpleText text                -> text
 
--- | render 'CodeBlock'
+-- | Render 'CodeBlock'
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
     let codeContent = map (\line -> " " <> line) (T.lines code)
     [codeName] <> codeContent
 
--- | render an table
+-- | Render 'Table'
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
@@ -128,7 +129,7 @@ renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
             ]
     in blocked $ combinedSyntax <> (renderContent content)
 
--- | render header
+-- | Render header
 renderHeader :: HeaderSize -> Content -> Text
 renderHeader (HeaderSize headerSize) content =
     let style = StyleData headerSize False False False

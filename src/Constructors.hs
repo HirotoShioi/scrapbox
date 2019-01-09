@@ -40,6 +40,7 @@ import           Types (Block (..), BulletSize (..), CodeName (..),
 -- Smart constructors
 --------------------------------------------------------------------------------
 
+-- | Constructors for creating Markdown with given list of 'Block'
 markdown :: [Block] -> Markdown
 markdown = Markdown
 
@@ -47,33 +48,43 @@ markdown = Markdown
 -- Block
 --------------------------------------------------------------------------------
 
+-- | Constructors for creating 'BlockQuote'
 blockQuote :: [Context] -> Block
 blockQuote = BlockQuote . ScrapText
 
+-- | Constructors for creating 'BulletList' with given list of 'Block'
 bulletList :: [Block] -> Block
 bulletList = BulletList
 
+-- | Constructors for creating 'CodeBlock' block
 codeBlock :: Text -> Text -> Block
 codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet codeSnippet)
 
+-- | Constructors for creating 'Paragraph' block
 paragraph :: [Context] -> Block
 paragraph = Paragraph . ScrapText
 
+-- | Synonym of paragraph function
 p :: [Context] -> Block
 p = paragraph
 
+-- | Constructors for creating table block
 table :: Text -> [[Text]] -> Block
 table title contents = Table (TableName title) (TableContent contents)
 
+-- | Constructors for creating thumbnail with given Url
 thumbnail :: Text -> Block
 thumbnail url = Thumbnail (Url url)
 
+-- | Constructors for creating Header with given Header size and content
 header :: Int -> Content -> Block
 header size contents = Header (HeaderSize size) contents
 
+-- | Constructors for creating BulletPoint block with given size and content
 bulletPoint :: Int -> [Context] -> Block
 bulletPoint size ctxs = BulletPoint (BulletSize size) (ScrapText ctxs)
 
+-- | LineBreak
 lineBreak :: Block
 lineBreak = LineBreak
 
@@ -81,21 +92,27 @@ lineBreak = LineBreak
 -- Context
 --------------------------------------------------------------------------------
 
+-- | Create context wigh given 'Style' and 'Content'
 context :: Style -> Content -> Context
 context = Context
 
+-- | Creates 'Context' with no style
 noStyle :: [Segment] -> Context
 noStyle segments = Context NoStyle segments
 
+-- | Create 'Context' with bold style
 bold :: [Segment] -> Context
 bold segments = Context Bold segments
 
+-- | Creates 'Context' with italic style
 italic :: [Segment] -> Context
 italic segments = Context Italic segments
 
+-- | Creates 'Context' with strikethrough style
 strikeThrough :: [Segment] -> Context
 strikeThrough segments = Context StrikeThrough segments
 
+-- | Creates Context wigh given 'StyleData' and 'Segment'
 customStyle :: StyleData -> [Segment] -> Context
 customStyle sData segments = Context (CustomStyle sData) segments
 
@@ -103,17 +120,22 @@ customStyle sData segments = Context (CustomStyle sData) segments
 -- Segment
 --------------------------------------------------------------------------------
 
+-- | Creates SimpleText segment with given text
 text :: Text -> Segment
 text = SimpleText
 
+-- | Creates CodeNotation segment with given text
 codeNotation :: Text -> Segment
 codeNotation = CodeNotation
 
+-- | Creates HashTag segment with given text
 hashtag :: Text -> Segment
 hashtag = HashTag
 
+-- | Creates link with given name and url
 link :: Maybe Text -> Text -> Segment
 link mName url = Link mName (Url url)
 
+-- | Creates 'StyleData' with given params
 styleData :: Int -> Bool -> Bool -> Bool -> StyleData
 styleData = StyleData

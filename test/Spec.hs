@@ -19,7 +19,8 @@ import           Types                 (Block (..), CodeSnippet (..),
                                         Segment (..), TableContent (..),
                                         Url (..), isBlockQuote, isBulletList,
                                         isCodeBlock, isCodeNotation, isHeader,
-                                        isParagraph, isTable, isThumbnail)
+                                        isLink, isParagraph, isTable,
+                                        isThumbnail)
 
 main :: IO ()
 main = hspec $ do
@@ -27,8 +28,8 @@ main = hspec $ do
 
 commonMarkSpec :: Spec
 commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
+    -- Blocks
     paragraphSpec
-    codeNotationSpec
     headerTextSpec
     blockQuoteSpec
     codeBlockSpec
@@ -36,11 +37,15 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     orderedListSpec
     imageSpec
     tableSpec
+    -- Segments
+    linkSpec
+    codeNotationSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
 --------------------------------------------------------------------------------
 
+-- | Paragraph section
 newtype ParagraphSection = ParagraphSection {
     getParagraphSection :: Text
     } deriving Show
@@ -72,66 +77,49 @@ getParagraph paragraph@(Paragraph _) = Just paragraph
 getParagraph _                       = Nothing
 
 --------------------------------------------------------------------------------
--- CodeNotation
---------------------------------------------------------------------------------
-
-newtype CodeNotationSegment = CodeNotationSegment
-    { getCodeNotationSegment :: Text
-    } deriving Show
-
-instance CommonMarkdown CodeNotationSegment where
-    render (CodeNotationSegment txt) = "`" <> txt <> "`"
-
-instance Arbitrary CodeNotationSegment where
-    arbitrary = CodeNotationSegment <$> genPrintableText
-
-codeNotationSpec :: Spec
-codeNotationSpec = do
-    describe "Code notation" $ do
-        prop "should be able to parser code section as CodeNotation" $
-            \(codeNotation :: CodeNotationSegment) -> do
-                checkMarkdown codeNotation isCodeNotation getHeadSegment
-
-        prop "should preserve its content" $
-            \(codeNotation :: CodeNotationSegment) -> do
-                checkMarkdown codeNotation
-                    (\codeText -> codeText == getCodeNotationSegment codeNotation)
-                    (\content -> do
-                        segment                 <- getHeadSegment content
-                        (CodeNotation codeText) <- getCodeNotationText segment
-                        return codeText
-                    )
-        prop "should not have any other segments except for code section" $
-            \(codeNotation :: CodeNotationSegment) -> do
-                checkMarkdown codeNotation
-                    (\(content', ctxs, segments) ->
-                        and [ length content' == 1
-                            , length ctxs     == 1
-                            , length segments == 1
-                            ]
-                    )
-                    (\content -> do
-                        blockContent                 <- headMaybe content
-                        (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-                        (Context _ segments)         <- headMaybe ctxs
-                        return (content, ctxs, segments)
-                    )
-  where
-    getCodeNotationText :: Segment -> Maybe Segment
-    getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
-    getCodeNotationText _                             = Nothing
-
-getHeadSegment :: [Block] -> Maybe Segment
-getHeadSegment blocks = do
-    blockContent                 <- headMaybe blocks
-    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-    (Context _ segments)         <- headMaybe ctxs
-    segment                      <- headMaybe segments
-    return segment
-
---------------------------------------------------------------------------------
 -- Header
 --------------------------------------------------------------------------------
+
+-- | Header text
+data HeaderText
+    = H1 Text
+    | H2 Text
+    | H3 Text
+    | H4 Text
+    | H5 Text
+    | H6 Text
+    deriving Show
+
+-- | Get the content of the 'HeaderText'
+getHeaderTextContent :: HeaderText -> Text
+getHeaderTextContent = \case
+    H1 txt -> txt
+    H2 txt -> txt
+    H3 txt -> txt
+    H4 txt -> txt
+    H5 txt -> txt
+    H6 txt -> txt
+
+instance Arbitrary HeaderText where
+    arbitrary = do
+        someText <- genPrintableText
+        elements
+            [ H1 someText
+            , H2 someText
+            , H3 someText
+            , H4 someText
+            , H5 someText
+            , H6 someText
+            ]
+
+instance CommonMarkdown HeaderText where
+    render = \case
+        H1 textContent -> "# " <> textContent
+        H2 textContent -> "## " <> textContent
+        H3 textContent -> "### " <> textContent
+        H4 textContent -> "#### " <> textContent
+        H5 textContent -> "##### " <> textContent
+        H6 textContent -> "###### " <> textContent
 
 -- | Test spec for Header text
 headerTextSpec :: Spec
@@ -173,50 +161,20 @@ headerTextSpec = describe "Header text" $ do
     isSameHeaderSize (HeaderSize 1) (H6 _) = True
     isSameHeaderSize _ _                   = False
 
--- | Data type for common mark Header
-data HeaderText
-    = H1 Text
-    | H2 Text
-    | H3 Text
-    | H4 Text
-    | H5 Text
-    | H6 Text
-    deriving Show
-
--- | Get the content of the 'HeaderText'
-getHeaderTextContent :: HeaderText -> Text
-getHeaderTextContent = \case
-    H1 txt -> txt
-    H2 txt -> txt
-    H3 txt -> txt
-    H4 txt -> txt
-    H5 txt -> txt
-    H6 txt -> txt
-
-instance Arbitrary HeaderText where
-    arbitrary = do
-        someText <- genPrintableText
-        elements
-            [ H1 someText
-            , H2 someText
-            , H3 someText
-            , H4 someText
-            , H5 someText
-            , H6 someText
-            ]
-
-instance CommonMarkdown HeaderText where
-    render = \case
-        H1 textContent -> "# " <> textContent
-        H2 textContent -> "## " <> textContent
-        H3 textContent -> "### " <> textContent
-        H4 textContent -> "#### " <> textContent
-        H5 textContent -> "##### " <> textContent
-        H6 textContent -> "###### " <> textContent
-
 --------------------------------------------------------------------------------
 -- BlockQuote
 --------------------------------------------------------------------------------
+
+-- | Blockquote
+newtype BlockQuoteText = BlockQuoteText
+    { getBlockQuoteText :: Text
+    } deriving Show
+
+instance CommonMarkdown BlockQuoteText where
+    render (BlockQuoteText txt) = ">" <> txt
+
+instance Arbitrary BlockQuoteText where
+    arbitrary = BlockQuoteText <$> genPrintableText
 
 blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
@@ -239,21 +197,11 @@ blockQuoteSpec = describe "BlockQuote text" $ do
     getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
     getBlockQuote _                         = Nothing
 
-
-newtype BlockQuoteText = BlockQuoteText
-    { getBlockQuoteText :: Text
-    } deriving Show
-
-instance CommonMarkdown BlockQuoteText where
-    render (BlockQuoteText txt) = ">" <> txt
-
-instance Arbitrary BlockQuoteText where
-    arbitrary = BlockQuoteText <$> genPrintableText
-
 --------------------------------------------------------------------------------
 -- CodeBlock
 --------------------------------------------------------------------------------
 
+-- | Codeblock section
 newtype CodeBlockSection = CodeBlockSection
     { getCodeBlockContent :: [Text]
     } deriving Show
@@ -287,6 +235,7 @@ codeBlockSpec = describe "Code block" $ do
 -- Unordered list
 --------------------------------------------------------------------------------
 
+-- | Unordered list
 newtype UnorderedList = UnorderedList
     { getUnorderedList :: [Text]
     } deriving Show
@@ -321,6 +270,7 @@ getBulletList _                         = Nothing
 -- Ordered list
 --------------------------------------------------------------------------------
 
+-- | OrderedList
 newtype OrderedList = OrderedList
     { getOrderedList :: [Text]
     } deriving Show
@@ -352,6 +302,7 @@ orderedListSpec = describe "Ordered list" $ do
 -- Images
 --------------------------------------------------------------------------------
 
+-- | Image section
 data ImageSection = ImageSection
     { imageTitle :: !Text
     , imageLink  :: !ImageLink
@@ -389,6 +340,7 @@ imageSpec = do
 -- Table
 --------------------------------------------------------------------------------
 
+-- | Table section
 data TableSection = TableSection
     { tableHeader  :: ![Text]
     , tableContent :: ![[Text]]
@@ -435,6 +387,90 @@ tableSpec = describe "Table" $ do
     getTable table@(Table _ _) = Just table
     getTable _                 = Nothing
 
+----------------------------------------------------------------------------------------------------
+-- Segments
+----------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- Link
+--------------------------------------------------------------------------------
+
+-- | Link segment
+data LinkSegment = LinkSegment
+    { linkName :: !Text
+    , linkUrl  :: !Text
+    } deriving Show
+
+instance CommonMarkdown LinkSegment where
+    render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
+
+instance Arbitrary LinkSegment where
+    arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
+
+linkSpec :: Spec
+linkSpec = describe "Links" $ do
+    prop "should parse link as Link" $
+        \(linkSegment :: LinkSegment) -> do
+            checkMarkdown linkSegment isLink getHeadSegment
+
+    prop "should preserve its content" $
+        \(linkSegment :: LinkSegment) -> do
+            checkMarkdown linkSegment
+                (\(Link mName (Url url)) ->
+                    and
+                        [ url == linkUrl linkSegment
+                        , maybe False (\name -> name == linkName linkSegment) mName
+                        ]
+                )
+                (\content -> do
+                    segment <- getHeadSegment content
+                    getLink segment
+                )
+    prop "should not have any other segments except for code section" $
+        \(linkSegment :: LinkSegment) -> segmentTest linkSegment
+  where
+    getLink :: Segment -> Maybe Segment
+    getLink linkSegment@(Link _ _) = Just linkSegment
+    getLink _                      = Nothing
+
+--------------------------------------------------------------------------------
+-- CodeNotation
+--------------------------------------------------------------------------------
+
+-- | Code notation segment
+newtype CodeNotationSegment = CodeNotationSegment
+    { getCodeNotationSegment :: Text
+    } deriving Show
+
+instance CommonMarkdown CodeNotationSegment where
+    render (CodeNotationSegment txt) = "`" <> txt <> "`"
+
+instance Arbitrary CodeNotationSegment where
+    arbitrary = CodeNotationSegment <$> genPrintableText
+
+codeNotationSpec :: Spec
+codeNotationSpec = do
+    describe "Code notation" $ do
+        prop "should be able to parser code section as CodeNotation" $
+            \(codeNotation :: CodeNotationSegment) -> do
+                checkMarkdown codeNotation isCodeNotation getHeadSegment
+
+        prop "should preserve its content" $
+            \(codeNotation :: CodeNotationSegment) -> do
+                checkMarkdown codeNotation
+                    (\codeText -> codeText == getCodeNotationSegment codeNotation)
+                    (\content -> do
+                        segment                 <- getHeadSegment content
+                        (CodeNotation codeText) <- getCodeNotationText segment
+                        return codeText
+                    )
+        prop "should not have any other segments except for code section" $
+            \(codeNotation :: CodeNotationSegment) -> segmentTest codeNotation
+  where
+    getCodeNotationText :: Segment -> Maybe Segment
+    getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
+    getCodeNotationText _                             = Nothing
+
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
@@ -449,9 +485,11 @@ class CommonMarkdown a where
 genPrintableText :: Gen Text
 genPrintableText = T.unwords <$> listOf1 genRandomText
 
+-- | Generate random text
 genRandomText :: Gen Text
 genRandomText = (fmap fromString) <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
+-- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
     end        <- elements [".org", ".edu", ".com", ".co.jp"]
@@ -462,7 +500,39 @@ genPrintableUrl = do
 parseMarkdown :: CommonMarkdown a => a -> Markdown
 parseMarkdown = commonmarkToMarkdown optDefault . render
 
-checkMarkdown :: (CommonMarkdown a) => a -> (b -> Bool) -> ([Block] -> Maybe b) -> Bool
-checkMarkdown markdown pre mSomething = do
+-- | General function used to test if given 'CommonMarkdown' can be properly parsed
+-- and extract the expected element
+checkMarkdown :: (CommonMarkdown a) 
+              => a
+              -> (parsedContent -> Bool)
+              -> ([Block] -> Maybe parsedContent)
+              -> Bool
+checkMarkdown markdown pre extractionFunc = do
     let (Markdown content) = parseMarkdown markdown
-    maybe False pre (mSomething content)
+    maybe False pre (extractionFunc content)
+
+-- | Extract heed segment of a given list of blocks
+getHeadSegment :: [Block] -> Maybe Segment
+getHeadSegment blocks = do
+    blockContent                 <- headMaybe blocks
+    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+    (Context _ segments)         <- headMaybe ctxs
+    segment                      <- headMaybe segments
+    return segment
+
+-- | General test case to check whether the segment was parsed properly
+segmentTest :: (CommonMarkdown section) => section -> Bool
+segmentTest someSegment = do
+    checkMarkdown someSegment
+        (\(content', ctxs, segments) ->
+            and [ length content' == 1
+                , length ctxs     == 1
+                , length segments == 1
+                ]
+        )
+        (\content -> do
+            blockContent                 <- headMaybe content
+            (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+            (Context _ segments)         <- headMaybe ctxs
+            return (content, ctxs, segments)
+        )
