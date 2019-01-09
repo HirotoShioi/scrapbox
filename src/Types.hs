@@ -14,11 +14,12 @@ import           Data.List    (groupBy)
 -- | Data structure of an scrapbox page in JSON format
 data Page = Page
     { pContent :: !Markdown
+    -- ^ Content of the page
     , pTitle   :: !Text
+    -- ^ Title
     } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Markdown consist of list of 'Blocks'
--- Need title!
 newtype Markdown = Markdown [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -26,24 +27,31 @@ newtype Markdown = Markdown [Block]
 -- Elements that are used in Block
 --------------------------------------------------------------------------------
 
+-- | Size of bullet point
 newtype BulletSize = BulletSize Int
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Name of the code block
 newtype CodeName = CodeName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Code snippet
 newtype CodeSnippet = CodeSnippet Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Header size
 newtype HeaderSize = HeaderSize Int
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Name of the table
 newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Content of the table
 newtype TableContent = TableContent [[Text]]
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Url for Link/Thumbnail
 newtype Url = Url Text
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -174,39 +182,51 @@ concatScrapText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $
 emptyContext :: Context
 emptyContext = Context NoStyle []
 
--- | Predicate to check if given 'Block' is an 'Header' block
+--------------------------------------------------------------------------------
+-- Predicates
+--------------------------------------------------------------------------------
+
+-- | Checks if given 'Block' is an 'Header'
 isHeader :: Block -> Bool
 isHeader (Header _ _) = True
 isHeader _            = False
 
+-- | Checks whether given 'Block' is 'BlockQuote'
 isBlockQuote :: Block -> Bool
 isBlockQuote (BlockQuote _) = True
 isBlockQuote _              = False
 
+-- | Checks whether given 'Block' is 'CodeBlock'
 isCodeBlock :: Block -> Bool
 isCodeBlock (CodeBlock _ _) = True
 isCodeBlock _               = False
 
+-- | Checks whether given 'Block' is 'Paragraph'
 isParagraph :: Block -> Bool
 isParagraph (Paragraph _) = True
 isParagraph _             = False
 
-isCodeNotation :: Segment -> Bool
-isCodeNotation (CodeNotation _) = True
-isCodeNotation _                = False
-
+-- | Checks whether given 'Block' is 'BulletList'
 isBulletList :: Block -> Bool
 isBulletList (BulletList _) = True
 isBulletList _              = False
 
+-- | Checks whether given 'Block' is Thumbnail
 isThumbnail :: Block -> Bool
 isThumbnail (Thumbnail _) = True
 isThumbnail _             = False
 
+-- | Checks whether given 'Block' is Table
 isTable :: Block -> Bool
 isTable (Table _ _) = True
 isTable _           = False
 
+-- | Checks whether given Segment is Link
 isLink :: Segment -> Bool
 isLink (Link _ _) = True
 isLink _          = False
+
+-- | Checks whether given 'Segment is Code notation
+isCodeNotation :: Segment -> Bool
+isCodeNotation (CodeNotation _) = True
+isCodeNotation _                = False
