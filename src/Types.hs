@@ -206,3 +206,7 @@ isThumbnail _             = False
 isTable :: Block -> Bool
 isTable (Table _ _) = True
 isTable _           = False
+
+isLink :: Segment -> Bool
+isLink (Link _ _) = True
+isLink _          = False
