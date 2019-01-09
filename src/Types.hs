@@ -230,3 +230,7 @@ isLink _          = False
 isCodeNotation :: Segment -> Bool
 isCodeNotation (CodeNotation _) = True
 isCodeNotation _                = False
+
+isSimpleText :: Segment -> Bool
+isSimpleText (SimpleText _) = True
+isSimpleText _              = False
