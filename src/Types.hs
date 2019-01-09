@@ -231,6 +231,7 @@ isCodeNotation :: Segment -> Bool
 isCodeNotation (CodeNotation _) = True
 isCodeNotation _                = False
 
+-- | Checks whether given 'Segment is Simple text
 isSimpleText :: Segment -> Bool
 isSimpleText (SimpleText _) = True
 isSimpleText _              = False
