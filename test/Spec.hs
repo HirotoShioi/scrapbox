@@ -45,6 +45,7 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
 -- Paragraph
 --------------------------------------------------------------------------------
 
+-- | Paragraph section
 newtype ParagraphSection = ParagraphSection {
     getParagraphSection :: Text
     } deriving Show
@@ -78,6 +79,47 @@ getParagraph _                       = Nothing
 --------------------------------------------------------------------------------
 -- Header
 --------------------------------------------------------------------------------
+
+-- | Header text
+data HeaderText
+    = H1 Text
+    | H2 Text
+    | H3 Text
+    | H4 Text
+    | H5 Text
+    | H6 Text
+    deriving Show
+
+-- | Get the content of the 'HeaderText'
+getHeaderTextContent :: HeaderText -> Text
+getHeaderTextContent = \case
+    H1 txt -> txt
+    H2 txt -> txt
+    H3 txt -> txt
+    H4 txt -> txt
+    H5 txt -> txt
+    H6 txt -> txt
+
+instance Arbitrary HeaderText where
+    arbitrary = do
+        someText <- genPrintableText
+        elements
+            [ H1 someText
+            , H2 someText
+            , H3 someText
+            , H4 someText
+            , H5 someText
+            , H6 someText
+            ]
+
+instance CommonMarkdown HeaderText where
+    render = \case
+        H1 textContent -> "# " <> textContent
+        H2 textContent -> "## " <> textContent
+        H3 textContent -> "### " <> textContent
+        H4 textContent -> "#### " <> textContent
+        H5 textContent -> "##### " <> textContent
+        H6 textContent -> "###### " <> textContent
 
 -- | Test spec for Header text
 headerTextSpec :: Spec
@@ -119,50 +161,20 @@ headerTextSpec = describe "Header text" $ do
     isSameHeaderSize (HeaderSize 1) (H6 _) = True
     isSameHeaderSize _ _                   = False
 
--- | Data type for common mark Header
-data HeaderText
-    = H1 Text
-    | H2 Text
-    | H3 Text
-    | H4 Text
-    | H5 Text
-    | H6 Text
-    deriving Show
-
--- | Get the content of the 'HeaderText'
-getHeaderTextContent :: HeaderText -> Text
-getHeaderTextContent = \case
-    H1 txt -> txt
-    H2 txt -> txt
-    H3 txt -> txt
-    H4 txt -> txt
-    H5 txt -> txt
-    H6 txt -> txt
-
-instance Arbitrary HeaderText where
-    arbitrary = do
-        someText <- genPrintableText
-        elements
-            [ H1 someText
-            , H2 someText
-            , H3 someText
-            , H4 someText
-            , H5 someText
-            , H6 someText
-            ]
-
-instance CommonMarkdown HeaderText where
-    render = \case
-        H1 textContent -> "# " <> textContent
-        H2 textContent -> "## " <> textContent
-        H3 textContent -> "### " <> textContent
-        H4 textContent -> "#### " <> textContent
-        H5 textContent -> "##### " <> textContent
-        H6 textContent -> "###### " <> textContent
-
 --------------------------------------------------------------------------------
 -- BlockQuote
 --------------------------------------------------------------------------------
+
+-- | Blockquote
+newtype BlockQuoteText = BlockQuoteText
+    { getBlockQuoteText :: Text
+    } deriving Show
+
+instance CommonMarkdown BlockQuoteText where
+    render (BlockQuoteText txt) = ">" <> txt
+
+instance Arbitrary BlockQuoteText where
+    arbitrary = BlockQuoteText <$> genPrintableText
 
 blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
@@ -185,21 +197,11 @@ blockQuoteSpec = describe "BlockQuote text" $ do
     getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
     getBlockQuote _                         = Nothing
 
-
-newtype BlockQuoteText = BlockQuoteText
-    { getBlockQuoteText :: Text
-    } deriving Show
-
-instance CommonMarkdown BlockQuoteText where
-    render (BlockQuoteText txt) = ">" <> txt
-
-instance Arbitrary BlockQuoteText where
-    arbitrary = BlockQuoteText <$> genPrintableText
-
 --------------------------------------------------------------------------------
 -- CodeBlock
 --------------------------------------------------------------------------------
 
+-- | Codeblock section
 newtype CodeBlockSection = CodeBlockSection
     { getCodeBlockContent :: [Text]
     } deriving Show
@@ -233,6 +235,7 @@ codeBlockSpec = describe "Code block" $ do
 -- Unordered list
 --------------------------------------------------------------------------------
 
+-- | Unordered list
 newtype UnorderedList = UnorderedList
     { getUnorderedList :: [Text]
     } deriving Show
@@ -267,6 +270,7 @@ getBulletList _                         = Nothing
 -- Ordered list
 --------------------------------------------------------------------------------
 
+-- | OrderedList
 newtype OrderedList = OrderedList
     { getOrderedList :: [Text]
     } deriving Show
@@ -298,6 +302,7 @@ orderedListSpec = describe "Ordered list" $ do
 -- Images
 --------------------------------------------------------------------------------
 
+-- | Image section
 data ImageSection = ImageSection
     { imageTitle :: !Text
     , imageLink  :: !ImageLink
@@ -335,6 +340,7 @@ imageSpec = do
 -- Table
 --------------------------------------------------------------------------------
 
+-- | Table section
 data TableSection = TableSection
     { tableHeader  :: ![Text]
     , tableContent :: ![[Text]]
