@@ -474,7 +474,7 @@ codeNotationSpec = do
     getCodeNotationText _                             = Nothing
 
 --------------------------------------------------------------------------------
--- SimpleText
+-- SimpleText segment
 --------------------------------------------------------------------------------
 
 -- | Simple text segment
