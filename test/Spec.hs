@@ -541,7 +541,7 @@ instance CommonMarkdown (StyledText BoldStyle) where
     render (StyledText txt) = "**" <> txt <> "**"
 
 instance CommonMarkdown (StyledText ItalicStyle) where
-    render (StyledText txt) = "_" <> txt <> "_"
+    render (StyledText txt) = "*" <> txt <> "*"
 
 instance CommonMarkdown (StyledText NoStyles) where
     render (StyledText txt) = txt
