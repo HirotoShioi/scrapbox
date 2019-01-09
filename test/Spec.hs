@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -29,6 +31,7 @@ main = hspec $ do
 
 commonMarkSpec :: Spec
 commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
+
     -- Blocks
     paragraphSpec
     headerTextSpec
@@ -44,8 +47,11 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     codeNotationSpec
     plainTextSpec
 
-    -- Style
-    boldTextSpec
+    describe "Styles" $ do
+        -- Style
+        noStyleTextSpec
+        boldTextSpec
+        italicTextSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -519,34 +525,77 @@ plainTextSpec = describe "Plain text" $ do
 ----------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
--- Bold text
+-- Something new
 --------------------------------------------------------------------------------
 
-newtype BoldText = BoldText {
-    getBoldText :: Text
+-- | Use Phantom type to change typeclass instances
+newtype StyledText a = StyledText {
+    getStyledText :: Text
     } deriving Show
 
-instance CommonMarkdown BoldText where
-    render (BoldText txt) = "**" <> txt <> "**"
+data BoldStyle
+data ItalicStyle
+data NoStyles
 
-instance Arbitrary BoldText where
-    arbitrary = BoldText <$> genPrintableText
+instance CommonMarkdown (StyledText BoldStyle) where
+    render (StyledText txt) = "**" <> txt <> "**"
+
+instance CommonMarkdown (StyledText ItalicStyle) where
+    render (StyledText txt) = "_" <> txt <> "_"
+
+instance CommonMarkdown (StyledText NoStyles) where
+    render (StyledText txt) = txt
+
+instance Arbitrary (StyledText a) where
+    arbitrary = StyledText <$> genPrintableText
+
+checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
+checkStyledTextContent styledText = do
+    checkMarkdown styledText
+        (\(SimpleText txt) -> txt == getStyledText styledText)
+        (\content -> do
+            segment <- getHeadSegment content
+            if isSimpleText segment
+                then Just segment
+                else Nothing
+        )
+
+--------------------------------------------------------------------------------
+-- No style
+--------------------------------------------------------------------------------
+
+noStyleTextSpec :: Spec
+noStyleTextSpec = do
+    describe "Non-styled text" $ do
+        prop "should parse non-styled text as NoStyle" $
+           \(noStyleText :: StyledText NoStyles) ->
+               checkMarkdown noStyleText (\(Context style _) -> style == NoStyle) getHeadContext
+        prop "should preserve its content" $
+            \(noStyleText :: StyledText NoStyles) -> checkStyledTextContent noStyleText
+
+--------------------------------------------------------------------------------
+-- Bold text
+--------------------------------------------------------------------------------
 
 boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
-        \(boldText :: BoldText) ->
+        \(boldText :: StyledText BoldStyle) ->
             checkMarkdown boldText (\(Context style _) -> style == Bold) getHeadContext
     prop "should preserve its content" $
-        \(boldText :: BoldText) ->
-            checkMarkdown boldText
-                (\(SimpleText txt) -> txt == getBoldText boldText)
-                (\content -> do
-                    segment <- getHeadSegment content
-                    if isSimpleText segment
-                        then Just segment
-                        else Nothing
-                )
+        \(boldText :: StyledText BoldStyle) -> checkStyledTextContent boldText
+
+--------------------------------------------------------------------------------
+-- Italic text
+--------------------------------------------------------------------------------
+
+italicTextSpec :: Spec
+italicTextSpec = describe "Italic text" $ do
+    prop "should parse italic text as Italic" $
+        \(italicText :: StyledText ItalicStyle) ->
+            checkMarkdown italicText (\(Context style _) -> style == Italic) getHeadContext
+    prop "should preserve its content" $
+        \(italicText :: StyledText ItalicStyle) -> checkStyledTextContent italicText
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
