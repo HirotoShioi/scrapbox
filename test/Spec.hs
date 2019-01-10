@@ -18,8 +18,7 @@ main = hspec $ do
     commonMarkSpec
 
 commonMarkSpec :: Spec
-commonMarkSpec = describe "CommonMark parser" $ 
-    modifyMaxSuccess (const 200) $ do
+commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
     blockSpec
     segmentSpec
     styleSpec
