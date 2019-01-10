@@ -10,20 +10,25 @@ import qualified RIO.Text              as T
 
 import           Test.Hspec            (Spec, describe, hspec)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck       (Arbitrary (..), Gen, choose, elements,
+import           Test.QuickCheck       (Arbitrary (..), choose, elements,
                                         listOf1, vectorOf)
 
-import           CommonMark.Lib        (commonmarkToMarkdown, optDefault)
 import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Context (..), HeaderSize (..),
-                                        Markdown (..), ScrapText (..),
-                                        Segment (..), Style (..),
+                                        ScrapText (..), Segment (..),
                                         TableContent (..), Url (..),
                                         isBlockQuote, isBulletList, isCodeBlock,
                                         isCodeNotation, isHeader, isLink,
                                         isParagraph, isSimpleText, isTable,
                                         isThumbnail)
+
+import           TestCommonMark.Styles (boldTextSpec, italicTextSpec,
+                                        noStyleTextSpec)
+import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
+                                        genPrintableText, genPrintableUrl,
+                                        genRandomText, getHeadSegment,
+                                        getParagraph)
 
 main :: IO ()
 main = hspec $ do
@@ -83,10 +88,6 @@ paragraphSpec = describe "Paragraph" $ do
                     (Paragraph stext) <- getParagraph blockContent
                     return $ renderText stext
                 )
-
-getParagraph :: Block -> Maybe Block
-getParagraph paragraph@(Paragraph _) = Just paragraph
-getParagraph _                       = Nothing
 
 --------------------------------------------------------------------------------
 -- Header
@@ -519,138 +520,6 @@ plainTextSpec = describe "Plain text" $ do
     getSimpleText :: Segment -> Maybe Segment
     getSimpleText simpleTextSegment@(SimpleText _) = Just simpleTextSegment
     getSimpleText _                                = Nothing
-
-----------------------------------------------------------------------------------------------------
--- Styles
-----------------------------------------------------------------------------------------------------
-
---------------------------------------------------------------------------------
--- Something new
---------------------------------------------------------------------------------
-
--- | Use Phantom type to change typeclass instances
-newtype StyledText a = StyledText {
-    getStyledText :: Text
-    } deriving Show
-
-data BoldStyle
-data ItalicStyle
-data NoStyles
-
-instance CommonMarkdown (StyledText BoldStyle) where
-    render (StyledText txt) = "**" <> txt <> "**"
-
-instance CommonMarkdown (StyledText ItalicStyle) where
-    render (StyledText txt) = "*" <> txt <> "*"
-
-instance CommonMarkdown (StyledText NoStyles) where
-    render (StyledText txt) = txt
-
-instance Arbitrary (StyledText a) where
-    arbitrary = StyledText <$> genPrintableText
-
-checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
-checkStyledTextContent styledText = do
-    checkMarkdown styledText
-        (\(SimpleText txt) -> txt == getStyledText styledText)
-        (\content -> do
-            segment <- getHeadSegment content
-            if isSimpleText segment
-                then Just segment
-                else Nothing
-        )
-
---------------------------------------------------------------------------------
--- No style
---------------------------------------------------------------------------------
-
-noStyleTextSpec :: Spec
-noStyleTextSpec = do
-    describe "Non-styled text" $ do
-        prop "should parse non-styled text as NoStyle" $
-           \(noStyleText :: StyledText NoStyles) ->
-               checkMarkdown noStyleText (\(Context style _) -> style == NoStyle) getHeadContext
-        prop "should preserve its content" $
-            \(noStyleText :: StyledText NoStyles) -> checkStyledTextContent noStyleText
-
---------------------------------------------------------------------------------
--- Bold text
---------------------------------------------------------------------------------
-
-boldTextSpec :: Spec
-boldTextSpec = describe "Bold text" $ do
-    prop "should parse bold text as Bold" $
-        \(boldText :: StyledText BoldStyle) ->
-            checkMarkdown boldText (\(Context style _) -> style == Bold) getHeadContext
-    prop "should preserve its content" $
-        \(boldText :: StyledText BoldStyle) -> checkStyledTextContent boldText
-
---------------------------------------------------------------------------------
--- Italic text
---------------------------------------------------------------------------------
-
-italicTextSpec :: Spec
-italicTextSpec = describe "Italic text" $ do
-    prop "should parse italic text as Italic" $
-        \(italicText :: StyledText ItalicStyle) ->
-            checkMarkdown italicText (\(Context style _) -> style == Italic) getHeadContext
-    prop "should preserve its content" $
-        \(italicText :: StyledText ItalicStyle) -> checkStyledTextContent italicText
-
---------------------------------------------------------------------------------
--- Auxiliary functions
---------------------------------------------------------------------------------
-
--- | Typeclass in which is used to render given datatype into common markdown format.
-class CommonMarkdown a where
-    render :: a -> Text
-
--- | Generate arbitrary Text
--- this is needed as some characters like
--- '`' and `>` will be parsed as blockquote, code notation, etc.
-genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genRandomText
-
--- | Generate random text
-genRandomText :: Gen Text
-genRandomText = (fmap fromString) <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
-
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp"]
-    randomSite <- genRandomText
-    return $ "http://www." <> randomSite <> end
-
--- | Parse given datatype into Markdown
-parseMarkdown :: CommonMarkdown a => a -> Markdown
-parseMarkdown = commonmarkToMarkdown optDefault . render
-
--- | General function used to test if given 'CommonMarkdown' can be properly parsed
--- and extract the expected element
-checkMarkdown :: (CommonMarkdown a)
-              => a
-              -> (parsedContent -> Bool)
-              -> ([Block] -> Maybe parsedContent)
-              -> Bool
-checkMarkdown markdown pre extractionFunc = do
-    let (Markdown content) = parseMarkdown markdown
-    maybe False pre (extractionFunc content)
-
-getHeadContext :: [Block] -> Maybe Context
-getHeadContext blocks = do
-    blockContent                 <- headMaybe blocks
-    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-    headMaybe ctxs
-
--- | Extract heed segment of a given list of blocks
-getHeadSegment :: [Block] -> Maybe Segment
-getHeadSegment blocks = do
-    blockContent                 <- headMaybe blocks
-    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-    (Context _ segments)         <- headMaybe ctxs
-    segment                      <- headMaybe segments
-    return segment
 
 -- | General test case to check whether the segment was parsed properly
 testSegment :: (CommonMarkdown section) => section -> Bool
