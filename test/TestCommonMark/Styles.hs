@@ -62,6 +62,12 @@ checkStyledTextContent styledText = do
                 else Nothing
         )
 
+getHeadContext :: [Block] -> Maybe Context
+getHeadContext blocks = do
+    blockContent                 <- headMaybe blocks
+    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+    headMaybe ctxs
+
 --------------------------------------------------------------------------------
 -- No style
 --------------------------------------------------------------------------------
@@ -98,9 +104,3 @@ italicTextSpec = describe "Italic text" $ do
             checkMarkdown italicText (\(Context style _) -> style == Italic) getHeadContext
     prop "should preserve its content" $
         \(italicText :: StyledText ItalicStyle) -> checkStyledTextContent italicText
-
-getHeadContext :: [Block] -> Maybe Context
-getHeadContext blocks = do
-    blockContent                 <- headMaybe blocks
-    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-    headMaybe ctxs
