@@ -19,7 +19,10 @@ import           Types                 (Block (..), CodeSnippet (..),
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
 
-import           TestCommonMark.Utils
+import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
+                                        genPrintableText, genPrintableUrl,
+                                        genRandomText, getParagraph)
+
 --------------------------------------------------------------------------------
 -- Paragraph
 --------------------------------------------------------------------------------

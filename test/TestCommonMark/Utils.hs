@@ -6,10 +6,11 @@ import           RIO
 
 import           RIO.List        (headMaybe)
 import qualified RIO.Text        as T
-import           Test.QuickCheck
+import           Test.QuickCheck (Gen, elements, listOf1)
 
 import           CommonMark.Lib  (commonmarkToMarkdown, optDefault)
-import           Types
+import           Types           (Block (..), Context (..), Markdown (..),
+                                  ScrapText (..), Segment)
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
