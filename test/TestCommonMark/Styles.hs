@@ -20,6 +20,12 @@ import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
                                         genPrintableText, getHeadSegment,
                                         getParagraph)
 
+styleSpec :: Spec
+styleSpec = describe "Styles" $ do
+    noStyleTextSpec
+    boldTextSpec
+    italicTextSpec
+
 --------------------------------------------------------------------------------
 -- Something new
 --------------------------------------------------------------------------------

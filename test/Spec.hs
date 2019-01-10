@@ -5,30 +5,27 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 import           RIO
-import           RIO.List              (headMaybe, zipWith)
-import qualified RIO.Text              as T
+import           RIO.List                (headMaybe, zipWith)
+import qualified RIO.Text                as T
 
-import           Test.Hspec            (Spec, describe, hspec)
-import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck       (Arbitrary (..), choose, elements,
-                                        listOf1, vectorOf)
+import           Test.Hspec              (Spec, describe, hspec)
+import           Test.Hspec.QuickCheck   (modifyMaxSuccess, prop)
+import           Test.QuickCheck         (Arbitrary (..), choose, elements,
+                                          listOf1, vectorOf)
 
-import           Render                (renderBlock, renderContent, renderText)
-import           Types                 (Block (..), CodeSnippet (..),
-                                        Context (..), HeaderSize (..),
-                                        ScrapText (..), Segment (..),
-                                        TableContent (..), Url (..),
-                                        isBlockQuote, isBulletList, isCodeBlock,
-                                        isCodeNotation, isHeader, isLink,
-                                        isParagraph, isSimpleText, isTable,
-                                        isThumbnail)
+import           Render                  (renderBlock, renderContent,
+                                          renderText)
+import           Types                   (Block (..), CodeSnippet (..),
+                                          HeaderSize (..), TableContent (..),
+                                          Url (..), isBlockQuote, isBulletList,
+                                          isCodeBlock, isHeader, isParagraph,
+                                          isTable, isThumbnail)
 
-import           TestCommonMark.Styles (boldTextSpec, italicTextSpec,
-                                        noStyleTextSpec)
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
-                                        genPrintableText, genPrintableUrl,
-                                        genRandomText, getHeadSegment,
-                                        getParagraph)
+import           TestCommonMark.Segments (segmentSpec)
+import           TestCommonMark.Styles   (styleSpec)
+import           TestCommonMark.Utils    (CommonMarkdown (..), checkMarkdown,
+                                          genPrintableText, genPrintableUrl,
+                                          genRandomText, getParagraph)
 
 main :: IO ()
 main = hspec $ do
@@ -47,16 +44,9 @@ commonMarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
     imageSpec
     tableSpec
 
-    -- Segments
-    linkSpec
-    codeNotationSpec
-    plainTextSpec
+    segmentSpec
 
-    describe "Styles" $ do
-        -- Style
-        noStyleTextSpec
-        boldTextSpec
-        italicTextSpec
+    styleSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -399,141 +389,3 @@ tableSpec = describe "Table" $ do
     getTable :: Block -> Maybe Block
     getTable table@(Table _ _) = Just table
     getTable _                 = Nothing
-
-----------------------------------------------------------------------------------------------------
--- Segments
-----------------------------------------------------------------------------------------------------
-
---------------------------------------------------------------------------------
--- Link
---------------------------------------------------------------------------------
-
--- | Link segment
-data LinkSegment = LinkSegment
-    { linkName :: !Text
-    , linkUrl  :: !Text
-    } deriving Show
-
-instance CommonMarkdown LinkSegment where
-    render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
-
-instance Arbitrary LinkSegment where
-    arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
-
-linkSpec :: Spec
-linkSpec = describe "Links" $ do
-    prop "should parse link as Link" $
-        \(linkSegment :: LinkSegment) -> do
-            checkMarkdown linkSegment isLink getHeadSegment
-
-    prop "should preserve its content" $
-        \(linkSegment :: LinkSegment) -> do
-            checkMarkdown linkSegment
-                (\(Link mName (Url url)) ->
-                    and
-                        [ url == linkUrl linkSegment
-                        , maybe False (\name -> name == linkName linkSegment) mName
-                        ]
-                )
-                (\content -> do
-                    segment <- getHeadSegment content
-                    getLink segment
-                )
-    prop "should not have any other segments except for code section" $
-        \(linkSegment :: LinkSegment) -> testSegment linkSegment
-  where
-    getLink :: Segment -> Maybe Segment
-    getLink linkSegment@(Link _ _) = Just linkSegment
-    getLink _                      = Nothing
-
---------------------------------------------------------------------------------
--- CodeNotation
---------------------------------------------------------------------------------
-
--- | Code notation segment
-newtype CodeNotationSegment = CodeNotationSegment
-    { getCodeNotationSegment :: Text
-    } deriving Show
-
-instance CommonMarkdown CodeNotationSegment where
-    render (CodeNotationSegment txt) = "`" <> txt <> "`"
-
-instance Arbitrary CodeNotationSegment where
-    arbitrary = CodeNotationSegment <$> genPrintableText
-
-codeNotationSpec :: Spec
-codeNotationSpec = do
-    describe "Code notation" $ do
-        prop "should be able to parser code section as CodeNotation" $
-            \(codeNotation :: CodeNotationSegment) -> do
-                checkMarkdown codeNotation isCodeNotation getHeadSegment
-
-        prop "should preserve its content" $
-            \(codeNotation :: CodeNotationSegment) -> do
-                checkMarkdown codeNotation
-                    (\codeText -> codeText == getCodeNotationSegment codeNotation)
-                    (\content -> do
-                        segment                 <- getHeadSegment content
-                        (CodeNotation codeText) <- getCodeNotationText segment
-                        return codeText
-                    )
-        prop "should not have any other segments except for code section" $
-            \(codeNotation :: CodeNotationSegment) -> testSegment codeNotation
-  where
-    getCodeNotationText :: Segment -> Maybe Segment
-    getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
-    getCodeNotationText _                             = Nothing
-
---------------------------------------------------------------------------------
--- SimpleText segment
---------------------------------------------------------------------------------
-
--- | Simple text segment
-newtype SimpleTextSegment = SimpleTextSegment {
-    getSimpleTextSegment :: Text
-    } deriving Show
-
-instance CommonMarkdown SimpleTextSegment where
-    render (SimpleTextSegment txt) = txt
-
-instance Arbitrary SimpleTextSegment where
-    arbitrary = SimpleTextSegment <$> genPrintableText
-
-plainTextSpec :: Spec
-plainTextSpec = describe "Plain text" $ do
-    prop "should parse plain text as SimpleText" $
-        \(simpleTextSegment :: SimpleTextSegment) ->
-            checkMarkdown simpleTextSegment isSimpleText getHeadSegment
-
-    prop "should preserve its content" $
-        \(simpleTextSegment :: SimpleTextSegment) ->
-            checkMarkdown simpleTextSegment
-            (\(SimpleText txt) -> txt == getSimpleTextSegment simpleTextSegment)
-            (\content -> do
-                segment                 <- getHeadSegment content
-                getSimpleText segment
-            )
-
-    prop "should not have any other segments except for plain text" $
-        \(simpleTextSegment :: SimpleTextSegment) -> testSegment simpleTextSegment
-  where
-    getSimpleText :: Segment -> Maybe Segment
-    getSimpleText simpleTextSegment@(SimpleText _) = Just simpleTextSegment
-    getSimpleText _                                = Nothing
-
--- | General test case to check whether the segment was parsed properly
-testSegment :: (CommonMarkdown section) => section -> Bool
-testSegment someSegment = do
-    checkMarkdown someSegment
-        (\(content', ctxs, segments) ->
-            and [ length content' == 1
-                , length ctxs     == 1
-                , length segments == 1
-                ]
-        )
-        (\content -> do
-            blockContent                 <- headMaybe content
-            (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-            (Context _ segments)         <- headMaybe ctxs
-            return (content, ctxs, segments)
-        )
