@@ -271,7 +271,7 @@ instance Arbitrary OrderedListBlock where
 
 instance CommonMarkdown OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
-        zipWith (\num someText -> tshow num <> ". " <> someText) [1..] list
+        zipWith (\num someText -> tshow num <> ". " <> someText) ([1..] :: [Int]) list
 
 orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do

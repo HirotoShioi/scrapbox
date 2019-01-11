@@ -16,9 +16,8 @@ import           Prelude              (String)
 import           Constructors         (table)
 import           Types                (Block)
 
-newtype CommonMarkTable = CommonMarkTable
-    { getCommomMarkTable :: [Column]
-    } deriving Show
+newtype CommonMarkTable = CommonMarkTable [Column]
+    deriving Show
 
 newtype Column = Column
     { getColumn :: [Text]
