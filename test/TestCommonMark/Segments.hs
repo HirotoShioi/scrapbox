@@ -44,17 +44,16 @@ instance Arbitrary LinkSegment where
 linkSpec :: Spec
 linkSpec = describe "Links" $ do
     prop "should parse link as Link" $
-        \(linkSegment :: LinkSegment) -> do
+        \(linkSegment :: LinkSegment) ->
             checkMarkdown linkSegment isLink getHeadSegment
 
     prop "should preserve its content" $
-        \(linkSegment :: LinkSegment) -> do
+        \(linkSegment :: LinkSegment) ->
             checkMarkdown linkSegment
                 (\(Link mName (Url url)) ->
-                    and
-                        [ url == linkUrl linkSegment
-                        , maybe False (\name -> name == linkName linkSegment) mName
-                        ]
+                       url == linkUrl linkSegment
+                    && maybe False (\name -> name == linkName linkSegment) mName
+                        
                 )
                 (\content -> do
                     segment <- getHeadSegment content
@@ -83,14 +82,14 @@ instance Arbitrary CodeNotationSegment where
     arbitrary = CodeNotationSegment <$> genPrintableText
 
 codeNotationSpec :: Spec
-codeNotationSpec = do
+codeNotationSpec =
     describe "Code notation" $ do
         prop "should be able to parser code section as CodeNotation" $
-            \(codeNotation :: CodeNotationSegment) -> do
+            \(codeNotation :: CodeNotationSegment) ->
                 checkMarkdown codeNotation isCodeNotation getHeadSegment
 
         prop "should preserve its content" $
-            \(codeNotation :: CodeNotationSegment) -> do
+            \(codeNotation :: CodeNotationSegment) ->
                 checkMarkdown codeNotation
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
                     (\content -> do
@@ -144,13 +143,12 @@ plainTextSpec = describe "Plain text" $ do
 
 -- | General test case to check whether the segment was parsed properly
 testSegment :: (CommonMarkdown section) => section -> Bool
-testSegment someSegment = do
+testSegment someSegment =
     checkMarkdown someSegment
         (\(content', ctxs, segments) ->
-            and [ length content' == 1
-                , length ctxs     == 1
-                , length segments == 1
-                ]
+               length content' == 1
+            && length ctxs     == 1
+            && length segments == 1
         )
         (\content -> do
             blockContent                 <- headMaybe content

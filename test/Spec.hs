@@ -1,9 +1,3 @@
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 import           RIO
 
 import           Test.Hspec              (Spec, describe, hspec)
@@ -14,7 +8,7 @@ import           TestCommonMark.Styles   (styleSpec)
 import           TestCommonMark.Blocks   (blockSpec)
 
 main :: IO ()
-main = hspec $ do
+main = hspec
     commonMarkSpec
 
 commonMarkSpec :: Spec

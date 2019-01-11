@@ -78,7 +78,7 @@ thumbnail url = Thumbnail (Url url)
 
 -- | Constructors for creating Header with given Header size and content
 header :: Int -> Content -> Block
-header size contents = Header (HeaderSize size) contents
+header size = Header (HeaderSize size)
 
 -- | Constructors for creating BulletPoint block with given size and content
 bulletPoint :: Int -> [Context] -> Block
@@ -98,23 +98,23 @@ context = Context
 
 -- | Creates 'Context' with no style
 noStyle :: [Segment] -> Context
-noStyle segments = Context NoStyle segments
+noStyle = Context NoStyle
 
 -- | Create 'Context' with bold style
 bold :: [Segment] -> Context
-bold segments = Context Bold segments
+bold = Context Bold
 
 -- | Creates 'Context' with italic style
 italic :: [Segment] -> Context
-italic segments = Context Italic segments
+italic = Context Italic
 
 -- | Creates 'Context' with strikethrough style
 strikeThrough :: [Segment] -> Context
-strikeThrough segments = Context StrikeThrough segments
+strikeThrough = Context StrikeThrough
 
 -- | Creates Context wigh given 'StyleData' and 'Segment'
 customStyle :: StyleData -> [Segment] -> Context
-customStyle sData segments = Context (CustomStyle sData) segments
+customStyle sData = Context (CustomStyle sData)
 
 --------------------------------------------------------------------------------
 -- Segment

@@ -22,8 +22,8 @@ import qualified RIO.Text               as T
 
 import           Constructors           (blockQuote, bold, bulletList,
                                          codeBlock, codeNotation, header,
-                                         italic, link, markdown,
-                                         noStyle, paragraph, text, thumbnail)
+                                         italic, link, markdown, noStyle,
+                                         paragraph, text, thumbnail)
 import           Render                 (renderPretty)
 import           Types                  (Block (..), Context (..),
                                          Markdown (..), Segment, concatContext,
@@ -180,10 +180,10 @@ toHeader headerNum nodes =
 
 -- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
-extractTextFromNodes nodes = foldr
+extractTextFromNodes = foldr
     (\(Node _ nodeType nodes') acc
         -> extractText nodeType <> extractTextFromNodes nodes' <> acc
-    ) mempty nodes
+    ) mempty
   where
     extractText :: NodeType -> Text
     extractText = \case
@@ -204,8 +204,8 @@ toBulletList contents = bulletList $ concatMap toBlocks contents
 applyLinebreak :: [Block] -> [Block]
 applyLinebreak []                               = []
 applyLinebreak [b]                              = [b]
-applyLinebreak (b:(Header hsize hcontent):rest) =
-    b : LineBreak : applyLinebreak ((Header hsize hcontent) : rest)
+applyLinebreak (b:Header hsize hcontent:rest) =
+    b : LineBreak : applyLinebreak (Header hsize hcontent : rest)
 applyLinebreak (b: rest)                        = b : applyLinebreak rest
 
 --------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ parseParagraph nodes = if isTable nodes
     hasSymbols :: [Node] -> Bool
     hasSymbols nodes' =
         let filteredNodes   = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            extractedTexts  = map (\node -> extractTextFromNodes node) filteredNodes
+            extractedTexts  = map extractTextFromNodes filteredNodes
         in all (T.any (== '|')) extractedTexts
 
     toTable :: [Node] -> [Block]
@@ -256,7 +256,7 @@ parseParagraph nodes = if isTable nodes
     concatParagraph :: [Block] -> [Block]
     concatParagraph []  = []
     concatParagraph [n] = [n]
-    concatParagraph ((Paragraph stext1) : (Paragraph stext2) : rest) =
+    concatParagraph (Paragraph stext1 : Paragraph stext2 : rest) =
         let concatedParagraph = Paragraph $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
     concatParagraph (a : b : rest) = a : b : concatParagraph rest

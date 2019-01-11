@@ -42,13 +42,13 @@ instance Arbitrary ParagraphSection where
 paragraphSpec :: Spec
 paragraphSpec = describe "Paragraph" $ do
     prop "should be able to parse paragraph as Paragraph" $
-        \(paragraph :: ParagraphSection) -> do
+        \(paragraph :: ParagraphSection) ->
             checkMarkdown paragraph isParagraph headMaybe
 
     prop "should preserve its content" $
-        \(paragraph :: ParagraphSection) -> do
+        \(paragraph :: ParagraphSection) ->
             checkMarkdown paragraph
-                (\paragraphText -> paragraphText == (getParagraphSection paragraph))
+                (\paragraphText -> paragraphText == getParagraphSection paragraph)
                 (\content -> do
                     blockContent 　　　<- headMaybe content
                     (Paragraph stext) <- getParagraph blockContent
@@ -104,20 +104,20 @@ instance CommonMarkdown HeaderText where
 headerTextSpec :: Spec
 headerTextSpec = describe "Header text" $ do
     prop "should be able to parse header text as Header" $
-        \(headerText :: HeaderText) -> do
+        \(headerText :: HeaderText) ->
             checkMarkdown headerText isHeader headMaybe
 
     prop "should preserve header size" $
-        \(headerText :: HeaderText) -> do
+        \(headerText :: HeaderText) ->
             checkMarkdown headerText
-                (\headerSize -> isSameHeaderSize headerSize headerText)
+                (`isSameHeaderSize` headerSize headerText)
                 (\content -> do
                     blockContent          <- headMaybe content
                     (Header headerSize _) <- getHeader blockContent
                     return headerSize
                 )
     prop "should preserve its content" $
-        \(headerText :: HeaderText) -> do
+        \(headerText :: HeaderText) ->
             checkMarkdown headerText
                 (\headerContent -> headerContent == getHeaderTextContent headerText)
                 (\content -> do
@@ -158,11 +158,11 @@ instance Arbitrary BlockQuoteText where
 blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
     prop "should be able parse block quote text as BlockQuote" $
-        \(blockQuote :: BlockQuoteText) -> do
+        \(blockQuote :: BlockQuoteText) ->
             checkMarkdown blockQuote isBlockQuote headMaybe
 
     prop "should preserve its content" $
-        \(blockQuote :: BlockQuoteText) -> do
+        \(blockQuote :: BlockQuoteText) ->
             checkMarkdown blockQuote
                 (\quoteText -> quoteText == getBlockQuoteText blockQuote)
                 (\content -> do
@@ -206,10 +206,10 @@ instance Arbitrary CodeBlockSection where
 codeBlockSpec :: Spec
 codeBlockSpec = describe "Code block" $ do
     prop "should parse code block content as CodeBlock" $
-        \(codeBlock :: CodeBlockSection) -> do
+        \(codeBlock :: CodeBlockSection) ->
             checkMarkdown codeBlock isCodeBlock headMaybe
     prop "should preserve its content" $
-        \(codeBlock :: CodeBlockSection) -> do
+        \(codeBlock :: CodeBlockSection) ->
             checkMarkdown codeBlock
                 (\codeContent -> codeContent == T.unlines (getCodeBlockContent codeBlock))
                 (\content -> do
@@ -240,13 +240,13 @@ instance Arbitrary UnorderedListBlock where
 unorderedListSpec :: Spec
 unorderedListSpec = describe "Unordered list" $ do
     prop "should parse unordered list as BulletList" $
-        \(unorderedListBlock :: UnorderedListBlock) -> do
+        \(unorderedListBlock :: UnorderedListBlock) ->
             checkMarkdown unorderedListBlock isBulletList headMaybe
 
     prop "should preserve its content" $
-        \(unorderedListBlock :: UnorderedListBlock) -> do
+        \(unorderedListBlock :: UnorderedListBlock) ->
             checkMarkdown unorderedListBlock
-                (\renderedTexts -> renderedTexts == (getUnorderedListBlock unorderedListBlock))
+                (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
                 (\content -> do
                     blockContent       <- headMaybe content
                     (BulletList lists) <- getBulletList blockContent
@@ -276,13 +276,13 @@ instance CommonMarkdown OrderedListBlock where
 orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
     prop "should parse ordered list as BulletList" $
-        \(orderedListBlock :: OrderedListBlock) -> do
+        \(orderedListBlock :: OrderedListBlock) ->
             checkMarkdown orderedListBlock isBulletList headMaybe
 
     prop "should preserve its content" $
-        \(orderedListBlock :: OrderedListBlock) -> do
+        \(orderedListBlock :: OrderedListBlock) ->
             checkMarkdown orderedListBlock
-                (\renderedTexts -> renderedTexts == (getOrderedListBlock orderedListBlock))
+                (\renderedTexts -> renderedTexts == getOrderedListBlock orderedListBlock)
                 (\content -> do
                     blockContent       <- headMaybe content
                     (BulletList lists) <- getBulletList blockContent
@@ -308,13 +308,13 @@ instance Arbitrary ImageSection where
     arbitrary = ImageSection <$> genRandomText <*> genPrintableUrl
 
 imageSpec :: Spec
-imageSpec = do
+imageSpec =
     describe "Image" $ do
         prop "should parse image as Image" $
-            \(imageSection :: ImageSection) -> do
+            \(imageSection :: ImageSection) ->
                 checkMarkdown imageSection isThumbnail headMaybe
         prop "should preserve its link" $
-            \(imageSection :: ImageSection) -> do
+            \(imageSection :: ImageSection) ->
                 checkMarkdown imageSection
                     (\(Url url) -> url == imageLink imageSection)
                     (\content -> do
@@ -345,13 +345,13 @@ instance CommonMarkdown TableSection where
         T.unlines $ [renderedHeader] <> [between] <> renderedContents
       where
         renderColumn :: [Text] -> Text
-        renderColumn contents' = foldl' (\acc a -> acc <> a <> " | ") "| " contents'
+        renderColumn = foldl' (\acc a -> acc <> a <> " | ") "| "
 
         renderBetween' :: Int -> Text
         renderBetween' rowNum' = T.replicate rowNum' "|- " <> "|"
 
         renderTableContent :: [[Text]] -> [Text]
-        renderTableContent tables = map renderColumn tables
+        renderTableContent = map renderColumn
 
 instance Arbitrary TableSection where
     arbitrary = do
@@ -365,7 +365,7 @@ tableSpec = describe "Table" $ do
     prop "should parse tabel as Table" $
         \(table :: TableSection) -> checkMarkdown table isTable headMaybe
     prop "should preserve its content" $
-        \(table :: TableSection) -> do
+        \(table :: TableSection) ->
             checkMarkdown table
                 (\(TableContent contents) -> contents == [tableHeader table] <> tableContent table)
                 (\content -> do

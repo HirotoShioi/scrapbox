@@ -52,7 +52,7 @@ instance Arbitrary (StyledText a) where
     arbitrary = StyledText <$> genPrintableText
 
 checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
-checkStyledTextContent styledText = do
+checkStyledTextContent styledText =
     checkMarkdown styledText
         (\(SimpleText txt) -> txt == getStyledText styledText)
         (\content -> do
@@ -73,7 +73,7 @@ getHeadContext blocks = do
 --------------------------------------------------------------------------------
 
 noStyleTextSpec :: Spec
-noStyleTextSpec = do
+noStyleTextSpec =
     describe "Non-styled text" $ do
         prop "should parse non-styled text as NoStyle" $
            \(noStyleText :: StyledText NoStyles) ->

@@ -67,7 +67,7 @@ renderScrapText (Context style content) = renderWithStyle style content
 
 -- | render given 'Content' to 'Text'
 renderContent :: Content -> Text
-renderContent ctxs = foldr (\ctx acc -> renderSegment ctx <> acc) mempty ctxs
+renderContent = foldr (\ctx acc -> renderSegment ctx <> acc) mempty
   where
     renderSegment :: Segment -> Text
     renderSegment = \case
@@ -88,12 +88,12 @@ renderCodeBlock (CodeName name) (CodeSnippet code) = do
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
-        renderdTable = map (\c -> foldr (\someText acc -> "\t" <> someText <> acc) mempty c) content
+        renderdTable = map (foldr (\someText acc -> "\t" <> someText <> acc) mempty) content
     in title <> renderdTable
 
 -- | render bulletpoints
 renderBulletPoints :: [Block] -> [Text]
-renderBulletPoints blocks = concatMap (\block -> map (\text -> "\t" <> text) $ renderBlock block) blocks
+renderBulletPoints = concatMap (map (\ text -> "\t" <> text) . renderBlock)
 
 -- | Add an block to a given renderd text
 blocked :: Text -> Text
@@ -127,7 +127,7 @@ renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
             , strikeThroughSymbol
             , " "
             ]
-    in blocked $ combinedSyntax <> (renderContent content)
+    in blocked $ combinedSyntax <> renderContent content
 
 -- | Render header
 renderHeader :: HeaderSize -> Content -> Text

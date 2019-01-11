@@ -23,7 +23,7 @@ syntax =
 -- "[https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc]",
 mouseBased :: [Block]
 mouseBased =
-    [ header 1 $ [text "Mouse-based editing"]
+    [ header 1 [text "Mouse-based editing"]
     , thumbnail "https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc"
     , p
         [ bold [text "Internal Links"]
@@ -80,7 +80,7 @@ externalLinks =
 -- " [https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]",
 directImageLink :: [Block]
 directImageLink =
-    [ p $ [ bold [text "Images"]]
+    [ p [ bold [text "Images"]]
     , bulletPoint 1
         [ noStyle
             [ text "Direct mage link ↓"
