@@ -142,14 +142,14 @@ useScrapbox = bulletPoint 1
 
 -- "[* For example]",
 forExample :: Block
-forExample = bulletPoint 1 $ [noStyle [text "For example"]]
+forExample = bulletPoint 1 [noStyle [text "For example"]]
 
 -- "\tLets say you are working on developing a new website. You might want to discuss ideas with
 -- your team before and while you execute the plan.  First create a page `Site plan` to start a
 -- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
-letsSay = bulletPoint 1 $ [ noStyle [letsSayText, sitePlan, toStart, socialMedia, period]]
+letsSay = bulletPoint 1 [ noStyle [letsSayText, sitePlan, toStart, socialMedia, period]]
   where
     letsSayText = text "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
@@ -163,7 +163,7 @@ letsSay = bulletPoint 1 $ [ noStyle [letsSayText, sitePlan, toStart, socialMedia
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
 -- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
-youCanImmediately = bulletPoint 1 $
+youCanImmediately = bulletPoint 1
     [noStyle
         [ youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan
         , twitter, relatedLink, sitePlan, period

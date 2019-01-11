@@ -16,9 +16,8 @@ import           Prelude              (String)
 import           Constructors         (table)
 import           Types                (Block)
 
-newtype CommonMarkTable = CommonMarkTable
-    { getCommomMarkTable :: [Column]
-    } deriving Show
+newtype CommonMarkTable = CommonMarkTable [Column]
+    deriving Show
 
 newtype Column = Column
     { getColumn :: [Text]
@@ -32,9 +31,9 @@ columnParser = do
     -- Seems like it's Either monad but I need an function which converts
     -- Either to Parser (natural transformation?)
     go :: [Text] -> Text -> Parser Column
-    go currList curr = do
+    go currList curr =
         either
-            (\err -> fail err)
+            fail
             (\(currList', rest') -> do
                 -- If symbolCount is less than required amount then the process is done
                 let symbolCount = T.length $ T.filter (== '|') rest'
@@ -49,7 +48,7 @@ columnParser = do
         _       <- P.char '|'
         element <- T.strip <$> P.takeWhile (/= '|')
         rest    <- P.takeText
-        return $ ((currList ++ [element]), rest)
+        return (currList ++ [element], rest)
 
 parseTable :: [Text] -> Either String CommonMarkTable
 parseTable texts =

@@ -172,11 +172,11 @@ concatContext [] = []
 concatContext [ctx] = [ctx]
 concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
     | style1 == style2 = concatContext (Context style1 (ctx1 <> ctx2) : rest)
-    | otherwise        = (c1 : c2 : concatContext rest)
+    | otherwise        = c1 : c2 : concatContext rest
 
 -- Concatenate 'ScrapText'
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
-concatScrapText (ScrapText ctx1) (ScrapText ctx2) = (ScrapText $ concatContext $ ctx1 <> ctx2)
+concatScrapText (ScrapText ctx1) (ScrapText ctx2) = ScrapText $ concatContext $ ctx1 <> ctx2
 
 -- | Context with no content
 emptyContext :: Context

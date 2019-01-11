@@ -28,7 +28,7 @@ genPrintableText = T.unwords <$> listOf1 genRandomText
 
 -- | Generate random text
 genRandomText :: Gen Text
-genRandomText = (fmap fromString) <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+genRandomText = fmap fromString <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 -- | Generate random url
 genPrintableUrl :: Gen Text
@@ -59,8 +59,7 @@ getParagraph _                       = Nothing
 -- | Extract heed segment of a given list of blocks
 getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
-    blockContent                 <- headMaybe blocks
-    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
-    (Context _ segments)         <- headMaybe ctxs
-    segment                      <- headMaybe segments
-    return segment
+    blockContent               <- headMaybe blocks
+    Paragraph (ScrapText ctxs) <- getParagraph blockContent
+    Context _ segments         <- headMaybe ctxs
+    headMaybe segments
