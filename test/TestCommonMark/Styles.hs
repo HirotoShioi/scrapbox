@@ -30,7 +30,7 @@ styleSpec = describe "Styles" $ do
 -- Something new
 --------------------------------------------------------------------------------
 
--- | Use Phantom type to change typeclass instances
+-- | Use Phantom type so we can generalize the test
 newtype StyledText a = StyledText {
     getStyledText :: Text
     } deriving Show
@@ -51,6 +51,7 @@ instance CommonMarkdown (StyledText NoStyles) where
 instance Arbitrary (StyledText a) where
     arbitrary = StyledText <$> genPrintableText
 
+-- | Generalized test case for checking whether the content of the text has same content
 checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
 checkStyledTextContent styledText =
     checkMarkdown styledText

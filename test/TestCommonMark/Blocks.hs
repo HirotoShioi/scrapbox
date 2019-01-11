@@ -110,7 +110,7 @@ headerTextSpec = describe "Header text" $ do
     prop "should preserve header size" $
         \(headerText :: HeaderText) ->
             checkMarkdown headerText
-                (`isSameHeaderSize` headerSize headerText)
+                (`isSameHeaderSize` headerText)
                 (\content -> do
                     blockContent          <- headMaybe content
                     (Header headerSize _) <- getHeader blockContent
