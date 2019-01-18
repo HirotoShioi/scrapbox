@@ -15,7 +15,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 many, many1, manyTill, noneOf,
                                                 oneOf, optionMaybe, parse,
                                                 sepBy1, space, try, (<?>),
-                                                (<|>))
+                                                (<|>), unexpected)
 import           Types                         (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ linkParser = do
     return $ Link mName (Url someLink)
   where
 
-    mkLink :: (Monad m) => String -> String -> [String] -> m (Maybe Text, Text)
+    mkLink :: String -> String -> [String] -> Parser (Maybe Text, Text)
     mkLink link' link'' wholecontent
         | isURI link' = do
             nameContent <- getElement $ tailMaybe wholecontent
@@ -84,8 +84,8 @@ linkParser = do
     mkName wholecontent = T.strip $ fromString $
       foldr (\someText acc -> someText <> " " <> acc) mempty wholecontent
 
-    getElement :: (Monad m) => Maybe a -> m a
-    getElement mf = fromMaybeM (fail "failed to parse link content") (return mf)
+    getElement :: Maybe a -> Parser a
+    getElement mf = fromMaybeM (unexpected "failed to parse link content") (return mf)
 
 -- | Parser fro 'SimpleText'
 simpleTextParser :: Parser Segment
