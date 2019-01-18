@@ -1,19 +1,21 @@
-module Parser.Inline 
+module Parser.Inline
     ( inlineParser
     , testInlineParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
-import           RIO.List                      (headMaybe, tailMaybe)
+import           RIO.List                      (headMaybe, initMaybe, lastMaybe,
+                                                tailMaybe)
 
 import           Data.String                   (fromString)
 import qualified Data.Text                     as T
+import           Network.URI                   (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                between, char, lookAhead, many,
-                                                many1, noneOf, optionMaybe,
-                                                parse, sepBy1, space, try,
-                                                (<?>), (<|>), manyTill, eof, oneOf)
-
+                                                between, char, eof, lookAhead,
+                                                many, many1, manyTill, noneOf,
+                                                oneOf, optionMaybe, parse,
+                                                sepBy1, space, try, (<?>),
+                                                (<|>))
 import           Types                         (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
@@ -53,18 +55,35 @@ hashTagParser = do
 linkParser :: Parser Segment
 linkParser = do
     contents <- between (char '[') (char ']') $ sepBy1 (many1 $ noneOf "] ") space
-    (mName, someLink) <- if length contents == 1
+    (mName, someLink) <- if length contents <= 1
         then do
             linkContent <- getElement $ headMaybe contents
-            return (Nothing, linkContent)
+            return (Nothing, fromString linkContent)
         else do
-            nameContent <- getElement $ tailMaybe contents
-            linkContent <- getElement $ headMaybe contents
-            let name = T.strip $ fromString $
-                    foldr (\someText acc -> someText <> " " <> acc) mempty nameContent
-            return (Just name, linkContent)
-    return $ Link mName (Url $ fromString someLink)
+            -- Both are viable
+            --  [Haskell付箋まとめ http://lotz84.github.io/haskell/]
+            -- [http://lotz84.github.io/haskell/ Haskell付箋まとめ]
+            -- check if head or last is and url, if not the whote content is url
+            linkLeft  <- getElement $ headMaybe contents
+            linkRight <- getElement $ lastMaybe contents
+            mkLink linkLeft linkRight contents
+    return $ Link mName (Url someLink)
   where
+
+    mkLink :: (Monad m) => String -> String -> [String] -> m (Maybe Text, Text)
+    mkLink link' link'' wholecontent
+        | isURI link' = do
+            nameContent <- getElement $ tailMaybe wholecontent
+            return (Just $ mkName nameContent, fromString link')
+        | isURI link'' = do
+            nameContent <- getElement $ initMaybe wholecontent
+            return (Just $ mkName nameContent, fromString link'')
+        | otherwise   = return (Nothing, mkName wholecontent)
+
+    mkName :: [String] -> Text
+    mkName wholecontent = T.strip $ fromString $
+      foldr (\someText acc -> someText <> " " <> acc) mempty wholecontent
+
     getElement :: (Monad m) => Maybe a -> m a
     getElement mf = fromMaybeM (fail "failed to parse link content") (return mf)
 
