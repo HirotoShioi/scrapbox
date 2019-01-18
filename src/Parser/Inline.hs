@@ -1,4 +1,7 @@
-module Parser.Inline where
+module Parser.Inline 
+    ( inlineParser
+    , testInlineParser
+    ) where
 
 import           RIO                           hiding (many, try, (<|>))
 import           RIO.List                      (headMaybe, initMaybe, lastMaybe)
@@ -86,7 +89,7 @@ textParser content = do
         -- Could be hashtag, so try to parse it
         Just '#' -> checkWith hashTagParser content
 
-        -- For everything else, just return content
+        -- For everything else, parse until it hits the syntax symbol
         Just _   -> do
             text <- many $ noneOf syntaxSymbol
             textParser text
