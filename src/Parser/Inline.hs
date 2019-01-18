@@ -4,7 +4,7 @@ module Parser.Inline
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
-import           RIO.List                      (headMaybe, initMaybe, lastMaybe)
+import           RIO.List                      (headMaybe, tailMaybe)
 
 import           Data.String                   (fromString)
 import qualified Data.Text                     as T
@@ -58,8 +58,8 @@ linkParser = do
             linkContent <- getElement $ headMaybe contents
             return (Nothing, linkContent)
         else do
-            nameContent <- getElement $ initMaybe contents
-            linkContent <- getElement $ lastMaybe contents
+            nameContent <- getElement $ tailMaybe contents
+            linkContent <- getElement $ headMaybe contents
             let name = T.strip $ fromString $
                     foldr (\someText acc -> someText <> " " <> acc) mempty nameContent
             return (Just name, linkContent)
