@@ -9,7 +9,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, lookAhead, many,
                                                 many1, noneOf, optionMaybe,
                                                 parse, sepBy1, space, try,
-                                                (<?>), (<|>), manyTill, eof)
+                                                (<?>), (<|>), manyTill, eof, oneOf)
 
 import           Types                         (Segment (..), Url (..))
 
@@ -67,50 +67,47 @@ linkParser = do
 
 -- | Parser fro 'SimpleText'
 simpleTextParser :: Parser Segment
-simpleTextParser = do
-    content <- many $ noneOf "`[#"
-    content' <- someParser content
-    return $ simpleText content'
+simpleTextParser = simpleText <$> textParser mempty
 
-someParser :: String -> Parser String
-someParser content = do
+textParser :: String -> Parser String
+textParser content = do
     someChar <- lookAheadMaybe anyChar
     case someChar of
 
-        -- Nothing is behind
+        -- Nothing is ahead of it, the work is done
         Nothing  -> return content
 
         -- Could be link so try to parse it
-        Just '[' -> do
-            mLink <- lookAheadMaybe linkParser
-            if isJust mLink
-                then return content
-                else do
-                    rest <- many1 $ noneOf "`#"
-                    someParser $ content <> rest
+        Just '[' -> checkWith linkParser content
 
         -- Could be code notation so try to parse it
-        Just '`' -> do
-            mCodeNotation <- lookAheadMaybe codeNotationParser
-            if isJust mCodeNotation
-                then return content
-                else do
-                    rest <- many1 $ noneOf "[#"
-                    someParser $ content <> rest
+        Just '`' -> checkWith codeNotationParser content
 
-        -- For everything else, return the content
-        Just '#' -> do
-            mHashtag <- lookAheadMaybe hashTagParser
-            if isJust mHashtag
-                then return content
-                else do
-                    hashSymbol <- anyChar
-                    rest       <- many1 $ noneOf "[`#"
-                    someParser $ content <> [hashSymbol] <> rest 
-        Just _   -> return content
+        -- Could be hashtag, so try to parse it
+        Just '#' -> checkWith hashTagParser content
 
-lookAheadMaybe :: Parser a -> Parser (Maybe a)
-lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
+        -- For everything else, just return content
+        Just _   -> do
+            text <- many $ noneOf syntaxSymbol
+            textParser text
+  where
+    -- Check if the ahead content can be parsed by the given parser,
+    -- if not, consume them as simpletext until next symbol
+    checkWith :: Parser a -> String -> Parser String
+    checkWith parser content' = do
+        mResult <- lookAheadMaybe parser
+        if isJust mResult
+            then return content
+            else do
+                someSymbol <- oneOf syntaxSymbol
+                rest       <- many $ noneOf syntaxSymbol
+                textParser $ content' <> [someSymbol] <> rest
+
+    lookAheadMaybe :: Parser a -> Parser (Maybe a)
+    lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
+
+    syntaxSymbol :: String
+    syntaxSymbol = "[`#"
 
 -- | Parse inline text into list of 'Segment'
 segmentParser :: Parser Segment
