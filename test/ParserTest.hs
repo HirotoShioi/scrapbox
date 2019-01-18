@@ -2,17 +2,17 @@
 
 module ParserTest where
 
-import RIO
+import           RIO
 
-import Test.Hspec (Spec, describe)
-import Test.Hspec.QuickCheck (prop, modifyMaxSuccess)
-import Test.QuickCheck (PrintableString(..))
+import           Test.Hspec            (Spec, describe)
+import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
+import           Test.QuickCheck       (PrintableString (..))
 
-import Parser.Inline
+import           Parser.Inline         (testInlineParser)
 
 parserSpec :: Spec
-parserSpec = 
+parserSpec =
     describe "inline parser" $ modifyMaxSuccess (const 10000) $
         prop "should be able to parse any text without failing or cause infinite loop" $
-            \(someText :: PrintableString) -> 
-                isRight $ testInlineParser $ getPrintableString someText 
+            \(someText :: PrintableString) ->
+                isRight $ testInlineParser $ getPrintableString someText
