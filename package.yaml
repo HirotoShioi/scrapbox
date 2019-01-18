@@ -26,6 +26,7 @@ dependencies:
 - cmark
 - hspec
 - mtl
+- parsec
 - QuickCheck
 - rio
 - say
