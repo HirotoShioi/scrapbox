@@ -19,7 +19,8 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
 import           Types                         (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
--- Smart contstructors (do not export these)
+-- Smart contstructors 
+-- Do not export these. These should only be used within this module.
 --------------------------------------------------------------------------------
 
 -- | Used to create 'SimpleText'
