@@ -1,7 +1,4 @@
-module Parser.Inline
-    ( inlineParser
-    , testInlineParser
-    ) where
+module Parser.Inline where
 
 import           RIO                           hiding (many, try, (<|>))
 import           RIO.List                      (headMaybe, initMaybe, lastMaybe)
@@ -12,7 +9,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, lookAhead, many,
                                                 many1, noneOf, optionMaybe,
                                                 parse, sepBy1, space, try,
-                                                (<?>), (<|>))
+                                                (<?>), (<|>), manyTill, eof)
 
 import           Types                         (Segment (..), Url (..))
 
@@ -71,36 +68,49 @@ linkParser = do
 -- | Parser fro 'SimpleText'
 simpleTextParser :: Parser Segment
 simpleTextParser = do
-    content <- many1 $ noneOf "[`#"
+    content <- many $ noneOf "`[#"
+    content' <- someParser content
+    return $ simpleText content'
+
+someParser :: String -> Parser String
+someParser content = do
     someChar <- lookAheadMaybe anyChar
     case someChar of
 
         -- Nothing is behind
-        Nothing  -> return $ simpleText content
+        Nothing  -> return content
 
         -- Could be link so try to parse it
         Just '[' -> do
             mLink <- lookAheadMaybe linkParser
             if isJust mLink
-                then return $ simpleText content
+                then return content
                 else do
                     rest <- many1 $ noneOf "`#"
-                    return $ simpleText $ content <> rest
+                    someParser $ content <> rest
 
         -- Could be code notation so try to parse it
         Just '`' -> do
             mCodeNotation <- lookAheadMaybe codeNotationParser
             if isJust mCodeNotation
-                then return $ simpleText content
+                then return content
                 else do
                     rest <- many1 $ noneOf "[#"
-                    return $ simpleText $ content <> rest
+                    someParser $ content <> rest
 
         -- For everything else, return the content
-        Just _ -> return $ simpleText content
-  where
-    lookAheadMaybe :: Parser a -> Parser (Maybe a)
-    lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
+        Just '#' -> do
+            mHashtag <- lookAheadMaybe hashTagParser
+            if isJust mHashtag
+                then return content
+                else do
+                    hashSymbol <- anyChar
+                    rest       <- many1 $ noneOf "[`#"
+                    someParser $ content <> [hashSymbol] <> rest 
+        Just _   -> return content
+
+lookAheadMaybe :: Parser a -> Parser (Maybe a)
+lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
 
 -- | Parse inline text into list of 'Segment'
 segmentParser :: Parser Segment
@@ -113,13 +123,13 @@ segmentParser =
 
 -- | Parser for inline text
 inlineParser :: Parser [Segment]
-inlineParser = many segmentParser -- May want to switch over to many1 to make it fail
+inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
 
 -- | Function to test whether given 'String' can be properly parsed
 testInlineParser :: String -> Either ParseError [Segment]
 testInlineParser = parse inlineParser "Inline text parser"
 
--- > textParser "hello [hello yahoo link www.yahoo.co.jp] [hello] []"
+-- > textInlineParser "hello [hello yahoo link www.yahoo.co.jp] [hello] [] `failed code [failed url #someHashtag"
 -- Right
 --     [ SimpleText "hello "
 --     , Link ( Just "hello yahoo link" ) ( Url "www.yahoo.co.jp" )
