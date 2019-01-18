@@ -55,10 +55,11 @@ hashTagParser = do
 linkParser :: Parser Segment
 linkParser = do
     contents <- between (char '[') (char ']') $ sepBy1 (many1 $ noneOf "] ") space
-    (mName, someLink) <- if length contents <= 1
+    if length contents <= 1
         then do
             linkContent <- getElement $ headMaybe contents
-            return (Nothing, fromString linkContent)
+            return $ Link Nothing (Url $ fromString linkContent)
+
         else do
             -- Both are viable
             --  [Haskell付箋まとめ http://lotz84.github.io/haskell/]
@@ -67,18 +68,17 @@ linkParser = do
             linkLeft  <- getElement $ headMaybe contents
             linkRight <- getElement $ lastMaybe contents
             mkLink linkLeft linkRight contents
-    return $ Link mName (Url someLink)
   where
 
-    mkLink :: String -> String -> [String] -> Parser (Maybe Text, Text)
+    mkLink :: String -> String -> [String] -> Parser Segment
     mkLink link' link'' wholecontent
         | isURI link' = do
             nameContent <- getElement $ tailMaybe wholecontent
-            return (Just $ mkName nameContent, fromString link')
+            return $ Link (Just $ mkName nameContent) (Url $ fromString link')
         | isURI link'' = do
             nameContent <- getElement $ initMaybe wholecontent
-            return (Just $ mkName nameContent, fromString link'')
-        | otherwise   = return (Nothing, mkName wholecontent)
+            return $ Link (Just $ mkName nameContent) (Url $ fromString link'')
+        | otherwise   = return $ Link Nothing (Url $ mkName wholecontent)
 
     mkName :: [String] -> Text
     mkName wholecontent = T.strip $ fromString $
