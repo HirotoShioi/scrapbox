@@ -63,7 +63,7 @@ linkParser = do
             -- Both are viable
             --  [Haskell付箋まとめ http://lotz84.github.io/haskell/]
             -- [http://lotz84.github.io/haskell/ Haskell付箋まとめ]
-            -- check if head or last is and url, if not the whote content is url
+            -- check if head or last is and url, if not the whole content is url
             linkLeft  <- getElement $ headMaybe contents
             linkRight <- getElement $ lastMaybe contents
             mkLink linkLeft linkRight contents
