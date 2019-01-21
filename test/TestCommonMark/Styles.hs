@@ -73,7 +73,7 @@ getHeadContext blocks = do
 -- No style
 --------------------------------------------------------------------------------
 
--- | Test spec for non-styled text
+-- | Test spec for parsing non-styled text
 noStyleTextSpec :: Spec
 noStyleTextSpec =
     describe "Non-styled text" $ do
@@ -87,7 +87,7 @@ noStyleTextSpec =
 -- Bold text
 --------------------------------------------------------------------------------
 
--- | Test spec for Bold-styled text
+-- | Test spec for parsing Bold-styled text
 boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
@@ -100,7 +100,7 @@ boldTextSpec = describe "Bold text" $ do
 -- Italic text
 --------------------------------------------------------------------------------
 
--- | Test spec for italic-styled text
+-- | Test spec for parsing italic-styled text
 italicTextSpec :: Spec
 italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $

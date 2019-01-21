@@ -13,7 +13,6 @@ module Constructors
     , thumbnail
     -- * Context
     , context
-    -- * Constructors for creating 'Context' with a style
     , noStyle
     , bold
     , italic

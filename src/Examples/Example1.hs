@@ -366,7 +366,7 @@ getsInterestingMd = markdown getsInterestingBlock
 onceStartedMd :: Markdown
 onceStartedMd = markdown onceStartedBlock
 
--- Example of how https://scrapbox.io/scrapbox-parser/Get_started should be parsed
+-- | Example of how https://scrapbox.io/scrapbox-parser/Get_started should be parsed
 getStartedMarkdown :: Markdown
 getStartedMarkdown = markdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
 

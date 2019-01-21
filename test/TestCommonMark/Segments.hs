@@ -19,6 +19,7 @@ import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
                                         genRandomText, getHeadSegment,
                                         getParagraph)
 
+-- | Test suites for 'Segment'
 segmentSpec :: Spec
 segmentSpec = describe "Segments" $ do
     linkSpec
@@ -41,6 +42,7 @@ instance CommonMarkdown LinkSegment where
 instance Arbitrary LinkSegment where
     arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
 
+-- | Test spec for parsing 'Link'
 linkSpec :: Spec
 linkSpec = describe "Links" $ do
     prop "should parse link as Link" $
@@ -81,6 +83,7 @@ instance CommonMarkdown CodeNotationSegment where
 instance Arbitrary CodeNotationSegment where
     arbitrary = CodeNotationSegment <$> genPrintableText
 
+-- | Test spec for parsing 'CodeNotation'
 codeNotationSpec :: Spec
 codeNotationSpec =
     describe "Code notation" $ do
@@ -119,6 +122,7 @@ instance CommonMarkdown SimpleTextSegment where
 instance Arbitrary SimpleTextSegment where
     arbitrary = SimpleTextSegment <$> genPrintableText
 
+-- | Test spec for parsing 'SimpleText'
 plainTextSpec :: Spec
 plainTextSpec = describe "Plain text" $ do
     prop "should parse plain text as SimpleText" $

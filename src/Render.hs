@@ -99,7 +99,7 @@ renderBulletPoints = concatMap (map (\ text -> "\t" <> text) . renderBlock)
 blocked :: Text -> Text
 blocked content = "[" <> content <> "]"
 
--- | render with style (Do not export this)
+-- | Render with style (Do not export this)
 renderWithStyle :: Style -> Content -> Text
 renderWithStyle style ctx = case style of
     NoStyle -> renderContent ctx

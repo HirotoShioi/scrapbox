@@ -107,7 +107,7 @@ data Block
     -- ^ Header
     | Paragraph !ScrapText
     -- ^ Simple text
-    | Table !TableName !TableContent -- No sure how to implement yet!!
+    | Table !TableName !TableContent
     -- ^ Table
     | Thumbnail !Url
     -- ^ Thumbnail
@@ -125,6 +125,7 @@ newtype ScrapText = ScrapText [Context]
 data Context = Context !Style !Content
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Content is list of 'Segment's
 type Content = [Segment]
 
 -- | Style that can be applied to the 'Segment'
@@ -148,7 +149,7 @@ data Segment =
     | HashTag !Text
     -- ^ Hashtag
     | Link !(Maybe Text) !Url
-    -- ^ Link, it can have href
+    -- ^ Link, it can have named as href
     | SimpleText !Text
     -- ^ Just an simple text
     deriving (Eq, Show, Generic, Read, Ord)
@@ -212,7 +213,8 @@ concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
     | style1 == style2 = concatContext (Context style1 (ctx1 <> ctx2) : rest)
     | otherwise        = c1 : c2 : concatContext rest
 
--- Concatenate 'ScrapText'
+-- | Concatenate 'ScrapText'
+-- This could be Semigroup, but definatly not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
 concatScrapText (ScrapText ctx1) (ScrapText ctx2) = ScrapText $ concatContext $ ctx1 <> ctx2
 

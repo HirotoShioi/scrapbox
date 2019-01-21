@@ -18,9 +18,11 @@ import           Prelude              (String)
 import           Constructors         (table)
 import           Types                (Block)
 
+-- | Representation of CommonMark table
 newtype CommonMarkTable = CommonMarkTable [Column]
     deriving Show
 
+-- | Each column
 newtype Column = Column
     { getColumn :: [Text]
     } deriving Show
