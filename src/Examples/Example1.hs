@@ -354,15 +354,19 @@ onceStartedBlock =
     , noteWhen
     ]
 
+-- | 'Markdown' of get started section
 getStartedMd :: Markdown
 getStartedMd = markdown getStartedBlock
 
+-- | 'Markdown' of gets interesting section
 getsInterestingMd :: Markdown
 getsInterestingMd = markdown getsInterestingBlock
 
+-- | 'Markdown' of once started section
 onceStartedMd :: Markdown
 onceStartedMd = markdown onceStartedBlock
 
+-- Example of how https://scrapbox.io/scrapbox-parser/Get_started should be parsed
 getStartedMarkdown :: Markdown
 getStartedMarkdown = markdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
 

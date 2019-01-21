@@ -350,6 +350,7 @@ example2 = markdown $ concatMap section
     , codeBlockSection
     , tableSection
     ]
+
 -- "Syntax",
 -- "[https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815]",
 -- "",

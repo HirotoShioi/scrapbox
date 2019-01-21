@@ -1,6 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TestCommonMark.Utils where
+module TestCommonMark.Utils
+    ( CommonMarkdown(..)
+    , checkMarkdown
+    , genPrintableText
+    , getHeadSegment
+    , getParagraph
+    , genRandomText
+    , genPrintableUrl
+    ) where
 
 import           RIO
 
@@ -33,7 +41,7 @@ genRandomText = fmap fromString <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp"]
+    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
     randomSite <- genRandomText
     return $ "http://www." <> randomSite <> end
 
@@ -52,6 +60,7 @@ checkMarkdown markdown pre extractionFunc = do
     let (Markdown content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
 
+-- | Return 'Paragraph' if given 'Block' is 'Paragraph'
 getParagraph :: Block -> Maybe Block
 getParagraph paragraph@(Paragraph _) = Just paragraph
 getParagraph _                       = Nothing

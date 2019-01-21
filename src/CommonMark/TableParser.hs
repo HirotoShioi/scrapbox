@@ -3,6 +3,8 @@
 module CommonMark.TableParser
     ( commonMarkTableToTable
     , parseTable
+    , CommonMarkTable
+    , Column
     ) where
 
 import           RIO
@@ -50,6 +52,7 @@ columnParser = do
         rest    <- P.takeText
         return (currList ++ [element], rest)
 
+-- | Parse given '[Text]' into 'CommonMarkTable'
 parseTable :: [Text] -> Either String CommonMarkTable
 parseTable texts =
     let header = take 1 texts
@@ -62,6 +65,7 @@ parseTable texts =
         column <- P.parseOnly columnParser t
         go (CommonMarkTable (currList <> [column])) ts
 
+-- | Convert given common mark table into 'Table' block
 commonMarkTableToTable :: CommonMarkTable -> Block
 commonMarkTableToTable (CommonMarkTable columns) =
     table "table" (map getColumn columns)

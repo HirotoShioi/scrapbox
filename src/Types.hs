@@ -1,7 +1,42 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase    #-}
 
-module Types where
+module Types
+    ( -- * Datatypes
+      Page (..)
+    , Markdown (..)
+    , BulletSize(..)
+    , Block(..)
+    , CodeName(..)
+    , CodeSnippet(..)
+    , HeaderSize(..)
+    , TableName(..)
+    , Url(..)
+    , Segment(..)
+    , Content
+    , Context(..)
+    , ScrapText(..)
+    , Style(..)
+    , StyleData(..)
+    , TableContent(..)
+    -- * Helper functions
+    , concatContext
+    , concatScrapText
+    , verbose
+    , unverbose
+    , emptyContext
+    -- * Predicates
+    , isBlockQuote
+    , isBulletList
+    , isCodeBlock
+    , isCodeNotation
+    , isHeader
+    , isLink
+    , isParagraph
+    , isSimpleText
+    , isThumbnail
+    , isTable
+    ) where
 
 import           RIO
 
@@ -145,8 +180,10 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
         BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
+
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
+
     mkVerboseContext :: Context -> [Context]
     mkVerboseContext (Context style segments) =
         foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
@@ -162,6 +199,7 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
         BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
+
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
@@ -211,27 +249,27 @@ isBulletList :: Block -> Bool
 isBulletList (BulletList _) = True
 isBulletList _              = False
 
--- | Checks whether given 'Block' is Thumbnail
+-- | Checks whether given 'Block' is 'Thumbnail'
 isThumbnail :: Block -> Bool
 isThumbnail (Thumbnail _) = True
 isThumbnail _             = False
 
--- | Checks whether given 'Block' is Table
+-- | Checks whether given 'Block' is 'Table'
 isTable :: Block -> Bool
 isTable (Table _ _) = True
 isTable _           = False
 
--- | Checks whether given Segment is Link
+-- | Checks whether given 'Segment' is 'Link'
 isLink :: Segment -> Bool
 isLink (Link _ _) = True
 isLink _          = False
 
--- | Checks whether given 'Segment is Code notation
+-- | Checks whether given 'Segment' is 'CodeNotation'
 isCodeNotation :: Segment -> Bool
 isCodeNotation (CodeNotation _) = True
 isCodeNotation _                = False
 
--- | Checks whether given 'Segment is Simple text
+-- | Checks whether given 'Segment' is 'SimpleText'
 isSimpleText :: Segment -> Bool
 isSimpleText (SimpleText _) = True
 isSimpleText _              = False

@@ -6,7 +6,7 @@ module Render
       renderPretty
     , renderRaw
     , writeMarkdown
-    -- * For testing
+    -- * Exposed for testing
     , renderBlock
     , renderContent
     , renderText
@@ -29,12 +29,12 @@ import           Types    (Block (..), BulletSize (..), CodeName (..),
 renderPretty :: Markdown -> Text
 renderPretty (Markdown blocks) = T.unlines $ concatMap renderBlock blocks
 
--- | render given `Markdown' into list of ByteStrings
+-- | Render given `Markdown' into list of ByteStrings
 renderRaw :: Markdown -> [ByteString]
 renderRaw (Markdown blocks) =
     concatMap (map encodeUtf8 . renderBlock) blocks
 
--- | Write markdown to given path
+-- | Write given 'Markdown' to given path
 writeMarkdown :: FilePath -> Markdown -> IO ()
 writeMarkdown path (Markdown blocks) = do
     let renderedMarkdown = T.unlines $ concatMap renderBlock blocks
@@ -44,7 +44,7 @@ writeMarkdown path (Markdown blocks) = do
 -- Rendering logics
 --------------------------------------------------------------------------------
 
--- Render blocks
+-- | Render given 'Block' into  'Text'
 renderBlock :: Block -> [Text]
 renderBlock = \case
     LineBreak                          -> [""]
@@ -57,15 +57,15 @@ renderBlock = \case
     Table tableName tableContent       -> renderTable tableName tableContent <> renderBlock LineBreak
     Thumbnail (Url url)                -> [blocked url]
 
--- | render given 'ScrapText' into 'Text'
+-- | Render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
 renderText (ScrapText ctxs) = foldr (\scrap acc-> renderScrapText scrap <> acc) mempty ctxs
 
--- | render given 'Context' into 'Text'
+-- | Render given 'Context' into 'Text'
 renderScrapText :: Context -> Text
 renderScrapText (Context style content) = renderWithStyle style content
 
--- | render given 'Content' to 'Text'
+-- | Render given 'Content' to 'Text'
 renderContent :: Content -> Text
 renderContent = foldr (\ctx acc -> renderSegment ctx <> acc) mempty
   where
@@ -91,7 +91,7 @@ renderTable (TableName name) (TableContent content) =
         renderdTable = map (foldr (\someText acc -> "\t" <> someText <> acc) mempty) content
     in title <> renderdTable
 
--- | render bulletpoints
+-- | Render 'Bulletpoint's
 renderBulletPoints :: [Block] -> [Text]
 renderBulletPoints = concatMap (map (\ text -> "\t" <> text) . renderBlock)
 
@@ -129,7 +129,7 @@ renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
             ]
     in blocked $ combinedSyntax <> renderContent content
 
--- | Render header
+-- | Render 'Header' block
 renderHeader :: HeaderSize -> Content -> Text
 renderHeader (HeaderSize headerSize) content =
     let style = StyleData headerSize False False False

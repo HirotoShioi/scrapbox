@@ -94,6 +94,7 @@ linkParser = do
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
+-- | Parser for 'SimpleText'
 textParser :: String -> Parser String
 textParser content = do
     someChar <- lookAheadMaybe anyChar
