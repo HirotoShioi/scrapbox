@@ -152,11 +152,12 @@ inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to 
 testInlineParser :: String -> Either ParseError [Segment]
 testInlineParser = parse inlineParser "Inline text parser"
 
--- > textInlineParser "hello [hello yahoo link www.yahoo.co.jp] [hello] [] `failed code [failed url #someHashtag"
+-- > testInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `failed code [failed url #someHashtag"
 -- Right
 --     [ SimpleText "hello "
---     , Link ( Just "hello yahoo link" ) ( Url "www.yahoo.co.jp" )
+--     , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
 --     , SimpleText " "
 --     , Link Nothing ( Url "hello" )
---     , SimpleText " []"
+--     , SimpleText " [] `failed code [failed url "
+--     , HashTag "someHashtag"
 --     ]
