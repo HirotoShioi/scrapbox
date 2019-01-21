@@ -20,6 +20,7 @@ import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
                                         genPrintableText, getHeadSegment,
                                         getParagraph)
 
+-- | Test suites for parsing styled text
 styleSpec :: Spec
 styleSpec = describe "Styles" $ do
     noStyleTextSpec
