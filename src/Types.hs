@@ -5,7 +5,7 @@ module Types where
 
 import           RIO
 
-import           Data.List    (groupBy)
+import           Data.List (groupBy)
 
 -- https://scrapbox.io/help/Syntax
 

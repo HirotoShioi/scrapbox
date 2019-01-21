@@ -26,6 +26,8 @@ dependencies:
 - cmark
 - hspec
 - mtl
+- network-uri
+- parsec
 - QuickCheck
 - rio
 - say
