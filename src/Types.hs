@@ -1,7 +1,46 @@
+{-| Datatypes used to represent the scrapbox AST as well as some of the helper functions
+which are somewhat helpful.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase    #-}
 
-module Types where
+module Types
+    ( -- * Datatypes
+      Page (..)
+    , Markdown (..)
+    , BulletSize(..)
+    , Block(..)
+    , CodeName(..)
+    , CodeSnippet(..)
+    , HeaderSize(..)
+    , TableName(..)
+    , Url(..)
+    , Segment(..)
+    , Content
+    , Context(..)
+    , ScrapText(..)
+    , Style(..)
+    , StyleData(..)
+    , TableContent(..)
+    -- * Helper functions
+    , concatContext
+    , concatScrapText
+    , verbose
+    , unverbose
+    , emptyContext
+    -- * Predicates
+    , isBlockQuote
+    , isBulletList
+    , isCodeBlock
+    , isCodeNotation
+    , isHeader
+    , isLink
+    , isParagraph
+    , isSimpleText
+    , isThumbnail
+    , isTable
+    ) where
 
 import           RIO
 
@@ -72,7 +111,7 @@ data Block
     -- ^ Header
     | Paragraph !ScrapText
     -- ^ Simple text
-    | Table !TableName !TableContent -- No sure how to implement yet!!
+    | Table !TableName !TableContent
     -- ^ Table
     | Thumbnail !Url
     -- ^ Thumbnail
@@ -90,6 +129,7 @@ newtype ScrapText = ScrapText [Context]
 data Context = Context !Style !Content
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Content is list of 'Segment's
 type Content = [Segment]
 
 -- | Style that can be applied to the 'Segment'
@@ -113,7 +153,7 @@ data Segment =
     | HashTag !Text
     -- ^ Hashtag
     | Link !(Maybe Text) !Url
-    -- ^ Link, it can have href
+    -- ^ Link, it can have named as href
     | SimpleText !Text
     -- ^ Just an simple text
     deriving (Eq, Show, Generic, Read, Ord)
@@ -145,8 +185,10 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
         BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
+
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
+
     mkVerboseContext :: Context -> [Context]
     mkVerboseContext (Context style segments) =
         foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
@@ -162,6 +204,7 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
         BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
+
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
@@ -174,7 +217,8 @@ concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
     | style1 == style2 = concatContext (Context style1 (ctx1 <> ctx2) : rest)
     | otherwise        = c1 : c2 : concatContext rest
 
--- Concatenate 'ScrapText'
+-- | Concatenate 'ScrapText'
+-- This could be Semigroup, but definatly not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
 concatScrapText (ScrapText ctx1) (ScrapText ctx2) = ScrapText $ concatContext $ ctx1 <> ctx2
 
@@ -211,27 +255,27 @@ isBulletList :: Block -> Bool
 isBulletList (BulletList _) = True
 isBulletList _              = False
 
--- | Checks whether given 'Block' is Thumbnail
+-- | Checks whether given 'Block' is 'Thumbnail'
 isThumbnail :: Block -> Bool
 isThumbnail (Thumbnail _) = True
 isThumbnail _             = False
 
--- | Checks whether given 'Block' is Table
+-- | Checks whether given 'Block' is 'Table'
 isTable :: Block -> Bool
 isTable (Table _ _) = True
 isTable _           = False
 
--- | Checks whether given Segment is Link
+-- | Checks whether given 'Segment' is 'Link'
 isLink :: Segment -> Bool
 isLink (Link _ _) = True
 isLink _          = False
 
--- | Checks whether given 'Segment is Code notation
+-- | Checks whether given 'Segment' is 'CodeNotation'
 isCodeNotation :: Segment -> Bool
 isCodeNotation (CodeNotation _) = True
 isCodeNotation _                = False
 
--- | Checks whether given 'Segment is Simple text
+-- | Checks whether given 'Segment' is 'SimpleText'
 isSimpleText :: Segment -> Bool
 isSimpleText (SimpleText _) = True
 isSimpleText _              = False

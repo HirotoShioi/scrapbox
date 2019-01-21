@@ -1,3 +1,6 @@
+{-| Inline parser module
+-}
+
 module Parser.Inline
     ( inlineParser
     , testInlineParser
@@ -65,12 +68,12 @@ linkParser = do
 
         else do
             -- Both are viable
-            --  [Haskell付箋まとめ http://lotz84.github.io/haskell/]
-            -- [http://lotz84.github.io/haskell/ Haskell付箋まとめ]
+            --  [Haskell http://lotz84.github.io/haskell/]
+            -- [http://lotz84.github.io/haskell/ Haskell]
             -- check if head or last is an url, if not the whole content is url
-            linkLeft  <- getElement $ headMaybe contents
-            linkRight <- getElement $ lastMaybe contents
-            mkLink linkLeft linkRight contents
+            linkHead  <- getElement $ headMaybe contents
+            linkLast <- getElement $ lastMaybe contents
+            mkLink linkHead linkLast contents
   where
 
     mkLink :: String -> String -> [String] -> Parser Segment
@@ -94,6 +97,7 @@ linkParser = do
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
+-- | Parser for 'SimpleText'
 textParser :: String -> Parser String
 textParser content = do
     someChar <- lookAheadMaybe anyChar
@@ -151,11 +155,12 @@ inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to 
 testInlineParser :: String -> Either ParseError [Segment]
 testInlineParser = parse inlineParser "Inline text parser"
 
--- > textInlineParser "hello [hello yahoo link www.yahoo.co.jp] [hello] [] `failed code [failed url #someHashtag"
+-- > testInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
 -- Right
 --     [ SimpleText "hello "
---     , Link ( Just "hello yahoo link" ) ( Url "www.yahoo.co.jp" )
+--     , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
 --     , SimpleText " "
 --     , Link Nothing ( Url "hello" )
---     , SimpleText " []"
+--     , SimpleText " [] `weird code [weird url "
+--     , HashTag "someHashtag"
 --     ]

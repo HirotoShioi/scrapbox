@@ -1,3 +1,6 @@
+{-| Constructor that can be used to build scrapbox AST
+-}
+
 module Constructors
     ( markdown
     -- * Blocks
@@ -7,13 +10,12 @@ module Constructors
     , codeBlock
     , header
     , lineBreak
-    , p
     , paragraph
+    , p
     , table
     , thumbnail
     -- * Context
     , context
-    -- * Constructors for creating 'Context' with a style
     , noStyle
     , bold
     , italic
@@ -64,27 +66,27 @@ codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet code
 paragraph :: [Context] -> Block
 paragraph = Paragraph . ScrapText
 
--- | Synonym of paragraph function
+-- | Constructor for creating 'Paragraph' block, synonym of 'paragraph'
 p :: [Context] -> Block
 p = paragraph
 
--- | Constructors for creating table block
+-- | Constructors for creating 'Table' block
 table :: Text -> [[Text]] -> Block
 table title contents = Table (TableName title) (TableContent contents)
 
--- | Constructors for creating thumbnail with given Url
+-- | Constructors for creating 'Thumbnail' with given Url
 thumbnail :: Text -> Block
 thumbnail url = Thumbnail (Url url)
 
--- | Constructors for creating Header with given Header size and content
+-- | Constructors for creating 'Header' with given Header size and content
 header :: Int -> Content -> Block
 header size = Header (HeaderSize size)
 
--- | Constructors for creating BulletPoint block with given size and content
+-- | Constructors for creating 'BulletPoint' block with given size and content
 bulletPoint :: Int -> [Context] -> Block
 bulletPoint size ctxs = BulletPoint (BulletSize size) (ScrapText ctxs)
 
--- | LineBreak
+-- | 'LineBreak'
 lineBreak :: Block
 lineBreak = LineBreak
 
@@ -112,7 +114,7 @@ italic = Context Italic
 strikeThrough :: [Segment] -> Context
 strikeThrough = Context StrikeThrough
 
--- | Creates Context wigh given 'StyleData' and 'Segment'
+-- | Creates 'Context' wigh given 'StyleData' and 'Segment'
 customStyle :: StyleData -> [Segment] -> Context
 customStyle sData = Context (CustomStyle sData)
 
@@ -120,19 +122,19 @@ customStyle sData = Context (CustomStyle sData)
 -- Segment
 --------------------------------------------------------------------------------
 
--- | Creates SimpleText segment with given text
+-- | Creates 'SimpleText' segment with given 'Text'
 text :: Text -> Segment
 text = SimpleText
 
--- | Creates CodeNotation segment with given text
+-- | Creates 'CodeNotation' segment with given 'Text'
 codeNotation :: Text -> Segment
 codeNotation = CodeNotation
 
--- | Creates HashTag segment with given text
+-- | Creates 'HashTag' segment with given 'Text'
 hashtag :: Text -> Segment
 hashtag = HashTag
 
--- | Creates link with given name and url
+-- | Creates 'Link' with given name and url
 link :: Maybe Text -> Text -> Segment
 link mName url = Link mName (Url url)
 

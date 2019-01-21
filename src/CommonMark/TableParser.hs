@@ -1,8 +1,13 @@
+{-| This module exports parse used to parse common mark table
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module CommonMark.TableParser
     ( commonMarkTableToTable
     , parseTable
+    , CommonMarkTable
+    , Column
     ) where
 
 import           RIO
@@ -16,9 +21,11 @@ import           Prelude              (String)
 import           Constructors         (table)
 import           Types                (Block)
 
+-- | Representation of CommonMark table
 newtype CommonMarkTable = CommonMarkTable [Column]
     deriving Show
 
+-- | Each column
 newtype Column = Column
     { getColumn :: [Text]
     } deriving Show
@@ -50,6 +57,7 @@ columnParser = do
         rest    <- P.takeText
         return (currList ++ [element], rest)
 
+-- | Parse given '[Text]' into 'CommonMarkTable'
 parseTable :: [Text] -> Either String CommonMarkTable
 parseTable texts =
     let header = take 1 texts
@@ -62,6 +70,7 @@ parseTable texts =
         column <- P.parseOnly columnParser t
         go (CommonMarkTable (currList <> [column])) ts
 
+-- | Convert given common mark table into 'Table' block
 commonMarkTableToTable :: CommonMarkTable -> Block
 commonMarkTableToTable (CommonMarkTable columns) =
     table "table" (map getColumn columns)

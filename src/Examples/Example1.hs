@@ -1,3 +1,8 @@
+{-| Example of how our defined AST can be used to represent the scrapbox page
+
+Example page: https://scrapbox.io/scrapbox-parser/Get_started 
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Examples.Example1
@@ -354,15 +359,19 @@ onceStartedBlock =
     , noteWhen
     ]
 
+-- | 'Markdown' of get started section
 getStartedMd :: Markdown
 getStartedMd = markdown getStartedBlock
 
+-- | 'Markdown' of gets interesting section
 getsInterestingMd :: Markdown
 getsInterestingMd = markdown getsInterestingBlock
 
+-- | 'Markdown' of once started section
 onceStartedMd :: Markdown
 onceStartedMd = markdown onceStartedBlock
 
+-- | Example of how https://scrapbox.io/scrapbox-parser/Get_started should be parsed
 getStartedMarkdown :: Markdown
 getStartedMarkdown = markdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
 

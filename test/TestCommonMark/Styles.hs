@@ -1,3 +1,6 @@
+{-| Test suites for testing parser on styled-text
+-}
+
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -20,15 +23,12 @@ import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
                                         genPrintableText, getHeadSegment,
                                         getParagraph)
 
+-- | Test suites for parsing styled text
 styleSpec :: Spec
 styleSpec = describe "Styles" $ do
     noStyleTextSpec
     boldTextSpec
     italicTextSpec
-
---------------------------------------------------------------------------------
--- Something new
---------------------------------------------------------------------------------
 
 -- | Use Phantom type so we can generalize the test
 newtype StyledText a = StyledText {
@@ -73,6 +73,7 @@ getHeadContext blocks = do
 -- No style
 --------------------------------------------------------------------------------
 
+-- | Test spec for parsing non-styled text
 noStyleTextSpec :: Spec
 noStyleTextSpec =
     describe "Non-styled text" $ do
@@ -86,6 +87,7 @@ noStyleTextSpec =
 -- Bold text
 --------------------------------------------------------------------------------
 
+-- | Test spec for parsing Bold-styled text
 boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
@@ -98,6 +100,7 @@ boldTextSpec = describe "Bold text" $ do
 -- Italic text
 --------------------------------------------------------------------------------
 
+-- | Test spec for parsing italic-styled text
 italicTextSpec :: Spec
 italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $

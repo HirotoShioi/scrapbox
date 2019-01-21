@@ -1,3 +1,11 @@
+{-| This module exposes parser functions. You must provide 'ParseOption' 
+which is either 'optDefault' or 'optSectionHeader'
+
+To parse given CommonMark into Scrapbox AST, use 'commonmarkToMarkdown'.
+
+To parse given CommnMark and convert into Scrapbox format, use 'commonmarkToScrapbox'.
+-}
+
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -42,9 +50,11 @@ data ParseOption
     | SectionHeader
     -- ^ Will add linebreak before header to make it easier to see
 
+-- | Default parse option
 optDefault :: ParseOption
 optDefault = Default
 
+-- | This parse option adds LineBreak before each header to make it easier to see
 optSectionHeader :: ParseOption
 optSectionHeader = SectionHeader
 
@@ -72,6 +82,7 @@ commonmarkToMarkdown parseOption cmark =
 commonmarkToScrapbox :: ParseOption -> Text -> Text
 commonmarkToScrapbox parseOption cmark = renderPretty $ commonmarkToMarkdown parseOption cmark
 
+-- | Parse given CMark 'Node' into 'Markdown'
 parseNode :: ParseOption -> Node -> Markdown
 parseNode Default node       = markdown $ toBlocks node
 parseNode SectionHeader node = markdown $ applyLinebreak $ toBlocks node

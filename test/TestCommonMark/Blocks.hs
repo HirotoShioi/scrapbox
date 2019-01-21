@@ -1,3 +1,6 @@
+{-| Test suites for testing parser on Block
+-}
+
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -24,6 +27,19 @@ import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getParagraph)
 
+-- | Test suites for 'Block'          
+blockSpec :: Spec
+blockSpec = describe "Block" $ do
+    -- Blocks
+    paragraphSpec
+    headerTextSpec
+    blockQuoteSpec
+    codeBlockSpec
+    unorderedListSpec
+    orderedListSpec
+    imageSpec
+    tableSpec
+
 --------------------------------------------------------------------------------
 -- Paragraph
 --------------------------------------------------------------------------------
@@ -39,6 +55,7 @@ instance CommonMarkdown ParagraphSection where
 instance Arbitrary ParagraphSection where
     arbitrary = ParagraphSection <$> genPrintableText
 
+-- | Test spec for parsing 'Paragraph'
 paragraphSpec :: Spec
 paragraphSpec = describe "Paragraph" $ do
     prop "should be able to parse paragraph as Paragraph" $
@@ -100,7 +117,7 @@ instance CommonMarkdown HeaderText where
         H5 textContent -> "##### " <> textContent
         H6 textContent -> "###### " <> textContent
 
--- | Test spec for Header text
+-- | Test spec for parsing 'Header' text
 headerTextSpec :: Spec
 headerTextSpec = describe "Header text" $ do
     prop "should be able to parse header text as Header" $
@@ -155,6 +172,7 @@ instance CommonMarkdown BlockQuoteText where
 instance Arbitrary BlockQuoteText where
     arbitrary = BlockQuoteText <$> genPrintableText
 
+-- | Test spec for parsing 'BlockQuote'
 blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
     prop "should be able parse block quote text as BlockQuote" $
@@ -176,18 +194,6 @@ blockQuoteSpec = describe "BlockQuote text" $ do
     getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
     getBlockQuote _                         = Nothing
 
-blockSpec :: Spec
-blockSpec = describe "Block" $ do
-    -- Blocks
-    paragraphSpec
-    headerTextSpec
-    blockQuoteSpec
-    codeBlockSpec
-    unorderedListSpec
-    orderedListSpec
-    imageSpec
-    tableSpec
-
 --------------------------------------------------------------------------------
 -- CodeBlock
 --------------------------------------------------------------------------------
@@ -203,6 +209,7 @@ instance CommonMarkdown CodeBlockSection where
 instance Arbitrary CodeBlockSection where
     arbitrary = CodeBlockSection <$> listOf1 genPrintableText
 
+-- | Test spec for parsing 'CodeBlock'
 codeBlockSpec :: Spec
 codeBlockSpec = describe "Code block" $ do
     prop "should parse code block content as CodeBlock" $
@@ -237,6 +244,7 @@ instance CommonMarkdown UnorderedListBlock where
 instance Arbitrary UnorderedListBlock where
     arbitrary = UnorderedListBlock <$> listOf1 genPrintableText
 
+-- | Test spec for parsing unordered list
 unorderedListSpec :: Spec
 unorderedListSpec = describe "Unordered list" $ do
     prop "should parse unordered list as BulletList" $
@@ -253,6 +261,7 @@ unorderedListSpec = describe "Unordered list" $ do
                     return $ concatMap renderBlock lists
                 )
 
+-- | Check whether given 'Block' is 'BulletList'
 getBulletList :: Block -> Maybe Block
 getBulletList bulletList@(BulletList _) = Just bulletList
 getBulletList _                         = Nothing
@@ -273,6 +282,7 @@ instance CommonMarkdown OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
         zipWith (\num someText -> tshow num <> ". " <> someText) ([1..] :: [Int]) list
 
+-- | Test spec for parsing Ordered list
 orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
     prop "should parse ordered list as BulletList" $
@@ -307,6 +317,7 @@ instance CommonMarkdown ImageSection where
 instance Arbitrary ImageSection where
     arbitrary = ImageSection <$> genRandomText <*> genPrintableUrl
 
+-- | Test spec for parsing image
 imageSpec :: Spec
 imageSpec =
     describe "Image" $ do
@@ -334,7 +345,9 @@ imageSpec =
 -- | Table section
 data TableSection = TableSection
     { tableHeader  :: ![Text]
+    -- ^ Table header
     , tableContent :: ![[Text]]
+    -- ^ Content of the table
     } deriving Show
 
 instance CommonMarkdown TableSection where
@@ -360,6 +373,7 @@ instance Arbitrary TableSection where
         contents <- listOf1 $ vectorOf rowNum genRandomText
         return $ TableSection header contents
 
+-- | Test spec for parsing table
 tableSpec :: Spec
 tableSpec = describe "Table" $ do
     prop "should parse tabel as Table" $

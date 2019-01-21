@@ -1,3 +1,8 @@
+{-| Example of how our defined AST can be used to represent the scrapbox page
+
+Example page: https://scrapbox.io/toSrapbox/Syntax
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Examples.Example2
@@ -350,6 +355,7 @@ example2 = markdown $ concatMap section
     , codeBlockSection
     , tableSection
     ]
+
 -- "Syntax",
 -- "[https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815]",
 -- "",
