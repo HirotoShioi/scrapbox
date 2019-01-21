@@ -1,3 +1,7 @@
+{-| Datatypes used to represent the scrapbox AST as well as some of the helper functions
+which are somewhat helpful.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase    #-}
 

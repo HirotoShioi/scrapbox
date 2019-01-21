@@ -1,3 +1,6 @@
+{-| Test suites for testing parser on Segment
+-}
+
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 

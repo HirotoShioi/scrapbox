@@ -1,3 +1,6 @@
+{-| Inline parser module
+-}
+
 module Parser.Inline
     ( inlineParser
     , testInlineParser

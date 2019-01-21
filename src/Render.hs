@@ -1,3 +1,9 @@
+{-| Render module, these are used to render given 'Markdown' into 'Text' using
+'renderPretty' or 'renderRaw'
+
+You can also use 'writeMarkdown' to write given 'Markdown' into file.
+-}
+
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 

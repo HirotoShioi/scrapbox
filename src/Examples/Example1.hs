@@ -1,3 +1,8 @@
+{-| Example of how our defined AST can be used to represent the scrapbox page
+
+Example page: https://scrapbox.io/scrapbox-parser/Get_started 
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Examples.Example1

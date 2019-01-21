@@ -1,3 +1,6 @@
+{-| This module exports parse used to parse common mark table
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module CommonMark.TableParser

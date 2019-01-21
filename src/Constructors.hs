@@ -1,3 +1,6 @@
+{-| Constructor that can be used to build scrapbox AST
+-}
+
 module Constructors
     ( markdown
     -- * Blocks
@@ -63,7 +66,7 @@ codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet code
 paragraph :: [Context] -> Block
 paragraph = Paragraph . ScrapText
 
--- | Constructor for creating 'Paragraph' block
+-- | Constructor for creating 'Paragraph' block, synonym of 'paragraph'
 p :: [Context] -> Block
 p = paragraph
 
