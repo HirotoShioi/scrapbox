@@ -54,7 +54,7 @@ data ParseOption
 optDefault :: ParseOption
 optDefault = Default
 
--- | Adds linebreak before each header to make it easier to see
+-- | This parse option adds LineBreak before each header to make it easier to see
 optSectionHeader :: ParseOption
 optSectionHeader = SectionHeader
 

@@ -27,10 +27,6 @@ styleSpec = describe "Styles" $ do
     boldTextSpec
     italicTextSpec
 
---------------------------------------------------------------------------------
--- Something new
---------------------------------------------------------------------------------
-
 -- | Use Phantom type so we can generalize the test
 newtype StyledText a = StyledText {
     getStyledText :: Text
