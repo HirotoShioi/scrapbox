@@ -1,3 +1,6 @@
+{- Test suites for scrapbox parser
+-}
+
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module ParserTest where

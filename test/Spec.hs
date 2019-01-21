@@ -1,3 +1,6 @@
+{- Main function for exporting test suites
+-}
+
 import           RIO
 
 import           Test.Hspec              (Spec, describe, hspec)

@@ -1,3 +1,6 @@
+{-| Utility functions used to test commonmark parser
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module TestCommonMark.Utils

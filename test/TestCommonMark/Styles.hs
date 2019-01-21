@@ -1,3 +1,6 @@
+{-| Test suites for testing parser on styled-text
+-}
+
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE OverloadedStrings   #-}
