@@ -14,12 +14,14 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, lookAhead,
                                                 many, many1, manyTill, noneOf,
                                                 oneOf, optionMaybe, parse,
-                                                sepBy1, space, try, (<?>),
-                                                (<|>), unexpected)
+                                                sepBy1, space, try, unexpected,
+                                                (<?>), (<|>))
+
 import           Types                         (Segment (..), Url (..))
+import           Utils                         (fromMaybeM)
 
 --------------------------------------------------------------------------------
--- Smart contstructors 
+-- Smart contstructors
 -- Do not export these. These should only be used within this module.
 --------------------------------------------------------------------------------
 
@@ -65,7 +67,7 @@ linkParser = do
             -- Both are viable
             --  [Haskell付箋まとめ http://lotz84.github.io/haskell/]
             -- [http://lotz84.github.io/haskell/ Haskell付箋まとめ]
-            -- check if head or last is and url, if not the whole content is url
+            -- check if head or last is an url, if not the whole content is url
             linkLeft  <- getElement $ headMaybe contents
             linkRight <- getElement $ lastMaybe contents
             mkLink linkLeft linkRight contents
@@ -157,15 +159,3 @@ testInlineParser = parse inlineParser "Inline text parser"
 --     , Link Nothing ( Url "hello" )
 --     , SimpleText " []"
 --     ]
-
---------------------------------------------------------------------------------
--- Helper function
---------------------------------------------------------------------------------
-
--- | Monadic maybe
-maybeM :: Monad m => m b -> (a -> m b) -> m (Maybe a) -> m b
-maybeM n j x = maybe n j =<< x
-
--- | Monadic fromMaybe
-fromMaybeM :: Monad m => m a -> m (Maybe a) -> m a
-fromMaybeM n = maybeM n return

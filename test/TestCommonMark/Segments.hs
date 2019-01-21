@@ -53,7 +53,7 @@ linkSpec = describe "Links" $ do
                 (\(Link mName (Url url)) ->
                        url == linkUrl linkSegment
                     && maybe False (\name -> name == linkName linkSegment) mName
-                        
+
                 )
                 (\content -> do
                     segment <- getHeadSegment content
