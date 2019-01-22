@@ -23,19 +23,18 @@ contextParser =
 
 boldParser :: Parser Context
 boldParser = do
-    _        <- string "[["
+    _         <- string "[["
     paragraph <- manyTill anyChar (try $ string "]]")
-    -- Err try to fix this later
     segments <- runSegmentParser paragraph
     return $ Context Bold segments
 
 styledTextParser :: Parser Context
 styledTextParser = do
-    _ <- char '['
-    symbols  <- manyTill (oneOf "*/-!^~$") space
+    _         <- char '['
+    symbols   <- manyTill (oneOf "*/-!^~$%&") space -- Need to check if there's missing symobols
     paragraph <- manyTill anyChar (try $ char ']')
     let style = mkStyle symbols
-    segments <- runSegmentParser paragraph
+    segments  <- runSegmentParser paragraph
     return $ Context style segments
   where
 
@@ -107,6 +106,6 @@ eitherM l r x = either l r =<< x
 -- I'm guessing there's a bug in 'textParser'
 boldParser' :: Parser Context
 boldParser' = do
-    _        <- string "[["
+    _         <- string "[["
     paragraph <- manyTill segmentParser (try $ string "]]")
     return $ Context Bold paragraph
