@@ -13,7 +13,7 @@ import           Test.QuickCheck         (Arbitrary (..), PrintableString (..),
                                           arbitraryPrintableChar, listOf1)
 import           Test.QuickCheck.Monadic (assert, monadicIO)
 
-import           Parser.Inline           (testInlineParser)
+import           Parser.Inline           (runInlineParser)
 import           Utils                   (whenRight)
 
 -- | Test spec for inline parser
@@ -22,11 +22,11 @@ parserSpec =
     describe "inline parser" $ modifyMaxSuccess (const 10000) $ do
         prop "should be able to parse any text without failing or cause infinite loop" $
             \(someText :: PrintableString) ->
-                isRight $ testInlineParser $ getPrintableString someText
+                isRight $ runInlineParser $ getPrintableString someText
 
         prop "should not return empty list if given string is not empty" $
             \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = testInlineParser $ getNonEmptyPrintableString someText
+                let eParseredText = runInlineParser $ getNonEmptyPrintableString someText
 
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \parsedContent ->

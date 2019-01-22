@@ -3,7 +3,8 @@
 
 module Parser.Inline
     ( inlineParser
-    , testInlineParser
+    , runInlineParser
+    , segmentParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -97,6 +98,7 @@ linkParser = do
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
+-- Something is wrong, its causing infinite loop
 -- | Parser for 'SimpleText'
 textParser :: String -> Parser String
 textParser content = do
@@ -117,7 +119,7 @@ textParser content = do
 
         -- For everything else, parse until it hits the syntax symbol
         Just _   -> do
-            text <- many $ noneOf syntaxSymbol
+            text <- many1 $ noneOf syntaxSymbol
             textParser text
   where
     -- Check if the ahead content can be parsed by the given parser,
@@ -152,8 +154,8 @@ inlineParser :: Parser [Segment]
 inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
 
 -- | Function to test whether given 'String' can be properly parsed
-testInlineParser :: String -> Either ParseError [Segment]
-testInlineParser = parse inlineParser "Inline text parser"
+runInlineParser :: String -> Either ParseError [Segment]
+runInlineParser = parse inlineParser "Inline text parser"
 
 -- > testInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
 -- Right

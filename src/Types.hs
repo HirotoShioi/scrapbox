@@ -29,6 +29,7 @@ module Types
     , verbose
     , unverbose
     , emptyContext
+    , emptyStyle
     -- * Predicates
     , isBlockQuote
     , isBulletList
@@ -132,20 +133,6 @@ data Context = Context !Style !Content
 -- | Content is list of 'Segment's
 type Content = [Segment]
 
--- | Style that can be applied to the 'Segment'
-data Style =
-      CustomStyle StyleData
-    -- ^ You can use this to combine all three as of the styles as well as Header
-    | Bold
-    -- ^ Bold style
-    | Italic
-    -- ^ Italic style
-    | NoStyle
-    -- ^ No styles
-    | StrikeThrough
-    -- ^ StrikeThrough style
-    deriving (Eq, Show, Generic, Read, Ord)
-
 -- | Segment
 data Segment =
       CodeNotation !Text
@@ -158,6 +145,21 @@ data Segment =
     -- ^ Just an simple text
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Style that can be applied to the 'Segment'
+data Style =
+      CustomStyle StyleData
+    -- ^ You can use this to combine all three as of the styles as well as Header
+    | Bold
+    -- ^ Bold style
+    | Italic
+    -- ^ Italic style
+    | NoStyle
+    -- ^ No styles
+    | StrikeThrough
+    -- ^ StrikeThrough style
+    | UserStyle Text
+    deriving (Eq, Show, Generic, Read, Ord)
+
 -- | StyleData
 data StyleData = StyleData
     { sHeaderSize    :: !Int
@@ -166,13 +168,17 @@ data StyleData = StyleData
     -- ^ Bold style
     , sItalic        :: !Bool
     -- ^ Italic style
-    , bStrikeThrough :: !Bool
+    , sStrikeThrough :: !Bool
     -- ^ Strike through
     } deriving (Eq, Show, Generic, Read, Ord)
 
 --------------------------------------------------------------------------------
 -- Verbose/Unverbose
 --------------------------------------------------------------------------------
+
+-- Empty style data
+emptyStyle :: StyleData 
+emptyStyle = StyleData 0 False False False
 
 -- | Convert given Markdown into verbose structure
 verbose :: Markdown -> Markdown
