@@ -82,11 +82,17 @@ styledTextParser = do
 
 -- As you can see, this is very dangerous
 -- Logic
+--
 -- First, check if there's any closing bracket '['
+--
 -- If yes, check if the extracted text has any open bracket
+--
 -- If no, consume until closing bracket
+--
 -- If yes, check if there's another closing bracket ahead
+--
 -- If yes, consume until ']' as well as ']' and continue parsing
+--
 -- If no, consume until ']' and return
 paraParser :: String -> Parser String
 paraParser content = do
