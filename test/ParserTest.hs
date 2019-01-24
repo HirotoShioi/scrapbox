@@ -1,13 +1,14 @@
 {- Test suites for scrapbox parser
 -}
 
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module ParserTest where
 
 import           RIO                     hiding (assert)
 
-import           Test.Hspec              (Spec, describe)
+import           Test.Hspec              (Spec, describe, it)
 import           Test.Hspec.QuickCheck   (modifyMaxSuccess, prop)
 import           Test.QuickCheck         (Arbitrary (..), PrintableString (..),
                                           arbitraryPrintableChar, listOf1)
@@ -28,7 +29,7 @@ parserSpec = do
 
 -- | Spec for inline text parser
 inlineParserSpec :: Spec
-inlineParserSpec = 
+inlineParserSpec =
     describe "inline parser" $ modifyMaxSuccess (const 10000) $ do
         shouldParseSpec runInlineParser
 
@@ -54,6 +55,31 @@ scrapTextParserSpec =
                 whenRight eParseredText $ \(ScrapText ctxs) ->
                     assert $ not $ null ctxs
 
+        it "should parse given example text as expected" $ monadicIO $ do
+            let eParseredText = runScrapTextParser exampleText
+
+            assert $ isRight eParseredText
+
+            whenRight eParseredText $ \parsedText ->
+                assert $ parsedText == expectedParsedText
+  where
+    exampleText :: String
+    exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text [* test [link] test [partial]"
+
+    expectedParsedText :: ScrapText
+    expectedParsedText = ScrapText
+            [ Context Bold [ SimpleText "bold text" ]
+            , Context NoStyle [ SimpleText " " ]
+            , Context StrikeThrough [ SimpleText "strikethrough text" ]
+            , Context NoStyle [ SimpleText " " ]
+            , Context Italic [ SimpleText "italic text" ]
+            , Context NoStyle [ SimpleText " simple text " ]
+            , Context Bold
+                [ SimpleText "test "
+                , Link Nothing ( Url "link" )
+                , SimpleText " test [partial"
+                ]
+            ]
 
 newtype NonEmptyPrintableString =  NonEmptyPrintableString {
     getNonEmptyPrintableString :: String

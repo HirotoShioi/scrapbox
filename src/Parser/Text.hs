@@ -24,7 +24,7 @@ import           Types                         (Context (..), ScrapText (..),
                                                 StyleData (..), emptyStyle)
 import           Utils                         (eitherM)
 
--- | 'ScrapText' parser
+-- | Run 'ScrapText' parser on given 'String'
 --
 -- @
 -- > runScrapTextParser "[* bold text] [- strikethrough text] [/ italic text] simple text [* test [link] test [buggy]"
@@ -151,8 +151,9 @@ extractParagraph = go mempty
                     if hasNextClosingBracket
                         -- We are good, move on
                         then do
-                            tillClose' <- manyTill anyChar (try $ char ']')
-                            go $ content <> tillClose'
+                            tillClose' <- many (noneOf  "]")
+                            symbol     <- anyChar
+                            go $ content <> tillClose' <> [symbol]
 
                         -- If not (there's no closing bracket ahead), consume until closing bracket
                         else do
