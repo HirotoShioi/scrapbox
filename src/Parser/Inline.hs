@@ -2,8 +2,9 @@
 -}
 
 module Parser.Inline
-    ( inlineParser
-    , runInlineParser
+    ( runInlineParser
+    , runInlineParserM
+    , inlineParser
     , segmentParser
     ) where
 
@@ -15,14 +16,14 @@ import           Data.String                   (fromString)
 import qualified Data.Text                     as T
 import           Network.URI                   (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                between, char, eof, lookAhead,
-                                                many, many1, manyTill, noneOf,
-                                                oneOf, optionMaybe, parse,
+                                                between, char, eof, many, many1,
+                                                manyTill, noneOf, oneOf, parse,
                                                 sepBy1, space, try, unexpected,
                                                 (<?>), (<|>))
 
+import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (Segment (..), Url (..))
-import           Utils                         (fromMaybeM)
+import           Utils                         (eitherM, fromMaybeM)
 
 --------------------------------------------------------------------------------
 -- Smart contstructors
@@ -66,7 +67,6 @@ linkParser = do
         then do
             linkContent <- getElement $ headMaybe contents
             return $ Link Nothing (Url $ fromString linkContent)
-
         else do
             -- Both are viable
             --  [Haskell http://lotz84.github.io/haskell/]
@@ -134,9 +134,6 @@ textParser content = do
                 rest       <- many $ noneOf syntaxSymbol
                 textParser $ content' <> [someSymbol] <> rest
 
-    lookAheadMaybe :: Parser a -> Parser (Maybe a)
-    lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
-
     syntaxSymbol :: String
     syntaxSymbol = "[`#"
 
@@ -156,6 +153,14 @@ inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to 
 -- | Function to test whether given 'String' can be properly parsed
 runInlineParser :: String -> Either ParseError [Segment]
 runInlineParser = parse inlineParser "Inline text parser"
+
+-- | Monadic version of 'runInlineParser'
+runInlineParserM :: String -> Parser [Segment]
+runInlineParserM content =
+    eitherM
+        (\_ -> unexpected "Failed to parse inline text")
+        return
+        (return $ runInlineParser content)
 
 -- > testInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
 -- Right

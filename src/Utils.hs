@@ -9,6 +9,7 @@ module Utils
     ( maybeM
     , fromMaybeM
     , whenRight
+    , eitherM
     ) where
 
 import RIO
@@ -31,3 +32,6 @@ fromMaybeM n = maybeM n return
 whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
 whenRight (Right x) f = f x
 whenRight _         _ = pure ()
+
+eitherM :: Monad m => (a -> m c) -> (b -> m c) -> m (Either a b) -> m c
+eitherM l r x = either l r =<< x
