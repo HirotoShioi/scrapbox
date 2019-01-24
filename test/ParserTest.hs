@@ -19,12 +19,14 @@ import           Parser.Text             (runScrapTextParser)
 import           Types
 import           Utils                   (whenRight)
 
--- | Test spec for inline parser
+-- | Test spec for scrapbox parser
 parserSpec :: Spec
 parserSpec = do
     inlineParserSpec
     scrapTextParserSpec
 
+
+-- | Spec for inline text parser
 inlineParserSpec :: Spec
 inlineParserSpec = 
     describe "inline parser" $ modifyMaxSuccess (const 10000) $ do
@@ -38,6 +40,7 @@ inlineParserSpec =
                 whenRight eParseredText $ \parsedContent ->
                     assert $ not $ null parsedContent
 
+-- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec
 scrapTextParserSpec =
     describe "scrap text parser" $ modifyMaxSuccess (const 10000) $ do
@@ -59,6 +62,7 @@ newtype NonEmptyPrintableString =  NonEmptyPrintableString {
 instance Arbitrary NonEmptyPrintableString where
     arbitrary = NonEmptyPrintableString <$> listOf1 arbitraryPrintableChar
 
+-- | General testing spec for parser
 shouldParseSpec :: (String -> Either ParseError a) -> Spec
 shouldParseSpec parser =
         prop "should be able to parse any text without failing or cause infinite loop" $
