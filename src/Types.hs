@@ -1,5 +1,4 @@
-{-| Datatypes used to represent the scrapbox AST as well as some of the helper functions
-which are somewhat helpful.
+{-| Datatypes used to represent the scrapbox parse tree as well as some of the helper functions.
 -}
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -59,7 +58,7 @@ data Page = Page
     -- ^ Title
     } deriving (Eq, Show, Generic, Read, Ord)
 
--- | Markdown consist of list of 'Blocks'
+-- | Markdown consist of list of 'Block's
 newtype Markdown = Markdown [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -105,13 +104,14 @@ data Block
     -- ^ Bulletpoint styled line
     | BulletList ![Block]
     -- ^ Bullet points
+
     -- 'Block' for now, but it can be more type safe (although would become verbose)
     | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
     | Header !HeaderSize !Content
     -- ^ Header
     | Paragraph !ScrapText
-    -- ^ Simple text
+    -- ^ Paragraph
     | Table !TableName !TableContent
     -- ^ Table
     | Thumbnail !Url
@@ -176,7 +176,7 @@ data StyleData = StyleData
 -- Verbose/Unverbose
 --------------------------------------------------------------------------------
 
--- Empty style data
+-- | Empty style data
 emptyStyle :: StyleData 
 emptyStyle = StyleData 0 False False False
 

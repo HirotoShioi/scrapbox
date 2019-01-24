@@ -1,5 +1,6 @@
 {-| Module for 'ScrapText' parser
 -}
+
 {-# LANGUAGE LambdaCase #-}
 
 module Parser.Text
@@ -11,17 +12,21 @@ module Parser.Text
 import           RIO                           hiding (many, try, (<|>))
 
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                char, eof, lookAhead, many,
-                                                many1, manyTill, noneOf, oneOf,
-                                                optionMaybe, parse, space,
-                                                string, try, unexpected, (<|>))
+                                                char, eof, many, many1,
+                                                manyTill, noneOf, oneOf, parse,
+                                                space, string, try, unexpected,
+                                                (<|>))
 
-import           Parser.Inline
+import           Parser.Inline                 (runInlineParserM)
 import           Parser.Utils                  (lookAheadMaybe)
-import           Types
+import           Types                         (Context (..), ScrapText (..),
+                                                Segment, Style (..),
+                                                StyleData (..), emptyStyle)
 import           Utils                         (eitherM)
 
--- | ScrapText parser
+-- | 'ScrapText' parser
+--
+-- @
 -- > runScrapTextParser "[* bold text] [- strikethrough text] [/ italic text] simple text [* test [link] test [buggy]"
 -- Right
 --     ( ScrapText
@@ -38,6 +43,7 @@ import           Utils                         (eitherM)
 --             ]
 --         ]
 --     )
+-- @
 runScrapTextParser :: String -> Either ParseError ScrapText
 runScrapTextParser = parse scrapTextParser "Scrap text parser"
 
@@ -163,7 +169,7 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
 
     go :: String -> Parser [Segment]
     go content = do
-        someChar <- lookAhead $ optionMaybe
+        someChar <- lookAheadMaybe
             (   try (string "[[")
             <|> try (string "[")
             <|> try (many1 (noneOf "["))

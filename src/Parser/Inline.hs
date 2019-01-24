@@ -150,7 +150,19 @@ segmentParser =
 inlineParser :: Parser [Segment]
 inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
 
--- | Function to test whether given 'String' can be properly parsed
+-- | Run inline text parser on given 'String'
+--
+-- @
+-- > runInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
+-- Right
+--     [ SimpleText "hello "
+--     , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
+--     , SimpleText " "
+--     , Link Nothing ( Url "hello" )
+--     , SimpleText " [] `weird code [weird url "
+--     , HashTag "someHashtag"
+--     ]
+-- @
 runInlineParser :: String -> Either ParseError [Segment]
 runInlineParser = parse inlineParser "Inline text parser"
 
@@ -161,13 +173,3 @@ runInlineParserM content =
         (\_ -> unexpected "Failed to parse inline text")
         return
         (return $ runInlineParser content)
-
--- > testInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
--- Right
---     [ SimpleText "hello "
---     , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
---     , SimpleText " "
---     , Link Nothing ( Url "hello" )
---     , SimpleText " [] `weird code [weird url "
---     , HashTag "someHashtag"
---     ]

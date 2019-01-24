@@ -1,4 +1,4 @@
-{-| This module exports parse used to parse common mark table
+{-| This module exports parser used to parse common mark table
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -57,7 +57,7 @@ columnParser = do
         rest    <- P.takeText
         return (currList ++ [element], rest)
 
--- | Parse given '[Text]' into 'CommonMarkTable'
+-- | Parse given @[Text]@ into 'CommonMarkTable'
 parseTable :: [Text] -> Either String CommonMarkTable
 parseTable texts =
     let header = take 1 texts
