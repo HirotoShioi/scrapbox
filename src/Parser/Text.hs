@@ -76,11 +76,11 @@ boldParser = do
 
 -- | Parse styled text
 --
--- Bold: `[* Text]`
---
--- Italic: `[/ Text]`
---
--- StrikeThrough: `[- Text]
+-- @
+-- Bold: [* Text]
+-- Italic: [/ Text]
+-- StrikeThrough: [- Text]
+-- @
 styledTextParser :: Parser Context
 styledTextParser = do
     _         <- char '['
@@ -118,17 +118,17 @@ styledTextParser = do
 -- As you can see, this is very dangerous
 -- Logic
 --
--- First, check if there's any closing bracket '['
+-- @
+-- 1. First, check if there's any closing bracket ']'
+-- 2. If 1 is True, check if the extracted text has any open bracket '['
+-- 3. If 1 is False, return the current string
 --
--- If yes, check if the extracted text has any open bracket
---
--- If no, consume until closing bracket
---
--- If yes, check if there's another closing bracket ahead
---
--- If yes, consume until ']' as well as ']' and continue parsing
---
--- If no, consume until ']' and return
+-- 4. If 2 is True, consume until closing bracket 
+-- 5. If 2 is False, check if there's another closing bracket ahead
+-- 
+-- 6. If 5 is True, consume until ']' as well as ']' and continue parsing
+-- 7. If 5 is False, consume until ']' and return
+-- @
 extractParagraph :: Parser String
 extractParagraph = go mempty
   where
@@ -145,17 +145,20 @@ extractParagraph = go mempty
                         tillClose <- many $ noneOf "]"
                         return $ content <> tillClose
                     else do
+
                     -- Check if we have closing bracket for our parent bracket
                     hasNextClosingBracket <- isJust <$> lookAheadMaybe
                         (manyTill anyChar (char ']') *> manyTill anyChar (char ']'))
                     if hasNextClosingBracket
-                        -- We are good, move on
+
+                        -- We do have 2 closing brackets ahead, move on
                         then do
                             tillClose' <- many (noneOf  "]")
                             symbol     <- anyChar
                             go $ content <> tillClose' <> [symbol]
 
-                        -- If not (there's no closing bracket ahead), consume until closing bracket
+                        -- If not (there's no closing bracket ahead for parent bracket)
+                        -- consume until closing bracket
                         else do
                             tillClose'' <- many $ noneOf "]"
                             return $ content <> tillClose''
@@ -184,7 +187,7 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
             -- Check if ahead content can be parsed as custom styled text
             Just "["  -> checkWith "[" styledTextParser content
 
-            -- For everything else, consume until opening bracket
+            -- For everything else, consume until open bracket
             Just _ -> do
                 rest <- many1 $ noneOf "["
                 go $ content <> rest
@@ -192,8 +195,8 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
     -- Run parser on ahead content to see if it can be parsed, if not, consume the text
     checkWith :: String -> Parser a -> String -> Parser [Segment]
     checkWith symbolStr parser content' = do
-        mResult <- lookAheadMaybe parser
-        if isJust mResult
+        canBeParsed <- isJust <$> lookAheadMaybe parser
+        if canBeParsed
             then runInlineParserM content'
             else do
                 someSymbol <- string symbolStr
