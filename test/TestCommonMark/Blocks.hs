@@ -5,7 +5,9 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Blocks where
+module TestCommonMark.Blocks
+    ( blockSpec
+    ) where
 
 import           RIO
 

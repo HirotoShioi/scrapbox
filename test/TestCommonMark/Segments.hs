@@ -4,7 +4,9 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Segments where
+module TestCommonMark.Segments
+    ( segmentSpec
+    ) where
 
 import           RIO
 

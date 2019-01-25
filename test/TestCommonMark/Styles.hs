@@ -6,7 +6,9 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Styles where
+module TestCommonMark.Styles
+    ( styleSpec
+    ) where
 
 import           RIO
 

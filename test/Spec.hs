@@ -1,9 +1,11 @@
 {- Main function for exporting test suites
 -}
 
+module Main where
+
 import           RIO
 
-import           Test.Hspec              (Spec, describe, hspec)
+import           Test.Hspec              (describe, hspec)
 import           Test.Hspec.QuickCheck   (modifyMaxSuccess)
 
 import           TestCommonMark.Blocks   (blockSpec)
@@ -13,11 +15,7 @@ import           TestCommonMark.Styles   (styleSpec)
 import           ParserTest              (parserSpec)
 
 main :: IO ()
-main = hspec
-    commonMarkSpec
-
-commonMarkSpec :: Spec
-commonMarkSpec = do
+main = hspec $ do
     describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
         blockSpec
         segmentSpec
