@@ -4,7 +4,9 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module ParserTest where
+module ParserTest
+    ( parserSpec
+    ) where
 
 import           RIO                     hiding (assert)
 
@@ -22,7 +24,7 @@ import           Types                   (Context (..), ScrapText (..),
                                           Segment (..), Style (..), Url (..))
 import           Utils                   (eitherM, whenRight)
 
--- | Test spec for scrapbox parser
+-- | Test specs for scrapbox parser
 parserSpec :: Spec
 parserSpec = do
     inlineParserSpec
