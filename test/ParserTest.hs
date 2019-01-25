@@ -45,7 +45,8 @@ inlineParserSpec =
                 whenRight eParseredText $ \parsedContent ->
                     assert $ not $ null parsedContent
 
-        it "should parse given text as expected" $ propParseAsExpected exampleText expected runInlineParser
+        it "should parse given text as expected" $ 
+            propParseAsExpected exampleText expected runInlineParser
   where
     exampleText :: String
     exampleText = "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `partial code [partial url #someHashtag"
@@ -116,8 +117,7 @@ propParseAsExpected :: (Eq parsed)
                     -> parsed
                     -> (toParse -> Either ParseError parsed)
                     -> Property
-propParseAsExpected example expected parser = monadicIO $
-        eitherM
-            (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
-            (\parsedContent -> assert $ parsedContent == expected)
-            (return $ parser example)
+propParseAsExpected example expected parser = monadicIO $ eitherM
+    (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
+    (\parsedContent -> assert $ parsedContent == expected)
+    (return $ parser example)
