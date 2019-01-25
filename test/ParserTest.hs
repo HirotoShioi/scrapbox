@@ -93,6 +93,7 @@ scrapTextParserSpec =
                 ]
             ]
 
+-- | Non-empty version of 'PrintableString'
 newtype NonEmptyPrintableString =  NonEmptyPrintableString {
     getNonEmptyPrintableString :: String
     } deriving Show
@@ -107,6 +108,7 @@ shouldParseSpec parser =
             \(someText :: PrintableString) ->
                 isRight $ parser $ getPrintableString someText
 
+-- | General unit testing to see the parser can parse given data as expected
 propParseAsExpected :: (Eq parsed)
                     => toParse
                     -> parsed
