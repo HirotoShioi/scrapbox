@@ -119,6 +119,7 @@ renderWithStyle style ctx = case style of
         let strikeThroughStyle = StyleData 0 False False True
         in renderCustomStyle strikeThroughStyle ctx
     CustomStyle customStyle -> renderCustomStyle customStyle ctx
+    UserStyle userStyle -> "[" <> userStyle <> " " <> renderContent ctx <> "]"
 
 renderCustomStyle :: StyleData -> Content -> Text
 renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =

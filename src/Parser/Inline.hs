@@ -2,8 +2,10 @@
 -}
 
 module Parser.Inline
-    ( inlineParser
-    , testInlineParser
+    ( runInlineParser
+    , runInlineParserM
+    , inlineParser
+    , segmentParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -14,14 +16,14 @@ import           Data.String                   (fromString)
 import qualified Data.Text                     as T
 import           Network.URI                   (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                between, char, eof, lookAhead,
-                                                many, many1, manyTill, noneOf,
-                                                oneOf, optionMaybe, parse,
+                                                between, char, eof, many, many1,
+                                                manyTill, noneOf, oneOf, parse,
                                                 sepBy1, space, try, unexpected,
                                                 (<?>), (<|>))
 
+import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (Segment (..), Url (..))
-import           Utils                         (fromMaybeM)
+import           Utils                         (eitherM, fromMaybeM)
 
 --------------------------------------------------------------------------------
 -- Smart contstructors
@@ -65,7 +67,6 @@ linkParser = do
         then do
             linkContent <- getElement $ headMaybe contents
             return $ Link Nothing (Url $ fromString linkContent)
-
         else do
             -- Both are viable
             --  [Haskell http://lotz84.github.io/haskell/]
@@ -97,6 +98,7 @@ linkParser = do
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
+-- Something is wrong, its causing infinite loop
 -- | Parser for 'SimpleText'
 textParser :: String -> Parser String
 textParser content = do
@@ -117,7 +119,7 @@ textParser content = do
 
         -- For everything else, parse until it hits the syntax symbol
         Just _   -> do
-            text <- many $ noneOf syntaxSymbol
+            text <- many1 $ noneOf syntaxSymbol
             textParser text
   where
     -- Check if the ahead content can be parsed by the given parser,
@@ -131,9 +133,6 @@ textParser content = do
                 someSymbol <- oneOf syntaxSymbol
                 rest       <- many $ noneOf syntaxSymbol
                 textParser $ content' <> [someSymbol] <> rest
-
-    lookAheadMaybe :: Parser a -> Parser (Maybe a)
-    lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
 
     syntaxSymbol :: String
     syntaxSymbol = "[`#"
@@ -151,11 +150,10 @@ segmentParser =
 inlineParser :: Parser [Segment]
 inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
 
--- | Function to test whether given 'String' can be properly parsed
-testInlineParser :: String -> Either ParseError [Segment]
-testInlineParser = parse inlineParser "Inline text parser"
-
--- > testInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
+-- | Run inline text parser on given 'String'
+--
+-- @
+-- > runInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
 -- Right
 --     [ SimpleText "hello "
 --     , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
@@ -164,3 +162,14 @@ testInlineParser = parse inlineParser "Inline text parser"
 --     , SimpleText " [] `weird code [weird url "
 --     , HashTag "someHashtag"
 --     ]
+-- @
+runInlineParser :: String -> Either ParseError [Segment]
+runInlineParser = parse inlineParser "Inline text parser"
+
+-- | Monadic version of 'runInlineParser'
+runInlineParserM :: String -> Parser [Segment]
+runInlineParserM content =
+    eitherM
+        (\_ -> unexpected "Failed to parse inline text")
+        return
+        (return $ runInlineParser content)
