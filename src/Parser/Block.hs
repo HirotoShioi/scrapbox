@@ -14,7 +14,8 @@ import           Text.ParserCombinators.Parsec
 import           Types                         (Block (..), BulletSize (..),
                                                 CodeName (..), CodeSnippet (..),
                                                 HeaderSize (..), Markdown (..),
-                                                Url (..))
+                                                TableContent (..),
+                                                TableName (..), Url (..))
 
 import           Parser.Inline                 (runInlineParserM)
 import           Parser.Text                   (runScrapTextParserM)
@@ -55,9 +56,7 @@ headerParser = do
     _         <- char '['
     symbolLen <- length <$> many1 (char '*')
     _         <- space
-    str       <- many (noneOf "]")
-    _         <- char ']'
-    _         <- endOfLine
+    str       <- many (noneOf "]") <* char '[' <* endOfLine
     segments  <- runInlineParserM str
     return $ Header (HeaderSize symbolLen) segments
 
@@ -81,6 +80,20 @@ codeBlockParser = do
         codeLine <- manyTill anyChar endOfLine
         return $ fromString codeLine
 
+tableParser :: Parser Block
+tableParser = do
+    _            <- string "table:"
+    tableName    <- manyTill anyChar endOfLine
+    tableContent <- manyTill rowParser endOfLine
+    return $ Table (TableName $ fromString tableName) (TableContent tableContent)
+  where
+    rowParser :: Parser [Text]
+    rowParser = do
+        _    <- char '\t' <|> space
+        row  <- sepBy1 (many $ noneOf "\t\n") (try $ char '\t')
+        _    <- endOfLine
+        return $ map fromString row
+
 --------------------------------------------------------------------------------
 -- Markdown parser
 --------------------------------------------------------------------------------
@@ -96,6 +109,7 @@ markdownParser = Markdown <$> manyTill blockParser eof
         <|> try bulletPointParser
         <|> try lineBreakParser
         <|> try codeBlockParser
+        <|> try tableParser
         <|> try paragraphParser
 
 --------------------------------------------------------------------------------
