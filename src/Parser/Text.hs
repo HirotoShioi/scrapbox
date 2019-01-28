@@ -67,11 +67,12 @@ contextParser =
     <|> try noStyleParser
 
 -- | Parser for bold text `[[Like this]]`
+-- Todo: Fails to parse this `[[[Link]]]`
 boldParser :: Parser Context
 boldParser = do
     _         <- string "[["
     paragraph <- manyTill anyChar (try $ string "]]")
-    segments <- runInlineParserM paragraph
+    segments  <- runInlineParserM paragraph
     return $ Context Bold segments
 
 -- | Parse styled text

@@ -3,7 +3,9 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser.Block where
+module Parser.Scrapbox
+    ( runScrapboxParser
+    ) where
 
 import           RIO                           hiding (many, try, (<|>))
 import qualified RIO.Text                      as T
@@ -56,7 +58,9 @@ headerParser = do
     _         <- char '['
     symbolLen <- length <$> many1 (char '*')
     _         <- space
-    str       <- many (noneOf "]") <* char '[' <* endOfLine
+    str       <- many (noneOf "]") 
+    _         <- char ']'
+    _         <- endOfLine
     segments  <- runInlineParserM str
     return $ Header (HeaderSize symbolLen) segments
 
@@ -76,7 +80,7 @@ codeBlockParser = do
   where
     codeSnippetParser :: Parser Text
     codeSnippetParser = do
-        _        <- string "\t" <|> string " "
+        _        <- oneOf "\t "
         codeLine <- manyTill anyChar endOfLine
         return $ fromString codeLine
 
@@ -103,14 +107,17 @@ markdownParser = Markdown <$> manyTill blockParser eof
   where
     blockParser :: Parser Block
     blockParser =
-            try thumbnailParser
-        <|> try blockQuoteParser
+            try lineBreakParser
         <|> try headerParser
+        <|> try thumbnailParser
+        <|> try blockQuoteParser
         <|> try bulletPointParser
-        <|> try lineBreakParser
         <|> try codeBlockParser
         <|> try tableParser
         <|> try paragraphParser
+
+runScrapboxParser :: String -> Either ParseError Markdown
+runScrapboxParser = parse markdownParser "Scrapbox parser"
 
 --------------------------------------------------------------------------------
 -- Helper function
