@@ -187,7 +187,6 @@ extractParagraph = go mempty
                             return $ content <> tillClose''
 
 -- | Parser for non-styled text
--- Bugged
 noStyleParser :: Parser Context
 noStyleParser = Context NoStyle <$> extractNonStyledText
   where
