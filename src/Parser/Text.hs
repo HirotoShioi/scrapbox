@@ -7,6 +7,8 @@ module Parser.Text
     ( runScrapTextParser
     , runScrapTextParserM
     , scrapTextParser
+    , styledTextParser
+    , boldParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -17,11 +19,11 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 space, string, try, unexpected,
                                                 (<|>))
 
-import           Parser.Inline                 (runInlineParserM)
+import           Parser.Inline                 (runInlineParserM, codeNotationParser)
 import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (Context (..), ScrapText (..),
                                                 Segment, Style (..),
-                                                StyleData (..), emptyStyle)
+                                                StyleData (..), emptyStyle, Segment(..))
 import           Utils                         (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
@@ -71,9 +73,29 @@ contextParser =
 boldParser :: Parser Context
 boldParser = do
     _         <- string "[["
-    paragraph <- manyTill anyChar (try $ string "]]")
+    paragraph <- extractStr
     segments  <- runInlineParserM paragraph
     return $ Context Bold segments
+  where
+    extractStr :: Parser String
+    extractStr = go mempty
+    go :: String -> Parser String
+    go content = do
+        -- Check if we have enough closing brackets ahead
+        hasEnoughClosingBracket <- isJust <$> lookAheadMaybe
+            (manyTill anyChar (try $ char ']') *> manyTill anyChar (try $ string "]]"))
+        if hasEnoughClosingBracket
+
+            -- We do have enough closing brackets ahead, move on
+            then do
+                parsed <- many (noneOf  "]")
+                symbol <- anyChar
+                go $ content <> parsed <> [symbol]
+
+            -- If not, consume until double closing bracket
+            else do
+                tillClose'' <- manyTill anyChar (try $ string "]]")
+                return $ content <> tillClose''
 
 -- | Parse styled text
 --
@@ -165,6 +187,7 @@ extractParagraph = go mempty
                             return $ content <> tillClose''
 
 -- | Parser for non-styled text
+-- Bugged
 noStyleParser :: Parser Context
 noStyleParser = Context NoStyle <$> extractNonStyledText
   where
@@ -177,6 +200,7 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
         someChar <- lookAheadMaybe
             (   try (string "[[")
             <|> try (string "[")
+            <|> try (string "`")
             <|> try (many1 (noneOf "["))
             )
         case someChar of
@@ -187,7 +211,8 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
 
             -- Check if ahead content can be parsed as custom styled text
             Just "["  -> checkWith "[" styledTextParser content
-
+            
+            Just "`" -> checkCodeNotation codeNotationParser content
             -- For everything else, consume until open bracket
             Just _ -> do
                 rest <- many1 $ noneOf "["
@@ -199,10 +224,21 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
             then runInlineParserM content'
-            else do
-                someSymbol <- string symbolStr
-                rest       <- many (noneOf "[")
-                go $ content' <> someSymbol <> rest
+            else continue symbolStr "[" content'
+
+    checkCodeNotation :: Parser a -> String -> Parser [Segment]
+    checkCodeNotation parser content' = do
+        canBeParsed <- isJust <$> lookAheadMaybe parser
+        if canBeParsed
+            then continue "`" "`" content' 
+            else continue "`" "[" content'
+    
+    continue :: String -> String -> String -> Parser [Segment]
+    continue symbol till curr = do
+        someSymbol <- string symbol
+        rest       <- many (noneOf till)
+        go $ curr <> someSymbol <> rest
+
 
 --------------------------------------------------------------------------------
 -- Needs attention
