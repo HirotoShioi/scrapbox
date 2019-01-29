@@ -212,7 +212,9 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
             -- Check if ahead content can be parsed as custom styled text
             Just "["  -> checkWith "[" styledTextParser content
             
+            -- Check if ahead content can be parsed as code notation
             Just "`" -> checkCodeNotation codeNotationParser content
+
             -- For everything else, consume until open bracket
             Just _ -> do
                 rest <- many1 $ noneOf "["
