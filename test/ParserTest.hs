@@ -111,7 +111,7 @@ scrapTextParserSpec =
 
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
-    describe "ScrapText parser" $ modifyMaxSuccess (const 10000) $ do
+    describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
         shouldParseSpec runScrapboxParser
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
@@ -121,11 +121,25 @@ scrapboxParserSpec =
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \(Markdown blocks) ->
                     assert $ not $ null blocks
-        it "should parse given example text as expected" $
-             propParseAsExpected exampleText expected runScrapboxParser
+    
+        describe "Parsing getting syntax page with scrapbox parser" $ modifyMaxSuccess (const 1) $ do
+            it "should parse section1 as expected" $
+                propParseAsExpected example1 expected1 runScrapboxParser
+            
+            it "should parse section2 as expected" $
+                propParseAsExpected example2 expected2 runScrapboxParser
+
+            it "should parse section3 as expected" $
+                propParseAsExpected example3 expected3 runScrapboxParser
+
+            it "should parse section4 as expected" $
+                propParseAsExpected example4 expected4 runScrapboxParser
+
+            it "should parse section5 as expected" $
+                propParseAsExpected example5 expected5 runScrapboxParser
   where
-    exampleText :: String
-    exampleText = unlines [
+    example1 :: String
+    example1 = unlines [
         "Syntax",
         "[https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815]",
         "",
@@ -141,7 +155,10 @@ scrapboxParserSpec =
         "\t`[http://google.com Google]` ⇒ [http://google.com Google]",
         "or",
         " `[Google http://google.com]` ⇒ [Google http://google.com]",
-        "",
+        ""
+        ]
+
+    example2 = unlines [
         "[[Images]]",
         "\tDirect mage link ↓`[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]`",
         " [https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]",
@@ -155,7 +172,10 @@ scrapboxParserSpec =
         "[[Linking to other scrapbox projects]]",
         " `[/projectname/pagename]` ⇛ [/icons/check]",
         " `[/projectname]` ⇛ [/icons]",
-        "",
+        ""
+        ]
+
+    example3 = unlines [
         "[[Icons]]",
         " `[ben.icon]` ⇛  [ben.icon]",
         " `[/icons/todo.icon]` ⇛ [/icons/todo.icon]",
@@ -169,7 +189,10 @@ scrapboxParserSpec =
         "[[ Strikethrough text]]",
         " `[- strikethrough]`⇛ [- strikethrough]",
         "[https://gyazo.com/00ab07461d502db91c8ae170276d1396]",
-        "",
+        ""
+        ]
+    
+    example4 = unlines [
         "[[Bullet points]]",
         "\tPress space or tab on a new line to indent and create a bullet point",
         " \tPress backspace to remove the indent  / bullet point",
@@ -184,7 +207,10 @@ scrapboxParserSpec =
         "[[Code notation]]",
         " Use backquotes or backticks, `,  to highlight code  ",
         " e.g. `function() {  return true }`",
-        "",
+        ""
+        ]
+
+    example5 = unlines [
         "[[Code block notation]]",
         " Typing `code:filename.extension`or`code:filename`can be used to create a new code snippet and and display it as a block",
         "  Language names may be abbreviated",
@@ -208,8 +234,8 @@ scrapboxParserSpec =
         ""
         ]
 
-    expected :: Markdown
-    expected = Markdown 
+    expected1 :: Markdown
+    expected1 = Markdown 
         [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Syntax" ] ] )
         , Thumbnail ( Url "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815" )
         , LineBreak
@@ -267,7 +293,11 @@ scrapboxParserSpec =
                 ]
             )
         , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Images" ] ] )
+        ]
+
+    expected2 :: Markdown
+    expected2 = Markdown
+        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Images" ] ] )
         , BulletPoint ( BulletSize 1 ) 
             ( ScrapText 
                 [ Context NoStyle 
@@ -312,7 +342,11 @@ scrapboxParserSpec =
                 ]
             )
         , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Icons" ] ] )
+        ]
+    
+    expected3 :: Markdown
+    expected3 = Markdown
+        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Icons" ] ] )
         , BulletPoint ( BulletSize 1 ) 
             ( ScrapText 
                 [ Context NoStyle 
@@ -368,7 +402,11 @@ scrapboxParserSpec =
             )
         , Thumbnail ( Url "https://gyazo.com/00ab07461d502db91c8ae170276d1396" )
         , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Bullet points" ] ] )
+        ]
+    
+    expected4 :: Markdown
+    expected4 = Markdown
+        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Bullet points" ] ] )
         , BulletPoint ( BulletSize 1 ) ( ScrapText [ Context NoStyle [ SimpleText "Press space or tab on a new line to indent and create a bullet point" ] ] )
         , BulletPoint ( BulletSize 2 ) ( ScrapText [ Context NoStyle [ SimpleText "Press backspace to remove the indent  / bullet point" ] ] )
         , LineBreak
@@ -407,7 +445,11 @@ scrapboxParserSpec =
                 ]
             )
         , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Code block notation" ] ] )
+        ]
+
+    expected5 :: Markdown
+    expected5 = Markdown    
+        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Code block notation" ] ] )
         , BulletPoint ( BulletSize 1 ) 
             ( ScrapText 
                 [ Context NoStyle 

@@ -35,9 +35,6 @@ testWith filePath = do
     let parsed = commonmarkToNode options markDown
     return parsed
 
-main :: IO ()
-main = undefined
-
 exampleText :: String
 exampleText = unlines [
     "Syntax",
@@ -121,3 +118,6 @@ exampleText = unlines [
     "",
     ""
     ]
+
+main :: IO ()
+main = undefined
