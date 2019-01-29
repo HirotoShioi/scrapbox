@@ -3,10 +3,8 @@
 module Main where
 
 import           RIO
-import qualified RIO.Text as T
 
 import           CMark
-import           Types
 
 --------------------------------------------------------------------------------
 -- Test files
