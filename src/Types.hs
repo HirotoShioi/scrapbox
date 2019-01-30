@@ -100,7 +100,7 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote !ScrapText
     -- ^ BlockQuote like markdown
-    | BulletPoint !BulletSize !ScrapText -- Todo: replace ScrapText with Block
+    | BulletPoint !BulletSize !Block
     -- ^ Bulletpoint styled line
     | BulletList ![Block] -- Makes not much sense, perhaps remove?
     -- ^ Bullet points
@@ -188,7 +188,7 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     convertToVerbose = \case
         BlockQuote stext      -> BlockQuote $ verboseScrapText stext
         BulletList stexts     -> BulletList $ map convertToVerbose stexts
-        BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
+        BulletPoint num block -> BulletPoint num $ convertToVerbose block
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
 
@@ -201,13 +201,13 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
 
 -- | Convert given Markdown into unverbose structure
 unverbose :: Markdown -> Markdown
-unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
+unverbose (Markdown blocks) = Markdown $ map unVerboseBlock blocks
   where
-    unVerboseBlocks :: Block -> Block
-    unVerboseBlocks = \case
+    unVerboseBlock :: Block -> Block
+    unVerboseBlock = \case
         BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
-        BulletList stexts     -> BulletList $ map unVerboseBlocks stexts
-        BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
+        BulletList stexts     -> BulletList $ map unVerboseBlock stexts
+        BulletPoint num block -> BulletPoint num $ unVerboseBlock block
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
 
