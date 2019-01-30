@@ -41,40 +41,48 @@ everythingIs = header 2 [text "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
-clickOn = bulletPoint 1 $ p
-    [noStyle [text "Click on any line and start typing to edit. "]]
+clickOn = bulletPoint 1 
+    [ p
+        [noStyle [text "Click on any line and start typing to edit. "]]
+    ]
 
 -- "\t\tPress tab at the beginning of a line to indent and add a bullet point."
 pressTab :: Block
-pressTab = bulletPoint 2 $ p
-    [noStyle [text "Press tab at the beginning of a line to indent and add a bullet point."]]
+pressTab = bulletPoint 2 
+    [ p
+        [noStyle [text "Press tab at the beginning of a line to indent and add a bullet point."]]
+    ]
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
-highlightText = bulletPoint 1 $ p
-    [ noStyle
-        [ text " Highlight text to make it a "
-        , link Nothing "New link"
-        , text ", "
+highlightText = bulletPoint 1 
+    [ p
+        [ noStyle
+            [ text " Highlight text to make it a "
+            , link Nothing "New link"
+            , text ", "
+            ]
+        , bold [text "bold"]
+        , noStyle [text ", "]
+        , strikeThrough [text "and"]
+        , noStyle [text " "]
+        , italic [text "more"]
+        , noStyle [text "."]
         ]
-    , bold [text "bold"]
-    , noStyle [text ", "]
-    , strikeThrough [text "and"]
-    , noStyle [text " "]
-    , italic [text "more"]
-    , noStyle [text "."]
     ]
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block
-addLinks = bulletPoint 2 $ p
-    [ noStyle
-        [ text "Add links while typing with a "
-        , codeNotation "#"
-        , text " before or brackets around "
-        , codeNotation "["
-        , text "words you want to link "
-        , codeNotation "]"
+addLinks = bulletPoint 2 
+    [ p
+        [ noStyle
+            [ text "Add links while typing with a "
+            , codeNotation "#"
+            , text " before or brackets around "
+            , codeNotation "["
+            , text "words you want to link "
+            , codeNotation "]"
+            ]
         ]
     ]
 
@@ -89,11 +97,13 @@ hereIs = header 2 [text "🎯 Here is where it gets interesting "]
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
 clickNewLink =
-    bulletPoint 1 $ p
-        [ noStyle
-            [ text "Click a "
-            , link Nothing "New Link"
-            , text " to create a new page with that title and open it."
+    bulletPoint 1 
+        [ p
+            [ noStyle
+                [ text "Click a "
+                , link Nothing "New Link"
+                , text " to create a new page with that title and open it."
+                ]
             ]
         ]
 
@@ -104,19 +114,26 @@ clickRelated = p [noStyle [text "Click related thumbnails in the footer of any p
 
 -- " \tPages that are directly linked or two steps away from the current page will be displayed.",
 pagesThat :: Block
-pagesThat = bulletPoint 2 $ p
-    [noStyle [text "Pages that are directly linked or two steps away from the current page \
-    \will be displayed."]]
+pagesThat = bulletPoint 2 
+    [ p
+        [ noStyle 
+            [text "Pages that are directly linked or two steps away from the current page \
+            \will be displayed."
+            ]
+        ]
+    ]
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = bulletPoint 1 $ p
-    [ noStyle
-        [ text "See images, videos, and external links added inside "
-        , codeNotation "["
-        , text " brackets"
-        , codeNotation  "]"
-        , text " on the page"
+seeImages = bulletPoint 1 
+    [ p
+        [ noStyle
+            [ text "See images, videos, and external links added inside "
+            , codeNotation "["
+            , text " brackets"
+            , codeNotation  "]"
+            , text " on the page"
+            ]
         ]
     ]
 
@@ -137,24 +154,26 @@ whatCan = header 1 [text "What can you put in a Scrapbox project?"]
 
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
-useScrapbox = bulletPoint 1 $ p
-    [noStyle
-        [ text "Use Scrapbox to outline ideas, discuss "
-        , codeNotation "code blocks"
-        , text ", give feedback, and brainstorm. "
+useScrapbox = bulletPoint 1
+    [ p
+        [noStyle
+            [ text "Use Scrapbox to outline ideas, discuss "
+            , codeNotation "code blocks"
+            , text ", give feedback, and brainstorm. "
+            ]
         ]
     ]
 
 -- "[* For example]",
 forExample :: Block
-forExample = bulletPoint 1 $ p [noStyle [text "For example"]]
+forExample = bulletPoint 1 [p [noStyle [text "For example"]]]
 
 -- "\tLets say you are working on developing a new website. You might want to discuss ideas with
 -- your team before and while you execute the plan.  First create a page `Site plan` to start a
 -- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
-letsSay = bulletPoint 1 $ p [ noStyle [letsSayText, sitePlan, toStart, socialMedia, period]]
+letsSay = bulletPoint 1 [ p [ noStyle [letsSayText, sitePlan, toStart, socialMedia, period]]]
   where
     letsSayText = text "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
@@ -168,10 +187,12 @@ letsSay = bulletPoint 1 $ p [ noStyle [letsSayText, sitePlan, toStart, socialMed
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
 -- see a related link that will take you back to `Site Plan`. ",
 youCanImmediately :: Block
-youCanImmediately = bulletPoint 1 $ p
-    [noStyle
-        [ youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan
-        , twitter, relatedLink, sitePlan, period
+youCanImmediately = bulletPoint 1
+    [ p
+        [noStyle
+            [ youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan
+            , twitter, relatedLink, sitePlan, period
+            ]
         ]
     ]
   where
@@ -219,37 +240,53 @@ seeAList = p
 
 -- " \tIncludes more syntax, inviting team members, and creating profiles",
 includesMore :: Block
-includesMore = bulletPoint 1 $ p
-    [noStyle [text "Includes more syntax, inviting team members, and creating profiles"]]
+includesMore = bulletPoint 1
+    [ p
+        [ noStyle 
+            [ text "Includes more syntax, inviting team members, and creating profiles"]
+        ]
+    ]
 
 -- "\tSee some [https://scrapbox.io/help/examples Example projects] ",
 seeSome :: Block
-seeSome = bulletPoint 1 $ p
-    [noStyle
-        [ text "See some "
-        , link (Just "Example projects") "https://scrapbox.io/help/exampless"
-        , text " "
+seeSome = bulletPoint 1
+    [ p
+        [ noStyle
+            [ text "See some "
+            , link (Just "Example projects") "https://scrapbox.io/help/exampless"
+            , text " "
+            ]
         ]
     ]
 
 -- " \tIncludes a SaaS startup, design agency, and more",
 includesSaas :: Block
-includesSaas = bulletPoint 2 $ p [noStyle [text "Includes a SaaS startup, design agency, and more"]]
+includesSaas = bulletPoint 2 
+    [ p 
+        [ noStyle
+            [text "Includes a SaaS startup, design agency, and more"]
+        ]
+    ]
 
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = bulletPoint 1 $ p
-    [noStyle
-        [ text "See "
-        , link (Just "How-tos and support") "https://scrapbox.io/help/"
-        , text " "
+howTos = bulletPoint 1 
+    [ p
+        [noStyle
+            [ text "See "
+            , link (Just "How-tos and support") "https://scrapbox.io/help/"
+            , text " "
+            ]
         ]
     ]
 
 -- " \tFor detailed instructions and answers to FAQs",
 forDetails :: Block
-forDetails = bulletPoint 2 $ p [noStyle [text "For detailed instructions and answers to FAQs"]]
+forDetails = bulletPoint 2 
+    [ p 
+        [noStyle [text "For detailed instructions and answers to FAQs"]]
+    ]
 
 -- "[* We would love to hear any questions or feedback you may have]",
 weWouldLove :: Block
