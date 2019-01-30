@@ -100,9 +100,9 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote !ScrapText
     -- ^ BlockQuote like markdown
-    | BulletPoint !BulletSize !ScrapText
+    | BulletPoint !BulletSize !ScrapText -- Todo: replace ScrapText with Block
     -- ^ Bulletpoint styled line
-    | BulletList ![Block]
+    | BulletList ![Block] -- Makes not much sense, perhaps remove?
     -- ^ Bullet points
 
     -- 'Block' for now, but it can be more type safe (although would become verbose)
