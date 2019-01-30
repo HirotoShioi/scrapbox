@@ -28,10 +28,10 @@ import           CMark                  (Node (..), NodeType (..), Title, Url,
 import           Data.List.Split        (splitWhen)
 import qualified RIO.Text               as T
 
-import           Constructors           (blockQuote, bold, codeBlock,
-                                         codeNotation, header, italic, link,
-                                         markdown, noStyle, paragraph, text,
-                                         thumbnail, bulletPoint)
+import           Constructors           (blockQuote, bold, bulletPoint,
+                                         codeBlock, codeNotation, header,
+                                         italic, link, markdown, noStyle,
+                                         paragraph, text, thumbnail)
 import           Render                 (renderPretty)
 import           Types                  (Block (..), Context (..),
                                          Markdown (..), Segment, concatContext,
@@ -120,7 +120,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     LIST _                       -> [toBulletList contents]
     ITEM                         -> concatMap toBlocks contents
     SOFTBREAK                    -> [paragraph [noStyle [text "\t"]]]
-     --workaround need to pay attention
+     -- Workaround need to pay attention
     LINEBREAK                    -> [paragraph [noStyle [text "\n"]]]
     LINK url title               -> [paragraph [noStyle [toLink contents url title]]]
     HTML_BLOCK htmlContent       -> [codeBlock "html" htmlContent]

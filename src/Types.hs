@@ -173,7 +173,7 @@ data StyleData = StyleData
 --------------------------------------------------------------------------------
 
 -- | Empty style data
-emptyStyle :: StyleData 
+emptyStyle :: StyleData
 emptyStyle = StyleData 0 False False False
 
 -- | Convert given Markdown into verbose structure

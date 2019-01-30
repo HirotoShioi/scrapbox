@@ -230,7 +230,7 @@ strikeThroughSection =
 bulletPointSection :: [Block]
 bulletPointSection =
     [ p [bold [text "Bullet points"]]
-    , bulletPoint 1 
+    , bulletPoint 1
         [ p [noStyle [text "Press space or tab on a new line to indent and create a bullet point"]]
         ]
     , bulletPoint 2
@@ -244,7 +244,7 @@ bulletPointSection =
 hashtagSection :: [Block]
 hashtagSection =
     [ p [ bold [text "Hashtags / internal links"]]
-    , bulletPoint 1 
+    , bulletPoint 1
         [ p
             [ noStyle
                 [ codeNotation "#tag"
@@ -254,7 +254,7 @@ hashtagSection =
                 ]
             ]
         ]
-    , bulletPoint 1 
+    , bulletPoint 1
         [ p
             [ noStyle [text "Add links in the middle of a sentence to branch off as you type \
                 \or add tags at the end to organize."]
@@ -282,7 +282,7 @@ blockQuoteSection =
 codeNotationSection :: [Block]
 codeNotationSection =
     [ p [bold [link Nothing "Code notation"]]
-    , bulletPoint 1 
+    , bulletPoint 1
         [ p [ noStyle [text "Use backquotes or backticks, `,  to highlight code  "]]
         ]
     , bulletPoint 1

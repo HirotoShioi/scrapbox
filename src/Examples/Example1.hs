@@ -1,6 +1,6 @@
 {-| Example of how our defined parse tree can be used to represent the scrapbox page
 
-Example page: https://scrapbox.io/scrapbox-parser/Get_started 
+Example page: https://scrapbox.io/scrapbox-parser/Get_started
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -41,21 +41,21 @@ everythingIs = header 2 [text "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
-clickOn = bulletPoint 1 
+clickOn = bulletPoint 1
     [ p
         [noStyle [text "Click on any line and start typing to edit. "]]
     ]
 
 -- "\t\tPress tab at the beginning of a line to indent and add a bullet point."
 pressTab :: Block
-pressTab = bulletPoint 2 
+pressTab = bulletPoint 2
     [ p
         [noStyle [text "Press tab at the beginning of a line to indent and add a bullet point."]]
     ]
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
-highlightText = bulletPoint 1 
+highlightText = bulletPoint 1
     [ p
         [ noStyle
             [ text " Highlight text to make it a "
@@ -73,7 +73,7 @@ highlightText = bulletPoint 1
 
 -- "\t\tAdd links while typing with a `#` before or brackets around `[`words you want to link `]` "
 addLinks :: Block
-addLinks = bulletPoint 2 
+addLinks = bulletPoint 2
     [ p
         [ noStyle
             [ text "Add links while typing with a "
@@ -97,7 +97,7 @@ hereIs = header 2 [text "🎯 Here is where it gets interesting "]
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
 clickNewLink =
-    bulletPoint 1 
+    bulletPoint 1
         [ p
             [ noStyle
                 [ text "Click a "
@@ -114,9 +114,9 @@ clickRelated = p [noStyle [text "Click related thumbnails in the footer of any p
 
 -- " \tPages that are directly linked or two steps away from the current page will be displayed.",
 pagesThat :: Block
-pagesThat = bulletPoint 2 
+pagesThat = bulletPoint 2
     [ p
-        [ noStyle 
+        [ noStyle
             [text "Pages that are directly linked or two steps away from the current page \
             \will be displayed."
             ]
@@ -125,7 +125,7 @@ pagesThat = bulletPoint 2
 
 -- "\tSee images, videos, and external links added inside `[` brackets`]` on the page",
 seeImages :: Block
-seeImages = bulletPoint 1 
+seeImages = bulletPoint 1
     [ p
         [ noStyle
             [ text "See images, videos, and external links added inside "
@@ -242,7 +242,7 @@ seeAList = p
 includesMore :: Block
 includesMore = bulletPoint 1
     [ p
-        [ noStyle 
+        [ noStyle
             [ text "Includes more syntax, inviting team members, and creating profiles"]
         ]
     ]
@@ -261,8 +261,8 @@ seeSome = bulletPoint 1
 
 -- " \tIncludes a SaaS startup, design agency, and more",
 includesSaas :: Block
-includesSaas = bulletPoint 2 
-    [ p 
+includesSaas = bulletPoint 2
+    [ p
         [ noStyle
             [text "Includes a SaaS startup, design agency, and more"]
         ]
@@ -271,7 +271,7 @@ includesSaas = bulletPoint 2
 
 -- "\tSee [https://scrapbox.io/help/ How-tos and support] ",
 howTos :: Block
-howTos = bulletPoint 1 
+howTos = bulletPoint 1
     [ p
         [noStyle
             [ text "See "
@@ -283,8 +283,8 @@ howTos = bulletPoint 1
 
 -- " \tFor detailed instructions and answers to FAQs",
 forDetails :: Block
-forDetails = bulletPoint 2 
-    [ p 
+forDetails = bulletPoint 2
+    [ p
         [noStyle [text "For detailed instructions and answers to FAQs"]]
     ]
 

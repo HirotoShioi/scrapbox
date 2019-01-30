@@ -19,11 +19,13 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 space, string, try, unexpected,
                                                 (<|>))
 
-import           Parser.Inline                 (runInlineParserM, codeNotationParser)
+import           Parser.Inline                 (codeNotationParser,
+                                                runInlineParserM)
 import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (Context (..), ScrapText (..),
-                                                Segment, Style (..),
-                                                StyleData (..), emptyStyle, Segment(..))
+                                                Segment, Segment (..),
+                                                Style (..), StyleData (..),
+                                                emptyStyle)
 import           Utils                         (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
@@ -146,9 +148,9 @@ styledTextParser = do
 -- 2. If 1 is True, check if the extracted text has any open bracket '['
 -- 3. If 1 is False, return the current string
 --
--- 4. If 2 is True, consume until closing bracket 
+-- 4. If 2 is True, consume until closing bracket
 -- 5. If 2 is False, check if there's another closing bracket ahead
--- 
+--
 -- 6. If 5 is True, consume until ']' as well as ']' and continue parsing
 -- 7. If 5 is False, consume until ']' and return
 -- @
@@ -210,7 +212,7 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
 
             -- Check if ahead content can be parsed as custom styled text
             Just "["  -> checkWith "[" styledTextParser content
-            
+
             -- Check if ahead content can be parsed as code notation
             Just "`" -> checkCodeNotation codeNotationParser content
 
@@ -231,9 +233,9 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
     checkCodeNotation parser content' = do
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
-            then continue "`" "`" content' 
+            then continue "`" "`" content'
             else continue "`" "[" content'
-    
+
     continue :: String -> String -> String -> Parser [Segment]
     continue symbol till curr = do
         someSymbol <- string symbol
