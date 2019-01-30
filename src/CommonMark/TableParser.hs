@@ -30,6 +30,8 @@ newtype Column = Column
     { getColumn :: [Text]
     } deriving Show
 
+-- Should fix these!
+
 columnParser :: Parser Column
 columnParser = do
     rest <- P.takeText
