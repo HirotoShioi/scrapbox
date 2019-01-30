@@ -83,8 +83,8 @@ header :: Int -> Content -> Block
 header size = Header (HeaderSize size)
 
 -- | Constructors for creating 'BulletPoint' block with given size and content
-bulletPoint :: Int -> [Context] -> Block
-bulletPoint size ctxs = BulletPoint (BulletSize size) (ScrapText ctxs)
+bulletPoint :: Int -> Block -> Block
+bulletPoint size = BulletPoint (BulletSize size)
 
 -- | 'LineBreak'
 lineBreak :: Block

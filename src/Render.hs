@@ -56,7 +56,7 @@ renderBlock = \case
     LineBreak                          -> [""]
     BlockQuote stext                   -> [">" <> renderText stext]
     BulletList contents                -> renderBulletPoints contents
-    BulletPoint (BulletSize num) stext -> [T.replicate num " " <> renderText stext]
+    BulletPoint (BulletSize num) block -> renderBulletPoint num block
     CodeBlock codeName code            -> renderCodeBlock codeName code <> renderBlock LineBreak
     Paragraph stext                    -> [renderText stext]
     Header num contents                -> [renderHeader num contents]
@@ -99,7 +99,11 @@ renderTable (TableName name) (TableContent content) =
 
 -- | Render 'Bulletpoint's
 renderBulletPoints :: [Block] -> [Text]
-renderBulletPoints = concatMap (map (\ text -> "\t" <> text) . renderBlock)
+renderBulletPoints = concatMap (map (\text -> "\t" <> text) . renderBlock)
+
+-- | Render 'BulletPoint'
+renderBulletPoint :: Int -> Block -> [Text]
+renderBulletPoint num block = map (\text -> T.replicate num "\t" <> text) $ renderBlock block
 
 -- | Add an block to a given renderd text
 blocked :: Text -> Text
