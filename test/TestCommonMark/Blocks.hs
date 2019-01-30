@@ -21,7 +21,7 @@ import           Test.QuickCheck       (Arbitrary (..), choose, elements,
 import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
                                         HeaderSize (..), TableContent (..),
-                                        Url (..), isBlockQuote, isBulletList,
+                                        Url (..), isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
 
@@ -29,7 +29,7 @@ import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getParagraph)
 
--- | Test suites for 'Block'          
+-- | Test suites for 'Block'
 blockSpec :: Spec
 blockSpec = describe "Block" $ do
     -- Blocks
@@ -251,7 +251,7 @@ unorderedListSpec :: Spec
 unorderedListSpec = describe "Unordered list" $ do
     prop "should parse unordered list as BulletList" $
         \(unorderedListBlock :: UnorderedListBlock) ->
-            checkMarkdown unorderedListBlock isBulletList headMaybe
+            checkMarkdown unorderedListBlock isBulletPoint headMaybe
 
     prop "should preserve its content" $
         \(unorderedListBlock :: UnorderedListBlock) ->
@@ -259,14 +259,14 @@ unorderedListSpec = describe "Unordered list" $ do
                 (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
                 (\content -> do
                     blockContent       <- headMaybe content
-                    (BulletList lists) <- getBulletList blockContent
+                    (BulletPoint _ lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
                 )
 
 -- | Check whether given 'Block' is 'BulletList'
 getBulletList :: Block -> Maybe Block
-getBulletList bulletList@(BulletList _) = Just bulletList
-getBulletList _                         = Nothing
+getBulletList bulletList@(BulletPoint _ _) = Just bulletList
+getBulletList _                            = Nothing
 
 --------------------------------------------------------------------------------
 -- Ordered list
@@ -289,15 +289,15 @@ orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
     prop "should parse ordered list as BulletList" $
         \(orderedListBlock :: OrderedListBlock) ->
-            checkMarkdown orderedListBlock isBulletList headMaybe
+            checkMarkdown orderedListBlock isBulletPoint headMaybe
 
     prop "should preserve its content" $
         \(orderedListBlock :: OrderedListBlock) ->
             checkMarkdown orderedListBlock
                 (\renderedTexts -> renderedTexts == getOrderedListBlock orderedListBlock)
                 (\content -> do
-                    blockContent       <- headMaybe content
-                    (BulletList lists) <- getBulletList blockContent
+                    blockContent        <- headMaybe content
+                    (BulletPoint _ lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
                 )
 
