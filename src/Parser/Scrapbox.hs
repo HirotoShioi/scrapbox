@@ -79,7 +79,7 @@ bulletPointParser = do
     symbolLen <- length <$> many1 space
     str       <- getString
     scrapText <- runScrapTextParserM str
-    return $ BulletPoint (BulletSize symbolLen) scrapText
+    return $ BulletPoint (BulletSize symbolLen) $ Paragraph scrapText
 
 -- | Parser for 'CodeBlock'
 codeBlockParser :: Parser Block
