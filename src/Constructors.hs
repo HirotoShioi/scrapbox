@@ -4,7 +4,6 @@
 module Constructors
     ( markdown
     -- * Blocks
-    , bulletList
     , blockQuote
     , bulletPoint
     , codeBlock
@@ -54,10 +53,6 @@ markdown = Markdown
 blockQuote :: [Context] -> Block
 blockQuote = BlockQuote . ScrapText
 
--- | Constructors for creating 'BulletList' with given list of 'Block'
-bulletList :: [Block] -> Block
-bulletList = BulletList
-
 -- | Constructors for creating 'CodeBlock' block
 codeBlock :: Text -> Text -> Block
 codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet codeSnippet)
@@ -83,7 +78,7 @@ header :: Int -> Content -> Block
 header size = Header (HeaderSize size)
 
 -- | Constructors for creating 'BulletPoint' block with given size and content
-bulletPoint :: Int -> Block -> Block
+bulletPoint :: Int -> [Block] -> Block
 bulletPoint size = BulletPoint (BulletSize size)
 
 -- | 'LineBreak'

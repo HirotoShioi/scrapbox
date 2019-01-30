@@ -1,4 +1,4 @@
-{-| This module exposes parser functions. You must provide 'ParseOption' 
+{-| This module exposes parser functions. You must provide 'ParseOption'
 which is either 'optDefault' or 'optSectionHeader'
 
 To parse given CommonMark into Scrapbox parse tree, use 'commonmarkToMarkdown'.
@@ -28,10 +28,10 @@ import           CMark                  (Node (..), NodeType (..), Title, Url,
 import           Data.List.Split        (splitWhen)
 import qualified RIO.Text               as T
 
-import           Constructors           (blockQuote, bold, bulletList,
-                                         codeBlock, codeNotation, header,
-                                         italic, link, markdown, noStyle,
-                                         paragraph, text, thumbnail)
+import           Constructors           (blockQuote, bold, codeBlock,
+                                         codeNotation, header, italic, link,
+                                         markdown, noStyle, paragraph, text,
+                                         thumbnail, bulletPoint)
 import           Render                 (renderPretty)
 import           Types                  (Block (..), Context (..),
                                          Markdown (..), Segment, concatContext,
@@ -205,7 +205,7 @@ extractTextFromNodes = foldr
 
 -- | Construct bulletlist
 toBulletList :: [Node] -> Block
-toBulletList contents = bulletList $ concatMap toBlocks contents
+toBulletList nodes = bulletPoint 1 $ concatMap toBlocks nodes
 
 -- | Apply LineBreak between Header section
 --

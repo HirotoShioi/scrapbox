@@ -53,15 +53,14 @@ writeMarkdown path (Markdown blocks) = do
 -- | Render given 'Block' into  'Text'
 renderBlock :: Block -> [Text]
 renderBlock = \case
-    LineBreak                          -> [""]
-    BlockQuote stext                   -> [">" <> renderText stext]
-    BulletList contents                -> renderBulletPoints contents
-    BulletPoint (BulletSize num) block -> renderBulletPoint num block
-    CodeBlock codeName code            -> renderCodeBlock codeName code <> renderBlock LineBreak
-    Paragraph stext                    -> [renderText stext]
-    Header num contents                -> [renderHeader num contents]
-    Table tableName tableContent       -> renderTable tableName tableContent <> renderBlock LineBreak
-    Thumbnail (Url url)                -> [blocked url]
+    LineBreak                           -> [""]
+    BlockQuote stext                    -> [">" <> renderText stext]
+    BulletPoint (BulletSize num) blocks -> renderBulletPoint num blocks
+    CodeBlock codeName code             -> renderCodeBlock codeName code <> renderBlock LineBreak
+    Paragraph stext                     -> [renderText stext]
+    Header num contents                 -> [renderHeader num contents]
+    Table tableName tableContent        -> renderTable tableName tableContent <> renderBlock LineBreak
+    Thumbnail (Url url)                 -> [blocked url]
 
 -- | Render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
@@ -97,13 +96,9 @@ renderTable (TableName name) (TableContent content) =
         renderdTable = map (foldr (\someText acc -> "\t" <> someText <> acc) mempty) content
     in title <> renderdTable
 
--- | Render 'Bulletpoint's
-renderBulletPoints :: [Block] -> [Text]
-renderBulletPoints = concatMap (map (\text -> "\t" <> text) . renderBlock)
-
 -- | Render 'BulletPoint'
-renderBulletPoint :: Int -> Block -> [Text]
-renderBulletPoint num block = map (\text -> T.replicate num "\t" <> text) $ renderBlock block
+renderBulletPoint :: Int -> [Block] -> [Text]
+renderBulletPoint num = concatMap (map (\text -> T.replicate num "\t" <> text) . renderBlock)
 
 -- | Add an block to a given renderd text
 blocked :: Text -> Text

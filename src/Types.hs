@@ -31,7 +31,7 @@ module Types
     , emptyStyle
     -- * Predicates
     , isBlockQuote
-    , isBulletList
+    , isBulletPoint
     , isCodeBlock
     , isCodeNotation
     , isHeader
@@ -100,12 +100,8 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote !ScrapText
     -- ^ BlockQuote like markdown
-    | BulletPoint !BulletSize !Block
+    | BulletPoint !BulletSize ![Block]
     -- ^ Bulletpoint styled line
-    | BulletList ![Block] -- Makes not much sense, perhaps remove?
-    -- ^ Bullet points
-
-    -- 'Block' for now, but it can be more type safe (although would become verbose)
     | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
     | Header !HeaderSize !Content
@@ -187,8 +183,7 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
         BlockQuote stext      -> BlockQuote $ verboseScrapText stext
-        BulletList stexts     -> BulletList $ map convertToVerbose stexts
-        BulletPoint num block -> BulletPoint num $ convertToVerbose block
+        BulletPoint num block -> BulletPoint num $ map convertToVerbose block
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
 
@@ -206,8 +201,7 @@ unverbose (Markdown blocks) = Markdown $ map unVerboseBlock blocks
     unVerboseBlock :: Block -> Block
     unVerboseBlock = \case
         BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
-        BulletList stexts     -> BulletList $ map unVerboseBlock stexts
-        BulletPoint num block -> BulletPoint num $ unVerboseBlock block
+        BulletPoint num block -> BulletPoint num $ map unVerboseBlock block
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
 
@@ -246,6 +240,11 @@ isBlockQuote :: Block -> Bool
 isBlockQuote (BlockQuote _) = True
 isBlockQuote _              = False
 
+-- | Checks whether given 'Block' is 'BlockQuote'
+isBulletPoint :: Block -> Bool
+isBulletPoint (BulletPoint _ _) = True
+isBulletPoint _                 = False
+
 -- | Checks whether given 'Block' is 'CodeBlock'
 isCodeBlock :: Block -> Bool
 isCodeBlock (CodeBlock _ _) = True
@@ -255,11 +254,6 @@ isCodeBlock _               = False
 isParagraph :: Block -> Bool
 isParagraph (Paragraph _) = True
 isParagraph _             = False
-
--- | Checks whether given 'Block' is 'BulletList'
-isBulletList :: Block -> Bool
-isBulletList (BulletList _) = True
-isBulletList _              = False
 
 -- | Checks whether given 'Block' is 'Thumbnail'
 isThumbnail :: Block -> Bool
