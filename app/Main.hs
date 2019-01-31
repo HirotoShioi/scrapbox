@@ -5,7 +5,7 @@ module Main where
 import           RIO
 
 import           CMark
-
+import           Prelude (readFile)
 --------------------------------------------------------------------------------
 -- Test files
 --------------------------------------------------------------------------------
@@ -97,12 +97,12 @@ exampleText = unlines [
     "[[Code block notation]]",
     " Typing `code:filename.extension`or`code:filename`can be used to create a new code snippet and and display it as a block",
     "  Language names may be abbreviated",
-    "code:hello.js",
-    " function () {",
-    "   alert(document.location.href)",
-    "   console.log(\"hello\")",
-    "   // You can also write comments!",
-    " }",
+    " code:hello.js",
+    "  function () {",
+    "    alert(document.location.href)",
+    "    console.log(\"hello\")",
+    "    // You can also write comments!",
+    "  }",
     "",
     "[[Tables]]",
     "\tType table: tablename to create a table",
@@ -116,6 +116,9 @@ exampleText = unlines [
     "",
     ""
     ]
+
+listFile :: IO String
+listFile = readFile "./docs/scrapbox/testlist.sb"
 
 main :: IO ()
 main = undefined

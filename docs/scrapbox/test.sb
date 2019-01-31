@@ -27,3 +27,10 @@ This is my scrapbox link
 This is an quote from famous artist
 
 >I've found out that the winter in `Japan` is very [* very] cold
+
+ code:code
+  function () {
+     alert (p.location.href)
+     console.log("hello")
+     // You can also write comments!
+  }
