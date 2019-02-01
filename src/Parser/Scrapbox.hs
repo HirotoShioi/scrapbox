@@ -22,7 +22,6 @@ import           Types                         (Block (..), BulletSize (..),
                                                 HeaderSize (..), Markdown (..),
                                                 TableContent (..),
                                                 TableName (..), Url (..))
-import           Utils                         (whenJust)
 
 import           Parser.Inline                 (runInlineParserM)
 import           Parser.Text                   (runScrapTextParserM)
@@ -74,74 +73,67 @@ headerParser = do
     return $ Header (HeaderSize symbolLen) segments
 
 -- | Parser for 'BulletPoint'
-bulletPointParser :: Maybe Int -> Parser Block
-bulletPointParser mNumOfSpaces = do
-    consumeSpace mNumOfSpaces
+bulletPointParser :: Int -> Parser Block
+bulletPointParser indentNum = do
     -- Look ahead and count the number of spaces
-    numOfSpaces <- length <$> lookAhead (try $ many1 $ oneOf " \t")
-    blocks      <- many1 $ do
-        _ <- replicateM_ numOfSpaces (oneOf " \t")
-        let s = fromMaybe 0 mNumOfSpaces
-        blockParser (Just $ numOfSpaces + s)
-    return $ BulletPoint (BulletSize numOfSpaces) blocks
+    numOfIndents <- length <$> lookAhead (try $ many1 $ oneOf indent)
+    when (numOfIndents <= indentNum) $ fail "less indent"
+    blocks      <- many1 $ blockParser numOfIndents
+    let bulletSize = numOfIndents - indentNum
+    return $ BulletPoint (BulletSize bulletSize) blocks
 
 -- | Parser for 'CodeBlock'
-codeBlockParser :: Maybe Int -> Parser Block
-codeBlockParser mNumberOfSpaces = do
-    consumeSpace mNumberOfSpaces
+codeBlockParser :: Int -> Parser Block
+codeBlockParser indentNum = do
     _        <- string "code:"
     codeName <- manyTill anyChar endOfLine
-    snippet  <- T.unlines <$> many (codeSnippetParser mNumberOfSpaces)
+    snippet  <- T.unlines <$> many codeSnippetParser
     return $ CodeBlock (CodeName $ fromString codeName) (CodeSnippet snippet)
   where
-    codeSnippetParser :: Maybe Int -> Parser Text
-    codeSnippetParser mSpaces = do
-        consumeSpace mSpaces
-        _        <- oneOf "\t "
+    codeSnippetParser :: Parser Text
+    codeSnippetParser = do
+        consumeIndent indentNum
+        _        <- oneOf indent
         codeLine <- manyTill anyChar endOfLine
         return $ fromString codeLine
 
 -- | Parser to 'Table'
-tableParser :: Maybe Int -> Parser Block
-tableParser mNumberOfSpaces = do
+tableParser :: Int -> Parser Block
+tableParser indentNum = do
     _            <- string "table:"
     tableName    <- manyTill anyChar endOfLine
-    tableContent <- manyTill (rowParser mNumberOfSpaces) endOfLine
+    tableContent <- manyTill rowParser endOfLine
     return $ Table (TableName $ fromString tableName) (TableContent tableContent)
   where
-    rowParser :: Maybe Int -> Parser [Text]
-    rowParser mSpaces = do
-        consumeSpace mSpaces
-        _    <- char '\t' <|> space
+    rowParser :: Parser [Text]
+    rowParser = do
+        consumeIndent indentNum
+        _    <- oneOf indent
         row  <- sepBy1 (many $ noneOf "\t\n") (try $ char '\t')
         _    <- endOfLine
         return $ map fromString row
 
 
-blockParser :: Maybe Int
-            -- ^ Number of spaces for bullet point
+blockParser :: Int
+            -- ^ Number of indents
             -> Parser Block
-blockParser mNumOfSpaces =
-        try lineBreakParser
-    <|> try headerParser
-    <|> try thumbnailParser
-    <|> try blockQuoteParser
-    <|> try (bulletPointParser mNumOfSpaces)
-    <|> try (codeBlockParser mNumOfSpaces)
-    <|> try (tableParser mNumOfSpaces)
-    <|> try paragraphParser
+blockParser indentNum =
+        try (consumeIndent indentNum *> lineBreakParser)
+    <|> try (consumeIndent indentNum *> headerParser)
+    <|> try (consumeIndent indentNum *> thumbnailParser)
+    <|> try (consumeIndent indentNum *> blockQuoteParser)
+    <|> try (bulletPointParser indentNum)
+    <|> try (consumeIndent indentNum *> codeBlockParser indentNum)
+    <|> try (consumeIndent indentNum *> tableParser indentNum)
+    <|> try (consumeIndent indentNum *> paragraphParser)
 
-consumeSpace :: Maybe Int -> Parser ()
-consumeSpace mSpaces = 
-    whenJust mSpaces $ \spaces ->
-        replicateM_ spaces (oneOf " \t")
 --------------------------------------------------------------------------------
 -- Markdown parser
 --------------------------------------------------------------------------------
 
 -- | Parser for 'Markdown'
 markdownParser :: Parser Markdown
-markdownParser = Markdown <$> manyTill (blockParser Nothing) eof
+markdownParser = Markdown <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
 runScrapboxParser :: String -> Either ParseError Markdown
@@ -158,3 +150,9 @@ endOfLine = void (char '\n') <|> void (string "\r\n") <|> eof
 -- | Consume string until end of line
 getString :: Parser String
 getString = manyTill anyChar (try endOfLine)
+
+consumeIndent :: Int -> Parser ()
+consumeIndent indentNum = replicateM_ indentNum (oneOf indent)
+
+indent :: String
+indent = " \t"

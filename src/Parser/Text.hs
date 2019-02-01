@@ -23,9 +23,8 @@ import           Parser.Inline                 (codeNotationParser,
                                                 runInlineParserM)
 import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (Context (..), ScrapText (..),
-                                                Segment, Segment (..),
-                                                Style (..), StyleData (..),
-                                                emptyStyle)
+                                                Segment (..), Style (..),
+                                                StyleData (..), emptyStyle)
 import           Utils                         (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
@@ -122,7 +121,7 @@ styledTextParser = do
         "*"  -> Bold
         "-"  -> StrikeThrough
         "/"  -> Italic
-        rest -> if any (`notElem` "*-/") rest
+        rest -> if any (`notElem` "*-/") rest -- Need Header style
             then UserStyle (fromString rest)
             else mkCustomStyle rest emptyStyle
 
