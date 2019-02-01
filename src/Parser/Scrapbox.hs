@@ -113,7 +113,8 @@ tableParser indentNum = do
         _    <- endOfLine
         return $ map fromString row
 
-
+-- | Block parser
+-- Each parser must consume (or discard) indentation before parsing
 blockParser :: Int
             -- ^ Number of indents
             -> Parser Block
@@ -151,8 +152,10 @@ endOfLine = void (char '\n') <|> void (string "\r\n") <|> eof
 getString :: Parser String
 getString = manyTill anyChar (try endOfLine)
 
+-- | Consume number of whitespaces
 consumeIndent :: Int -> Parser ()
 consumeIndent indentNum = replicateM_ indentNum (oneOf indent)
 
+-- | Indent symbol
 indent :: String
 indent = " \t"
