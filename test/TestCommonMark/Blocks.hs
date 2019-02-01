@@ -258,7 +258,7 @@ unorderedListSpec = describe "Unordered list" $ do
             checkMarkdown unorderedListBlock
                 (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
                 (\content -> do
-                    blockContent       <- headMaybe content
+                    blockContent          <- headMaybe content
                     (BulletPoint _ lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
                 )
