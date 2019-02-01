@@ -241,7 +241,7 @@ newtype UnorderedListBlock = UnorderedListBlock
     } deriving Show
 
 instance CommonMarkdown UnorderedListBlock where
-    render (UnorderedListBlock list) = T.unlines $ map (\element -> "- " <> element) list
+    render (UnorderedListBlock list) = T.unlines $ map ("- " <>) list
 
 instance Arbitrary UnorderedListBlock where
     arbitrary = UnorderedListBlock <$> listOf1 genPrintableText

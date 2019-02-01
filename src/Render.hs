@@ -86,7 +86,7 @@ renderContent = foldr (\ctx acc -> renderSegment ctx <> acc) mempty
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
-    let codeContent = map (\line -> " " <> line) (T.lines code)
+    let codeContent = map (" " <>) (T.lines code)
     [codeName] <> codeContent
 
 -- | Render 'Table'
