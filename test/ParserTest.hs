@@ -276,9 +276,7 @@ scrapboxParserSpec =
                         ]
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+            , Paragraph
                 ( ScrapText
                     [ Context NoStyle
                         [ CodeNotation "[http://google.com Google]"
@@ -315,10 +313,7 @@ scrapboxParserSpec =
                         ]
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ Link Nothing ( Url "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" ) ] ] )
+            , Thumbnail ( Url "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" )
             ]
         , LineBreak
         , Paragraph ( ScrapText [ Context Bold [ SimpleText "Clickable Thumbnail Links" ] ] )
@@ -332,18 +327,9 @@ scrapboxParserSpec =
                         ]
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ Link ( Just "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" ) ( Url "http://cutedog.com" ) ] ] )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Adding the link at the end also works, as before:" ] ] )
-            ]
-        , BulletPoint ( BulletSize 2 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ CodeNotation "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]" ] ] )
+            , Paragraph ( ScrapText [ Context NoStyle [ Link ( Just "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" ) ( Url "http://cutedog.com" ) ] ] )
+            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Adding the link at the end also works, as before:" ] ] )
+            , BulletPoint ( BulletSize 1 ) [ Paragraph ( ScrapText [ Context NoStyle [ CodeNotation "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]" ] ] ) ]
             ]
         , LineBreak
         , Paragraph ( ScrapText [ Context Bold [ SimpleText "Linking to other scrapbox projects" ] ] )
@@ -357,9 +343,7 @@ scrapboxParserSpec =
                         ]
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+            , Paragraph
                 ( ScrapText
                     [ Context NoStyle
                         [ CodeNotation "[/projectname]"
@@ -385,9 +369,7 @@ scrapboxParserSpec =
                         ]
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+            , Paragraph
                 ( ScrapText
                     [ Context NoStyle
                         [ CodeNotation "[/icons/todo.icon]"
@@ -446,12 +428,8 @@ scrapboxParserSpec =
     expected4 = Markdown
         [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Bullet points" ] ] )
         , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Press space or tab on a new line to indent and create a bullet point" ] ] )
-            ]
-        , BulletPoint ( BulletSize 2 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Press backspace to remove the indent  / bullet point" ] ] )
+            [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Press space or tab on a new line to indent and create a bullet point" ] ] )
+            , BulletPoint ( BulletSize 1 ) [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Press backspace to remove the indent  / bullet point" ] ] ) ]
             ]
         , LineBreak
         , Paragraph ( ScrapText [ Context Bold [ SimpleText "Hashtags / internal links" ] ] )
@@ -466,10 +444,7 @@ scrapboxParserSpec =
                         ]
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Add links in the middle of a sentence to branch off as you type or add tags at the end to organize." ] ] )
+            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Add links in the middle of a sentence to branch off as you type or add tags at the end to organize." ] ] )
             ]
         , LineBreak
         , Paragraph ( ScrapText [ Context Bold [ SimpleText "Block quote" ] ] )
@@ -485,11 +460,8 @@ scrapboxParserSpec =
         , LineBreak
         , Paragraph ( ScrapText [ Context Bold [ SimpleText "Code notation" ] ] )
         , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Use backquotes or backticks, `,  to highlight code  " ] ] )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+            [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Use backquotes or backticks, `,  to highlight code  " ] ] )
+            , Paragraph
                 ( ScrapText
                     [ Context NoStyle
                         [ SimpleText "e.g. "
@@ -502,25 +474,22 @@ scrapboxParserSpec =
         ]
 
     expected5 :: Markdown
-    expected5 = Markdown
+    expected5 = Markdown 
         [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Code block notation" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText
-                    [ Context NoStyle
+        , BulletPoint ( BulletSize 1 ) 
+            [ Paragraph 
+                ( ScrapText 
+                    [ Context NoStyle 
                         [ SimpleText "Typing "
                         , CodeNotation "code:filename.extension"
                         , SimpleText "or"
                         , CodeNotation "code:filename"
                         , SimpleText "can be used to create a new code snippet and and display it as a block"
-                        ]
+                        ] 
                     ]
                 )
-            ]
-        , BulletPoint ( BulletSize 2 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Language names may be abbreviated" ] ] )
-            ]
+            , BulletPoint ( BulletSize 1 ) [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Language names may be abbreviated" ] ] ) ]
+            ] 
         , CodeBlock ( CodeName "hello.js" ) ( CodeSnippet (T.unlines
             [ "function () {"
             , "  alert(document.location.href)"
@@ -531,44 +500,38 @@ scrapboxParserSpec =
         )
         , LineBreak
         , Paragraph ( ScrapText [ Context Bold [ SimpleText "Tables" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Type table: tablename to create a table" ] ] )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "Use tab to move to the next column, use enter to move to the next row." ] ] )
-            ]
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText [ Context NoStyle [ SimpleText "An example:" ] ] )
-            ]
-        , Table ( TableName "hello" )
-            ( TableContent
-                [
+        , BulletPoint ( BulletSize 1 ) 
+            [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Type table: tablename to create a table" ] ] )
+            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Use tab to move to the next column, use enter to move to the next row." ] ] )
+            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "An example:" ] ] )
+            ] 
+        , Table ( TableName "hello" ) 
+            ( TableContent 
+                [ 
                     [ "1"
                     , "2"
                     , "3"
-                    ]
-                ,
+                    ] 
+                , 
                     [ "1 "
                     , "2 "
                     , "3"
-                    ]
-                ,
+                    ] 
+                , 
                     [ "------"
                     , "------"
                     , "------"
-                    ]
-                ,
+                    ] 
+                , 
                     [ "a"
                     , "b"
                     , "c"
-                    ]
-                ]
+                    ] 
+                ] 
             )
         , LineBreak
-        ]
+        ] 
+
 
 
 --------------------------------------------------------------------------------
