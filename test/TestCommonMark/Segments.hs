@@ -57,7 +57,7 @@ linkSpec = describe "Links" $ do
     prop "should preserve its content" $
         \(linkSegment :: LinkSegment) ->
             checkMarkdown linkSegment
-                (\(Link mName (Url url)) ->
+                (\(LINK mName (Url url)) ->
                        url == linkUrl linkSegment
                     && maybe False (\name -> name == linkName linkSegment) mName
 
@@ -70,7 +70,7 @@ linkSpec = describe "Links" $ do
         \(linkSegment :: LinkSegment) -> testSegment linkSegment
   where
     getLink :: Segment -> Maybe Segment
-    getLink linkSegment@(Link _ _) = Just linkSegment
+    getLink linkSegment@(LINK _ _) = Just linkSegment
     getLink _                      = Nothing
 
 --------------------------------------------------------------------------------
@@ -102,14 +102,14 @@ codeNotationSpec =
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
                     (\content -> do
                         segment                 <- getHeadSegment content
-                        (CodeNotation codeText) <- getCodeNotationText segment
+                        (CODE_NOTATION codeText) <- getCodeNotationText segment
                         return codeText
                     )
         prop "should not have any other segments except for code section" $
             \(codeNotation :: CodeNotationSegment) -> testSegment codeNotation
   where
     getCodeNotationText :: Segment -> Maybe Segment
-    getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
+    getCodeNotationText codeNotation@(CODE_NOTATION _) = Just codeNotation
     getCodeNotationText _                             = Nothing
 
 --------------------------------------------------------------------------------
@@ -137,18 +137,18 @@ plainTextSpec = describe "Plain text" $ do
     prop "should preserve its content" $
         \(simpleTextSegment :: SimpleTextSegment) ->
             checkMarkdown simpleTextSegment
-            (\(SimpleText txt) -> txt == getSimpleTextSegment simpleTextSegment)
+            (\(TEXT txt) -> txt == getSimpleTextSegment simpleTextSegment)
             (\content -> do
                 segment                 <- getHeadSegment content
-                getSimpleText segment
+                getText segment
             )
 
     prop "should not have any other segments except for plain text" $
         \(simpleTextSegment :: SimpleTextSegment) -> testSegment simpleTextSegment
   where
-    getSimpleText :: Segment -> Maybe Segment
-    getSimpleText simpleTextSegment@(SimpleText _) = Just simpleTextSegment
-    getSimpleText _                                = Nothing
+    getText :: Segment -> Maybe Segment
+    getText textSegment@(TEXT _) = Just textSegment
+    getText _                    = Nothing
 
 -- | General test case to check whether the segment was parsed properly
 testSegment :: (CommonMarkdown section) => section -> Bool
@@ -161,7 +161,7 @@ testSegment someSegment =
         )
         (\content -> do
             blockContent                 <- headMaybe content
-            (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+            (PARAGRAPH (ScrapText ctxs)) <- getParagraph blockContent
             (Context _ segments)         <- headMaybe ctxs
             return (content, ctxs, segments)
         )

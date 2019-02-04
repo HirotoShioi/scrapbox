@@ -43,7 +43,7 @@ import           Types (Block (..), Start (..), CodeName (..),
 
 -- | Constructors for creating Markdown with given list of 'Block'
 scrapbox :: [Block] -> Scrapbox
-scrapbox = scrapbox
+scrapbox = Scrapbox
 
 --------------------------------------------------------------------------------
 -- Block

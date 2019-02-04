@@ -57,7 +57,7 @@ instance Arbitrary (StyledText a) where
 checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
 checkStyledTextContent styledText =
     checkMarkdown styledText
-        (\(SimpleText txt) -> txt == getStyledText styledText)
+        (\(TEXT txt) -> txt == getStyledText styledText)
         (\content -> do
             segment <- getHeadSegment content
             if isSimpleText segment
@@ -68,7 +68,7 @@ checkStyledTextContent styledText =
 getHeadContext :: [Block] -> Maybe Context
 getHeadContext blocks = do
     blockContent                 <- headMaybe blocks
-    (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+    (PARAGRAPH (ScrapText ctxs)) <- getParagraph blockContent
     headMaybe ctxs
 
 --------------------------------------------------------------------------------

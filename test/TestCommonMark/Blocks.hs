@@ -20,7 +20,7 @@ import           Test.QuickCheck       (Arbitrary (..), choose, elements,
 
 import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
-                                        HeaderSize (..), TableContent (..),
+                                        Level (..), TableContent (..),
                                         Url (..), isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
@@ -70,7 +70,7 @@ paragraphSpec = describe "Paragraph" $ do
                 (\paragraphText -> paragraphText == getParagraphSection paragraph)
                 (\content -> do
                     blockContent 　　　<- headMaybe content
-                    (Paragraph stext) <- getParagraph blockContent
+                    (PARAGRAPH stext) <- getParagraph blockContent
                     return $ renderText stext
                 )
 
@@ -129,11 +129,11 @@ headerTextSpec = describe "Header text" $ do
     prop "should preserve header size" $
         \(headerText :: HeaderText) ->
             checkMarkdown headerText
-                (`isSameHeaderSize` headerText)
+                (`isSameLevel` headerText)
                 (\content -> do
                     blockContent          <- headMaybe content
-                    (Header headerSize _) <- getHeader blockContent
-                    return headerSize
+                    (HEADING level _) <- getHeader blockContent
+                    return level
                 )
     prop "should preserve its content" $
         \(headerText :: HeaderText) ->
@@ -141,23 +141,23 @@ headerTextSpec = describe "Header text" $ do
                 (\headerContent -> headerContent == getHeaderTextContent headerText)
                 (\content -> do
                     blockContent             <- headMaybe content
-                    (Header _ headerContent) <- getHeader blockContent
+                    (HEADING _ headerContent) <- getHeader blockContent
                     return $ renderContent headerContent
                 )
   where
     getHeader :: Block -> Maybe Block
-    getHeader header@(Header _ _) = Just header
+    getHeader header@(HEADING _ _) = Just header
     getHeader _                   = Nothing
 
     -- Check if given headerSize is same size
-    isSameHeaderSize :: HeaderSize -> HeaderText -> Bool
-    isSameHeaderSize (HeaderSize 4) (H1 _) = True
-    isSameHeaderSize (HeaderSize 3) (H2 _) = True
-    isSameHeaderSize (HeaderSize 2) (H3 _) = True
-    isSameHeaderSize (HeaderSize 1) (H4 _) = True
-    isSameHeaderSize (HeaderSize 1) (H5 _) = True
-    isSameHeaderSize (HeaderSize 1) (H6 _) = True
-    isSameHeaderSize _ _                   = False
+    isSameLevel :: Level -> HeaderText -> Bool
+    isSameLevel (Level 4) (H1 _) = True
+    isSameLevel (Level 3) (H2 _) = True
+    isSameLevel (Level 2) (H3 _) = True
+    isSameLevel (Level 1) (H4 _) = True
+    isSameLevel (Level 1) (H5 _) = True
+    isSameLevel (Level 1) (H6 _) = True
+    isSameLevel _ _                   = False
 
 --------------------------------------------------------------------------------
 -- BlockQuote
@@ -187,14 +187,14 @@ blockQuoteSpec = describe "BlockQuote text" $ do
                 (\quoteText -> quoteText == getBlockQuoteText blockQuote)
                 (\content -> do
                     blockContent       <- headMaybe content
-                    (BlockQuote stext) <- getBlockQuote blockContent
+                    (BLOCK_QUOTE stext) <- getBlockQuote blockContent
                     return $ renderText stext
                 )
   where
     -- Should this function be here?
     getBlockQuote :: Block -> Maybe Block
-    getBlockQuote blockQuote@(BlockQuote _) = Just blockQuote
-    getBlockQuote _                         = Nothing
+    getBlockQuote blockQuote@(BLOCK_QUOTE _) = Just blockQuote
+    getBlockQuote _                          = Nothing
 
 --------------------------------------------------------------------------------
 -- CodeBlock
@@ -223,12 +223,12 @@ codeBlockSpec = describe "Code block" $ do
                 (\codeContent -> codeContent == T.unlines (getCodeBlockContent codeBlock))
                 (\content -> do
                     blockContent <- headMaybe content
-                    (CodeBlock _ (CodeSnippet snippet)) <- getCodeBlock blockContent
+                    (CODE_BLOCK _ (CodeSnippet snippet)) <- getCodeBlock blockContent
                     return snippet
                 )
   where
     getCodeBlock :: Block -> Maybe Block
-    getCodeBlock codeBlock@(CodeBlock _ _) = Just codeBlock
+    getCodeBlock codeBlock@(CODE_BLOCK _ _) = Just codeBlock
     getCodeBlock _                         = Nothing
 
 --------------------------------------------------------------------------------
@@ -259,13 +259,13 @@ unorderedListSpec = describe "Unordered list" $ do
                 (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
                 (\content -> do
                     blockContent          <- headMaybe content
-                    (BulletPoint _ lists) <- getBulletList blockContent
+                    (BULLET_POINT _ lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
                 )
 
 -- | Check whether given 'Block' is 'BulletList'
 getBulletList :: Block -> Maybe Block
-getBulletList bulletList@(BulletPoint _ _) = Just bulletList
+getBulletList bulletList@(BULLET_POINT _ _) = Just bulletList
 getBulletList _                            = Nothing
 
 --------------------------------------------------------------------------------
@@ -297,7 +297,7 @@ orderedListSpec = describe "Ordered list" $ do
                 (\renderedTexts -> renderedTexts == getOrderedListBlock orderedListBlock)
                 (\content -> do
                     blockContent        <- headMaybe content
-                    (BulletPoint _ lists) <- getBulletList blockContent
+                    (BULLET_POINT _ lists) <- getBulletList blockContent
                     return $ concatMap renderBlock lists
                 )
 
@@ -332,12 +332,12 @@ imageSpec =
                     (\(Url url) -> url == imageLink imageSection)
                     (\content -> do
                         blockContent    <- headMaybe content
-                        (Thumbnail url) <- getImage blockContent
+                        (THUMBNAIL url) <- getImage blockContent
                         return url
                     )
   where
     getImage :: Block -> Maybe Block
-    getImage thumbnail@(Thumbnail _) = Just thumbnail
+    getImage thumbnail@(THUMBNAIL _) = Just thumbnail
     getImage _                       = Nothing
 
 --------------------------------------------------------------------------------
@@ -386,10 +386,10 @@ tableSpec = describe "Table" $ do
                 (\(TableContent contents) -> contents == [tableHeader table] <> tableContent table)
                 (\content -> do
                     blockContent     <- headMaybe content
-                    (Table _ tables) <- getTable blockContent
+                    (TABLE _ tables) <- getTable blockContent
                     return tables
                 )
   where
     getTable :: Block -> Maybe Block
-    getTable table@(Table _ _) = Just table
+    getTable table@(TABLE _ _) = Just table
     getTable _                 = Nothing

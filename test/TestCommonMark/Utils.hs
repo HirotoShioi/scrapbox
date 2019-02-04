@@ -19,8 +19,8 @@ import           RIO.List        (headMaybe)
 import qualified RIO.Text        as T
 import           Test.QuickCheck (Gen, elements, listOf1)
 
-import           CommonMark.Lib  (commonmarkToMarkdown, optDefault)
-import           Types           (Block (..), Context (..), Markdown (..),
+import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
+import           Types           (Block (..), Context (..), Scrapbox (..),
                                   ScrapText (..), Segment)
 
 --------------------------------------------------------------------------------
@@ -49,8 +49,8 @@ genPrintableUrl = do
     return $ "http://www." <> randomSite <> end
 
 -- | Parse given datatype into Markdown
-parseMarkdown :: CommonMarkdown a => a -> Markdown
-parseMarkdown = commonmarkToMarkdown optDefault . render
+parseMarkdown :: CommonMarkdown a => a -> Scrapbox
+parseMarkdown = commonmarkToScrapboxNode optDefault . render
 
 -- | General function used to test if given 'CommonMarkdown' can be properly parsed
 -- and extract the expected element
@@ -60,18 +60,18 @@ checkMarkdown :: (CommonMarkdown a)
               -> ([Block] -> Maybe parsedContent)
               -> Bool
 checkMarkdown markdown pre extractionFunc = do
-    let (Markdown content) = parseMarkdown markdown
+    let (Scrapbox content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
 
 -- | Return 'Paragraph' if given 'Block' is 'Paragraph'
 getParagraph :: Block -> Maybe Block
-getParagraph paragraph@(Paragraph _) = Just paragraph
+getParagraph paragraph@(PARAGRAPH _) = Just paragraph
 getParagraph _                       = Nothing
 
 -- | Extract heed segment of a given list of blocks
 getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
     blockContent               <- headMaybe blocks
-    Paragraph (ScrapText ctxs) <- getParagraph blockContent
+    PARAGRAPH (ScrapText ctxs) <- getParagraph blockContent
     Context _ segments         <- headMaybe ctxs
     headMaybe segments

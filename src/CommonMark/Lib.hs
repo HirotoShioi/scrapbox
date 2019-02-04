@@ -34,9 +34,10 @@ import           Constructors           (blockQuote, bold, bulletPoint,
                                          italic, link, noStyle, paragraph,
                                          scrapbox, text, thumbnail)
 import           Render                 (renderPretty)
-import           Types                  (Block (..), Context (..),
-                                         Scrapbox (..), Segment, concatContext,
-                                         concatScrapText)
+import           Types                  as Scrapbox (Block (..), Context (..),
+                                                     Scrapbox (..), Segment,
+                                                     concatContext,
+                                                     concatScrapText)
 
 import           CommonMark.TableParser (commonMarkTableToTable, parseTable)
 
@@ -214,10 +215,10 @@ toBulletList nodes = bulletPoint 1 $ concatMap toBlocks nodes
 -- =>
 -- [HEADING, b1, b2, b3, LINEBREAK, HEADING, b4, b5, b6, LINEBREAK, HEADING]
 applyLinebreak :: [Block] -> [Block]
-applyLinebreak []                               = []
-applyLinebreak [b]                              = [b]
-applyLinebreak (b:Types.HEADING hsize hcontent:rest) =
-    b : Types.LINEBREAK : applyLinebreak (Types.HEADING hsize hcontent : rest)
+applyLinebreak []                                       = []
+applyLinebreak [b]                                      = [b]
+applyLinebreak (b:Scrapbox.HEADING hsize hcontent:rest) =
+    b : Scrapbox.LINEBREAK : applyLinebreak (Scrapbox.HEADING hsize hcontent : rest)
 applyLinebreak (b: rest)                        = b : applyLinebreak rest
 
 --------------------------------------------------------------------------------
@@ -268,7 +269,7 @@ parseParagraph nodes = if isTable nodes
     concatParagraph :: [Block] -> [Block]
     concatParagraph []  = []
     concatParagraph [n] = [n]
-    concatParagraph (Types.PARAGRAPH stext1 : Types.PARAGRAPH stext2 : rest) =
-        let concatedParagraph = Types.PARAGRAPH $ concatScrapText stext1 stext2
+    concatParagraph (Scrapbox.PARAGRAPH stext1 : Scrapbox.PARAGRAPH stext2 : rest) =
+        let concatedParagraph = Scrapbox.PARAGRAPH $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
     concatParagraph (a : b : rest) = a : b : concatParagraph rest
