@@ -13,7 +13,7 @@ module Utils
     , whenJust
     ) where
 
-import RIO
+import           RIO
 
 --------------------------------------------------------------------------------
 -- Helper function

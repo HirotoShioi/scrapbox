@@ -2,9 +2,10 @@
 This is an example of an nested bullet points
 
 	Haskell
-		Lazy
+	 Lazy
 		Pure
-		Monads
+	 Monads
+	[** Header2]
 	Javascript
 		Crazy
 		Weird
@@ -14,6 +15,7 @@ This is an example of an nested bullet points
 		Utilize JVM
 	Elm
 	TypeScript
+
 [**** Orderedlist]
 	List item1
 	List item2

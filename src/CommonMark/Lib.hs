@@ -1,4 +1,4 @@
-{-| This module exposes parser functions. You must provide 'ParseOption' 
+{-| This module exposes parser functions. You must provide 'ParseOption'
 which is either 'optDefault' or 'optSectionHeader'
 
 To parse given CommonMark into Scrapbox parse tree, use 'commonmarkToMarkdown'.
@@ -28,7 +28,7 @@ import           CMark                  (Node (..), NodeType (..), Title, Url,
 import           Data.List.Split        (splitWhen)
 import qualified RIO.Text               as T
 
-import           Constructors           (blockQuote, bold, bulletList,
+import           Constructors           (blockQuote, bold, bulletPoint,
                                          codeBlock, codeNotation, header,
                                          italic, link, markdown, noStyle,
                                          paragraph, text, thumbnail)
@@ -120,7 +120,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     LIST _                       -> [toBulletList contents]
     ITEM                         -> concatMap toBlocks contents
     SOFTBREAK                    -> [paragraph [noStyle [text "\t"]]]
-     --workaround need to pay attention
+     -- Workaround need to pay attention
     LINEBREAK                    -> [paragraph [noStyle [text "\n"]]]
     LINK url title               -> [paragraph [noStyle [toLink contents url title]]]
     HTML_BLOCK htmlContent       -> [codeBlock "html" htmlContent]
@@ -205,7 +205,7 @@ extractTextFromNodes = foldr
 
 -- | Construct bulletlist
 toBulletList :: [Node] -> Block
-toBulletList contents = bulletList $ concatMap toBlocks contents
+toBulletList nodes = bulletPoint 1 $ concatMap toBlocks nodes
 
 -- | Apply LineBreak between Header section
 --

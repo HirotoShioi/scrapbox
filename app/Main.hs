@@ -33,8 +33,8 @@ testWith filePath = do
     let parsed = commonmarkToNode options markDown
     return parsed
 
-exampleText :: String
-exampleText = unlines [
+example1 :: String
+example1 = unlines [
     "Syntax",
     "[https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815]",
     "",
@@ -50,7 +50,11 @@ exampleText = unlines [
     "\t`[http://google.com Google]` ⇒ [http://google.com Google]",
     "or",
     " `[Google http://google.com]` ⇒ [Google http://google.com]",
-    "",
+    ""
+    ]
+
+example2 :: String
+example2 = unlines [
     "[[Images]]",
     "\tDirect mage link ↓`[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]`",
     " [https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]",
@@ -64,7 +68,11 @@ exampleText = unlines [
     "[[Linking to other scrapbox projects]]",
     " `[/projectname/pagename]` ⇛ [/icons/check]",
     " `[/projectname]` ⇛ [/icons]",
-    "",
+    ""
+    ]
+
+example3 :: String
+example3 = unlines [
     "[[Icons]]",
     " `[ben.icon]` ⇛  [ben.icon]",
     " `[/icons/todo.icon]` ⇛ [/icons/todo.icon]",
@@ -78,7 +86,11 @@ exampleText = unlines [
     "[[ Strikethrough text]]",
     " `[- strikethrough]`⇛ [- strikethrough]",
     "[https://gyazo.com/00ab07461d502db91c8ae170276d1396]",
-    "",
+    ""
+    ]
+
+example4 :: String
+example4 = unlines [
     "[[Bullet points]]",
     "\tPress space or tab on a new line to indent and create a bullet point",
     " \tPress backspace to remove the indent  / bullet point",
@@ -93,7 +105,11 @@ exampleText = unlines [
     "[[Code notation]]",
     " Use backquotes or backticks, `,  to highlight code  ",
     " e.g. `function() {  return true }`",
-    "",
+    ""
+    ]
+
+example5 :: String
+example5 = unlines [
     "[[Code block notation]]",
     " Typing `code:filename.extension`or`code:filename`can be used to create a new code snippet and and display it as a block",
     "  Language names may be abbreviated",

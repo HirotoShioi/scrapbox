@@ -31,7 +31,7 @@ module Types
     , emptyStyle
     -- * Predicates
     , isBlockQuote
-    , isBulletList
+    , isBulletPoint
     , isCodeBlock
     , isCodeNotation
     , isHeader
@@ -100,12 +100,8 @@ data Block
     -- ^ Simply breaks a line
     | BlockQuote !ScrapText
     -- ^ BlockQuote like markdown
-    | BulletPoint !BulletSize !ScrapText -- Todo: replace ScrapText with Block
+    | BulletPoint !BulletSize ![Block]
     -- ^ Bulletpoint styled line
-    | BulletList ![Block] -- Makes not much sense, perhaps remove?
-    -- ^ Bullet points
-
-    -- 'Block' for now, but it can be more type safe (although would become verbose)
     | CodeBlock !CodeName !CodeSnippet
     -- ^ Code blocks
     | Header !HeaderSize !Content
@@ -177,7 +173,7 @@ data StyleData = StyleData
 --------------------------------------------------------------------------------
 
 -- | Empty style data
-emptyStyle :: StyleData 
+emptyStyle :: StyleData
 emptyStyle = StyleData 0 False False False
 
 -- | Convert given Markdown into verbose structure
@@ -187,8 +183,7 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
         BlockQuote stext      -> BlockQuote $ verboseScrapText stext
-        BulletList stexts     -> BulletList $ map convertToVerbose stexts
-        BulletPoint num stext -> BulletPoint num (verboseScrapText stext)
+        BulletPoint num block -> BulletPoint num $ map convertToVerbose block
         Paragraph stext       -> Paragraph $ verboseScrapText stext
         other                 -> other
 
@@ -201,13 +196,12 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
 
 -- | Convert given Markdown into unverbose structure
 unverbose :: Markdown -> Markdown
-unverbose (Markdown blocks) = Markdown $ map unVerboseBlocks blocks
+unverbose (Markdown blocks) = Markdown $ map unVerboseBlock blocks
   where
-    unVerboseBlocks :: Block -> Block
-    unVerboseBlocks = \case
+    unVerboseBlock :: Block -> Block
+    unVerboseBlock = \case
         BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
-        BulletList stexts     -> BulletList $ map unVerboseBlocks stexts
-        BulletPoint num stext -> BulletPoint num (unVerboseScrapText stext)
+        BulletPoint num block -> BulletPoint num $ map unVerboseBlock block
         Paragraph stext       -> Paragraph $ unVerboseScrapText stext
         other                 -> other
 
@@ -246,6 +240,11 @@ isBlockQuote :: Block -> Bool
 isBlockQuote (BlockQuote _) = True
 isBlockQuote _              = False
 
+-- | Checks whether given 'Block' is 'BlockQuote'
+isBulletPoint :: Block -> Bool
+isBulletPoint (BulletPoint _ _) = True
+isBulletPoint _                 = False
+
 -- | Checks whether given 'Block' is 'CodeBlock'
 isCodeBlock :: Block -> Bool
 isCodeBlock (CodeBlock _ _) = True
@@ -255,11 +254,6 @@ isCodeBlock _               = False
 isParagraph :: Block -> Bool
 isParagraph (Paragraph _) = True
 isParagraph _             = False
-
--- | Checks whether given 'Block' is 'BulletList'
-isBulletList :: Block -> Bool
-isBulletList (BulletList _) = True
-isBulletList _              = False
 
 -- | Checks whether given 'Block' is 'Thumbnail'
 isThumbnail :: Block -> Bool
