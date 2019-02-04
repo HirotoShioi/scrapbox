@@ -2,12 +2,12 @@
 -}
 
 module Constructors
-    ( markdown
+    ( scrapbox
     -- * Blocks
     , blockQuote
     , bulletPoint
     , codeBlock
-    , header
+    , heading
     , lineBreak
     , paragraph
     , p
@@ -31,9 +31,9 @@ module Constructors
 
 import           RIO   hiding (link)
 
-import           Types (Block (..), BulletSize (..), CodeName (..),
+import           Types (Block (..), Start (..), CodeName (..),
                         CodeSnippet (..), Content, Context (..),
-                        HeaderSize (..), Markdown (..), ScrapText (..),
+                        Level (..), Scrapbox (..), ScrapText (..),
                         Segment (..), Style (..), StyleData (..),
                         TableContent (..), TableName (..), Url (..))
 
@@ -42,48 +42,48 @@ import           Types (Block (..), BulletSize (..), CodeName (..),
 --------------------------------------------------------------------------------
 
 -- | Constructors for creating Markdown with given list of 'Block'
-markdown :: [Block] -> Markdown
-markdown = Markdown
+scrapbox :: [Block] -> Scrapbox
+scrapbox = scrapbox
 
 --------------------------------------------------------------------------------
 -- Block
 --------------------------------------------------------------------------------
 
--- | Constructors for creating 'BlockQuote'
+-- | Constructors for creating 'BLOCK_QUOTE'
 blockQuote :: [Context] -> Block
-blockQuote = BlockQuote . ScrapText
+blockQuote = BLOCK_QUOTE . ScrapText
 
--- | Constructors for creating 'CodeBlock' block
+-- | Constructors for creating 'CODE_BLOCK' block
 codeBlock :: Text -> Text -> Block
-codeBlock codeName codeSnippet = CodeBlock (CodeName codeName) (CodeSnippet codeSnippet)
+codeBlock codeName codeSnippet = CODE_BLOCK (CodeName codeName) (CodeSnippet codeSnippet)
 
--- | Constructors for creating 'Paragraph' block
+-- | Constructors for creating 'PARAGRAPH' block
 paragraph :: [Context] -> Block
-paragraph = Paragraph . ScrapText
+paragraph = PARAGRAPH . ScrapText
 
--- | Constructor for creating 'Paragraph' block, synonym of 'paragraph'
+-- | Constructor for creating 'PARAGRAPH' block, synonym of 'paragraph'
 p :: [Context] -> Block
 p = paragraph
 
--- | Constructors for creating 'Table' block
+-- | Constructors for creating 'TABLE' block
 table :: Text -> [[Text]] -> Block
-table title contents = Table (TableName title) (TableContent contents)
+table title contents = TABLE (TableName title) (TableContent contents)
 
--- | Constructors for creating 'Thumbnail' with given Url
+-- | Constructors for creating 'THUMBNAIL' with given Url
 thumbnail :: Text -> Block
-thumbnail url = Thumbnail (Url url)
+thumbnail url = THUMBNAIL (Url url)
 
--- | Constructors for creating 'Header' with given Header size and content
-header :: Int -> Content -> Block
-header size = Header (HeaderSize size)
+-- | Constructors for creating 'HEADING' with given level and content
+heading :: Int -> Content -> Block
+heading level = HEADING (Level level)
 
--- | Constructors for creating 'BulletPoint' block with given size and content
+-- | Constructors for creating 'BULLET_POINT' block with given start and content
 bulletPoint :: Int -> [Block] -> Block
-bulletPoint size = BulletPoint (BulletSize size)
+bulletPoint start = BULLET_POINT (Start start)
 
 -- | 'LineBreak'
 lineBreak :: Block
-lineBreak = LineBreak
+lineBreak = LINEBREAK
 
 --------------------------------------------------------------------------------
 -- Context
@@ -117,21 +117,21 @@ customStyle sData = Context (CustomStyle sData)
 -- Segment
 --------------------------------------------------------------------------------
 
--- | Creates 'SimpleText' segment with given 'Text'
+-- | Creates 'TEXT' segment with given 'Text'
 text :: Text -> Segment
-text = SimpleText
+text = TEXT
 
--- | Creates 'CodeNotation' segment with given 'Text'
+-- | Creates 'CODE_NOTATIOn' segment with given 'Text'
 codeNotation :: Text -> Segment
-codeNotation = CodeNotation
+codeNotation = CODE_NOTATION
 
--- | Creates 'HashTag' segment with given 'Text'
+-- | Creates 'HASHTAG' segment with given 'Text'
 hashtag :: Text -> Segment
-hashtag = HashTag
+hashtag = HASHTAG
 
--- | Creates 'Link' with given name and url
+-- | Creates 'LINK' with given name and url
 link :: Maybe Text -> Text -> Segment
-link mName url = Link mName (Url url)
+link mName url = LINK mName (Url url)
 
 -- | Creates 'StyleData' with given params
 styleData :: Int -> Bool -> Bool -> Bool -> StyleData

@@ -17,9 +17,9 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 oneOf, parse, sepBy1, space,
                                                 string, try, unexpected, (<|>))
 
-import           Types                         (Block (..), BulletSize (..),
+import           Types                         (Block (..), Start (..),
                                                 CodeName (..), CodeSnippet (..),
-                                                HeaderSize (..), Markdown (..),
+                                                Level (..), Scrapbox (..),
                                                 TableContent (..),
                                                 TableName (..), Url (..))
 
@@ -34,14 +34,14 @@ import           Parser.Text                   (runScrapTextParserM)
 lineBreakParser :: Parser Block
 lineBreakParser = do
     _ <- endOfLine
-    return LineBreak
+    return LINEBREAK
 
 -- | Parser for 'Paragraph'
 paragraphParser :: Parser Block
 paragraphParser = do
     str       <- getString
     scrapText <- runScrapTextParserM str
-    return $ Paragraph scrapText
+    return $ PARAGRAPH scrapText
 
 -- | Parser for 'Thumbnail'
 thumbnailParser :: Parser Block
@@ -49,7 +49,7 @@ thumbnailParser = do
     thumbnailLink <- between (char '[') (char ']') (many1 $ noneOf "]")
     _             <- endOfLine
     if isURI thumbnailLink
-        then return $ Thumbnail (Url $ fromString thumbnailLink)
+        then return $ THUMBNAIL (Url $ fromString thumbnailLink)
         else unexpected "Cannot parse as Thumbnail since the content is not URI"
 
 -- | Parser for 'BlockQuote'
@@ -58,7 +58,7 @@ blockQuoteParser = do
     _         <- char '>'
     str       <- getString
     scrapText <- runScrapTextParserM str
-    return $ BlockQuote scrapText
+    return $ BLOCK_QUOTE scrapText
 
 -- | Parser for 'Header'
 headerParser :: Parser Block
@@ -70,7 +70,7 @@ headerParser = do
     _         <- char ']'
     _         <- endOfLine
     segments  <- runInlineParserM str
-    return $ Header (HeaderSize symbolLen) segments
+    return $ HEADING (Level symbolLen) segments
 
 -- | Parser for 'BulletPoint'
 bulletPointParser :: Int -> Parser Block
@@ -79,16 +79,16 @@ bulletPointParser indentNum = do
     numOfIndents <- length <$> lookAhead (try $ many1 $ oneOf indent)
     when (numOfIndents <= indentNum) $ fail "less indent"
     blocks      <- many1 $ blockParser numOfIndents
-    let bulletSize = numOfIndents - indentNum
-    return $ BulletPoint (BulletSize bulletSize) blocks
+    let start = numOfIndents - indentNum
+    return $ BULLET_POINT (Start start) blocks
 
--- | Parser for 'CodeBlock'
+-- | Parser for 'CODE_BLOCK'
 codeBlockParser :: Int -> Parser Block
 codeBlockParser indentNum = do
     _        <- string "code:"
     codeName <- manyTill anyChar endOfLine
     snippet  <- T.unlines <$> many codeSnippetParser
-    return $ CodeBlock (CodeName $ fromString codeName) (CodeSnippet snippet)
+    return $ CODE_BLOCK (CodeName $ fromString codeName) (CodeSnippet snippet)
   where
     codeSnippetParser :: Parser Text
     codeSnippetParser = do
@@ -97,13 +97,13 @@ codeBlockParser indentNum = do
         codeLine <- manyTill anyChar endOfLine
         return $ fromString codeLine
 
--- | Parser to 'Table'
+-- | Parser to 'TABLE'
 tableParser :: Int -> Parser Block
 tableParser indentNum = do
     _            <- string "table:"
     tableName    <- manyTill anyChar endOfLine
     tableContent <- manyTill rowParser endOfLine
-    return $ Table (TableName $ fromString tableName) (TableContent tableContent)
+    return $ TABLE (TableName $ fromString tableName) (TableContent tableContent)
   where
     rowParser :: Parser [Text]
     rowParser = do
@@ -132,12 +132,12 @@ blockParser indentNum =
 -- Markdown parser
 --------------------------------------------------------------------------------
 
--- | Parser for 'Markdown'
-markdownParser :: Parser Markdown
-markdownParser = Markdown <$> manyTill (blockParser 0) eof
+-- | Parser for 'Scrapbox'
+markdownParser :: Parser Scrapbox
+markdownParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
-runScrapboxParser :: String -> Either ParseError Markdown
+runScrapboxParser :: String -> Either ParseError Scrapbox
 runScrapboxParser = parse markdownParser "Scrapbox parser"
 
 --------------------------------------------------------------------------------

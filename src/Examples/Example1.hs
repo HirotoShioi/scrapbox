@@ -6,18 +6,18 @@ Example page: https://scrapbox.io/scrapbox-parser/Get_started
 {-# LANGUAGE OverloadedStrings #-}
 
 module Examples.Example1
-  ( getStartedMarkdown
-  , getsInterestingMd
-  , onceStartedMd
-  , getStartedMd
+  ( getStartedScrapbox
+  , getsInterestingSB
+  , onceStartedSB
+  , getStartedSB
   ) where
 
 import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeNotation,
-                               header, italic, lineBreak, link, markdown,
+                               heading, italic, lineBreak, link, scrapbox,
                                noStyle, p, strikeThrough, text, thumbnail)
-import           Types        (Block, Markdown)
+import           Types        (Block, Scrapbox)
 
 --------------------------------------------------------------------------------
 -- SECTION: Get started
@@ -37,7 +37,7 @@ welcome = p [noStyle [text "Welcome to your new Scrapbox project!"]]
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
-everythingIs = header 2 [text "📝 Everything is editable"]
+everythingIs = heading 2 [text "📝 Everything is editable"]
 
 -- "\tClick on any line and start typing to edit. "
 clickOn :: Block
@@ -92,7 +92,7 @@ addLinks = bulletPoint 2
 
 -- "[** 🎯 Here is where it gets interesting ]",
 hereIs :: Block
-hereIs = header 2 [text "🎯 Here is where it gets interesting "]
+hereIs = heading 2 [text "🎯 Here is where it gets interesting "]
 
 -- "\tClick a [new link] to create a new page with that title and open it.",
 clickNewLink :: Block
@@ -150,7 +150,7 @@ ourGoalIs = blockQuote [noStyle [ourGoalItext]]
 
 -- "[* What can you put in a Scrapbox project?]",
 whatCan :: Block
-whatCan = header 1 [text "What can you put in a Scrapbox project?"]
+whatCan = heading 1 [text "What can you put in a Scrapbox project?"]
 
 -- "\tUse Scrapbox to outline ideas, discuss `code blocks`, give feedback, and brainstorm. ",
 useScrapbox :: Block
@@ -224,7 +224,7 @@ whatIdeas = blockQuote [italic [text "What ideas in your head could your team \
 
 -- "[** 📌 Once you've got the basics, here are ways to dig deeper and get the most out of your new project ]",
 onceYouGot :: Block
-onceYouGot = header 2 [text "📌 Once you've got the basics, here are ways to dig deeper and \
+onceYouGot = heading 2 [text "📌 Once you've got the basics, here are ways to dig deeper and \
   \get the most out of your new project "]
 
 
@@ -290,7 +290,7 @@ forDetails = bulletPoint 2
 
 -- "[* We would love to hear any questions or feedback you may have]",
 weWouldLove :: Block
-weWouldLove = header 1 [text "We would love to hear any questions or feedback you may have"]
+weWouldLove = heading 1 [text "We would love to hear any questions or feedback you may have"]
 
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block
@@ -396,21 +396,21 @@ onceStartedBlock =
     , noteWhen
     ]
 
--- | 'Markdown' of get started section
-getStartedMd :: Markdown
-getStartedMd = markdown getStartedBlock
+-- | 'Scrapbox' of get started section
+getStartedSB :: Scrapbox
+getStartedSB = scrapbox getStartedBlock
 
--- | 'Markdown' of gets interesting section
-getsInterestingMd :: Markdown
-getsInterestingMd = markdown getsInterestingBlock
+-- | 'Scrapbox' of gets interesting section
+getsInterestingSB :: Scrapbox
+getsInterestingSB = scrapbox getsInterestingBlock
 
--- | 'Markdown' of once started section
-onceStartedMd :: Markdown
-onceStartedMd = markdown onceStartedBlock
+-- | 'Scrapbox' of once started section
+onceStartedSB :: Scrapbox
+onceStartedSB = scrapbox onceStartedBlock
 
 -- | Example of how https://scrapbox.io/scrapbox-parser/Get_started should be parsed
-getStartedMarkdown :: Markdown
-getStartedMarkdown = markdown $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
+getStartedScrapbox :: Scrapbox
+getStartedScrapbox = scrapbox $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
 
 -- "Get started",
 -- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",

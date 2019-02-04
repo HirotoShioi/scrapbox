@@ -11,7 +11,7 @@ module Render
     ( -- * Exposed interface
       renderPretty
     , renderRaw
-    , writeMarkdown
+    , writeScrapbox
     -- * Exposed for testing
     , renderBlock
     , renderContent
@@ -21,28 +21,28 @@ module Render
 import           RIO
 import qualified RIO.Text as T
 
-import           Types    (Block (..), BulletSize (..), CodeName (..),
-                           CodeSnippet (..), Content, Context (..),
-                           HeaderSize (..), Markdown (..), ScrapText (..),
-                           Segment (..), Style (..), StyleData (..),
-                           TableContent (..), TableName (..), Url (..))
+import           Types    (Block (..), CodeName (..), CodeSnippet (..), Content,
+                           Context (..), Level (..), ScrapText (..),
+                           Scrapbox (..), Segment (..), Start (..), Style (..),
+                           StyleData (..), TableContent (..), TableName (..),
+                           Url (..))
 
 --------------------------------------------------------------------------------
 -- Exposed interface
 --------------------------------------------------------------------------------
 
--- | Pretty print Markdown
-renderPretty :: Markdown -> Text
-renderPretty (Markdown blocks) = T.unlines $ concatMap renderBlock blocks
+-- | Pretty print 'Scrapbox'
+renderPretty :: Scrapbox -> Text
+renderPretty (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
 
--- | Render given `Markdown' into list of ByteStrings
-renderRaw :: Markdown -> [ByteString]
-renderRaw (Markdown blocks) =
+-- | Render given 'Scrapbox' into list of 'ByteString'
+renderRaw :: Scrapbox -> [ByteString]
+renderRaw (Scrapbox blocks) =
     concatMap (map encodeUtf8 . renderBlock) blocks
 
--- | Write given 'Markdown' to given path
-writeMarkdown :: FilePath -> Markdown -> IO ()
-writeMarkdown path (Markdown blocks) = do
+-- | Write given 'Scrapbox' to given path
+writeScrapbox :: FilePath -> Scrapbox -> IO ()
+writeScrapbox path (Scrapbox blocks) = do
     let renderedMarkdown = T.unlines $ concatMap renderBlock blocks
     writeFileUtf8 path renderedMarkdown
 
@@ -53,14 +53,14 @@ writeMarkdown path (Markdown blocks) = do
 -- | Render given 'Block' into  'Text'
 renderBlock :: Block -> [Text]
 renderBlock = \case
-    LineBreak                           -> [""]
-    BlockQuote stext                    -> [">" <> renderText stext]
-    BulletPoint (BulletSize num) blocks -> renderBulletPoint num blocks
-    CodeBlock codeName code             -> renderCodeBlock codeName code <> renderBlock LineBreak
-    Paragraph stext                     -> [renderText stext]
-    Header num contents                 -> [renderHeader num contents]
-    Table tableName tableContent        -> renderTable tableName tableContent <> renderBlock LineBreak
-    Thumbnail (Url url)                 -> [blocked url]
+    LINEBREAK                    -> [""]
+    BLOCK_QUOTE stext            -> [">" <> renderText stext]
+    BULLET_POINT start blocks    -> renderBulletPoint start blocks
+    CODE_BLOCK codeName code     -> renderCodeBlock codeName code <> renderBlock LINEBREAK
+    PARAGRAPH stext              -> [renderText stext]
+    HEADING level contents       -> [renderHeading level contents]
+    TABLE tableName tableContent -> renderTable tableName tableContent <> renderBlock LINEBREAK
+    THUMBNAIL (Url url)          -> [blocked url]
 
 -- | Render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
@@ -76,29 +76,29 @@ renderContent = foldr (\ctx acc -> renderSegment ctx <> acc) mempty
   where
     renderSegment :: Segment -> Text
     renderSegment = \case
-        CodeNotation code              -> "`" <> code <> "`"
-        HashTag text                   -> "#" <> text
-        Link (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
-        Link Nothing (Url url)         -> blocked url
-        SimpleText text                -> text
+        CODE_NOTATION code             -> "`" <> code <> "`"
+        HASHTAG text                   -> "#" <> text
+        LINK (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
+        LINK Nothing (Url url)         -> blocked url
+        TEXT text                      -> text
 
--- | Render 'CodeBlock'
+-- | Render 'CODE_BLOCK'
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
     let codeContent = map (" " <>) (T.lines code)
     [codeName] <> codeContent
 
--- | Render 'Table'
+-- | Render 'TABLE'
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
         renderdTable = map (foldr (\someText acc -> "\t" <> someText <> acc) mempty) content
     in title <> renderdTable
 
--- | Render 'BulletPoint'
-renderBulletPoint :: Int -> [Block] -> [Text]
-renderBulletPoint num = concatMap (map (\text -> T.replicate num "\t" <> text) . renderBlock)
+-- | Render 'BULLET_POINT'
+renderBulletPoint :: Start -> [Block] -> [Text]
+renderBulletPoint (Start num) = concatMap (map (\text -> T.replicate num "\t" <> text) . renderBlock)
 
 -- | Add an block to a given renderd text
 blocked :: Text -> Text
@@ -135,8 +135,8 @@ renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
             ]
     in blocked $ combinedSyntax <> renderContent content
 
--- | Render 'Header' block
-renderHeader :: HeaderSize -> Content -> Text
-renderHeader (HeaderSize headerSize) content =
+-- | Render 'HEADING' block
+renderHeading :: Level -> Content -> Text
+renderHeading (Level headerSize) content =
     let style = StyleData headerSize False False False
     in renderCustomStyle style content

@@ -32,15 +32,15 @@ import           Utils                         (eitherM, fromMaybeM)
 
 -- | Used to create 'SimpleText'
 simpleText :: String -> Segment
-simpleText = SimpleText . fromString
+simpleText = TEXT . fromString
 
 -- | Used to create 'CodeNotation'
 codeNotation :: String -> Segment
-codeNotation = CodeNotation . fromString
+codeNotation = CODE_NOTATION . fromString
 
 -- | Used to create 'HashTag'
 hashtag :: String -> Segment
-hashtag = HashTag . fromString
+hashtag = HASHTAG . fromString
 
 --------------------------------------------------------------------------------
 -- Parsers
@@ -66,7 +66,7 @@ linkParser = do
     if length contents <= 1
         then do
             linkContent <- getElement $ headMaybe contents
-            return $ Link Nothing (Url $ fromString linkContent)
+            return $ LINK Nothing (Url $ fromString linkContent)
         else do
             -- Both are viable
             --  [Haskell http://lotz84.github.io/haskell/]
@@ -81,11 +81,11 @@ linkParser = do
     mkLink link' link'' wholecontent
         | isURI link' = do
             nameContent <- getElement $ tailMaybe wholecontent
-            return $ Link (Just $ mkName nameContent) (Url $ fromString link')
+            return $ LINK (Just $ mkName nameContent) (Url $ fromString link')
         | isURI link'' = do
             nameContent <- getElement $ initMaybe wholecontent
-            return $ Link (Just $ mkName nameContent) (Url $ fromString link'')
-        | otherwise   = return $ Link Nothing (Url $ mkName wholecontent)
+            return $ LINK (Just $ mkName nameContent) (Url $ fromString link'')
+        | otherwise   = return $ LINK Nothing (Url $ mkName wholecontent)
 
     mkName :: [String] -> Text
     mkName wholecontent = T.strip $ fromString $
