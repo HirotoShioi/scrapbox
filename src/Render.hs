@@ -1,7 +1,7 @@
-{-| Render module, these are used to render given 'Markdown' into 'Text' using
+{-| Render module, these are used to render given 'Scrapbox' into 'Text' using
 'renderPretty' or 'renderRaw'
 
-You can also use 'writeMarkdown' to write given 'Markdown' into file.
+You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 -}
 
 {-# LANGUAGE LambdaCase        #-}

@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module CommonMark.TableParser
-    ( commonMarkTableToTable
+    ( commonmarkTableToTable
     , parseTable
     , CommonMarkTable
     , Column
@@ -72,7 +72,7 @@ parseTable texts =
         column <- P.parseOnly columnParser t
         go (CommonMarkTable (currList <> [column])) ts
 
--- | Convert given common mark table into 'Table' block
-commonMarkTableToTable :: CommonMarkTable -> Block
-commonMarkTableToTable (CommonMarkTable columns) =
+-- | Convert given common mark table into 'TABLE' block
+commonmarkTableToTable :: CommonMarkTable -> Block
+commonmarkTableToTable (CommonMarkTable columns) =
     table "table" (map getColumn columns)

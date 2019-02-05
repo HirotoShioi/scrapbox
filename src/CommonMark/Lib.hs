@@ -1,9 +1,9 @@
 {-| This module exposes parser functions. You must provide 'ParseOption'
 which is either 'optDefault' or 'optSectionHeading'
 
-To parse given CommonMark into Scrapbox parse tree, use 'commonmarkToMarkdown'.
+To parse given CommonMark into 'Scrapbox' AST, use 'commonmarkToScrapboxNode'.
 
-To parse given CommnMark and convert into Scrapbox format, use 'commonmarkToScrapbox'.
+To parse given CommnMark and convert into 'Scrapbox' format, use 'commonmarkToScrapbox'.
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -39,7 +39,7 @@ import           Types                  as Scrapbox (Block (..), Context (..),
                                                      concatContext,
                                                      concatScrapText)
 
-import           CommonMark.TableParser (commonMarkTableToTable, parseTable)
+import           CommonMark.TableParser (commonmarkTableToTable, parseTable)
 
 --------------------------------------------------------------------------------
 -- Options
@@ -80,11 +80,11 @@ commonmarkToScrapboxNode parseOption cmark =
         node = commonmarkToNode options cmark
     in parseNode parseOption node
 
--- | Convert given common mark into Scrapbox markdown format
+-- | Convert given common mark text into 'Scrapbox' format
 commonmarkToScrapbox :: ParseOption -> Text -> Text
 commonmarkToScrapbox parseOption cmark = renderPretty $ commonmarkToScrapboxNode parseOption cmark
 
--- | Parse given CMark 'Node' into 'Markdown'
+-- | Parse given CMark 'Node' into 'Scrapbox'
 parseNode :: ParseOption -> Node -> Scrapbox
 parseNode Default node        = scrapbox $ toBlocks node
 parseNode SectionHeading node = scrapbox $ applyLinebreak $ toBlocks node
@@ -119,7 +119,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.TEXT textContent         -> [paragraph [noStyle [text textContent]]]
     C.CODE codeContent         -> [paragraph [noStyle [codeNotation codeContent]]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo code]
-    C.LIST _                   -> [toBulletList contents]
+    C.LIST _                   -> [toBulletPoint contents]
     C.ITEM                     -> concatMap toBlocks contents
     C.SOFTBREAK                -> [paragraph [noStyle [text "\t"]]]
      -- Workaround need to pay attention
@@ -205,9 +205,9 @@ extractTextFromNodes = foldr
         -- For now, we're going to ignore everything else
         _         -> mempty
 
--- | Construct bulletlist
-toBulletList :: [Node] -> Block
-toBulletList nodes = bulletPoint 1 $ concatMap toBlocks nodes
+-- | Construct 'BULLET_POINT'
+toBulletPoint :: [Node] -> Block
+toBulletPoint nodes = bulletPoint 1 $ concatMap toBlocks nodes
 
 -- | Apply 'LINEBREAK' between 'HEADING' section
 --
@@ -225,7 +225,7 @@ applyLinebreak (b: rest)                        = b : applyLinebreak rest
 -- Paragraph parsing logic
 --------------------------------------------------------------------------------
 
--- | Parse nodes and produce either an 'Table' or 'Paragraph
+-- | Parse nodes and produce either an 'TABLE' or 'PARAGRAPH'
 --
 -- CMark parses Table as an list of Paragraphs
 -- So we need to parse it on our own.
@@ -255,10 +255,10 @@ parseParagraph nodes = if isTable nodes
             nodeTexts         = map extractTextFromNodes splittedNodes
         either
             (\_ -> toParagraph nodes')
-            (\tableContent -> [commonMarkTableToTable tableContent])
+            (\tableContent -> [commonmarkTableToTable tableContent])
             (parseTable nodeTexts)
 
-    -- | Convert list of 'Node' into list of 'Blocks'
+    -- | Convert list of 'Node' into list of 'Block'
     toParagraph :: [Node] -> [Block]
     toParagraph nodes' =
         let blocks = concatMap toBlocks nodes'

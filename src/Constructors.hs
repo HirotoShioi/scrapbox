@@ -69,7 +69,7 @@ p = paragraph
 table :: Text -> [[Text]] -> Block
 table title contents = TABLE (TableName title) (TableContent contents)
 
--- | Constructors for creating 'THUMBNAIL' with given Url
+-- | Constructors for creating 'THUMBNAIL' with given 'Url'
 thumbnail :: Text -> Block
 thumbnail url = THUMBNAIL (Url url)
 
@@ -81,7 +81,7 @@ heading level = HEADING (Level level)
 bulletPoint :: Int -> [Block] -> Block
 bulletPoint start = BULLET_POINT (Start start)
 
--- | 'LineBreak'
+-- | 'LINEBREAK'
 lineBreak :: Block
 lineBreak = LINEBREAK
 
@@ -121,7 +121,7 @@ customStyle sData = Context (CustomStyle sData)
 text :: Text -> Segment
 text = TEXT
 
--- | Creates 'CODE_NOTATIOn' segment with given 'Text'
+-- | Creates 'CODE_NOTATION' segment with given 'Text'
 codeNotation :: Text -> Segment
 codeNotation = CODE_NOTATION
 

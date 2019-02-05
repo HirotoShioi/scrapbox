@@ -30,20 +30,20 @@ import           Parser.Text                   (runScrapTextParserM)
 -- Block parser
 --------------------------------------------------------------------------------
 
--- | Parser for 'LineBreak'
+-- | Parser for 'LINEBREAK'
 lineBreakParser :: Parser Block
 lineBreakParser = do
     _ <- endOfLine
     return LINEBREAK
 
--- | Parser for 'Paragraph'
+-- | Parser for 'PARAGRAPH'
 paragraphParser :: Parser Block
 paragraphParser = do
     str       <- getString
     scrapText <- runScrapTextParserM str
     return $ PARAGRAPH scrapText
 
--- | Parser for 'Thumbnail'
+-- | Parser for 'THUMBNAIL'
 thumbnailParser :: Parser Block
 thumbnailParser = do
     thumbnailLink <- between (char '[') (char ']') (many1 $ noneOf "]")
@@ -52,7 +52,7 @@ thumbnailParser = do
         then return $ THUMBNAIL (Url $ fromString thumbnailLink)
         else unexpected "Cannot parse as Thumbnail since the content is not URI"
 
--- | Parser for 'BlockQuote'
+-- | Parser for 'BLOCK_QUOTE'
 blockQuoteParser :: Parser Block
 blockQuoteParser = do
     _         <- char '>'
@@ -60,9 +60,9 @@ blockQuoteParser = do
     scrapText <- runScrapTextParserM str
     return $ BLOCK_QUOTE scrapText
 
--- | Parser for 'Header'
-headerParser :: Parser Block
-headerParser = do
+-- | Parser for 'HEADING'
+headingParser :: Parser Block
+headingParser = do
     _         <- char '['
     symbolLen <- length <$> many1 (char '*')
     _         <- space
@@ -72,7 +72,7 @@ headerParser = do
     segments  <- runInlineParserM str
     return $ HEADING (Level symbolLen) segments
 
--- | Parser for 'BulletPoint'
+-- | Parser for 'BULLET_POINT'
 bulletPointParser :: Int -> Parser Block
 bulletPointParser indentNum = do
     -- Look ahead and count the number of spaces
@@ -120,7 +120,7 @@ blockParser :: Int
             -> Parser Block
 blockParser indentNum =
         try (consumeIndent indentNum *> lineBreakParser)
-    <|> try (consumeIndent indentNum *> headerParser)
+    <|> try (consumeIndent indentNum *> headingParser)
     <|> try (consumeIndent indentNum *> thumbnailParser)
     <|> try (consumeIndent indentNum *> blockQuoteParser)
     <|> try (bulletPointParser indentNum)

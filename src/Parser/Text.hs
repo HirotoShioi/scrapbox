@@ -58,7 +58,7 @@ runScrapTextParserM content =
         return
         (return $ runScrapTextParser content)
 
--- | Parser for scraptext
+-- | Parser for 'ScrapText'
 scrapTextParser :: Parser ScrapText
 scrapTextParser = ScrapText <$> manyTill contextParser eof
 
@@ -69,8 +69,7 @@ contextParser =
     <|> try styledTextParser
     <|> try noStyleParser
 
--- | Parser for bold text `[[Like this]]`
--- Todo: Fails to parse this `[[[Link]]]`
+-- | Parser for bold text @[[Like this]]@
 boldParser :: Parser Context
 boldParser = do
     _         <- string "[["

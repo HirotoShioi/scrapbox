@@ -30,15 +30,15 @@ import           Utils                         (eitherM, fromMaybeM)
 -- Do not export these. These should only be used within this module.
 --------------------------------------------------------------------------------
 
--- | Used to create 'SimpleText'
+-- | Used to create 'TEXT'
 simpleText :: String -> Segment
 simpleText = TEXT . fromString
 
--- | Used to create 'CodeNotation'
+-- | Used to create 'CODENOTATION'
 codeNotation :: String -> Segment
 codeNotation = CODE_NOTATION . fromString
 
--- | Used to create 'HashTag'
+-- | Used to create 'HASHTAG'
 hashtag :: String -> Segment
 hashtag = HASHTAG . fromString
 
@@ -46,20 +46,20 @@ hashtag = HASHTAG . fromString
 -- Parsers
 --------------------------------------------------------------------------------
 
--- | Parser for 'CodeNotation'
+-- | Parser for 'CODENOTATION'
 codeNotationParser :: Parser Segment
 codeNotationParser = do
     content <- between (char '`') (char '`') $ many1 (noneOf "`")
     return $ codeNotation content
 
--- | Parser for 'HashTag'
+-- | Parser for 'HASHTAG'
 hashTagParser :: Parser Segment
 hashTagParser = do
     _ <- char '#'
     content <- many1 (noneOf " ")
     return $ hashtag content
 
--- | Parser for 'Link'
+-- | Parser for 'LINK'
 linkParser :: Parser Segment
 linkParser = do
     contents <- between (char '[') (char ']') $ sepBy1 (many1 $ noneOf "[] ") space
@@ -94,12 +94,12 @@ linkParser = do
     getElement :: Maybe a -> Parser a
     getElement mf = fromMaybeM (unexpected "failed to parse link content") (return mf)
 
--- | Parser fro 'SimpleText'
+-- | Parser fro 'TEXT'
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
 -- Something is wrong, its causing infinite loop
--- | Parser for 'SimpleText'
+-- | Parser for 'TEXT'
 textParser :: String -> Parser String
 textParser content = do
     someChar <- lookAheadMaybe anyChar
