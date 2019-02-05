@@ -1,4 +1,4 @@
-{-| Datatypes used to represent the scrapbox parse tree as well as some of the helper functions.
+{-| Datatypes used to represent the scrapbox AST as well as some of the helper functions.
 -}
 
 {-# LANGUAGE DeriveGeneric #-}

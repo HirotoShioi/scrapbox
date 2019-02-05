@@ -1,4 +1,4 @@
-{-| Constructor that can be used to build scrapbox parse tree
+{-| Constructor that can be used to build scrapbox AST
 -}
 
 module Constructors
