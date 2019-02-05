@@ -94,7 +94,7 @@ linkParser = do
     getElement :: Maybe a -> Parser a
     getElement mf = fromMaybeM (unexpected "failed to parse link content") (return mf)
 
--- | Parser fro 'TEXT'
+-- | Parser for 'TEXT'
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
