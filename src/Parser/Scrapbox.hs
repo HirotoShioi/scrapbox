@@ -129,16 +129,16 @@ blockParser indentNum =
     <|> try (consumeIndent indentNum *> paragraphParser)
 
 --------------------------------------------------------------------------------
--- Markdown parser
+-- Scrapbox parser
 --------------------------------------------------------------------------------
 
 -- | Parser for 'Scrapbox'
-markdownParser :: Parser Scrapbox
-markdownParser = Scrapbox <$> manyTill (blockParser 0) eof
+scrapboxParser :: Parser Scrapbox
+scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
 runScrapboxParser :: String -> Either ParseError Scrapbox
-runScrapboxParser = parse markdownParser "Scrapbox parser"
+runScrapboxParser = parse scrapboxParser "Scrapbox parser"
 
 --------------------------------------------------------------------------------
 -- Helper function

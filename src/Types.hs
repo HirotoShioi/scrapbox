@@ -58,7 +58,7 @@ data Page = Page
     -- ^ Title
     } deriving (Eq, Show, Generic, Read, Ord)
 
--- | Markdown consist of list of 'Block'
+-- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -99,7 +99,7 @@ data Block
     = LINEBREAK
     -- ^ Linebreak
     | BLOCK_QUOTE !ScrapText
-    -- ^ BlockQuote like markdown
+    -- ^ BlockQuote
     | BULLET_POINT !Start ![Block]
     -- ^ Bulletpoint styled line
     | CODE_BLOCK !CodeName !CodeSnippet

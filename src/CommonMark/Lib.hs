@@ -182,7 +182,7 @@ toCodeBlock codeInfo code
 toHeading :: Int -> [Node] -> Block
 toHeading headingNum nodes =
     let level =
-    -- Headers in scrapbox are opposite of what common markdowns are
+    -- Headers in scrapbox are opposite of what commonmark are
           case headingNum of
               1 -> 4
               2 -> 3

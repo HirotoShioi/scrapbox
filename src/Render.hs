@@ -43,8 +43,8 @@ renderRaw (Scrapbox blocks) =
 -- | Write given 'Scrapbox' to given path
 writeScrapbox :: FilePath -> Scrapbox -> IO ()
 writeScrapbox path (Scrapbox blocks) = do
-    let renderedMarkdown = T.unlines $ concatMap renderBlock blocks
-    writeFileUtf8 path renderedMarkdown
+    let renderedScrapbox = T.unlines $ concatMap renderBlock blocks
+    writeFileUtf8 path renderedScrapbox
 
 --------------------------------------------------------------------------------
 -- Rendering logics
