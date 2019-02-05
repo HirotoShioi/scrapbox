@@ -5,7 +5,7 @@
 
 module TestCommonMark.Utils
     ( CommonMarkdown(..)
-    , checkMarkdown
+    , checkScrapbox
     , genPrintableText
     , getHeadSegment
     , getParagraph
@@ -27,7 +27,7 @@ import           Types           (Block (..), Context (..), Scrapbox (..),
 -- Auxiliary functions
 --------------------------------------------------------------------------------
 
--- | Typeclass in which is used to render given datatype into common markdown format.
+-- | Typeclass in which is used to render given datatype into markdown format.
 class CommonMarkdown a where
     render :: a -> Text
 
@@ -48,22 +48,22 @@ genPrintableUrl = do
     randomSite <- genRandomText
     return $ "http://www." <> randomSite <> end
 
--- | Parse given datatype into Markdown
-parseMarkdown :: CommonMarkdown a => a -> Scrapbox
-parseMarkdown = commonmarkToScrapboxNode optDefault . render
-
 -- | General function used to test if given 'CommonMarkdown' can be properly parsed
 -- and extract the expected element
-checkMarkdown :: (CommonMarkdown a)
+checkScrapbox :: (CommonMarkdown a)
               => a
               -> (parsedContent -> Bool)
               -> ([Block] -> Maybe parsedContent)
               -> Bool
-checkMarkdown markdown pre extractionFunc = do
+checkScrapbox markdown pre extractionFunc = do
     let (Scrapbox content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
+  where
+    -- | Parse given datatype into 'Scrapbox'
+    parseMarkdown :: CommonMarkdown a => a -> Scrapbox
+    parseMarkdown = commonmarkToScrapboxNode optDefault . render
 
--- | Return 'Paragraph' if given 'Block' is 'Paragraph'
+-- | Return 'PARAGRAPH' if given 'Block' is 'PARAGRAPH'
 getParagraph :: Block -> Maybe Block
 getParagraph paragraph@(PARAGRAPH _) = Just paragraph
 getParagraph _                       = Nothing

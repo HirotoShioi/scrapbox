@@ -1,10 +1,14 @@
 {-| Test suites for testing parser on styled-text
 -}
 
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 
 module TestCommonMark.Styles
     ( styleSpec
@@ -21,7 +25,7 @@ import           Types                 (Block (..), Context (..),
                                         ScrapText (..), Segment (..),
                                         Style (..), isSimpleText)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
+import           TestCommonMark.Utils  (CommonMarkdown (..), checkScrapbox,
                                         genPrintableText, getHeadSegment,
                                         getParagraph)
 
@@ -33,21 +37,25 @@ styleSpec = describe "Styles" $ do
     italicTextSpec
 
 -- | Use Phantom type so we can generalize the test
-newtype StyledText a = StyledText {
+newtype StyledText (a :: TestStyle) = StyledText {
     getStyledText :: Text
     } deriving Show
 
-data BoldStyle
-data ItalicStyle
-data NoStyles
+-- | Style type
+--
+-- Data constructors will be promoted using DataKinds
+data TestStyle =
+      BoldStyle
+    | ItalicStyle
+    | NoStyles
 
-instance CommonMarkdown (StyledText BoldStyle) where
+instance CommonMarkdown (StyledText 'BoldStyle) where
     render (StyledText txt) = "**" <> txt <> "**"
 
-instance CommonMarkdown (StyledText ItalicStyle) where
+instance CommonMarkdown (StyledText 'ItalicStyle) where
     render (StyledText txt) = "*" <> txt <> "*"
 
-instance CommonMarkdown (StyledText NoStyles) where
+instance CommonMarkdown (StyledText 'NoStyles) where
     render (StyledText txt) = txt
 
 instance Arbitrary (StyledText a) where
@@ -56,7 +64,7 @@ instance Arbitrary (StyledText a) where
 -- | Generalized test case for checking whether the content of the text has same content
 checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
 checkStyledTextContent styledText =
-    checkMarkdown styledText
+    checkScrapbox styledText
         (\(TEXT txt) -> txt == getStyledText styledText)
         (\content -> do
             segment <- getHeadSegment content
@@ -80,10 +88,10 @@ noStyleTextSpec :: Spec
 noStyleTextSpec =
     describe "Non-styled text" $ do
         prop "should parse non-styled text as NoStyle" $
-           \(noStyleText :: StyledText NoStyles) ->
-               checkMarkdown noStyleText (\(Context style _) -> style == NoStyle) getHeadContext
+           \(noStyleText :: StyledText 'NoStyles) ->
+               checkScrapbox noStyleText (\(Context style _) -> style == NoStyle) getHeadContext
         prop "should preserve its content" $
-            \(noStyleText :: StyledText NoStyles) -> checkStyledTextContent noStyleText
+            \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
 
 --------------------------------------------------------------------------------
 -- Bold text
@@ -93,10 +101,10 @@ noStyleTextSpec =
 boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
-        \(boldText :: StyledText BoldStyle) ->
-            checkMarkdown boldText (\(Context style _) -> style == Bold) getHeadContext
+        \(boldText :: StyledText 'BoldStyle) ->
+            checkScrapbox boldText (\(Context style _) -> style == Bold) getHeadContext
     prop "should preserve its content" $
-        \(boldText :: StyledText BoldStyle) -> checkStyledTextContent boldText
+        \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
 
 --------------------------------------------------------------------------------
 -- Italic text
@@ -106,7 +114,7 @@ boldTextSpec = describe "Bold text" $ do
 italicTextSpec :: Spec
 italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $
-        \(italicText :: StyledText ItalicStyle) ->
-            checkMarkdown italicText (\(Context style _) -> style == Italic) getHeadContext
+        \(italicText :: StyledText 'ItalicStyle) ->
+            checkScrapbox italicText (\(Context style _) -> style == Italic) getHeadContext
     prop "should preserve its content" $
-        \(italicText :: StyledText ItalicStyle) -> checkStyledTextContent italicText
+        \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText

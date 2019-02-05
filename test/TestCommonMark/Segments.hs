@@ -19,7 +19,7 @@ import           Types                 (Block (..), Context (..),
                                         ScrapText (..), Segment (..), Url (..),
                                         isCodeNotation, isLink, isSimpleText)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
+import           TestCommonMark.Utils  (CommonMarkdown (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getHeadSegment,
                                         getParagraph)
@@ -47,16 +47,16 @@ instance CommonMarkdown LinkSegment where
 instance Arbitrary LinkSegment where
     arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
 
--- | Test spec for parsing 'Link'
+-- | Test spec for parsing 'LINK'
 linkSpec :: Spec
 linkSpec = describe "Links" $ do
-    prop "should parse link as Link" $
+    prop "should parse link as LINK" $
         \(linkSegment :: LinkSegment) ->
-            checkMarkdown linkSegment isLink getHeadSegment
+            checkScrapbox linkSegment isLink getHeadSegment
 
     prop "should preserve its content" $
         \(linkSegment :: LinkSegment) ->
-            checkMarkdown linkSegment
+            checkScrapbox linkSegment
                 (\(LINK mName (Url url)) ->
                        url == linkUrl linkSegment
                     && maybe False (\name -> name == linkName linkSegment) mName
@@ -77,7 +77,7 @@ linkSpec = describe "Links" $ do
 -- CodeNotation
 --------------------------------------------------------------------------------
 
--- | Code notation segment
+-- | 'CODE_NOTATION' segment
 newtype CodeNotationSegment = CodeNotationSegment
     { getCodeNotationSegment :: Text
     } deriving Show
@@ -88,17 +88,17 @@ instance CommonMarkdown CodeNotationSegment where
 instance Arbitrary CodeNotationSegment where
     arbitrary = CodeNotationSegment <$> genPrintableText
 
--- | Test spec for parsing 'CodeNotation'
+-- | Test spec for parsing 'CODE_NOTATION'
 codeNotationSpec :: Spec
 codeNotationSpec =
     describe "Code notation" $ do
-        prop "should be able to parser code section as CodeNotation" $
+        prop "should be able to parser code section as CODE_NOTATION" $
             \(codeNotation :: CodeNotationSegment) ->
-                checkMarkdown codeNotation isCodeNotation getHeadSegment
+                checkScrapbox codeNotation isCodeNotation getHeadSegment
 
         prop "should preserve its content" $
             \(codeNotation :: CodeNotationSegment) ->
-                checkMarkdown codeNotation
+                checkScrapbox codeNotation
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
                     (\content -> do
                         segment                 <- getHeadSegment content
@@ -113,38 +113,38 @@ codeNotationSpec =
     getCodeNotationText _                             = Nothing
 
 --------------------------------------------------------------------------------
--- SimpleText segment
+-- Text segment
 --------------------------------------------------------------------------------
 
--- | Simple text segment
-newtype SimpleTextSegment = SimpleTextSegment {
-    getSimpleTextSegment :: Text
+-- | Text segment
+newtype TextSegment = TextSegment {
+    getTextSegment :: Text
     } deriving Show
 
-instance CommonMarkdown SimpleTextSegment where
-    render (SimpleTextSegment txt) = txt
+instance CommonMarkdown TextSegment where
+    render (TextSegment txt) = txt
 
-instance Arbitrary SimpleTextSegment where
-    arbitrary = SimpleTextSegment <$> genPrintableText
+instance Arbitrary TextSegment where
+    arbitrary = TextSegment <$> genPrintableText
 
--- | Test spec for parsing 'SimpleText'
+-- | Test spec for parsing 'TEXT'
 plainTextSpec :: Spec
 plainTextSpec = describe "Plain text" $ do
-    prop "should parse plain text as SimpleText" $
-        \(simpleTextSegment :: SimpleTextSegment) ->
-            checkMarkdown simpleTextSegment isSimpleText getHeadSegment
+    prop "should parse plain text as TEXT" $
+        \(textSegment :: TextSegment) ->
+            checkScrapbox textSegment isSimpleText getHeadSegment
 
     prop "should preserve its content" $
-        \(simpleTextSegment :: SimpleTextSegment) ->
-            checkMarkdown simpleTextSegment
-            (\(TEXT txt) -> txt == getSimpleTextSegment simpleTextSegment)
+        \(textSegment :: TextSegment) ->
+            checkScrapbox textSegment
+            (\(TEXT txt) -> txt == getTextSegment textSegment)
             (\content -> do
                 segment                 <- getHeadSegment content
                 getText segment
             )
 
     prop "should not have any other segments except for plain text" $
-        \(simpleTextSegment :: SimpleTextSegment) -> testSegment simpleTextSegment
+        \(textSegment :: TextSegment) -> testSegment textSegment
   where
     getText :: Segment -> Maybe Segment
     getText textSegment@(TEXT _) = Just textSegment
@@ -153,7 +153,7 @@ plainTextSpec = describe "Plain text" $ do
 -- | General test case to check whether the segment was parsed properly
 testSegment :: (CommonMarkdown section) => section -> Bool
 testSegment someSegment =
-    checkMarkdown someSegment
+    checkScrapbox someSegment
         (\(content', ctxs, segments) ->
                length content' == 1
             && length ctxs     == 1

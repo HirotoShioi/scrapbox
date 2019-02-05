@@ -25,7 +25,7 @@ import           Types                 (Block (..), CodeSnippet (..),
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
+import           TestCommonMark.Utils  (CommonMarkdown (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getParagraph)
 
@@ -57,16 +57,16 @@ instance CommonMarkdown ParagraphSection where
 instance Arbitrary ParagraphSection where
     arbitrary = ParagraphSection <$> genPrintableText
 
--- | Test spec for parsing 'Paragraph'
+-- | Test spec for parsing 'PARAGRAPH'
 paragraphSpec :: Spec
 paragraphSpec = describe "Paragraph" $ do
-    prop "should be able to parse paragraph as Paragraph" $
+    prop "should be able to parse paragraph as PARAGRAPH" $
         \(paragraph :: ParagraphSection) ->
-            checkMarkdown paragraph isParagraph headMaybe
+            checkScrapbox paragraph isParagraph headMaybe
 
     prop "should preserve its content" $
         \(paragraph :: ParagraphSection) ->
-            checkMarkdown paragraph
+            checkScrapbox paragraph
                 (\paragraphText -> paragraphText == getParagraphSection paragraph)
                 (\content -> do
                     blockContent 　　　<- headMaybe content
@@ -119,16 +119,16 @@ instance CommonMarkdown HeaderText where
         H5 textContent -> "##### " <> textContent
         H6 textContent -> "###### " <> textContent
 
--- | Test spec for parsing 'Header' text
+-- | Test spec for parsing 'HEADING' text
 headerTextSpec :: Spec
 headerTextSpec = describe "Header text" $ do
-    prop "should be able to parse header text as Header" $
+    prop "should be able to parse header text as HEADING" $
         \(headerText :: HeaderText) ->
-            checkMarkdown headerText isHeader headMaybe
+            checkScrapbox headerText isHeader headMaybe
 
     prop "should preserve header size" $
         \(headerText :: HeaderText) ->
-            checkMarkdown headerText
+            checkScrapbox headerText
                 (`isSameLevel` headerText)
                 (\content -> do
                     blockContent          <- headMaybe content
@@ -137,7 +137,7 @@ headerTextSpec = describe "Header text" $ do
                 )
     prop "should preserve its content" $
         \(headerText :: HeaderText) ->
-            checkMarkdown headerText
+            checkScrapbox headerText
                 (\headerContent -> headerContent == getHeaderTextContent headerText)
                 (\content -> do
                     blockContent             <- headMaybe content
@@ -174,16 +174,16 @@ instance CommonMarkdown BlockQuoteText where
 instance Arbitrary BlockQuoteText where
     arbitrary = BlockQuoteText <$> genPrintableText
 
--- | Test spec for parsing 'BlockQuote'
+-- | Test spec for parsing 'BLOCK_QUOTE'
 blockQuoteSpec :: Spec
 blockQuoteSpec = describe "BlockQuote text" $ do
-    prop "should be able parse block quote text as BlockQuote" $
+    prop "should be able parse block quote text as BLOCK_QUOTE" $
         \(blockQuote :: BlockQuoteText) ->
-            checkMarkdown blockQuote isBlockQuote headMaybe
+            checkScrapbox blockQuote isBlockQuote headMaybe
 
     prop "should preserve its content" $
         \(blockQuote :: BlockQuoteText) ->
-            checkMarkdown blockQuote
+            checkScrapbox blockQuote
                 (\quoteText -> quoteText == getBlockQuoteText blockQuote)
                 (\content -> do
                     blockContent       <- headMaybe content
@@ -211,15 +211,15 @@ instance CommonMarkdown CodeBlockSection where
 instance Arbitrary CodeBlockSection where
     arbitrary = CodeBlockSection <$> listOf1 genPrintableText
 
--- | Test spec for parsing 'CodeBlock'
+-- | Test spec for parsing 'CODE_BLOCK'
 codeBlockSpec :: Spec
 codeBlockSpec = describe "Code block" $ do
-    prop "should parse code block content as CodeBlock" $
+    prop "should parse code block content as CODE_BLOCK" $
         \(codeBlock :: CodeBlockSection) ->
-            checkMarkdown codeBlock isCodeBlock headMaybe
+            checkScrapbox codeBlock isCodeBlock headMaybe
     prop "should preserve its content" $
         \(codeBlock :: CodeBlockSection) ->
-            checkMarkdown codeBlock
+            checkScrapbox codeBlock
                 (\codeContent -> codeContent == T.unlines (getCodeBlockContent codeBlock))
                 (\content -> do
                     blockContent <- headMaybe content
@@ -249,24 +249,24 @@ instance Arbitrary UnorderedListBlock where
 -- | Test spec for parsing unordered list
 unorderedListSpec :: Spec
 unorderedListSpec = describe "Unordered list" $ do
-    prop "should parse unordered list as BulletList" $
+    prop "should parse unordered list as BULLET_POINT" $
         \(unorderedListBlock :: UnorderedListBlock) ->
-            checkMarkdown unorderedListBlock isBulletPoint headMaybe
+            checkScrapbox unorderedListBlock isBulletPoint headMaybe
 
     prop "should preserve its content" $
         \(unorderedListBlock :: UnorderedListBlock) ->
-            checkMarkdown unorderedListBlock
+            checkScrapbox unorderedListBlock
                 (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
                 (\content -> do
                     blockContent          <- headMaybe content
-                    (BULLET_POINT _ lists) <- getBulletList blockContent
+                    (BULLET_POINT _ lists) <- getBulletPoint blockContent
                     return $ concatMap renderBlock lists
                 )
 
--- | Check whether given 'Block' is 'BulletList'
-getBulletList :: Block -> Maybe Block
-getBulletList bulletList@(BULLET_POINT _ _) = Just bulletList
-getBulletList _                            = Nothing
+-- | Check whether given 'Block' is 'BULLET_POINT'
+getBulletPoint :: Block -> Maybe Block
+getBulletPoint bulletList@(BULLET_POINT _ _) = Just bulletList
+getBulletPoint _                            = Nothing
 
 --------------------------------------------------------------------------------
 -- Ordered list
@@ -287,17 +287,17 @@ instance CommonMarkdown OrderedListBlock where
 -- | Test spec for parsing Ordered list
 orderedListSpec :: Spec
 orderedListSpec = describe "Ordered list" $ do
-    prop "should parse ordered list as BulletList" $
+    prop "should parse ordered list as BULLET_POINT" $
         \(orderedListBlock :: OrderedListBlock) ->
-            checkMarkdown orderedListBlock isBulletPoint headMaybe
+            checkScrapbox orderedListBlock isBulletPoint headMaybe
 
     prop "should preserve its content" $
         \(orderedListBlock :: OrderedListBlock) ->
-            checkMarkdown orderedListBlock
+            checkScrapbox orderedListBlock
                 (\renderedTexts -> renderedTexts == getOrderedListBlock orderedListBlock)
                 (\content -> do
                     blockContent        <- headMaybe content
-                    (BULLET_POINT _ lists) <- getBulletList blockContent
+                    (BULLET_POINT _ lists) <- getBulletPoint blockContent
                     return $ concatMap renderBlock lists
                 )
 
@@ -323,22 +323,22 @@ instance Arbitrary ImageSection where
 imageSpec :: Spec
 imageSpec =
     describe "Image" $ do
-        prop "should parse image as Image" $
+        prop "should parse image as THUMBNAIL" $
             \(imageSection :: ImageSection) ->
-                checkMarkdown imageSection isThumbnail headMaybe
+                checkScrapbox imageSection isThumbnail headMaybe
         prop "should preserve its link" $
             \(imageSection :: ImageSection) ->
-                checkMarkdown imageSection
+                checkScrapbox imageSection
                     (\(Url url) -> url == imageLink imageSection)
                     (\content -> do
                         blockContent    <- headMaybe content
-                        (THUMBNAIL url) <- getImage blockContent
+                        (THUMBNAIL url) <- getThumbnail blockContent
                         return url
                     )
   where
-    getImage :: Block -> Maybe Block
-    getImage thumbnail@(THUMBNAIL _) = Just thumbnail
-    getImage _                       = Nothing
+    getThumbnail :: Block -> Maybe Block
+    getThumbnail thumbnail@(THUMBNAIL _) = Just thumbnail
+    getThumbnail _                       = Nothing
 
 --------------------------------------------------------------------------------
 -- Table
@@ -378,11 +378,11 @@ instance Arbitrary TableSection where
 -- | Test spec for parsing table
 tableSpec :: Spec
 tableSpec = describe "Table" $ do
-    prop "should parse tabel as Table" $
-        \(table :: TableSection) -> checkMarkdown table isTable headMaybe
+    prop "should parse tabel as TABLE" $
+        \(table :: TableSection) -> checkScrapbox table isTable headMaybe
     prop "should preserve its content" $
         \(table :: TableSection) ->
-            checkMarkdown table
+            checkScrapbox table
                 (\(TableContent contents) -> contents == [tableHeader table] <> tableContent table)
                 (\content -> do
                     blockContent     <- headMaybe content
