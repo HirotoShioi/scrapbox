@@ -25,7 +25,7 @@ import           Types                 (Block (..), CodeSnippet (..),
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkScrapbox,
+import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getParagraph)
 
@@ -51,7 +51,7 @@ newtype ParagraphSection = ParagraphSection {
     getParagraphSection :: Text
     } deriving Show
 
-instance CommonMarkdown ParagraphSection where
+instance CommonMark ParagraphSection where
     render (ParagraphSection txt) = txt
 
 instance Arbitrary ParagraphSection where
@@ -110,7 +110,7 @@ instance Arbitrary HeaderText where
             , H6 someText
             ]
 
-instance CommonMarkdown HeaderText where
+instance CommonMark HeaderText where
     render = \case
         H1 textContent -> "# " <> textContent
         H2 textContent -> "## " <> textContent
@@ -168,7 +168,7 @@ newtype BlockQuoteText = BlockQuoteText
     { getBlockQuoteText :: Text
     } deriving Show
 
-instance CommonMarkdown BlockQuoteText where
+instance CommonMark BlockQuoteText where
     render (BlockQuoteText txt) = ">" <> txt
 
 instance Arbitrary BlockQuoteText where
@@ -205,7 +205,7 @@ newtype CodeBlockSection = CodeBlockSection
     { getCodeBlockContent :: [Text]
     } deriving Show
 
-instance CommonMarkdown CodeBlockSection where
+instance CommonMark CodeBlockSection where
     render (CodeBlockSection codes) = T.unlines $ ["```"] <> codes <> ["```"]
 
 instance Arbitrary CodeBlockSection where
@@ -240,7 +240,7 @@ newtype UnorderedListBlock = UnorderedListBlock
     { getUnorderedListBlock :: [Text]
     } deriving Show
 
-instance CommonMarkdown UnorderedListBlock where
+instance CommonMark UnorderedListBlock where
     render (UnorderedListBlock list) = T.unlines $ map ("- " <>) list
 
 instance Arbitrary UnorderedListBlock where
@@ -280,7 +280,7 @@ newtype OrderedListBlock = OrderedListBlock
 instance Arbitrary OrderedListBlock where
     arbitrary = OrderedListBlock <$> listOf1 genPrintableText
 
-instance CommonMarkdown OrderedListBlock where
+instance CommonMark OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
         zipWith (\num someText -> tshow num <> ". " <> someText) ([1..] :: [Int]) list
 
@@ -313,7 +313,7 @@ data ImageSection = ImageSection
 
 type ImageLink = Text
 
-instance CommonMarkdown ImageSection where
+instance CommonMark ImageSection where
     render (ImageSection title someLink) = "![" <> title <> "](" <> someLink <> ")"
 
 instance Arbitrary ImageSection where
@@ -352,7 +352,7 @@ data TableSection = TableSection
     -- ^ Content of the table
     } deriving Show
 
-instance CommonMarkdown TableSection where
+instance CommonMark TableSection where
     render (TableSection header contents) = do
         let renderedHeader   = renderColumn header
         let between          = renderBetween' (length header)

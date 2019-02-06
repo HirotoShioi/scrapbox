@@ -4,8 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module CommonMark.TableParser
-    ( commonmarkTableToTable
-    , parseTable
+    ( parseTable
     , CommonMarkTable
     , Column
     ) where
@@ -60,8 +59,8 @@ columnParser = do
         return (currList ++ [element], rest)
 
 -- | Parse given @[Text]@ into 'CommonMarkTable'
-parseTable :: [Text] -> Either String CommonMarkTable
-parseTable texts =
+parseTable' :: [Text] -> Either String CommonMarkTable
+parseTable' texts =
     let header = take 1 texts
         rest   = drop 2 texts
     in go (CommonMarkTable mempty) (header <> rest)
@@ -76,3 +75,6 @@ parseTable texts =
 commonmarkTableToTable :: CommonMarkTable -> Block
 commonmarkTableToTable (CommonMarkTable columns) =
     table "table" (map getColumn columns)
+
+parseTable :: [Text] -> Either String Block
+parseTable txt = commonmarkTableToTable <$> parseTable' txt

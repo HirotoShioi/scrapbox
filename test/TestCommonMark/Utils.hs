@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TestCommonMark.Utils
-    ( CommonMarkdown(..)
+    ( CommonMark(..)
     , checkScrapbox
     , genPrintableText
     , getHeadSegment
@@ -28,7 +28,7 @@ import           Types           (Block (..), Context (..), Scrapbox (..),
 --------------------------------------------------------------------------------
 
 -- | Typeclass in which is used to render given datatype into markdown format.
-class CommonMarkdown a where
+class CommonMark a where
     render :: a -> Text
 
 -- | Generate arbitrary Text
@@ -48,9 +48,9 @@ genPrintableUrl = do
     randomSite <- genRandomText
     return $ "http://www." <> randomSite <> end
 
--- | General function used to test if given 'CommonMarkdown' can be properly parsed
+-- | General function used to test if given 'CommonMark' can be properly parsed
 -- and extract the expected element
-checkScrapbox :: (CommonMarkdown a)
+checkScrapbox :: (CommonMark a)
               => a
               -> (parsedContent -> Bool)
               -> ([Block] -> Maybe parsedContent)
@@ -60,7 +60,7 @@ checkScrapbox markdown pre extractionFunc = do
     maybe False pre (extractionFunc content)
   where
     -- | Parse given datatype into 'Scrapbox'
-    parseMarkdown :: CommonMarkdown a => a -> Scrapbox
+    parseMarkdown :: CommonMark a => a -> Scrapbox
     parseMarkdown = commonmarkToScrapboxNode optDefault . render
 
 -- | Return 'PARAGRAPH' if given 'Block' is 'PARAGRAPH'

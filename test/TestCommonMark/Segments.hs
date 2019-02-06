@@ -19,7 +19,7 @@ import           Types                 (Block (..), Context (..),
                                         ScrapText (..), Segment (..), Url (..),
                                         isCodeNotation, isLink, isSimpleText)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkScrapbox,
+import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getHeadSegment,
                                         getParagraph)
@@ -41,7 +41,7 @@ data LinkSegment = LinkSegment
     , linkUrl  :: !Text
     } deriving Show
 
-instance CommonMarkdown LinkSegment where
+instance CommonMark LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
 
 instance Arbitrary LinkSegment where
@@ -82,7 +82,7 @@ newtype CodeNotationSegment = CodeNotationSegment
     { getCodeNotationSegment :: Text
     } deriving Show
 
-instance CommonMarkdown CodeNotationSegment where
+instance CommonMark CodeNotationSegment where
     render (CodeNotationSegment txt) = "`" <> txt <> "`"
 
 instance Arbitrary CodeNotationSegment where
@@ -121,7 +121,7 @@ newtype TextSegment = TextSegment {
     getTextSegment :: Text
     } deriving Show
 
-instance CommonMarkdown TextSegment where
+instance CommonMark TextSegment where
     render (TextSegment txt) = txt
 
 instance Arbitrary TextSegment where
@@ -151,7 +151,7 @@ plainTextSpec = describe "Plain text" $ do
     getText _                    = Nothing
 
 -- | General test case to check whether the segment was parsed properly
-testSegment :: (CommonMarkdown section) => section -> Bool
+testSegment :: (CommonMark section) => section -> Bool
 testSegment someSegment =
     checkScrapbox someSegment
         (\(content', ctxs, segments) ->

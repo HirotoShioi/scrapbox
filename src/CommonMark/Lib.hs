@@ -39,7 +39,7 @@ import           Types                  as Scrapbox (Block (..), Context (..),
                                                      concatContext,
                                                      concatScrapText)
 
-import           CommonMark.TableParser (commonmarkTableToTable, parseTable)
+import           CommonMark.TableParser (parseTable)
 
 --------------------------------------------------------------------------------
 -- Options
@@ -255,7 +255,7 @@ parseParagraph nodes = if isTable nodes
             nodeTexts         = map extractTextFromNodes splittedNodes
         either
             (\_ -> toParagraph nodes')
-            (\tableContent -> [commonmarkTableToTable tableContent])
+            (: [])
             (parseTable nodeTexts)
 
     -- | Convert list of 'Node' into list of 'Block'

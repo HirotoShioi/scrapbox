@@ -41,7 +41,7 @@ import           Types (Block (..), Start (..), CodeName (..),
 -- Smart constructors
 --------------------------------------------------------------------------------
 
--- | Constructors for creating Markdown with given list of 'Block'
+-- | Constructors for creating 'Scrapbox' with given list of 'Block'
 scrapbox :: [Block] -> Scrapbox
 scrapbox = Scrapbox
 

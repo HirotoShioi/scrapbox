@@ -24,7 +24,7 @@ import           Types                 (Block (..), Context (..),
                                         ScrapText (..), Segment (..),
                                         Style (..), isSimpleText)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkScrapbox,
+import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, getHeadSegment,
                                         getParagraph)
 
@@ -48,20 +48,20 @@ data TestStyle =
     | ItalicStyle
     | NoStyles
 
-instance CommonMarkdown (StyledText 'BoldStyle) where
+instance CommonMark (StyledText 'BoldStyle) where
     render (StyledText txt) = "**" <> txt <> "**"
 
-instance CommonMarkdown (StyledText 'ItalicStyle) where
+instance CommonMark (StyledText 'ItalicStyle) where
     render (StyledText txt) = "*" <> txt <> "*"
 
-instance CommonMarkdown (StyledText 'NoStyles) where
+instance CommonMark (StyledText 'NoStyles) where
     render (StyledText txt) = txt
 
 instance Arbitrary (StyledText a) where
     arbitrary = StyledText <$> genPrintableText
 
 -- | Generalized test case for checking whether the content of the text has same content
-checkStyledTextContent :: (CommonMarkdown (StyledText style)) => StyledText style -> Bool
+checkStyledTextContent :: (CommonMark (StyledText style)) => StyledText style -> Bool
 checkStyledTextContent styledText =
     checkScrapbox styledText
         (\(TEXT txt) -> txt == getStyledText styledText)

@@ -104,7 +104,7 @@ renderBulletPoint (Start num) = concatMap (map (\text -> T.replicate num "\t" <>
 blocked :: Text -> Text
 blocked content = "[" <> content <> "]"
 
--- | Render with style (Do not export this)
+-- | Render with style
 renderWithStyle :: Style -> Content -> Text
 renderWithStyle style ctx = case style of
     NoStyle -> renderContent ctx
