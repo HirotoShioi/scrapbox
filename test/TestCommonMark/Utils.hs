@@ -20,8 +20,8 @@ import qualified RIO.Text        as T
 import           Test.QuickCheck (Gen, elements, listOf1)
 
 import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
-import           Types           (Block (..), Context (..), Scrapbox (..),
-                                  ScrapText (..), Segment)
+import           Types           (Block (..), Context (..), ScrapText (..),
+                                  Scrapbox (..), Segment)
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions

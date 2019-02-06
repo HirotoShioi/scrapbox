@@ -15,8 +15,8 @@ module Examples.Example1
 import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeNotation,
-                               heading, italic, lineBreak, link, scrapbox,
-                               noStyle, p, strikeThrough, text, thumbnail)
+                               heading, italic, lineBreak, link, noStyle, p,
+                               scrapbox, strikeThrough, text, thumbnail)
 import           Types        (Block, Scrapbox)
 
 --------------------------------------------------------------------------------

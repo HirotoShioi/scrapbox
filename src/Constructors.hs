@@ -31,10 +31,9 @@ module Constructors
 
 import           RIO   hiding (link)
 
-import           Types (Block (..), Start (..), CodeName (..),
-                        CodeSnippet (..), Content, Context (..),
-                        Level (..), Scrapbox (..), ScrapText (..),
-                        Segment (..), Style (..), StyleData (..),
+import           Types (Block (..), CodeName (..), CodeSnippet (..), Content,
+                        Context (..), Level (..), ScrapText (..), Scrapbox (..),
+                        Segment (..), Start (..), Style (..), StyleData (..),
                         TableContent (..), TableName (..), Url (..))
 
 --------------------------------------------------------------------------------

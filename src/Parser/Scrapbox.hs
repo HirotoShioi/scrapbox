@@ -17,9 +17,9 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 oneOf, parse, sepBy1, space,
                                                 string, try, unexpected, (<|>))
 
-import           Types                         (Block (..), Start (..),
-                                                CodeName (..), CodeSnippet (..),
-                                                Level (..), Scrapbox (..),
+import           Types                         (Block (..), CodeName (..),
+                                                CodeSnippet (..), Level (..),
+                                                Scrapbox (..), Start (..),
                                                 TableContent (..),
                                                 TableName (..), Url (..))
 

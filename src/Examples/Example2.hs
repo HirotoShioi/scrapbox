@@ -13,7 +13,7 @@ import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeBlock,
                                codeNotation, heading, italic, lineBreak, link,
-                               scrapbox, noStyle, p, strikeThrough, table, text,
+                               noStyle, p, scrapbox, strikeThrough, table, text,
                                thumbnail)
 import           Types        (Block (..), Scrapbox)
 

@@ -20,8 +20,8 @@ import           Test.QuickCheck       (Arbitrary (..), choose, elements,
 
 import           Render                (renderBlock, renderContent, renderText)
 import           Types                 (Block (..), CodeSnippet (..),
-                                        Level (..), TableContent (..),
-                                        Url (..), isBlockQuote, isBulletPoint,
+                                        Level (..), TableContent (..), Url (..),
+                                        isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
 
@@ -147,7 +147,7 @@ headerTextSpec = describe "Header text" $ do
   where
     getHeader :: Block -> Maybe Block
     getHeader header@(HEADING _ _) = Just header
-    getHeader _                   = Nothing
+    getHeader _                    = Nothing
 
     -- Check if given headerSize is same size
     isSameLevel :: Level -> HeaderText -> Bool
@@ -157,7 +157,7 @@ headerTextSpec = describe "Header text" $ do
     isSameLevel (Level 1) (H4 _) = True
     isSameLevel (Level 1) (H5 _) = True
     isSameLevel (Level 1) (H6 _) = True
-    isSameLevel _ _                   = False
+    isSameLevel _ _              = False
 
 --------------------------------------------------------------------------------
 -- BlockQuote
@@ -229,7 +229,7 @@ codeBlockSpec = describe "Code block" $ do
   where
     getCodeBlock :: Block -> Maybe Block
     getCodeBlock codeBlock@(CODE_BLOCK _ _) = Just codeBlock
-    getCodeBlock _                         = Nothing
+    getCodeBlock _                          = Nothing
 
 --------------------------------------------------------------------------------
 -- Unordered list
@@ -266,7 +266,7 @@ unorderedListSpec = describe "Unordered list" $ do
 -- | Check whether given 'Block' is 'BULLET_POINT'
 getBulletPoint :: Block -> Maybe Block
 getBulletPoint bulletList@(BULLET_POINT _ _) = Just bulletList
-getBulletPoint _                            = Nothing
+getBulletPoint _                             = Nothing
 
 --------------------------------------------------------------------------------
 -- Ordered list

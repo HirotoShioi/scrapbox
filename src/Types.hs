@@ -233,22 +233,22 @@ emptyContext = Context NoStyle []
 -- | Checks if given 'Block' is an 'HEADING'
 isHeader :: Block -> Bool
 isHeader (HEADING _ _) = True
-isHeader _            = False
+isHeader _             = False
 
 -- | Checks whether given 'Block' is 'BLOCK_QUOTE'
 isBlockQuote :: Block -> Bool
 isBlockQuote (BLOCK_QUOTE _) = True
-isBlockQuote _              = False
+isBlockQuote _               = False
 
 -- | Checks whether given 'Block' is 'BULLET_POINT'
 isBulletPoint :: Block -> Bool
 isBulletPoint (BULLET_POINT _ _) = True
-isBulletPoint _                 = False
+isBulletPoint _                  = False
 
 -- | Checks whether given 'Block' is 'CODE_BLOCK'
 isCodeBlock :: Block -> Bool
 isCodeBlock (CODE_BLOCK _ _) = True
-isCodeBlock _               = False
+isCodeBlock _                = False
 
 -- | Checks whether given 'Block' is 'PARAGRAPH'
 isParagraph :: Block -> Bool
@@ -273,9 +273,9 @@ isLink _          = False
 -- | Checks whether given 'Segment' is 'CODE_NOTATION'
 isCodeNotation :: Segment -> Bool
 isCodeNotation (CODE_NOTATION _) = True
-isCodeNotation _                = False
+isCodeNotation _                 = False
 
 -- | Checks whether given 'Segment' is 'TEXT'
 isSimpleText :: Segment -> Bool
 isSimpleText (TEXT _) = True
-isSimpleText _              = False
+isSimpleText _        = False

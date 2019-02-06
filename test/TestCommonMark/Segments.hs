@@ -110,7 +110,7 @@ codeNotationSpec =
   where
     getCodeNotationText :: Segment -> Maybe Segment
     getCodeNotationText codeNotation@(CODE_NOTATION _) = Just codeNotation
-    getCodeNotationText _                             = Nothing
+    getCodeNotationText _                              = Nothing
 
 --------------------------------------------------------------------------------
 -- Text segment
