@@ -64,13 +64,18 @@ instance Arbitrary (StyledText a) where
 checkStyledTextContent :: (CommonMark (StyledText style)) => StyledText style -> Bool
 checkStyledTextContent styledText =
     checkScrapbox styledText
-        (\(TEXT txt) -> txt == getStyledText styledText)
+        (\txt -> txt == getStyledText styledText)
         (\content -> do
-            segment <- getHeadSegment content
-            if isSimpleText segment
-                then Just segment
-                else Nothing
+            segment    <- getHeadSegment content
+            (TEXT txt) <- getText segment
+            return txt
         )
+  where
+    getText :: Segment -> Maybe Segment
+    getText segment = 
+        if isSimpleText segment
+        then Just segment
+        else Nothing
 
 getHeadContext :: [Block] -> Maybe Context
 getHeadContext blocks = do

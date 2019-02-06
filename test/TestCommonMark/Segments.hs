@@ -57,14 +57,15 @@ linkSpec = describe "Links" $ do
     prop "should preserve its content" $
         \(linkSegment :: LinkSegment) ->
             checkScrapbox linkSegment
-                (\(LINK mName (Url url)) ->
+                (\(mName, Url url) ->
                        url == linkUrl linkSegment
                     && maybe False (\name -> name == linkName linkSegment) mName
 
                 )
                 (\content -> do
-                    segment <- getHeadSegment content
-                    getLink segment
+                    segment          <- getHeadSegment content
+                    (LINK mName url) <- getLink segment
+                    return (mName, url)
                 )
     prop "should not have any other segments except for code section" $
         \(linkSegment :: LinkSegment) -> testSegment linkSegment
@@ -137,10 +138,11 @@ plainTextSpec = describe "Plain text" $ do
     prop "should preserve its content" $
         \(textSegment :: TextSegment) ->
             checkScrapbox textSegment
-            (\(TEXT txt) -> txt == getTextSegment textSegment)
+            (\txt -> txt == getTextSegment textSegment)
             (\content -> do
-                segment                 <- getHeadSegment content
-                getText segment
+                segment    <- getHeadSegment content
+                (TEXT txt) <- getText segment
+                return txt
             )
 
     prop "should not have any other segments except for plain text" $
