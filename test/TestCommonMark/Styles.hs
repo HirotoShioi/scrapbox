@@ -36,8 +36,8 @@ styleSpec = describe "Styles" $ do
     italicTextSpec
 
 -- | Use Phantom type so we can generalize the test
-newtype StyledText (a :: TestStyle) = StyledText {
-    getStyledText :: Text
+newtype StyledText (a :: TestStyle) = StyledText
+    { getStyledText :: Text
     } deriving Show
 
 -- | Style type
@@ -116,6 +116,9 @@ italicTextSpec :: Spec
 italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $
         \(italicText :: StyledText 'ItalicStyle) ->
-            checkScrapbox italicText (\(Context style _) -> style == Italic) getHeadContext
+            checkScrapbox
+                italicText
+                (\(Context style _) -> style == Italic)
+                getHeadContext
     prop "should preserve its content" $
         \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText

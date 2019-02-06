@@ -47,8 +47,8 @@ blockSpec = describe "Block" $ do
 --------------------------------------------------------------------------------
 
 -- | Paragraph section
-newtype ParagraphSection = ParagraphSection {
-    getParagraphSection :: Text
+newtype ParagraphSection = ParagraphSection
+    { getParagraphSection :: Text
     } deriving Show
 
 instance CommonMark ParagraphSection where

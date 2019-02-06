@@ -117,8 +117,8 @@ codeNotationSpec =
 --------------------------------------------------------------------------------
 
 -- | Text segment
-newtype TextSegment = TextSegment {
-    getTextSegment :: Text
+newtype TextSegment = TextSegment
+    { getTextSegment :: Text
     } deriving Show
 
 instance CommonMark TextSegment where

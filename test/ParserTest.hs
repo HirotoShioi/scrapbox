@@ -543,8 +543,8 @@ scrapboxParserSpec =
 --------------------------------------------------------------------------------
 
 -- | Non-empty version of 'PrintableString'
-newtype NonEmptyPrintableString =  NonEmptyPrintableString {
-    getNonEmptyPrintableString :: String
+newtype NonEmptyPrintableString =  NonEmptyPrintableString
+    { getNonEmptyPrintableString :: String
     } deriving Show
 
 instance Arbitrary NonEmptyPrintableString where
