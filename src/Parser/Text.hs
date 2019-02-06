@@ -107,7 +107,8 @@ boldParser = do
 styledTextParser :: Parser Context
 styledTextParser = do
     _         <- char '['
-    symbols   <- manyTill (oneOf "*/-!^~$%&") space -- Need to check if there's missing symobols
+     -- Need to check if there's missing symobols
+    symbols   <- manyTill (oneOf "*/-!^~$%&") space
     paragraph <- extractParagraph
     let style = mkStyle symbols
     segments  <- runInlineParserM paragraph

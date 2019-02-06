@@ -39,7 +39,8 @@ genPrintableText = T.unwords <$> listOf1 genRandomText
 
 -- | Generate random text
 genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+genRandomText = fmap fromString <$> listOf1 
+    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 -- | Generate random url
 genPrintableUrl :: Gen Text

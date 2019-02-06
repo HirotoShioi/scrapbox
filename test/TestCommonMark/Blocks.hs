@@ -383,7 +383,9 @@ tableSpec = describe "Table" $ do
     prop "should preserve its content" $
         \(table :: TableSection) ->
             checkScrapbox table
-                (\(TableContent contents) -> contents == [tableHeader table] <> tableContent table)
+                (\(TableContent contents) ->
+                  contents == [tableHeader table] <> tableContent table
+                )
                 (\content -> do
                     blockContent     <- headMaybe content
                     (TABLE _ tables) <- getTable blockContent

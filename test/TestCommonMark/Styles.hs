@@ -88,7 +88,9 @@ noStyleTextSpec =
     describe "Non-styled text" $ do
         prop "should parse non-styled text as NoStyle" $
            \(noStyleText :: StyledText 'NoStyles) ->
-               checkScrapbox noStyleText (\(Context style _) -> style == NoStyle) getHeadContext
+               checkScrapbox
+                 noStyleText
+                 (\(Context style _) -> style == NoStyle) getHeadContext
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
 

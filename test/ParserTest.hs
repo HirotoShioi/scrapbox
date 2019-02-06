@@ -123,7 +123,8 @@ scrapboxParserSpec =
                 whenRight eParseredText $ \(Scrapbox blocks) ->
                     assert $ not $ null blocks
 
-        describe "Parsing \"syntax\" page with scrapbox parser" $ modifyMaxSuccess (const 1) $ do
+        describe "Parsing \"syntax\" page with scrapbox parser" $ 
+          modifyMaxSuccess (const 1) $ do
             it "should parse section1 as expected" $
                 propParseAsExpected example1 expected1 runScrapboxParser
 
