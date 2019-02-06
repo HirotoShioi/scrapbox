@@ -129,7 +129,6 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.IMAGE url _              -> [thumbnail url]
     C.HTML_INLINE htmlContent  -> [codeBlock "html" htmlContent]
     C.BLOCK_QUOTE              -> [blockQuote $ concatMap toContext contents]
-
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
     C.CUSTOM_INLINE _ _            -> parseParagraph contents
@@ -250,10 +249,10 @@ parseParagraph nodes = if isTable nodes
         in all (T.any (== '|')) extractedTexts
 
     toTable :: [Node] -> [Block]
-    toTable nodes' = do
+    toTable nodes' =
         let splittedNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
             nodeTexts         = map extractTextFromNodes splittedNodes
-        either
+        in either
             (\_ -> toParagraph nodes')
             (: [])
             (parseTable nodeTexts)

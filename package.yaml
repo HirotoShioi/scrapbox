@@ -36,6 +36,11 @@ dependencies:
 
 ghc-options:
 - -Wall
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wredundant-constraints
+- -Wnoncanonical-monad-instances
 
 default-extensions:
 - NoImplicitPrelude

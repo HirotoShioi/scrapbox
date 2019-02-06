@@ -64,19 +64,18 @@ linkParser :: Parser Segment
 linkParser = do
     contents <- between (char '[') (char ']') $ sepBy1 (many1 $ noneOf "[] ") space
     if length contents <= 1
-        then do
-            linkContent <- getElement $ headMaybe contents
-            return $ LINK Nothing (Url $ fromString linkContent)
-        else do
-            -- Both are viable
-            --  [Haskell http://lotz84.github.io/haskell/]
-            -- [http://lotz84.github.io/haskell/ Haskell]
-            -- check if head or last is an url, if not the whole content is url
-            linkHead  <- getElement $ headMaybe contents
-            linkLast <- getElement $ lastMaybe contents
-            mkLink linkHead linkLast contents
+    then do
+        linkContent <- getElement $ headMaybe contents
+        return $ LINK Nothing (Url $ fromString linkContent)
+    else do
+        -- Both are viable
+        --  [Haskell http://lotz84.github.io/haskell/]
+        -- [http://lotz84.github.io/haskell/ Haskell]
+        -- check if head or last is an url, if not the whole content is url
+        linkHead  <- getElement $ headMaybe contents
+        linkLast <- getElement $ lastMaybe contents
+        mkLink linkHead linkLast contents
   where
-
     mkLink :: String -> String -> [String] -> Parser Segment
     mkLink link' link'' wholecontent
         | isURI link' = do
@@ -104,19 +103,14 @@ textParser :: String -> Parser String
 textParser content = do
     someChar <- lookAheadMaybe anyChar
     case someChar of
-
         -- Nothing is ahead of it, the work is done
         Nothing  -> return content
-
         -- Could be link so try to parse it
         Just '[' -> checkWith linkParser content
-
         -- Could be code notation so try to parse it
         Just '`' -> checkWith codeNotationParser content
-
         -- Could be hashtag, so try to parse it
         Just '#' -> checkWith hashTagParser content
-
         -- For everything else, parse until it hits the syntax symbol
         Just _   -> do
             text <- many1 $ noneOf syntaxSymbol
@@ -128,11 +122,11 @@ textParser content = do
     checkWith parser content' = do
         mResult <- lookAheadMaybe parser
         if isJust mResult
-            then return content
-            else do
-                someSymbol <- oneOf syntaxSymbol
-                rest       <- many $ noneOf syntaxSymbol
-                textParser $ content' <> [someSymbol] <> rest
+        then return content
+        else do
+            someSymbol <- oneOf syntaxSymbol
+            rest       <- many $ noneOf syntaxSymbol
+            textParser $ content' <> [someSymbol] <> rest
 
     syntaxSymbol :: String
     syntaxSymbol = "[`#"
