@@ -190,8 +190,17 @@ youCanImmediately :: Block
 youCanImmediately = bulletPoint 1
     [ p
         [noStyle
-            [ youcan, socialMedia, andStart, twitter, column, faceBook, nextYoucan
-            , twitter, relatedLink, sitePlan, period
+            [ youcan
+            , socialMedia
+            , andStart
+            , twitter
+            , column
+            , faceBook
+            , nextYoucan
+            , twitter
+            , relatedLink
+            , sitePlan
+            , period
             ]
         ]
     ]

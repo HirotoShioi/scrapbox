@@ -1,5 +1,6 @@
 {-| Utility function used within parser modules
 -}
+
 module Parser.Utils
     ( lookAheadMaybe
     ) where

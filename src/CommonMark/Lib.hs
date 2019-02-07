@@ -3,7 +3,8 @@ which is either 'optDefault' or 'optSectionHeading'
 
 To parse given CommonMark into 'Scrapbox' AST, use 'commonmarkToScrapboxNode'.
 
-To parse given CommnMark and convert into 'Scrapbox' format, use 'commonmarkToScrapbox'.
+To parse given CommnMark and convert into 'Scrapbox' format,
+use 'commonmarkToScrapbox'.
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -82,7 +83,8 @@ commonmarkToScrapboxNode parseOption cmark =
 
 -- | Convert given common mark text into 'Scrapbox' format
 commonmarkToScrapbox :: ParseOption -> Text -> Text
-commonmarkToScrapbox parseOption cmark = renderPretty $ commonmarkToScrapboxNode parseOption cmark
+commonmarkToScrapbox parseOption cmark =
+    renderPretty $ commonmarkToScrapboxNode parseOption cmark
 
 -- | Parse given CMark 'Node' into 'Scrapbox'
 parseNode :: ParseOption -> Node -> Scrapbox
@@ -131,9 +133,9 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.BLOCK_QUOTE              -> [blockQuote $ concatMap toContext contents]
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
-    C.CUSTOM_INLINE _ _            -> parseParagraph contents
-    C.CUSTOM_BLOCK _ _             -> parseParagraph contents
-    C.THEMATIC_BREAK               -> [paragraph [noStyle [text "\n"]]]
+    C.CUSTOM_INLINE _ _        -> parseParagraph contents
+    C.CUSTOM_BLOCK _ _         -> parseParagraph contents
+    C.THEMATIC_BREAK           -> [paragraph [noStyle [text "\n"]]]
 
 -- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]
@@ -180,14 +182,13 @@ toCodeBlock codeInfo code
 -- | Convert HEADING
 toHeading :: Int -> [Node] -> Block
 toHeading headingNum nodes =
-    let level =
     -- Headers in scrapbox are opposite of what commonmark are
-          case headingNum of
-              1 -> 4
-              2 -> 3
-              3 -> 2
-              4 -> 1
-              _ -> 1
+    let level = case headingNum of
+                    1 -> 4
+                    2 -> 3
+                    3 -> 2
+                    4 -> 1
+                    _ -> 1
     in heading level $ concatMap toSegments nodes
 
 -- | Extract text from nodes
@@ -244,14 +245,15 @@ parseParagraph nodes = if isTable nodes
     -- Each of the element should have '|' symbol to be an valid table
     hasSymbols :: [Node] -> Bool
     hasSymbols nodes' =
-        let filteredNodes   = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            extractedTexts  = map extractTextFromNodes filteredNodes
+        let filteredNodes  =
+                splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
+            extractedTexts = map extractTextFromNodes filteredNodes
         in all (T.any (== '|')) extractedTexts
 
     toTable :: [Node] -> [Block]
     toTable nodes' =
-        let splittedNodes     = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            nodeTexts         = map extractTextFromNodes splittedNodes
+        let splittedNodes = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
+            nodeTexts     = map extractTextFromNodes splittedNodes
         in either
             (\_ -> toParagraph nodes')
             (: [])

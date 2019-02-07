@@ -130,8 +130,8 @@ data Context = Context !Style !Content
 type Content = [Segment]
 
 -- | Segment
-data Segment =
-      CODE_NOTATION !Text
+data Segment
+    = CODE_NOTATION !Text
     -- ^ CodeNotation
     | HASHTAG !Text
     -- ^ Hashtag
@@ -142,8 +142,8 @@ data Segment =
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Style that can be applied to the 'Segment'
-data Style =
-      CustomStyle StyleData
+data Style
+    = CustomStyle StyleData
     -- ^ You can use this to combine all three as of the styles as well as Header
     | Bold
     -- ^ Bold style

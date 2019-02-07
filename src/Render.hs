@@ -64,7 +64,8 @@ renderBlock = \case
 
 -- | Render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
-renderText (ScrapText ctxs) = foldr (\scrap acc-> renderScrapText scrap <> acc) mempty ctxs
+renderText (ScrapText ctxs) = 
+    foldr (\scrap acc-> renderScrapText scrap <> acc) mempty ctxs
 
 -- | Render given 'Context' into 'Text'
 renderScrapText :: Context -> Text
@@ -93,12 +94,15 @@ renderCodeBlock (CodeName name) (CodeSnippet code) = do
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
-        renderdTable = map (foldr (\someText acc -> "\t" <> someText <> acc) mempty) content
+        renderdTable = map 
+                       (foldr (\someText acc -> "\t" <> someText <> acc) mempty)
+                       content
     in title <> renderdTable
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start num) = concatMap (map (\text -> T.replicate num "\t" <> text) . renderBlock)
+renderBulletPoint (Start num) = 
+    concatMap (map (\text -> T.replicate num "\t" <> text) . renderBlock)
 
 -- | Add an block to a given renderd text
 blocked :: Text -> Text

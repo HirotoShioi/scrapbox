@@ -62,7 +62,10 @@ hashTagParser = do
 -- | Parser for 'LINK'
 linkParser :: Parser Segment
 linkParser = do
-    contents <- between (char '[') (char ']') $ sepBy1 (many1 $ noneOf "[] ") space
+    contents <- between
+        (char '[')
+        (char ']') $
+        sepBy1 (many1 $ noneOf "[] ") space
     if length contents <= 1
     then do
         linkContent <- getElement $ headMaybe contents

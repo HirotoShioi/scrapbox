@@ -95,7 +95,8 @@ noStyleTextSpec =
            \(noStyleText :: StyledText 'NoStyles) ->
                checkScrapbox
                  noStyleText
-                 (\(Context style _) -> style == NoStyle) getHeadContext
+                 (\(Context style _) -> style == NoStyle)
+                 getHeadContext
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
 
@@ -108,7 +109,10 @@ boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
         \(boldText :: StyledText 'BoldStyle) ->
-            checkScrapbox boldText (\(Context style _) -> style == Bold) getHeadContext
+            checkScrapbox
+                boldText
+                (\(Context style _) -> style == Bold)
+                getHeadContext
     prop "should preserve its content" $
         \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
 
