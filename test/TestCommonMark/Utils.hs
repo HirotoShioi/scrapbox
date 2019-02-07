@@ -8,6 +8,7 @@ module TestCommonMark.Utils
     , checkScrapbox
     , genPrintableText
     , getHeadSegment
+    , getHeadContext
     , getParagraph
     , genRandomText
     , genPrintableUrl
@@ -74,5 +75,12 @@ getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
     blockContent               <- headMaybe blocks
     PARAGRAPH (ScrapText ctxs) <- getParagraph blockContent
-    Context _ segments         <- headMaybe ctxs
+    CONTEXT _ segments         <- headMaybe ctxs
     headMaybe segments
+
+-- | Extract heed segment of a given list of blocks
+getHeadContext :: [Block] -> Maybe Context
+getHeadContext blocks = do
+    blockContent               <- headMaybe blocks
+    PARAGRAPH (ScrapText ctxs) <- getParagraph blockContent
+    headMaybe ctxs

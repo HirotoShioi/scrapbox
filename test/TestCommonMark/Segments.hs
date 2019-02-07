@@ -21,8 +21,8 @@ import           Types                 (Block (..), Context (..),
 
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
-                                        genRandomText, getHeadSegment,
-                                        getParagraph)
+                                        genRandomText, getHeadContext,
+                                        getHeadSegment, getParagraph)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
@@ -95,21 +95,19 @@ codeNotationSpec =
     describe "Code notation" $ do
         prop "should be able to parser code section as CODE_NOTATION" $
             \(codeNotation :: CodeNotationSegment) ->
-                checkScrapbox codeNotation isCodeNotation getHeadSegment
+                checkScrapbox codeNotation isCodeNotation getHeadContext
 
         prop "should preserve its content" $
             \(codeNotation :: CodeNotationSegment) ->
                 checkScrapbox codeNotation
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
                     (\content -> do
-                        segment                 <- getHeadSegment content
-                        (CODE_NOTATION codeText) <- getCodeNotationText segment
+                        ctx                      <- getHeadContext content
+                        (CODE_NOTATION codeText) <- getCodeNotationText ctx
                         return codeText
                     )
-        prop "should not have any other segments except for code section" $
-            \(codeNotation :: CodeNotationSegment) -> testSegment codeNotation
   where
-    getCodeNotationText :: Segment -> Maybe Segment
+    getCodeNotationText :: Context -> Maybe Context
     getCodeNotationText codeNotation@(CODE_NOTATION _) = Just codeNotation
     getCodeNotationText _                              = Nothing
 
@@ -164,6 +162,6 @@ testSegment someSegment =
         (\content -> do
             blockContent                 <- headMaybe content
             (PARAGRAPH (ScrapText ctxs)) <- getParagraph blockContent
-            (Context _ segments)         <- headMaybe ctxs
+            (CONTEXT _ segments)         <- headMaybe ctxs
             return (content, ctxs, segments)
         )
