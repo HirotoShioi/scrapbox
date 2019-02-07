@@ -30,62 +30,64 @@ import           Utils                         (eitherM, fromMaybeM)
 -- Do not export these. These should only be used within this module.
 --------------------------------------------------------------------------------
 
--- | Used to create 'SimpleText'
+-- | Used to create 'TEXT'
 simpleText :: String -> Segment
-simpleText = SimpleText . fromString
+simpleText = TEXT . fromString
 
--- | Used to create 'CodeNotation'
+-- | Used to create 'CODENOTATION'
 codeNotation :: String -> Segment
-codeNotation = CodeNotation . fromString
+codeNotation = CODE_NOTATION . fromString
 
--- | Used to create 'HashTag'
+-- | Used to create 'HASHTAG'
 hashtag :: String -> Segment
-hashtag = HashTag . fromString
+hashtag = HASHTAG . fromString
 
 --------------------------------------------------------------------------------
 -- Parsers
 --------------------------------------------------------------------------------
 
--- | Parser for 'CodeNotation'
+-- | Parser for 'CODENOTATION'
 codeNotationParser :: Parser Segment
 codeNotationParser = do
     content <- between (char '`') (char '`') $ many1 (noneOf "`")
     return $ codeNotation content
 
--- | Parser for 'HashTag'
+-- | Parser for 'HASHTAG'
 hashTagParser :: Parser Segment
 hashTagParser = do
     _ <- char '#'
     content <- many1 (noneOf " ")
     return $ hashtag content
 
--- | Parser for 'Link'
+-- | Parser for 'LINK'
 linkParser :: Parser Segment
 linkParser = do
-    contents <- between (char '[') (char ']') $ sepBy1 (many1 $ noneOf "[] ") space
+    contents <- between
+        (char '[')
+        (char ']') $
+        sepBy1 (many1 $ noneOf "[] ") space
     if length contents <= 1
-        then do
-            linkContent <- getElement $ headMaybe contents
-            return $ Link Nothing (Url $ fromString linkContent)
-        else do
-            -- Both are viable
-            --  [Haskell http://lotz84.github.io/haskell/]
-            -- [http://lotz84.github.io/haskell/ Haskell]
-            -- check if head or last is an url, if not the whole content is url
-            linkHead  <- getElement $ headMaybe contents
-            linkLast <- getElement $ lastMaybe contents
-            mkLink linkHead linkLast contents
+    then do
+        linkContent <- getElement $ headMaybe contents
+        return $ LINK Nothing (Url $ fromString linkContent)
+    else do
+        -- Both are viable
+        --  [Haskell http://lotz84.github.io/haskell/]
+        -- [http://lotz84.github.io/haskell/ Haskell]
+        -- check if head or last is an url, if not the whole content is url
+        linkHead  <- getElement $ headMaybe contents
+        linkLast <- getElement $ lastMaybe contents
+        mkLink linkHead linkLast contents
   where
-
     mkLink :: String -> String -> [String] -> Parser Segment
     mkLink link' link'' wholecontent
         | isURI link' = do
             nameContent <- getElement $ tailMaybe wholecontent
-            return $ Link (Just $ mkName nameContent) (Url $ fromString link')
+            return $ LINK (Just $ mkName nameContent) (Url $ fromString link')
         | isURI link'' = do
             nameContent <- getElement $ initMaybe wholecontent
-            return $ Link (Just $ mkName nameContent) (Url $ fromString link'')
-        | otherwise   = return $ Link Nothing (Url $ mkName wholecontent)
+            return $ LINK (Just $ mkName nameContent) (Url $ fromString link'')
+        | otherwise   = return $ LINK Nothing (Url $ mkName wholecontent)
 
     mkName :: [String] -> Text
     mkName wholecontent = T.strip $ fromString $
@@ -94,29 +96,24 @@ linkParser = do
     getElement :: Maybe a -> Parser a
     getElement mf = fromMaybeM (unexpected "failed to parse link content") (return mf)
 
--- | Parser fro 'SimpleText'
+-- | Parser for 'TEXT'
 simpleTextParser :: Parser Segment
 simpleTextParser = simpleText <$> textParser mempty
 
 -- Something is wrong, its causing infinite loop
--- | Parser for 'SimpleText'
+-- | Parser for 'TEXT'
 textParser :: String -> Parser String
 textParser content = do
     someChar <- lookAheadMaybe anyChar
     case someChar of
-
         -- Nothing is ahead of it, the work is done
         Nothing  -> return content
-
         -- Could be link so try to parse it
         Just '[' -> checkWith linkParser content
-
         -- Could be code notation so try to parse it
         Just '`' -> checkWith codeNotationParser content
-
         -- Could be hashtag, so try to parse it
         Just '#' -> checkWith hashTagParser content
-
         -- For everything else, parse until it hits the syntax symbol
         Just _   -> do
             text <- many1 $ noneOf syntaxSymbol
@@ -128,11 +125,11 @@ textParser content = do
     checkWith parser content' = do
         mResult <- lookAheadMaybe parser
         if isJust mResult
-            then return content
-            else do
-                someSymbol <- oneOf syntaxSymbol
-                rest       <- many $ noneOf syntaxSymbol
-                textParser $ content' <> [someSymbol] <> rest
+        then return content
+        else do
+            someSymbol <- oneOf syntaxSymbol
+            rest       <- many $ noneOf syntaxSymbol
+            textParser $ content' <> [someSymbol] <> rest
 
     syntaxSymbol :: String
     syntaxSymbol = "[`#"

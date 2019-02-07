@@ -1,4 +1,4 @@
-{-| Datatypes used to represent the scrapbox parse tree as well as some of the helper functions.
+{-| Datatypes used to represent the scrapbox AST as well as some of the helper functions.
 -}
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -7,12 +7,12 @@
 module Types
     ( -- * Datatypes
       Page (..)
-    , Markdown (..)
-    , BulletSize(..)
+    , Scrapbox (..)
+    , Start(..)
     , Block(..)
     , CodeName(..)
     , CodeSnippet(..)
-    , HeaderSize(..)
+    , Level(..)
     , TableName(..)
     , Url(..)
     , Segment(..)
@@ -52,22 +52,22 @@ import           Data.List (groupBy)
 
 -- | Data structure of an scrapbox page in JSON format
 data Page = Page
-    { pContent :: !Markdown
+    { pContent :: !Scrapbox
     -- ^ Content of the page
     , pTitle   :: !Text
     -- ^ Title
     } deriving (Eq, Show, Generic, Read, Ord)
 
--- | Markdown consist of list of 'Block's
-newtype Markdown = Markdown [Block]
+-- | Scrapbox page consist of list of 'Block'
+newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
 --------------------------------------------------------------------------------
 
--- | Size of bullet point
-newtype BulletSize = BulletSize Int
+-- | Starting point of 'BULLET_POINT'
+newtype Start = Start Int
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Name of the code block
@@ -78,8 +78,8 @@ newtype CodeName = CodeName Text
 newtype CodeSnippet = CodeSnippet Text
     deriving (Eq, Show, Generic, Read, Ord)
 
--- | Header size
-newtype HeaderSize = HeaderSize Int
+-- | Heading level
+newtype Level = Level Int
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Name of the table
@@ -96,21 +96,21 @@ newtype Url = Url Text
 
 -- | Blocks are contents
 data Block
-    = LineBreak
-    -- ^ Simply breaks a line
-    | BlockQuote !ScrapText
-    -- ^ BlockQuote like markdown
-    | BulletPoint !BulletSize ![Block]
+    = LINEBREAK
+    -- ^ Linebreak
+    | BLOCK_QUOTE !ScrapText
+    -- ^ BlockQuote
+    | BULLET_POINT !Start ![Block]
     -- ^ Bulletpoint styled line
-    | CodeBlock !CodeName !CodeSnippet
+    | CODE_BLOCK !CodeName !CodeSnippet
     -- ^ Code blocks
-    | Header !HeaderSize !Content
+    | HEADING !Level !Content
     -- ^ Header
-    | Paragraph !ScrapText
+    | PARAGRAPH !ScrapText
     -- ^ Paragraph
-    | Table !TableName !TableContent
+    | TABLE !TableName !TableContent
     -- ^ Table
-    | Thumbnail !Url
+    | THUMBNAIL !Url
     -- ^ Thumbnail
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -130,20 +130,20 @@ data Context = Context !Style !Content
 type Content = [Segment]
 
 -- | Segment
-data Segment =
-      CodeNotation !Text
+data Segment
+    = CODE_NOTATION !Text
     -- ^ CodeNotation
-    | HashTag !Text
+    | HASHTAG !Text
     -- ^ Hashtag
-    | Link !(Maybe Text) !Url
+    | LINK !(Maybe Text) !Url
     -- ^ Link, it can have named as href
-    | SimpleText !Text
+    | TEXT !Text
     -- ^ Just an simple text
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Style that can be applied to the 'Segment'
-data Style =
-      CustomStyle StyleData
+data Style
+    = CustomStyle StyleData
     -- ^ You can use this to combine all three as of the styles as well as Header
     | Bold
     -- ^ Bold style
@@ -176,16 +176,16 @@ data StyleData = StyleData
 emptyStyle :: StyleData
 emptyStyle = StyleData 0 False False False
 
--- | Convert given Markdown into verbose structure
-verbose :: Markdown -> Markdown
-verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
+-- | Convert given 'Scrapbox' into verbose structure
+verbose :: Scrapbox -> Scrapbox
+verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
   where
     convertToVerbose :: Block -> Block
     convertToVerbose = \case
-        BlockQuote stext      -> BlockQuote $ verboseScrapText stext
-        BulletPoint num block -> BulletPoint num $ map convertToVerbose block
-        Paragraph stext       -> Paragraph $ verboseScrapText stext
-        other                 -> other
+        BLOCK_QUOTE stext      -> BLOCK_QUOTE $ verboseScrapText stext
+        BULLET_POINT num block -> BULLET_POINT num $ map convertToVerbose block
+        PARAGRAPH stext        -> PARAGRAPH $ verboseScrapText stext
+        other                  -> other
 
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
@@ -194,31 +194,31 @@ verbose (Markdown blocks) = Markdown $ map convertToVerbose blocks
     mkVerboseContext (Context style segments) =
         foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
 
--- | Convert given Markdown into unverbose structure
-unverbose :: Markdown -> Markdown
-unverbose (Markdown blocks) = Markdown $ map unVerboseBlock blocks
+-- | Convert given 'Scrapbox' into unverbose structure
+unverbose :: Scrapbox -> Scrapbox
+unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
   where
     unVerboseBlock :: Block -> Block
     unVerboseBlock = \case
-        BlockQuote stext      -> BlockQuote $ unVerboseScrapText stext
-        BulletPoint num block -> BulletPoint num $ map unVerboseBlock block
-        Paragraph stext       -> Paragraph $ unVerboseScrapText stext
-        other                 -> other
+        BLOCK_QUOTE stext      -> BLOCK_QUOTE $ unVerboseScrapText stext
+        BULLET_POINT num block -> BULLET_POINT num $ map unVerboseBlock block
+        PARAGRAPH stext        -> PARAGRAPH $ unVerboseScrapText stext
+        other                  -> other
 
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy
         (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
 
--- | Concatinate given contexts which has same style
+-- | Concatinate 'CONTEXT' with same style
 concatContext :: [Context] -> [Context]
-concatContext [] = []
-concatContext [ctx] = [ctx]
+concatContext []       = []
+concatContext [ctx]    = [ctx]
 concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
     | style1 == style2 = concatContext (Context style1 (ctx1 <> ctx2) : rest)
     | otherwise        = c1 : c2 : concatContext rest
 
 -- | Concatenate 'ScrapText'
--- This could be Semigroup, but definatly not Monoid (there's no mempty)
+-- This could be Semigroup, but definitely not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
 concatScrapText (ScrapText ctx1) (ScrapText ctx2) = ScrapText $ concatContext $ ctx1 <> ctx2
 
@@ -230,52 +230,52 @@ emptyContext = Context NoStyle []
 -- Predicates
 --------------------------------------------------------------------------------
 
--- | Checks if given 'Block' is an 'Header'
+-- | Checks if given 'Block' is an 'HEADING'
 isHeader :: Block -> Bool
-isHeader (Header _ _) = True
-isHeader _            = False
+isHeader (HEADING _ _) = True
+isHeader _             = False
 
--- | Checks whether given 'Block' is 'BlockQuote'
+-- | Checks whether given 'Block' is 'BLOCK_QUOTE'
 isBlockQuote :: Block -> Bool
-isBlockQuote (BlockQuote _) = True
-isBlockQuote _              = False
+isBlockQuote (BLOCK_QUOTE _) = True
+isBlockQuote _               = False
 
--- | Checks whether given 'Block' is 'BlockQuote'
+-- | Checks whether given 'Block' is 'BULLET_POINT'
 isBulletPoint :: Block -> Bool
-isBulletPoint (BulletPoint _ _) = True
-isBulletPoint _                 = False
+isBulletPoint (BULLET_POINT _ _) = True
+isBulletPoint _                  = False
 
--- | Checks whether given 'Block' is 'CodeBlock'
+-- | Checks whether given 'Block' is 'CODE_BLOCK'
 isCodeBlock :: Block -> Bool
-isCodeBlock (CodeBlock _ _) = True
-isCodeBlock _               = False
+isCodeBlock (CODE_BLOCK _ _) = True
+isCodeBlock _                = False
 
--- | Checks whether given 'Block' is 'Paragraph'
+-- | Checks whether given 'Block' is 'PARAGRAPH'
 isParagraph :: Block -> Bool
-isParagraph (Paragraph _) = True
+isParagraph (PARAGRAPH _) = True
 isParagraph _             = False
 
--- | Checks whether given 'Block' is 'Thumbnail'
+-- | Checks whether given 'Block' is 'THUMBNAIL'
 isThumbnail :: Block -> Bool
-isThumbnail (Thumbnail _) = True
+isThumbnail (THUMBNAIL _) = True
 isThumbnail _             = False
 
--- | Checks whether given 'Block' is 'Table'
+-- | Checks whether given 'Block' is 'TABLE'
 isTable :: Block -> Bool
-isTable (Table _ _) = True
+isTable (TABLE _ _) = True
 isTable _           = False
 
--- | Checks whether given 'Segment' is 'Link'
+-- | Checks whether given 'Segment' is 'LINK'
 isLink :: Segment -> Bool
-isLink (Link _ _) = True
+isLink (LINK _ _) = True
 isLink _          = False
 
--- | Checks whether given 'Segment' is 'CodeNotation'
+-- | Checks whether given 'Segment' is 'CODE_NOTATION'
 isCodeNotation :: Segment -> Bool
-isCodeNotation (CodeNotation _) = True
-isCodeNotation _                = False
+isCodeNotation (CODE_NOTATION _) = True
+isCodeNotation _                 = False
 
--- | Checks whether given 'Segment' is 'SimpleText'
+-- | Checks whether given 'Segment' is 'TEXT'
 isSimpleText :: Segment -> Bool
-isSimpleText (SimpleText _) = True
-isSimpleText _              = False
+isSimpleText (TEXT _) = True
+isSimpleText _        = False

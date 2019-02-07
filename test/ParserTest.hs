@@ -23,11 +23,11 @@ import           Parser.Inline           (runInlineParser)
 import           Parser.Scrapbox         (runScrapboxParser)
 import           Parser.Text             (runScrapTextParser)
 
-import           Types                   (Block (..), BulletSize (..),
-                                          CodeName (..), CodeSnippet (..),
-                                          Context (..), HeaderSize (..),
-                                          Markdown (..), ScrapText (..),
-                                          Segment (..), Style (..),
+import           Types                   (Block (..), CodeName (..),
+                                          CodeSnippet (..), Context (..),
+                                          Level (..), ScrapText (..),
+                                          Scrapbox (..), Segment (..),
+                                          Start (..), Style (..),
                                           TableContent (..), TableName (..),
                                           Url (..))
 import           Utils                   (eitherM, whenRight)
@@ -62,12 +62,12 @@ inlineParserSpec =
 
     expected :: [Segment]
     expected =
-        [ SimpleText "hello "
-        , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
-        , SimpleText " "
-        , Link Nothing ( Url "hello" )
-        , SimpleText " [] `partial code [partial url "
-        , HashTag "someHashtag"
+        [ TEXT "hello "
+        , LINK ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
+        , TEXT " "
+        , LINK Nothing ( Url "hello" )
+        , TEXT " [] `partial code [partial url "
+        , HASHTAG "someHashtag"
         ]
 
 -- | Test spec for scrap text parser
@@ -92,18 +92,19 @@ scrapTextParserSpec =
 
     expectedParsedText :: ScrapText
     expectedParsedText = ScrapText
-            [ Context Bold [ SimpleText "bold text" ]
-            , Context NoStyle [ SimpleText " " ]
-            , Context StrikeThrough [ SimpleText "strikethrough text" ]
-            , Context NoStyle [ SimpleText " " ]
-            , Context Italic [ SimpleText "italic text" ]
-            , Context NoStyle [ SimpleText " simple text " ]
-            , Context Bold
-                [ SimpleText "test "
-                , Link Nothing ( Url "link" )
-                , SimpleText " test [partial"
-                ]
+        [ Context Bold [ TEXT "bold text" ]
+        , Context NoStyle [ TEXT " " ]
+        , Context StrikeThrough [ TEXT "strikethrough text" ]
+        , Context NoStyle [ TEXT " " ]
+        , Context Italic [ TEXT "italic text" ]
+        , Context NoStyle [ TEXT " simple text " ]
+        , Context Bold
+            [ TEXT "test "
+            , LINK Nothing ( Url "link" )
+            , TEXT " test [partial"
             ]
+        ]
+
 
 --------------------------------------------------------------------------------
 -- Scrapbox parser
@@ -119,10 +120,11 @@ scrapboxParserSpec =
                 let eParseredText = runScrapboxParser $ getNonEmptyPrintableString someText
 
                 assert $ isRight eParseredText
-                whenRight eParseredText $ \(Markdown blocks) ->
+                whenRight eParseredText $ \(Scrapbox blocks) ->
                     assert $ not $ null blocks
 
-        describe "Parsing \"syntax\" page with scrapbox parser" $ modifyMaxSuccess (const 1) $ do
+        describe "Parsing \"syntax\" page with scrapbox parser" $ 
+          modifyMaxSuccess (const 1) $ do
             it "should parse section1 as expected" $
                 propParseAsExpected example1 expected1 runScrapboxParser
 
@@ -234,263 +236,267 @@ scrapboxParserSpec =
         ""
         ]
 
-    expected1 :: Markdown
-    expected1 = Markdown
-        [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Syntax" ] ] )
-        , Thumbnail ( Url "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815" )
-        , LineBreak
-        , LineBreak
-        , Header ( HeaderSize 1 ) [ SimpleText "Mouse-based editing" ]
-        , Thumbnail ( Url "https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc" )
-        , LineBreak
-        , Paragraph
+    expected1 :: Scrapbox
+    expected1 = Scrapbox
+        [ PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Syntax" ] ] )
+        , THUMBNAIL ( Url "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815" )
+        , LINEBREAK
+        , LINEBREAK
+        , HEADING ( Level 1 ) [ TEXT "Mouse-based editing" ]
+        , THUMBNAIL ( Url "https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc" )
+        , LINEBREAK
+        , PARAGRAPH
             ( ScrapText
-                [ Context Bold [ SimpleText "Internal Links" ]
-                , Context NoStyle [ SimpleText " (linking to another page on scrapbox)" ]
+                [ Context Bold [ TEXT "Internal Links" ]
+                , Context NoStyle [ TEXT " (linking to another page on scrapbox)" ]
                 ]
             )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[link]"
-                        , SimpleText " ⇒ "
-                        , Link Nothing ( Url "Link" )
+                        [ CODE_NOTATION "[link]"
+                        , TEXT " ⇒ "
+                        , LINK Nothing ( Url "Link" )
                         ]
                     ]
                 )
             ]
-        , LineBreak
-        , Paragraph
+        , LINEBREAK
+        , PARAGRAPH
             ( ScrapText
-                [ Context Bold [ SimpleText "External  Links" ]
-                , Context NoStyle [ SimpleText " (linking to another web page)" ]
+                [ Context Bold [ TEXT "External  Links" ]
+                , Context NoStyle [ TEXT " (linking to another web page)" ]
                 ]
             )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "http://google.com"
-                        , SimpleText " ⇒ http://google.com"
+                        [ CODE_NOTATION "http://google.com"
+                        , TEXT " ⇒ http://google.com"
                         ]
                     ]
                 )
-            , Paragraph
+            , PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[http://google.com Google]"
-                        , SimpleText " ⇒ "
-                        , Link ( Just "Google" ) ( Url "http://google.com" )
-                        ]
-                    ]
-                )
-            ]
-        , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "or" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
-                ( ScrapText
-                    [ Context NoStyle
-                        [ CodeNotation "[Google http://google.com]"
-                        , SimpleText " ⇒ "
-                        , Link ( Just "Google" ) ( Url "http://google.com" )
+                        [ CODE_NOTATION "[http://google.com Google]"
+                        , TEXT " ⇒ "
+                        , LINK ( Just "Google" ) ( Url "http://google.com" )
                         ]
                     ]
                 )
             ]
-        , LineBreak
+        , PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "or" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
+                ( ScrapText
+                    [ Context NoStyle
+                        [ CODE_NOTATION "[Google http://google.com]"
+                        , TEXT " ⇒ "
+                        , LINK ( Just "Google" ) ( Url "http://google.com" )
+                        ]
+                    ]
+                )
+            ]
+        , LINEBREAK
         ]
 
-    expected2 :: Markdown
-    expected2 = Markdown
-        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Images" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+
+    expected2 :: Scrapbox
+    expected2 = Scrapbox
+        [ PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Images" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ SimpleText "Direct mage link ↓"
-                        , CodeNotation "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
+                        [ TEXT "Direct mage link ↓"
+                        , CODE_NOTATION "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
                         ]
                     ]
                 )
-            , Thumbnail ( Url "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" )
+            , THUMBNAIL ( Url "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" )
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Clickable Thumbnail Links" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Clickable Thumbnail Links" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ SimpleText "↓ "
-                        , CodeNotation "[http://cutedog.com https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
-                        , SimpleText " "
+                        [ TEXT "↓ "
+                        , CODE_NOTATION "[http://cutedog.com https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
+                        , TEXT " "
                         ]
                     ]
                 )
-            , Paragraph ( ScrapText [ Context NoStyle [ Link ( Just "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" ) ( Url "http://cutedog.com" ) ] ] )
-            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Adding the link at the end also works, as before:" ] ] )
-            , BulletPoint ( BulletSize 1 ) [ Paragraph ( ScrapText [ Context NoStyle [ CodeNotation "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]" ] ] ) ]
+            , PARAGRAPH ( ScrapText [ Context NoStyle [ LINK ( Just "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png" ) ( Url "http://cutedog.com" ) ] ] )
+            , PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Adding the link at the end also works, as before:" ] ] )
+            , BULLET_POINT ( Start 1 ) [ PARAGRAPH ( ScrapText [ Context NoStyle [ CODE_NOTATION "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]" ] ] ) ]
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Linking to other scrapbox projects" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Linking to other scrapbox projects" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[/projectname/pagename]"
-                        , SimpleText " ⇛ "
-                        , Link Nothing ( Url "/icons/check" )
+                        [ CODE_NOTATION "[/projectname/pagename]"
+                        , TEXT " ⇛ "
+                        , LINK Nothing ( Url "/icons/check" )
                         ]
                     ]
                 )
-            , Paragraph
+            , PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[/projectname]"
-                        , SimpleText " ⇛ "
-                        , Link Nothing ( Url "/icons" )
+                        [ CODE_NOTATION "[/projectname]"
+                        , TEXT " ⇛ "
+                        , LINK Nothing ( Url "/icons" )
                         ]
                     ]
                 )
             ]
-        , LineBreak
+        , LINEBREAK
         ]
 
-    expected3 :: Markdown
-    expected3 = Markdown
-        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Icons" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+
+    expected3 :: Scrapbox
+    expected3 = Scrapbox
+        [ PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Icons" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[ben.icon]"
-                        , SimpleText " ⇛  "
-                        , Link Nothing ( Url "ben.icon" )
+                        [ CODE_NOTATION "[ben.icon]"
+                        , TEXT " ⇛  "
+                        , LINK Nothing ( Url "ben.icon" )
                         ]
                     ]
                 )
-            , Paragraph
+            , PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[/icons/todo.icon]"
-                        , SimpleText " ⇛ "
-                        , Link Nothing ( Url "/icons/todo.icon" )
+                        [ CODE_NOTATION "[/icons/todo.icon]"
+                        , TEXT " ⇛ "
+                        , LINK Nothing ( Url "/icons/todo.icon" )
                         ]
                     ]
                 )
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Bold text" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Bold text" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[[Bold]]"
-                        , SimpleText " or "
-                        , CodeNotation "[* Bold]"
-                        , SimpleText "⇒ "
+                        [ CODE_NOTATION "[[Bold]]"
+                        , TEXT " or "
+                        , CODE_NOTATION "[* Bold]"
+                        , TEXT "⇒ "
                         ]
-                    , Context Bold [ SimpleText "Bold" ]
+                    , Context Bold [ TEXT "Bold" ]
                     ]
                 )
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Italic text" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Italic text" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[/ italic]"
-                        , SimpleText "⇛ "
+                        [ CODE_NOTATION "[/ italic]"
+                        , TEXT "⇛ "
                         ]
-                    , Context Italic [ SimpleText "italic" ]
+                    , Context Italic [ TEXT "italic" ]
                     ]
                 )
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText " Strikethrough text" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT " Strikethrough text" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "[- strikethrough]"
-                        , SimpleText "⇛ "
+                        [ CODE_NOTATION "[- strikethrough]"
+                        , TEXT "⇛ "
                         ]
-                    , Context StrikeThrough [ SimpleText "strikethrough" ]
+                    , Context StrikeThrough [ TEXT "strikethrough" ]
                     ]
                 )
             ]
-        , Thumbnail ( Url "https://gyazo.com/00ab07461d502db91c8ae170276d1396" )
-        , LineBreak
+        , THUMBNAIL ( Url "https://gyazo.com/00ab07461d502db91c8ae170276d1396" )
+        , LINEBREAK
         ]
 
-    expected4 :: Markdown
-    expected4 = Markdown
-        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Bullet points" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Press space or tab on a new line to indent and create a bullet point" ] ] )
-            , BulletPoint ( BulletSize 1 ) [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Press backspace to remove the indent  / bullet point" ] ] ) ]
+
+    expected4 :: Scrapbox
+    expected4 = Scrapbox
+        [ PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Bullet points" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Press space or tab on a new line to indent and create a bullet point" ] ] )
+            , BULLET_POINT ( Start 1 ) [ PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Press backspace to remove the indent  / bullet point" ] ] ) ]
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Hashtags / internal links" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Hashtags / internal links" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ CodeNotation "#tag"
-                        , SimpleText " and  "
-                        , CodeNotation "[link]"
-                        , SimpleText " work the same to create a link but also define related pages you can find later"
+                        [ CODE_NOTATION "#tag"
+                        , TEXT " and  "
+                        , CODE_NOTATION "[link]"
+                        , TEXT " work the same to create a link but also define related pages you can find later"
                         ]
                     ]
                 )
-            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Add links in the middle of a sentence to branch off as you type or add tags at the end to organize." ] ] )
+            , PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Add links in the middle of a sentence to branch off as you type or add tags at the end to organize." ] ] )
             ]
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Block quote" ] ] )
-        , BlockQuote
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Block quote" ] ] )
+        , BLOCK_QUOTE
             ( ScrapText
                 [ Context NoStyle
-                    [ SimpleText " use the right arrow "
-                    , CodeNotation ">"
-                    , SimpleText " at the beginning of a line to get a block quote "
+                    [ TEXT " use the right arrow "
+                    , CODE_NOTATION ">"
+                    , TEXT " at the beginning of a line to get a block quote "
                     ]
                 ]
             )
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Code notation" ] ] )
-        , BulletPoint ( BulletSize 1 )
-            [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Use backquotes or backticks, `,  to highlight code  " ] ] )
-            , Paragraph
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Code notation" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Use backquotes or backticks, `,  to highlight code  " ] ] )
+            , PARAGRAPH
                 ( ScrapText
                     [ Context NoStyle
-                        [ SimpleText "e.g. "
-                        , CodeNotation "function() {  return true }"
+                        [ TEXT "e.g. "
+                        , CODE_NOTATION "function() {  return true }"
                         ]
                     ]
                 )
             ]
-        , LineBreak
+        , LINEBREAK
         ]
 
-    expected5 :: Markdown
-    expected5 = Markdown 
-        [ Paragraph ( ScrapText [ Context Bold [ SimpleText "Code block notation" ] ] )
-        , BulletPoint ( BulletSize 1 ) 
-            [ Paragraph 
-                ( ScrapText 
-                    [ Context NoStyle 
-                        [ SimpleText "Typing "
-                        , CodeNotation "code:filename.extension"
-                        , SimpleText "or"
-                        , CodeNotation "code:filename"
-                        , SimpleText "can be used to create a new code snippet and and display it as a block"
-                        ] 
+
+    expected5 :: Scrapbox
+    expected5 = Scrapbox
+        [ PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Code block notation" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH
+                ( ScrapText
+                    [ Context NoStyle
+                        [ TEXT "Typing "
+                        , CODE_NOTATION "code:filename.extension"
+                        , TEXT "or"
+                        , CODE_NOTATION "code:filename"
+                        , TEXT "can be used to create a new code snippet and and display it as a block"
+                        ]
                     ]
                 )
-            , BulletPoint ( BulletSize 1 ) [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Language names may be abbreviated" ] ] ) ]
-            ] 
-        , CodeBlock ( CodeName "hello.js" ) ( CodeSnippet (T.unlines
+            , BULLET_POINT ( Start 1 ) [ PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Language names may be abbreviated" ] ] ) ]
+            ]
+        , CODE_BLOCK ( CodeName "hello.js" ) ( CodeSnippet (T.unlines
             [ "function () {"
             , "  alert(document.location.href)"
             , "  console.log(\"hello\")"
@@ -498,49 +504,47 @@ scrapboxParserSpec =
             , "}"
             ])
         )
-        , LineBreak
-        , Paragraph ( ScrapText [ Context Bold [ SimpleText "Tables" ] ] )
-        , BulletPoint ( BulletSize 1 ) 
-            [ Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Type table: tablename to create a table" ] ] )
-            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "Use tab to move to the next column, use enter to move to the next row." ] ] )
-            , Paragraph ( ScrapText [ Context NoStyle [ SimpleText "An example:" ] ] )
-            ] 
-        , Table ( TableName "hello" ) 
-            ( TableContent 
-                [ 
+        , LINEBREAK
+        , PARAGRAPH ( ScrapText [ Context Bold [ TEXT "Tables" ] ] )
+        , BULLET_POINT ( Start 1 )
+            [ PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Type table: tablename to create a table" ] ] )
+            , PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "Use tab to move to the next column, use enter to move to the next row." ] ] )
+            , PARAGRAPH ( ScrapText [ Context NoStyle [ TEXT "An example:" ] ] )
+            ]
+        , TABLE ( TableName "hello" )
+            ( TableContent
+                [
                     [ "1"
                     , "2"
                     , "3"
-                    ] 
-                , 
+                    ]
+                ,
                     [ "1 "
                     , "2 "
                     , "3"
-                    ] 
-                , 
+                    ]
+                ,
                     [ "------"
                     , "------"
                     , "------"
-                    ] 
-                , 
+                    ]
+                ,
                     [ "a"
                     , "b"
                     , "c"
-                    ] 
-                ] 
+                    ]
+                ]
             )
-        , LineBreak
-        ] 
-
-
+        , LINEBREAK
+        ]
 
 --------------------------------------------------------------------------------
 -- Helper functions
 --------------------------------------------------------------------------------
 
 -- | Non-empty version of 'PrintableString'
-newtype NonEmptyPrintableString =  NonEmptyPrintableString {
-    getNonEmptyPrintableString :: String
+newtype NonEmptyPrintableString =  NonEmptyPrintableString
+    { getNonEmptyPrintableString :: String
     } deriving Show
 
 instance Arbitrary NonEmptyPrintableString where

@@ -4,8 +4,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TestCommonMark.Utils
-    ( CommonMarkdown(..)
-    , checkMarkdown
+    ( CommonMark(..)
+    , checkScrapbox
     , genPrintableText
     , getHeadSegment
     , getParagraph
@@ -19,16 +19,16 @@ import           RIO.List        (headMaybe)
 import qualified RIO.Text        as T
 import           Test.QuickCheck (Gen, elements, listOf1)
 
-import           CommonMark.Lib  (commonmarkToMarkdown, optDefault)
-import           Types           (Block (..), Context (..), Markdown (..),
-                                  ScrapText (..), Segment)
+import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
+import           Types           (Block (..), Context (..), ScrapText (..),
+                                  Scrapbox (..), Segment)
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
 
--- | Typeclass in which is used to render given datatype into common markdown format.
-class CommonMarkdown a where
+-- | Typeclass in which is used to render given datatype into markdown format.
+class CommonMark a where
     render :: a -> Text
 
 -- | Generate arbitrary Text
@@ -39,7 +39,8 @@ genPrintableText = T.unwords <$> listOf1 genRandomText
 
 -- | Generate random text
 genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1 $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+genRandomText = fmap fromString <$> listOf1 
+    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 -- | Generate random url
 genPrintableUrl :: Gen Text
@@ -48,30 +49,30 @@ genPrintableUrl = do
     randomSite <- genRandomText
     return $ "http://www." <> randomSite <> end
 
--- | Parse given datatype into Markdown
-parseMarkdown :: CommonMarkdown a => a -> Markdown
-parseMarkdown = commonmarkToMarkdown optDefault . render
-
--- | General function used to test if given 'CommonMarkdown' can be properly parsed
+-- | General function used to test if given 'CommonMark' can be properly parsed
 -- and extract the expected element
-checkMarkdown :: (CommonMarkdown a)
+checkScrapbox :: (CommonMark a)
               => a
               -> (parsedContent -> Bool)
               -> ([Block] -> Maybe parsedContent)
               -> Bool
-checkMarkdown markdown pre extractionFunc = do
-    let (Markdown content) = parseMarkdown markdown
+checkScrapbox markdown pre extractionFunc = do
+    let (Scrapbox content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
+  where
+    -- | Parse given datatype into 'Scrapbox'
+    parseMarkdown :: CommonMark a => a -> Scrapbox
+    parseMarkdown = commonmarkToScrapboxNode optDefault . render
 
--- | Return 'Paragraph' if given 'Block' is 'Paragraph'
+-- | Return 'PARAGRAPH' if given 'Block' is 'PARAGRAPH'
 getParagraph :: Block -> Maybe Block
-getParagraph paragraph@(Paragraph _) = Just paragraph
+getParagraph paragraph@(PARAGRAPH _) = Just paragraph
 getParagraph _                       = Nothing
 
 -- | Extract heed segment of a given list of blocks
 getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
     blockContent               <- headMaybe blocks
-    Paragraph (ScrapText ctxs) <- getParagraph blockContent
+    PARAGRAPH (ScrapText ctxs) <- getParagraph blockContent
     Context _ segments         <- headMaybe ctxs
     headMaybe segments

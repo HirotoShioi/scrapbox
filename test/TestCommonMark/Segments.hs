@@ -19,7 +19,7 @@ import           Types                 (Block (..), Context (..),
                                         ScrapText (..), Segment (..), Url (..),
                                         isCodeNotation, isLink, isSimpleText)
 
-import           TestCommonMark.Utils  (CommonMarkdown (..), checkMarkdown,
+import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getHeadSegment,
                                         getParagraph)
@@ -41,119 +41,121 @@ data LinkSegment = LinkSegment
     , linkUrl  :: !Text
     } deriving Show
 
-instance CommonMarkdown LinkSegment where
+instance CommonMark LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
 
 instance Arbitrary LinkSegment where
     arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
 
--- | Test spec for parsing 'Link'
+-- | Test spec for parsing 'LINK'
 linkSpec :: Spec
 linkSpec = describe "Links" $ do
-    prop "should parse link as Link" $
+    prop "should parse link as LINK" $
         \(linkSegment :: LinkSegment) ->
-            checkMarkdown linkSegment isLink getHeadSegment
+            checkScrapbox linkSegment isLink getHeadSegment
 
     prop "should preserve its content" $
         \(linkSegment :: LinkSegment) ->
-            checkMarkdown linkSegment
-                (\(Link mName (Url url)) ->
+            checkScrapbox linkSegment
+                (\(mName, Url url) ->
                        url == linkUrl linkSegment
                     && maybe False (\name -> name == linkName linkSegment) mName
 
                 )
                 (\content -> do
-                    segment <- getHeadSegment content
-                    getLink segment
+                    segment          <- getHeadSegment content
+                    (LINK mName url) <- getLink segment
+                    return (mName, url)
                 )
     prop "should not have any other segments except for code section" $
         \(linkSegment :: LinkSegment) -> testSegment linkSegment
   where
     getLink :: Segment -> Maybe Segment
-    getLink linkSegment@(Link _ _) = Just linkSegment
+    getLink linkSegment@(LINK _ _) = Just linkSegment
     getLink _                      = Nothing
 
 --------------------------------------------------------------------------------
 -- CodeNotation
 --------------------------------------------------------------------------------
 
--- | Code notation segment
+-- | 'CODE_NOTATION' segment
 newtype CodeNotationSegment = CodeNotationSegment
     { getCodeNotationSegment :: Text
     } deriving Show
 
-instance CommonMarkdown CodeNotationSegment where
+instance CommonMark CodeNotationSegment where
     render (CodeNotationSegment txt) = "`" <> txt <> "`"
 
 instance Arbitrary CodeNotationSegment where
     arbitrary = CodeNotationSegment <$> genPrintableText
 
--- | Test spec for parsing 'CodeNotation'
+-- | Test spec for parsing 'CODE_NOTATION'
 codeNotationSpec :: Spec
 codeNotationSpec =
     describe "Code notation" $ do
-        prop "should be able to parser code section as CodeNotation" $
+        prop "should be able to parser code section as CODE_NOTATION" $
             \(codeNotation :: CodeNotationSegment) ->
-                checkMarkdown codeNotation isCodeNotation getHeadSegment
+                checkScrapbox codeNotation isCodeNotation getHeadSegment
 
         prop "should preserve its content" $
             \(codeNotation :: CodeNotationSegment) ->
-                checkMarkdown codeNotation
+                checkScrapbox codeNotation
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
                     (\content -> do
                         segment                 <- getHeadSegment content
-                        (CodeNotation codeText) <- getCodeNotationText segment
+                        (CODE_NOTATION codeText) <- getCodeNotationText segment
                         return codeText
                     )
         prop "should not have any other segments except for code section" $
             \(codeNotation :: CodeNotationSegment) -> testSegment codeNotation
   where
     getCodeNotationText :: Segment -> Maybe Segment
-    getCodeNotationText codeNotation@(CodeNotation _) = Just codeNotation
-    getCodeNotationText _                             = Nothing
+    getCodeNotationText codeNotation@(CODE_NOTATION _) = Just codeNotation
+    getCodeNotationText _                              = Nothing
 
 --------------------------------------------------------------------------------
--- SimpleText segment
+-- Text segment
 --------------------------------------------------------------------------------
 
--- | Simple text segment
-newtype SimpleTextSegment = SimpleTextSegment {
-    getSimpleTextSegment :: Text
+-- | Text segment
+newtype TextSegment = TextSegment
+    { getTextSegment :: Text
     } deriving Show
 
-instance CommonMarkdown SimpleTextSegment where
-    render (SimpleTextSegment txt) = txt
+instance CommonMark TextSegment where
+    render (TextSegment txt) = txt
 
-instance Arbitrary SimpleTextSegment where
-    arbitrary = SimpleTextSegment <$> genPrintableText
+instance Arbitrary TextSegment where
+    arbitrary = TextSegment <$> genPrintableText
 
--- | Test spec for parsing 'SimpleText'
+-- | Test spec for parsing 'TEXT'
 plainTextSpec :: Spec
 plainTextSpec = describe "Plain text" $ do
-    prop "should parse plain text as SimpleText" $
-        \(simpleTextSegment :: SimpleTextSegment) ->
-            checkMarkdown simpleTextSegment isSimpleText getHeadSegment
+    prop "should parse plain text as TEXT" $
+        \(textSegment :: TextSegment) ->
+            checkScrapbox textSegment isSimpleText getHeadSegment
 
     prop "should preserve its content" $
-        \(simpleTextSegment :: SimpleTextSegment) ->
-            checkMarkdown simpleTextSegment
-            (\(SimpleText txt) -> txt == getSimpleTextSegment simpleTextSegment)
+        \(textSegment :: TextSegment) ->
+            checkScrapbox textSegment
+            (\txt -> txt == getTextSegment textSegment)
             (\content -> do
-                segment                 <- getHeadSegment content
-                getSimpleText segment
+                segment    <- getHeadSegment content
+                (TEXT txt) <- getText segment
+                return txt
             )
 
     prop "should not have any other segments except for plain text" $
-        \(simpleTextSegment :: SimpleTextSegment) -> testSegment simpleTextSegment
+        \(textSegment :: TextSegment) -> testSegment textSegment
   where
-    getSimpleText :: Segment -> Maybe Segment
-    getSimpleText simpleTextSegment@(SimpleText _) = Just simpleTextSegment
-    getSimpleText _                                = Nothing
+    getText :: Segment -> Maybe Segment
+    getText textSegment@(TEXT _) = Just textSegment
+    getText _                    = Nothing
 
 -- | General test case to check whether the segment was parsed properly
-testSegment :: (CommonMarkdown section) => section -> Bool
+testSegment :: (CommonMark section) => section -> Bool
 testSegment someSegment =
-    checkMarkdown someSegment
+    checkScrapbox someSegment
         (\(content', ctxs, segments) ->
                length content' == 1
             && length ctxs     == 1
@@ -161,7 +163,7 @@ testSegment someSegment =
         )
         (\content -> do
             blockContent                 <- headMaybe content
-            (Paragraph (ScrapText ctxs)) <- getParagraph blockContent
+            (PARAGRAPH (ScrapText ctxs)) <- getParagraph blockContent
             (Context _ segments)         <- headMaybe ctxs
             return (content, ctxs, segments)
         )

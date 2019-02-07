@@ -58,7 +58,7 @@ runScrapTextParserM content =
         return
         (return $ runScrapTextParser content)
 
--- | Parser for scraptext
+-- | Parser for 'ScrapText'
 scrapTextParser :: Parser ScrapText
 scrapTextParser = ScrapText <$> manyTill contextParser eof
 
@@ -69,8 +69,7 @@ contextParser =
     <|> try styledTextParser
     <|> try noStyleParser
 
--- | Parser for bold text `[[Like this]]`
--- Todo: Fails to parse this `[[[Link]]]`
+-- | Parser for bold text @[[Like this]]@
 boldParser :: Parser Context
 boldParser = do
     _         <- string "[["
@@ -108,7 +107,8 @@ boldParser = do
 styledTextParser :: Parser Context
 styledTextParser = do
     _         <- char '['
-    symbols   <- manyTill (oneOf "*/-!^~$%&") space -- Need to check if there's missing symobols
+     -- Need to check if there's missing symobols
+    symbols   <- manyTill (oneOf "*/-!^~$%&") space
     paragraph <- extractParagraph
     let style = mkStyle symbols
     segments  <- runInlineParserM paragraph
@@ -169,18 +169,15 @@ extractParagraph = go mempty
                         tillClose <- many $ noneOf "]"
                         return $ content <> tillClose
                     else do
-
                     -- Check if we have closing bracket for our parent bracket
                     hasNextClosingBracket <- isJust <$> lookAheadMaybe
                         (manyTill anyChar (char ']') *> manyTill anyChar (char ']'))
                     if hasNextClosingBracket
-
                         -- We do have 2 closing brackets ahead, move on
                         then do
                             tillClose' <- many (noneOf  "]")
                             symbol     <- anyChar
                             go $ content <> tillClose' <> [symbol]
-
                         -- If not (there's no closing bracket ahead for parent bracket)
                         -- consume until closing bracket
                         else do
@@ -205,16 +202,12 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
             )
         case someChar of
             Nothing   -> runInlineParserM content
-
             -- Check if ahead content can be parsed as bold text
             Just "[[" -> checkWith "[[" boldParser content
-
             -- Check if ahead content can be parsed as custom styled text
             Just "["  -> checkWith "[" styledTextParser content
-
             -- Check if ahead content can be parsed as code notation
             Just "`" -> checkCodeNotation codeNotationParser content
-
             -- For everything else, consume until open bracket
             Just _ -> do
                 rest <- many1 $ noneOf "["

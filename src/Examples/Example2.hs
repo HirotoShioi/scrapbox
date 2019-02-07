@@ -1,4 +1,4 @@
-{-| Example of how our defined parse tree can be used to represent the scrapbox page
+{-| Example of how our defined AST can be used to represent the scrapbox page
 
 Example page: https://scrapbox.io/toSrapbox/Syntax
 -}
@@ -12,10 +12,10 @@ module Examples.Example2
 import           RIO          hiding (link)
 
 import           Constructors (blockQuote, bold, bulletPoint, codeBlock,
-                               codeNotation, header, italic, lineBreak, link,
-                               markdown, noStyle, p, strikeThrough, table, text,
+                               codeNotation, heading, italic, lineBreak, link,
+                               noStyle, p, scrapbox, strikeThrough, table, text,
                                thumbnail)
-import           Types        (Block (..), Markdown)
+import           Types        (Block (..), Scrapbox)
 
 
 syntax :: [Block]
@@ -28,7 +28,7 @@ syntax =
 -- "[https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc]",
 mouseBased :: [Block]
 mouseBased =
-    [ header 1 [text "Mouse-based editing"]
+    [ heading 1 [text "Mouse-based editing"]
     , thumbnail "https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc"
     , p
         [ bold [text "Internal Links"]
@@ -367,10 +367,10 @@ tableSection =
 section :: [Block] -> [Block]
 section bs = bs <> [lineBreak]
 
--- | Example Markdown
+-- | Example Page
 -- https://scrapbox.io/toSrapbox/Syntax
-example2 :: Markdown
-example2 = markdown $ concatMap section
+example2 :: Scrapbox
+example2 = scrapbox $ concatMap section
     [ syntax
     , mouseBased
     , internalLinks
