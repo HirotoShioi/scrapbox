@@ -75,14 +75,12 @@ highlightText = bulletPoint 1
 addLinks :: Block
 addLinks = bulletPoint 2
     [ p
-        [ noStyle
-            [ text "Add links while typing with a "
-            , codeNotation "#"
-            , text " before or brackets around "
-            , codeNotation "["
-            , text "words you want to link "
-            , codeNotation "]"
-            ]
+        [ noStyle [ text "Add links while typing with a "]
+        , codeNotation "#"
+        , noStyle [text " before or brackets around "]
+        , codeNotation "["
+        , noStyle [text "words you want to link "]
+        , codeNotation "]"
         ]
     ]
 
@@ -127,13 +125,11 @@ pagesThat = bulletPoint 2
 seeImages :: Block
 seeImages = bulletPoint 1
     [ p
-        [ noStyle
-            [ text "See images, videos, and external links added inside "
-            , codeNotation "["
-            , text " brackets"
-            , codeNotation  "]"
-            , text " on the page"
-            ]
+        [ noStyle [ text "See images, videos, and external links added inside "]
+        , codeNotation "["
+        , noStyle [text " brackets"]
+        , codeNotation  "]"
+        , noStyle [text " on the page"]
         ]
     ]
 
@@ -156,11 +152,9 @@ whatCan = heading 1 [text "What can you put in a Scrapbox project?"]
 useScrapbox :: Block
 useScrapbox = bulletPoint 1
     [ p
-        [noStyle
-            [ text "Use Scrapbox to outline ideas, discuss "
-            , codeNotation "code blocks"
-            , text ", give feedback, and brainstorm. "
-            ]
+        [ noStyle [text "Use Scrapbox to outline ideas, discuss "]
+        , codeNotation "code blocks"
+        , noStyle [text ", give feedback, and brainstorm. "]
         ]
     ]
 
@@ -173,15 +167,15 @@ forExample = bulletPoint 1 [p [noStyle [text "For example"]]]
 -- conversation about the site requirements and link some useful resources. On that page you might
 -- add a link for a new page called `Social media buttons`.",
 letsSay :: Block
-letsSay = bulletPoint 1 [ p [ noStyle [letsSayText, sitePlan, toStart, socialMedia, period]]]
+letsSay = bulletPoint 1 [ p [letsSayText, sitePlan, toStart, socialMedia, period]]
   where
-    letsSayText = text "Lets say you are working on developing a new website. \
-    \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "
+    letsSayText = noStyle [text "Lets say you are working on developing a new website. \
+    \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "]
     sitePlan    = codeNotation "Site plan"
-    toStart     = text " to start a conversation about the site requirements and link \
-    \some useful resources. On that page you might add a link for a new page called "
+    toStart     = noStyle [text " to start a conversation about the site requirements and link \
+    \some useful resources. On that page you might add a link for a new page called "]
     socialMedia = codeNotation "Social media buttons"
-    period      = text "."
+    period      = noStyle [text "."]
 
 -- "\tYou can immediately click on that link to `Social media buttons` and start editing.
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
@@ -189,33 +183,31 @@ letsSay = bulletPoint 1 [ p [ noStyle [letsSayText, sitePlan, toStart, socialMed
 youCanImmediately :: Block
 youCanImmediately = bulletPoint 1
     [ p
-        [noStyle
-            [ youcan
-            , socialMedia
-            , andStart
-            , twitter
-            , column
-            , faceBook
-            , nextYoucan
-            , twitter
-            , relatedLink
-            , sitePlan
-            , period
-            ]
+        [ youcan
+        , socialMedia
+        , andStart
+        , twitter
+        , column
+        , faceBook
+        , nextYoucan
+        , twitter
+        , relatedLink
+        , sitePlan
+        , period
         ]
     ]
   where
-    youcan      = text "You can immediately click on that link to `Social media buttons` and \
-    \ start editing. There you may add links to "
+    youcan      = noStyle [text "You can immediately click on that link to `Social media buttons` and \
+    \ start editing. There you may add links to "]
     socialMedia = codeNotation "Social media buttons"
     twitter     = codeNotation "Twitter"
     faceBook    = codeNotation "Facebook"
-    andStart    = text " and start editing.  There you may add links to "
-    column      = text ", "
-    nextYoucan  = text ", etc.  Next you can click on "
-    relatedLink = text " and you'll see a related link that will take you back to "
+    andStart    = noStyle [text " and start editing.  There you may add links to "]
+    column      = noStyle [text ", "]
+    nextYoucan  = noStyle [text ", etc.  Next you can click on "]
+    relatedLink = noStyle [text " and you'll see a related link that will take you back to "]
     sitePlan    = codeNotation "Site Plan"
-    period      = text ". "
+    period      = noStyle [text ". "]
 
 -- Once you can easily and directly type your ideas while also building context ideas become more
 -- clear the more you use it. No more folders full of dead text means no more teams isolated from their own ideas.

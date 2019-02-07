@@ -69,7 +69,8 @@ renderText (ScrapText ctxs) =
 
 -- | Render given 'Context' into 'Text'
 renderScrapText :: Context -> Text
-renderScrapText (Context style content) = renderWithStyle style content
+renderScrapText (CONTEXT style content) = renderWithStyle style content
+renderScrapText (CODE_NOTATION content) = "`" <> content <> "`"
 
 -- | Render given 'Content' to 'Text'
 renderContent :: Content -> Text
@@ -77,7 +78,6 @@ renderContent = foldr (\ctx acc -> renderSegment ctx <> acc) mempty
   where
     renderSegment :: Segment -> Text
     renderSegment = \case
-        CODE_NOTATION code             -> "`" <> code <> "`"
         HASHTAG text                   -> "#" <> text
         LINK (Just linkName) (Url url) -> blocked $ url <> " " <> linkName
         LINK Nothing (Url url)         -> blocked url

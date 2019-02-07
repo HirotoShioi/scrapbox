@@ -5,7 +5,6 @@ module Parser.Inline
     ( runInlineParser
     , runInlineParserM
     , inlineParser
-    , codeNotationParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -34,10 +33,6 @@ import           Utils                         (eitherM, fromMaybeM)
 simpleText :: String -> Segment
 simpleText = TEXT . fromString
 
--- | Used to create 'CODENOTATION'
-codeNotation :: String -> Segment
-codeNotation = CODE_NOTATION . fromString
-
 -- | Used to create 'HASHTAG'
 hashtag :: String -> Segment
 hashtag = HASHTAG . fromString
@@ -45,12 +40,6 @@ hashtag = HASHTAG . fromString
 --------------------------------------------------------------------------------
 -- Parsers
 --------------------------------------------------------------------------------
-
--- | Parser for 'CODENOTATION'
-codeNotationParser :: Parser Segment
-codeNotationParser = do
-    content <- between (char '`') (char '`') $ many1 (noneOf "`")
-    return $ codeNotation content
 
 -- | Parser for 'HASHTAG'
 hashTagParser :: Parser Segment
@@ -110,8 +99,6 @@ textParser content = do
         Nothing  -> return content
         -- Could be link so try to parse it
         Just '[' -> checkWith linkParser content
-        -- Could be code notation so try to parse it
-        Just '`' -> checkWith codeNotationParser content
         -- Could be hashtag, so try to parse it
         Just '#' -> checkWith hashTagParser content
         -- For everything else, parse until it hits the syntax symbol
@@ -132,13 +119,12 @@ textParser content = do
             textParser $ content' <> [someSymbol] <> rest
 
     syntaxSymbol :: String
-    syntaxSymbol = "[`#"
+    syntaxSymbol = "[#"
 
 -- | Parse inline text into list of 'Segment'
 segmentParser :: Parser Segment
 segmentParser =
-        try codeNotationParser
-    <|> try linkParser
+        try linkParser
     <|> try hashTagParser
     <|> try simpleTextParser
     <?> "failed to parse segment"

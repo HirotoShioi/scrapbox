@@ -9,18 +9,19 @@ module Parser.Text
     , scrapTextParser
     , styledTextParser
     , boldParser
+    , noStyleParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
 
+import           RIO.List                      (nub)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                char, eof, many, many1,
+                                                between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
                                                 space, string, try, unexpected,
                                                 (<|>))
 
-import           Parser.Inline                 (codeNotationParser,
-                                                runInlineParserM)
+import           Parser.Inline                 (runInlineParserM)
 import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (Context (..), ScrapText (..),
                                                 Segment (..), Style (..),
@@ -65,7 +66,8 @@ scrapTextParser = ScrapText <$> manyTill contextParser eof
 -- | Context parser
 contextParser :: Parser Context
 contextParser =
-        try boldParser
+        try codeNotationParser
+    <|> try boldParser
     <|> try styledTextParser
     <|> try noStyleParser
 
@@ -75,7 +77,7 @@ boldParser = do
     _         <- string "[["
     paragraph <- extractStr
     segments  <- runInlineParserM paragraph
-    return $ Context Bold segments
+    return $ CONTEXT Bold segments
   where
     extractStr :: Parser String
     extractStr = go mempty
@@ -113,7 +115,7 @@ styledTextParser = do
     let style = mkStyle symbols
     segments  <- runInlineParserM paragraph
     _         <- char ']'
-    return $ Context style segments
+    return $ CONTEXT style segments
   where
     -- Create style
     mkStyle :: String -> Style
@@ -186,7 +188,7 @@ extractParagraph = go mempty
 
 -- | Parser for non-styled text
 noStyleParser :: Parser Context
-noStyleParser = Context NoStyle <$> extractNonStyledText
+noStyleParser = CONTEXT NoStyle <$> extractNonStyledText
   where
 
     extractNonStyledText :: Parser [Segment]
@@ -207,10 +209,10 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
             -- Check if ahead content can be parsed as custom styled text
             Just "["  -> checkWith "[" styledTextParser content
             -- Check if ahead content can be parsed as code notation
-            Just "`" -> checkCodeNotation codeNotationParser content
+            Just "`"  -> checkWith "`" codeNotationParser content
             -- For everything else, consume until open bracket
             Just _ -> do
-                rest <- many1 $ noneOf "["
+                rest <- many1 $ noneOf "[`"
                 go $ content <> rest
 
     -- Run parser on ahead content to see if it can be parsed, if not, consume the text
@@ -219,14 +221,7 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
             then runInlineParserM content'
-            else continue symbolStr "[" content'
-
-    checkCodeNotation :: Parser a -> String -> Parser [Segment]
-    checkCodeNotation parser content' = do
-        canBeParsed <- isJust <$> lookAheadMaybe parser
-        if canBeParsed
-            then continue "`" "`" content'
-            else continue "`" "[" content'
+            else continue symbolStr (nub symbolStr) content'
 
     continue :: String -> String -> String -> Parser [Segment]
     continue symbol till curr = do
@@ -234,6 +229,11 @@ noStyleParser = Context NoStyle <$> extractNonStyledText
         rest       <- many (noneOf till)
         go $ curr <> someSymbol <> rest
 
+-- | Parser for 'CODENOTATION'
+codeNotationParser :: Parser Context
+codeNotationParser = do
+    content <- between (char '`') (char '`') $ many1 (noneOf "`")
+    return $ CODE_NOTATION $ fromString content
 
 --------------------------------------------------------------------------------
 -- Needs attention

@@ -46,9 +46,9 @@ internalLinks =
         ]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "[link]"
-                , text " ⇒ "
+            [ codeNotation "[link]"
+            , noStyle
+                [ text " ⇒ "
                 , link Nothing "Link"
                 ]
             ]
@@ -68,18 +68,16 @@ externalLinks =
         ]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "http://google.com"
-                , text " ⇒ http://google.com"
-                ]
+            [ codeNotation "http://google.com"
+            , noStyle [text " ⇒ http://google.com"]
             ]
         ]
     , p [noStyle [text "or"]]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "[Google http://google.com]"
-                , text " ⇒ "
+            [ codeNotation "[Google http://google.com]"
+            , noStyle
+                [ text " ⇒ "
                 , link (Just "Google") "http://google.com"
                 ]
             ]
@@ -94,10 +92,8 @@ directImageLink =
     [ p [ bold [text "Images"]]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ text "Direct mage link ↓"
-                , codeNotation "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
-                ]
+            [ noStyle [ text "Direct mage link ↓" ]
+            , codeNotation "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
             ]
         ]
     , p [ noStyle [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
@@ -112,15 +108,13 @@ clickableThumbnail :: [Block]
 clickableThumbnail =
     [ p [bold [text "Clickable Thumbnail Links"]]
     , p
-        [ noStyle
-            [text "t↓ "
-            , codeNotation "`[http://cutedog.com https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]`"
-            , text " "
-            ]
+        [ noStyle [text "t↓ "]
+        , codeNotation "`[http://cutedog.com https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]`"
+        , noStyle [text " "]
         ]
     , bulletPoint 1 [ p [noStyle [link (Just "http://cutedog.com") "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]]
     , bulletPoint 1 [ p [noStyle [text "Adding the link at the end also works, as before:"]]]
-    , bulletPoint 2 [ p [noStyle [codeNotation "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]"]]]
+    , bulletPoint 2 [ p [codeNotation "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]"]]
     ]
 
 -- "[[Linking to other scrapbox projects]]",
@@ -131,18 +125,18 @@ linkToOther =
     [ p [ bold [text "Linking to other scrapbox projects"]]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "[/projectname/pagename]"
-                , text " ⇛ "
+            [ codeNotation "[/projectname/pagename]"
+            , noStyle
+                [ text " ⇛ "
                 , link Nothing "/icons/check"
                 ]
             ]
         ]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "[/projectname]"
-                , text " ⇛ "
+            [ codeNotation "[/projectname]"
+            , noStyle
+                [ text " ⇛ "
                 , link Nothing "/icons"
                 ]
             ]
@@ -157,18 +151,18 @@ iconSection =
     [ p [bold [text "Icons"]]
     , bulletPoint 1
         [ p
-            [noStyle
-                [ codeNotation "[ben.icon]"
-                , text " ⇛  "
+            [ codeNotation "[ben.icon]"
+            , noStyle
+                [ text " ⇛  "
                 , link Nothing "ben.icon"
                 ]
             ]
         ]
     , bulletPoint 1
         [ p
-            [noStyle
-                [ codeNotation "[/icons/todo.icon]"
-                , text " ⇛ "
+            [ codeNotation "[/icons/todo.icon]"
+            , noStyle
+                [ text " ⇛ "
                 , link Nothing "/icons/todo.icon"
                 ]
             ]
@@ -182,12 +176,10 @@ boldSection =
     [ p [bold [text "Bold text"]]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "[[Bold]]"
-                , text " or "
-                , codeNotation "[* Bold]"
-                , text "⇒ "
-                ]
+            [ codeNotation "[[Bold]]"
+            , noStyle [text " or "]
+            , codeNotation "[* Bold]"
+            , noStyle [text "⇒ "]
             , bold [text "Bold"]
             ]
         ]
@@ -200,7 +192,8 @@ italicSection =
     [ p [bold [text "Italic text"]]
     , bulletPoint 1
         [ p
-            [ noStyle [codeNotation "[/ italic]", text "⇛ "]
+            [ codeNotation "[/ italic]"
+            , noStyle [text "⇛ "]
             , italic [text "italic"]
             ]
         ]
@@ -214,10 +207,8 @@ strikeThroughSection =
     [ p [bold [text " Strikethrough text"]]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "[- strikethrough]"
-                , text "⇛ "
-                ]
+            [ codeNotation "[- strikethrough]"
+            , noStyle [text "⇛ "]
             , strikeThrough [text "strikethrough"]
             ]
         ]
@@ -246,12 +237,10 @@ hashtagSection =
     [ p [ bold [text "Hashtags / internal links"]]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ codeNotation "#tag"
-                , text " and "
-                , codeNotation "link"
-                , text " work the same to create a link but also define related pages you can find later"
-                ]
+            [ codeNotation "#tag"
+            , noStyle [ text " and "]
+            , codeNotation "link"
+            , noStyle [ text " work the same to create a link but also define related pages you can find later"]
             ]
         ]
     , bulletPoint 1
@@ -268,11 +257,9 @@ blockQuoteSection :: [Block]
 blockQuoteSection =
     [ p [bold [text "Block quote"]]
     , blockQuote
-        [ noStyle
-            [ text "> use the right arrow "
-            , codeNotation ">"
-            , text " at the beginning of a line to get a block quote "
-            ]
+        [ noStyle [text "> use the right arrow "]
+        , codeNotation ">"
+        , noStyle [text " at the beginning of a line to get a block quote "]
         ]
     ]
 
@@ -287,10 +274,8 @@ codeNotationSection =
         ]
     , bulletPoint 1
         [ p
-            [ noStyle
-                [ text " e.g. "
-                , codeNotation "function() {  return true }"
-                ]
+            [ noStyle [ text " e.g. "]
+            , codeNotation "function() {  return true }"
             ]
         ]
     ]
@@ -302,13 +287,11 @@ codeBlockSection :: [Block]
 codeBlockSection =
     [ p [bold [link Nothing "[Code block notation]"]]
     , p
-        [ noStyle
-            [ text " Typing "
-            , codeNotation "code:filename.extension"
-            , text "or"
-            , codeNotation "code:filename"
-            , text "can be used to create a new code snippet and and display it as a block"
-            ]
+        [ noStyle [text " Typing "]
+        , codeNotation "code:filename.extension"
+        , noStyle [text "or"]
+        , codeNotation "code:filename"
+        , noStyle [text "can be used to create a new code snippet and and display it as a block"]
         ]
     , p [ noStyle [text "  Language names may be abbreviated"]]
     , codeContent
