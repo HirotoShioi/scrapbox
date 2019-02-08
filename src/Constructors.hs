@@ -14,7 +14,7 @@ module Constructors
     , table
     , thumbnail
     -- * InlineBlock
-    , context
+    , inline
     , noStyle
     , bold
     , italic
@@ -89,9 +89,9 @@ lineBreak = LINEBREAK
 -- InlineBlock
 --------------------------------------------------------------------------------
 
--- | Create context wigh given 'Style' and 'Content'
-context :: Style -> [Segment] -> InlineBlock
-context = ITEM
+-- | Create inline wigh given 'Style' and 'Segment'
+inline :: Style -> [Segment] -> InlineBlock
+inline = ITEM
 
 -- | Creates 'InlineBlock' with no style
 noStyle :: [Segment] -> InlineBlock
