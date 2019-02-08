@@ -3,7 +3,7 @@
 
 {-# LANGUAGE LambdaCase #-}
 
-module Parser.Text
+module Parser.ScrapText
     ( runScrapTextParser
     , runScrapTextParserM
     , scrapTextParser
@@ -21,11 +21,12 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 space, string, try, unexpected,
                                                 (<|>))
 
-import           Parser.Inline                 (runInlineParserM)
+import           Parser.Item                   (runItemParserM)
 import           Parser.Utils                  (lookAheadMaybe)
-import           Types                         (Context (..), ScrapText (..),
-                                                Segment (..), Style (..),
-                                                StyleData (..), emptyStyle)
+import           Types                         (InlineBlock (..),
+                                                ScrapText (..), Segment (..),
+                                                Style (..), StyleData (..),
+                                                emptyStyle)
 import           Utils                         (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
@@ -34,13 +35,13 @@ import           Utils                         (eitherM)
 -- > runScrapTextParser "[* bold text] [- strikethrough text] [/ italic text] simple text [* test [link] test [buggy]"
 -- Right
 --     ( ScrapText
---         [ Context Bold [ SimpleText "bold text" ]
---         , Context NoStyle [ SimpleText " " ]
---         , Context StrikeThrough [ SimpleText "strikethrough text" ]
---         , Context NoStyle [ SimpleText " " ]
---         , Context Italic [ SimpleText "italic text" ]
---         , Context NoStyle [ SimpleText " simple text " ]
---         , Context Bold
+--         [ InlineBlock Bold [ SimpleText "bold text" ]
+--         , InlineBlock NoStyle [ SimpleText " " ]
+--         , InlineBlock StrikeThrough [ SimpleText "strikethrough text" ]
+--         , InlineBlock NoStyle [ SimpleText " " ]
+--         , InlineBlock Italic [ SimpleText "italic text" ]
+--         , InlineBlock NoStyle [ SimpleText " simple text " ]
+--         , InlineBlock Bold
 --             [ SimpleText "test "
 --             , Link Nothing ( Url "link" )
 --             , SimpleText " test [buggy"
@@ -61,23 +62,23 @@ runScrapTextParserM content =
 
 -- | Parser for 'ScrapText'
 scrapTextParser :: Parser ScrapText
-scrapTextParser = ScrapText <$> manyTill contextParser eof
+scrapTextParser = ScrapText <$> manyTill inlineBlockParser eof
 
--- | Context parser
-contextParser :: Parser Context
-contextParser =
+-- | InlineBlock parser
+inlineBlockParser :: Parser InlineBlock
+inlineBlockParser =
         try codeNotationParser
     <|> try boldParser
     <|> try styledTextParser
     <|> try noStyleParser
 
 -- | Parser for bold text @[[Like this]]@
-boldParser :: Parser Context
+boldParser :: Parser InlineBlock
 boldParser = do
     _         <- string "[["
     paragraph <- extractStr
-    segments  <- runInlineParserM paragraph
-    return $ CONTEXT Bold segments
+    segments  <- runItemParserM paragraph
+    return $ ITEM Bold segments
   where
     extractStr :: Parser String
     extractStr = go mempty
@@ -87,13 +88,11 @@ boldParser = do
         hasEnoughClosingBracket <- isJust <$> lookAheadMaybe
             (manyTill anyChar (try $ char ']') *> manyTill anyChar (try $ string "]]"))
         if hasEnoughClosingBracket
-
             -- We do have enough closing brackets ahead, move on
             then do
                 parsed <- many (noneOf  "]")
                 symbol <- anyChar
                 go $ content <> parsed <> [symbol]
-
             -- If not, consume until double closing bracket
             else do
                 tillClose'' <- manyTill anyChar (try $ string "]]")
@@ -106,16 +105,16 @@ boldParser = do
 -- Italic: [/ Text]
 -- StrikeThrough: [- Text]
 -- @
-styledTextParser :: Parser Context
+styledTextParser :: Parser InlineBlock
 styledTextParser = do
     _         <- char '['
      -- Need to check if there's missing symobols
     symbols   <- manyTill (oneOf "*/-!^~$%&") space
     paragraph <- extractParagraph
     let style = mkStyle symbols
-    segments  <- runInlineParserM paragraph
+    segments  <- runItemParserM paragraph
     _         <- char ']'
-    return $ CONTEXT style segments
+    return $ ITEM style segments
   where
     -- Create style
     mkStyle :: String -> Style
@@ -187,8 +186,8 @@ extractParagraph = go mempty
                             return $ content <> tillClose''
 
 -- | Parser for non-styled text
-noStyleParser :: Parser Context
-noStyleParser = CONTEXT NoStyle <$> extractNonStyledText
+noStyleParser :: Parser InlineBlock
+noStyleParser = ITEM NoStyle <$> extractNonStyledText
   where
 
     extractNonStyledText :: Parser [Segment]
@@ -203,7 +202,7 @@ noStyleParser = CONTEXT NoStyle <$> extractNonStyledText
             <|> try (many1 (noneOf "["))
             )
         case someChar of
-            Nothing   -> runInlineParserM content
+            Nothing   -> runItemParserM content
             -- Check if ahead content can be parsed as bold text
             Just "[[" -> checkWith "[[" boldParser content
             -- Check if ahead content can be parsed as custom styled text
@@ -220,7 +219,7 @@ noStyleParser = CONTEXT NoStyle <$> extractNonStyledText
     checkWith symbolStr parser content' = do
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
-            then runInlineParserM content'
+            then runItemParserM content'
             else continue symbolStr (nub symbolStr) content'
 
     continue :: String -> String -> String -> Parser [Segment]
@@ -230,7 +229,7 @@ noStyleParser = CONTEXT NoStyle <$> extractNonStyledText
         go $ curr <> someSymbol <> rest
 
 -- | Parser for 'CODENOTATION'
-codeNotationParser :: Parser Context
+codeNotationParser :: Parser InlineBlock
 codeNotationParser = do
     content <- between (char '`') (char '`') $ many1 (noneOf "`")
     return $ CODE_NOTATION $ fromString content
@@ -242,8 +241,8 @@ codeNotationParser = do
 -- This is causing infinite loop
 -- >>> parse boldParser' "Bold parser" "[[This is bold text]]"
 -- I'm guessing there's a bug in 'textParser'
--- boldParser' :: Parser Context
+-- boldParser' :: Parser InlineBlock
 -- boldParser' = do
 --     _         <- string "[["
 --     paragraph <- manyTill segmentParser (try $ string "]]")
---     return $ Context Bold paragraph
+--     return $ InlineBlock Bold paragraph

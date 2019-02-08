@@ -15,13 +15,13 @@ import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..))
 
-import           Types                 (Block (..), Context (..),
+import           Types                 (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..), Url (..),
                                         isCodeNotation, isLink, isSimpleText)
 
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
-                                        genRandomText, getHeadContext,
+                                        genRandomText, getHeadInlineBlock,
                                         getHeadSegment, getParagraph)
 
 -- | Test suites for 'Segment'
@@ -95,19 +95,19 @@ codeNotationSpec =
     describe "Code notation" $ do
         prop "should be able to parser code section as CODE_NOTATION" $
             \(codeNotation :: CodeNotationSegment) ->
-                checkScrapbox codeNotation isCodeNotation getHeadContext
+                checkScrapbox codeNotation isCodeNotation getHeadInlineBlock
 
         prop "should preserve its content" $
             \(codeNotation :: CodeNotationSegment) ->
                 checkScrapbox codeNotation
                     (\codeText -> codeText == getCodeNotationSegment codeNotation)
                     (\content -> do
-                        ctx                      <- getHeadContext content
-                        (CODE_NOTATION codeText) <- getCodeNotationText ctx
+                        inline                   <- getHeadInlineBlock content
+                        (CODE_NOTATION codeText) <- getCodeNotationText inline
                         return codeText
                     )
   where
-    getCodeNotationText :: Context -> Maybe Context
+    getCodeNotationText :: InlineBlock -> Maybe InlineBlock
     getCodeNotationText codeNotation@(CODE_NOTATION _) = Just codeNotation
     getCodeNotationText _                              = Nothing
 
@@ -154,14 +154,14 @@ plainTextSpec = describe "Plain text" $ do
 testSegment :: (CommonMark section) => section -> Bool
 testSegment someSegment =
     checkScrapbox someSegment
-        (\(content', ctxs, segments) ->
+        (\(content', inlines, segments) ->
                length content' == 1
-            && length ctxs     == 1
+            && length inlines     == 1
             && length segments == 1
         )
         (\content -> do
             blockContent                 <- headMaybe content
-            (PARAGRAPH (ScrapText ctxs)) <- getParagraph blockContent
-            (CONTEXT _ segments)         <- headMaybe ctxs
-            return (content, ctxs, segments)
+            (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
+            (ITEM _ segments)         <- headMaybe inlines
+            return (content, inlines, segments)
         )

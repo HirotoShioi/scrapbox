@@ -8,7 +8,7 @@ module TestCommonMark.Utils
     , checkScrapbox
     , genPrintableText
     , getHeadSegment
-    , getHeadContext
+    , getHeadInlineBlock
     , getParagraph
     , genRandomText
     , genPrintableUrl
@@ -21,7 +21,7 @@ import qualified RIO.Text        as T
 import           Test.QuickCheck (Gen, elements, listOf1)
 
 import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
-import           Types           (Block (..), Context (..), ScrapText (..),
+import           Types           (Block (..), InlineBlock (..), ScrapText (..),
                                   Scrapbox (..), Segment)
 
 --------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ genPrintableText = T.unwords <$> listOf1 genRandomText
 
 -- | Generate random text
 genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1 
+genRandomText = fmap fromString <$> listOf1
     $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 -- | Generate random url
@@ -73,14 +73,14 @@ getParagraph _                       = Nothing
 -- | Extract heed segment of a given list of blocks
 getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
-    blockContent               <- headMaybe blocks
-    PARAGRAPH (ScrapText ctxs) <- getParagraph blockContent
-    CONTEXT _ segments         <- headMaybe ctxs
+    blockContent                  <- headMaybe blocks
+    PARAGRAPH (ScrapText inlines) <- getParagraph blockContent
+    ITEM _ segments               <- headMaybe inlines
     headMaybe segments
 
 -- | Extract heed segment of a given list of blocks
-getHeadContext :: [Block] -> Maybe Context
-getHeadContext blocks = do
-    blockContent               <- headMaybe blocks
-    PARAGRAPH (ScrapText ctxs) <- getParagraph blockContent
-    headMaybe ctxs
+getHeadInlineBlock :: [Block] -> Maybe InlineBlock
+getHeadInlineBlock blocks = do
+    blockContent                  <- headMaybe blocks
+    PARAGRAPH (ScrapText inlines) <- getParagraph blockContent
+    headMaybe inlines

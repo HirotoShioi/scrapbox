@@ -35,9 +35,10 @@ import           Constructors           (blockQuote, bold, bulletPoint,
                                          italic, link, noStyle, paragraph,
                                          scrapbox, text, thumbnail)
 import           Render                 (renderPretty)
-import           Types                  as Scrapbox (Block (..), Context (..),
+import           Types                  as Scrapbox (Block (..),
+                                                     InlineBlock (..),
                                                      Scrapbox (..), Segment,
-                                                     concatContext,
+                                                     concatInline,
                                                      concatScrapText)
 
 import           CommonMark.TableParser (parseTable)
@@ -110,7 +111,7 @@ parseNode SectionHeading node = scrapbox $ applyLinebreak $ toBlocks node
 -- SOFTBREAK
 --
 -- Others like STRONG and TEXT have PARAGRAPH as an parent node so it is very important
--- that the toContext is implemented correctly.
+-- that the toInlineBlock is implemented correctly.
 toBlocks :: Node -> [Block]
 toBlocks (Node _ nodeType contents) = case nodeType of
     C.PARAGRAPH                -> parseParagraph contents
@@ -130,7 +131,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" htmlContent]
     C.IMAGE url _              -> [thumbnail url]
     C.HTML_INLINE htmlContent  -> [codeBlock "html" htmlContent]
-    C.BLOCK_QUOTE              -> [blockQuote $ concatMap toContext contents]
+    C.BLOCK_QUOTE              -> [blockQuote $ concatMap toInlineBlock contents]
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
     C.CUSTOM_INLINE _ _        -> parseParagraph contents
@@ -146,20 +147,20 @@ toSegments (Node _ nodeType contents) = case nodeType of
     IMAGE url title  -> [toLink contents url title]
     _                -> concatMap toSegments contents
 
--- | Convert 'Node' into list of 'Context'
+-- | Convert 'Node' into list of 'InlineBlock'
 -- Need state monad to inherit style from parent node
-toContext :: Node -> [Context]
-toContext = concatContext . convertToContext
+toInlineBlock :: Node -> [InlineBlock]
+toInlineBlock = concatInline . convertToInlineBlock
   where
-    convertToContext :: Node -> [Context]
-    convertToContext (Node _ nodeType contents) = case nodeType of
+    convertToInlineBlock :: Node -> [InlineBlock]
+    convertToInlineBlock (Node _ nodeType contents) = case nodeType of
         EMPH             -> [italic (concatMap toSegments contents)]
         STRONG           -> [bold (concatMap toSegments contents)]
         TEXT textContent -> [noStyle [text textContent]]
         CODE codeContent -> [codeNotation codeContent]
         LINK url title   -> [noStyle [toLink contents url title]]
         IMAGE url title  -> [noStyle [toLink contents url title]]
-        _                -> concatMap toContext contents
+        _                -> concatMap toInlineBlock contents
 
 -- | Convert given LINK into 'Segment'
 toLink :: [Node] -> CMark.Url -> Title -> Segment

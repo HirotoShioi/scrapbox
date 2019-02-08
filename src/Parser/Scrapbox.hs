@@ -23,8 +23,8 @@ import           Types                         (Block (..), CodeName (..),
                                                 TableContent (..),
                                                 TableName (..), Url (..))
 
-import           Parser.Inline                 (runInlineParserM)
-import           Parser.Text                   (runScrapTextParserM)
+import           Parser.Item                   (runItemParserM)
+import           Parser.ScrapText              (runScrapTextParserM)
 
 --------------------------------------------------------------------------------
 -- Block parser
@@ -69,7 +69,7 @@ headingParser = do
     str       <- many (noneOf "]")
     _         <- char ']'
     _         <- endOfLine
-    segments  <- runInlineParserM str
+    segments  <- runItemParserM str
     return $ HEADING (Level symbolLen) segments
 
 -- | Parser for 'BULLET_POINT'

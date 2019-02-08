@@ -13,7 +13,7 @@ module Constructors
     , p
     , table
     , thumbnail
-    -- * Context
+    -- * InlineBlock
     , context
     , noStyle
     , bold
@@ -31,10 +31,11 @@ module Constructors
 
 import           RIO   hiding (link)
 
-import           Types (Block (..), CodeName (..), CodeSnippet (..), Content,
-                        Context (..), Level (..), ScrapText (..), Scrapbox (..),
-                        Segment (..), Start (..), Style (..), StyleData (..),
-                        TableContent (..), TableName (..), Url (..))
+import           Types (Block (..), CodeName (..), CodeSnippet (..),
+                        InlineBlock (..), Level (..), ScrapText (..),
+                        Scrapbox (..), Segment (..), Start (..), Style (..),
+                        StyleData (..), TableContent (..), TableName (..),
+                        Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart constructors
@@ -49,7 +50,7 @@ scrapbox = Scrapbox
 --------------------------------------------------------------------------------
 
 -- | Constructors for creating 'BLOCK_QUOTE'
-blockQuote :: [Context] -> Block
+blockQuote :: [InlineBlock] -> Block
 blockQuote = BLOCK_QUOTE . ScrapText
 
 -- | Constructors for creating 'CODE_BLOCK' block
@@ -57,11 +58,11 @@ codeBlock :: Text -> Text -> Block
 codeBlock codeName codeSnippet = CODE_BLOCK (CodeName codeName) (CodeSnippet codeSnippet)
 
 -- | Constructors for creating 'PARAGRAPH' block
-paragraph :: [Context] -> Block
+paragraph :: [InlineBlock] -> Block
 paragraph = PARAGRAPH . ScrapText
 
 -- | Constructor for creating 'PARAGRAPH' block, synonym of 'paragraph'
-p :: [Context] -> Block
+p :: [InlineBlock] -> Block
 p = paragraph
 
 -- | Constructors for creating 'TABLE' block
@@ -73,7 +74,7 @@ thumbnail :: Text -> Block
 thumbnail url = THUMBNAIL (Url url)
 
 -- | Constructors for creating 'HEADING' with given level and content
-heading :: Int -> Content -> Block
+heading :: Int -> [Segment] -> Block
 heading level = HEADING (Level level)
 
 -- | Constructors for creating 'BULLET_POINT' block with given start and content
@@ -85,35 +86,35 @@ lineBreak :: Block
 lineBreak = LINEBREAK
 
 --------------------------------------------------------------------------------
--- Context
+-- InlineBlock
 --------------------------------------------------------------------------------
 
 -- | Create context wigh given 'Style' and 'Content'
-context :: Style -> Content -> Context
-context = CONTEXT
+context :: Style -> [Segment] -> InlineBlock
+context = ITEM
 
--- | Creates 'Context' with no style
-noStyle :: [Segment] -> Context
-noStyle = CONTEXT NoStyle
+-- | Creates 'InlineBlock' with no style
+noStyle :: [Segment] -> InlineBlock
+noStyle = ITEM NoStyle
 
--- | Create 'Context' with bold style
-bold :: [Segment] -> Context
-bold = CONTEXT Bold
+-- | Create 'InlineBlock' with bold style
+bold :: [Segment] -> InlineBlock
+bold = ITEM Bold
 
--- | Creates 'Context' with italic style
-italic :: [Segment] -> Context
-italic = CONTEXT Italic
+-- | Creates 'InlineBlock' with italic style
+italic :: [Segment] -> InlineBlock
+italic = ITEM Italic
 
--- | Creates 'Context' with strikethrough style
-strikeThrough :: [Segment] -> Context
-strikeThrough = CONTEXT StrikeThrough
+-- | Creates 'InlineBlock' with strikethrough style
+strikeThrough :: [Segment] -> InlineBlock
+strikeThrough = ITEM StrikeThrough
 
--- | Creates 'Context' wigh given 'StyleData' and 'Segment'
-customStyle :: StyleData -> [Segment] -> Context
-customStyle sData = CONTEXT (CustomStyle sData)
+-- | Creates 'InlineBlock' wigh given 'StyleData' and 'Segment'
+customStyle :: StyleData -> [Segment] -> InlineBlock
+customStyle sData = ITEM (CustomStyle sData)
 
 -- | Creates 'CODE_NOTATION' segment with given 'Text'
-codeNotation :: Text -> Context
+codeNotation :: Text -> InlineBlock
 codeNotation = CODE_NOTATION
 
 --------------------------------------------------------------------------------

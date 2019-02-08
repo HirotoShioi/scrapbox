@@ -21,8 +21,8 @@ module Render
 import           RIO
 import qualified RIO.Text as T
 
-import           Types    (Block (..), CodeName (..), CodeSnippet (..), Content,
-                           Context (..), Level (..), ScrapText (..),
+import           Types    (Block (..), CodeName (..), CodeSnippet (..),
+                           InlineBlock (..), Level (..), ScrapText (..),
                            Scrapbox (..), Segment (..), Start (..), Style (..),
                            StyleData (..), TableContent (..), TableName (..),
                            Url (..))
@@ -64,17 +64,17 @@ renderBlock = \case
 
 -- | Render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
-renderText (ScrapText ctxs) = 
-    foldr (\scrap acc-> renderScrapText scrap <> acc) mempty ctxs
+renderText (ScrapText inlines) =
+    foldr (\scrap acc-> renderScrapText scrap <> acc) mempty inlines
 
--- | Render given 'Context' into 'Text'
-renderScrapText :: Context -> Text
-renderScrapText (CONTEXT style content) = renderWithStyle style content
+-- | Render given 'InlineBlock' into 'Text'
+renderScrapText :: InlineBlock -> Text
+renderScrapText (ITEM style content)    = renderWithStyle style content
 renderScrapText (CODE_NOTATION content) = "`" <> content <> "`"
 
 -- | Render given 'Content' to 'Text'
-renderContent :: Content -> Text
-renderContent = foldr (\ctx acc -> renderSegment ctx <> acc) mempty
+renderContent :: [Segment] -> Text
+renderContent = foldr (\inline acc -> renderSegment inline <> acc) mempty
   where
     renderSegment :: Segment -> Text
     renderSegment = \case
@@ -94,14 +94,14 @@ renderCodeBlock (CodeName name) (CodeSnippet code) = do
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
-        renderdTable = map 
+        renderdTable = map
                        (foldr (\someText acc -> "\t" <> someText <> acc) mempty)
                        content
     in title <> renderdTable
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start num) = 
+renderBulletPoint (Start num) =
     concatMap (map (\text -> T.replicate num "\t" <> text) . renderBlock)
 
 -- | Add an block to a given renderd text
@@ -109,22 +109,22 @@ blocked :: Text -> Text
 blocked content = "[" <> content <> "]"
 
 -- | Render with style
-renderWithStyle :: Style -> Content -> Text
-renderWithStyle style ctx = case style of
-    NoStyle -> renderContent ctx
+renderWithStyle :: Style -> [Segment] -> Text
+renderWithStyle style inline = case style of
+    NoStyle -> renderContent inline
     Bold ->
         let boldStyle = StyleData 0 True False False
-        in renderCustomStyle boldStyle ctx
+        in renderCustomStyle boldStyle inline
     Italic ->
         let italicStyle = StyleData 0 False True False
-        in renderCustomStyle italicStyle ctx
+        in renderCustomStyle italicStyle inline
     StrikeThrough ->
         let strikeThroughStyle = StyleData 0 False False True
-        in renderCustomStyle strikeThroughStyle ctx
-    CustomStyle customStyle -> renderCustomStyle customStyle ctx
-    UserStyle userStyle -> "[" <> userStyle <> " " <> renderContent ctx <> "]"
+        in renderCustomStyle strikeThroughStyle inline
+    CustomStyle customStyle -> renderCustomStyle customStyle inline
+    UserStyle userStyle -> "[" <> userStyle <> " " <> renderContent inline <> "]"
 
-renderCustomStyle :: StyleData -> Content -> Text
+renderCustomStyle :: StyleData -> [Segment] -> Text
 renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =
     let italicSymbol         = if isItalic then "/" else mempty
         strikeThroughSymbol  = if isStrikeThrough then "-" else mempty
@@ -140,7 +140,7 @@ renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
     in blocked $ combinedSyntax <> renderContent content
 
 -- | Render 'HEADING' block
-renderHeading :: Level -> Content -> Text
+renderHeading :: Level -> [Segment] -> Text
 renderHeading (Level headerSize) content =
     let style = StyleData headerSize False False False
     in renderCustomStyle style content

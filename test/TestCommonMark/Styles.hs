@@ -20,7 +20,7 @@ import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..))
 
-import           Types                 (Block (..), Context (..),
+import           Types                 (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..),
                                         Style (..), isSimpleText)
 
@@ -72,21 +72,21 @@ checkStyledTextContent styledText =
         )
   where
     getText :: Segment -> Maybe Segment
-    getText segment = 
+    getText segment =
         if isSimpleText segment
         then Just segment
         else Nothing
 
-getHeadContext :: [Block] -> Maybe Style
-getHeadContext blocks = do
+getHeadInlineBlock :: [Block] -> Maybe Style
+getHeadInlineBlock blocks = do
     blockContent                 <- headMaybe blocks
-    (PARAGRAPH (ScrapText ctxs)) <- getParagraph blockContent
-    ctx                          <- headMaybe ctxs
-    getStyle ctx
+    (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
+    inline                          <- headMaybe inlines
+    getStyle inline
   where
-    getStyle :: Context -> Maybe Style
-    getStyle (CONTEXT style _) = Just style
-    getStyle _                 = Nothing
+    getStyle :: InlineBlock -> Maybe Style
+    getStyle (ITEM style _) = Just style
+    getStyle _              = Nothing
 
 --------------------------------------------------------------------------------
 -- No style
@@ -101,7 +101,7 @@ noStyleTextSpec =
                checkScrapbox
                  noStyleText
                  (== NoStyle)
-                 getHeadContext
+                 getHeadInlineBlock
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
 
@@ -117,7 +117,7 @@ boldTextSpec = describe "Bold text" $ do
             checkScrapbox
                 boldText
                 (== Bold)
-                getHeadContext
+                getHeadInlineBlock
     prop "should preserve its content" $
         \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
 
@@ -133,6 +133,6 @@ italicTextSpec = describe "Italic text" $ do
             checkScrapbox
                 italicText
                 (== Italic)
-                getHeadContext
+                getHeadInlineBlock
     prop "should preserve its content" $
         \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText
