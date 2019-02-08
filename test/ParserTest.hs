@@ -20,7 +20,7 @@ import           Test.QuickCheck.Monadic (assert, monadicIO)
 import           Text.Parsec             (ParseError)
 
 import           Parser.Item             (runItemParser)
-import           Parser.Scrapbox         (runScrapboxParser)
+import           Parser.Scrapbox         (parseScrapbox)
 import           Parser.ScrapText        (runScrapTextParser)
 import           Types                   (Block (..), CodeName (..),
                                           CodeSnippet (..), InlineBlock (..),
@@ -114,11 +114,11 @@ scrapTextParserSpec =
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
     describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
-        shouldParseSpec runScrapboxParser
+        shouldParseSpec parseScrapbox
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
             \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runScrapboxParser $ getNonEmptyPrintableString someText
+                let eParseredText = parseScrapbox $ getNonEmptyPrintableString someText
 
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \(Scrapbox blocks) ->
@@ -127,19 +127,19 @@ scrapboxParserSpec =
         describe "Parsing \"syntax\" page with scrapbox parser" $
           modifyMaxSuccess (const 1) $ do
             it "should parse section1 as expected" $
-                propParseAsExpected example1 expected1 runScrapboxParser
+                propParseAsExpected example1 expected1 parseScrapbox
 
             it "should parse section2 as expected" $
-                propParseAsExpected example2 expected2 runScrapboxParser
+                propParseAsExpected example2 expected2 parseScrapbox
 
             it "should parse section3 as expected" $
-                propParseAsExpected example3 expected3 runScrapboxParser
+                propParseAsExpected example3 expected3 parseScrapbox
 
             it "should parse section4 as expected" $
-                propParseAsExpected example4 expected4 runScrapboxParser
+                propParseAsExpected example4 expected4 parseScrapbox
 
             it "should parse section5 as expected" $
-                propParseAsExpected example5 expected5 runScrapboxParser
+                propParseAsExpected example5 expected5 parseScrapbox
   where
     example1 :: String
     example1 = unlines [

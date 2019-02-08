@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Parser.Scrapbox
-    ( runScrapboxParser
+    ( parseScrapbox
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -136,8 +136,8 @@ scrapboxParser :: Parser Scrapbox
 scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
-runScrapboxParser :: String -> Either ParseError Scrapbox
-runScrapboxParser = parse scrapboxParser "Scrapbox parser"
+parseScrapbox :: String -> Either ParseError Scrapbox
+parseScrapbox = parse scrapboxParser "Scrapbox parser"
 
 --------------------------------------------------------------------------------
 -- Helper function
