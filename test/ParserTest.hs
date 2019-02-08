@@ -22,7 +22,6 @@ import           Text.Parsec             (ParseError)
 import           Parser.Item             (runItemParser)
 import           Parser.Scrapbox         (runScrapboxParser)
 import           Parser.ScrapText        (runScrapTextParser)
-
 import           Types                   (Block (..), CodeName (..),
                                           CodeSnippet (..), InlineBlock (..),
                                           Level (..), ScrapText (..),

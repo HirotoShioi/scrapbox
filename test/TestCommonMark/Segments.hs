@@ -15,14 +15,13 @@ import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..))
 
-import           Types                 (Block (..), InlineBlock (..),
-                                        ScrapText (..), Segment (..), Url (..),
-                                        isCodeNotation, isLink, isSimpleText)
-
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getHeadInlineBlock,
                                         getHeadSegment, getParagraph)
+import           Types                 (Block (..), InlineBlock (..),
+                                        ScrapText (..), Segment (..), Url (..),
+                                        isCodeNotation, isLink, isSimpleText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec

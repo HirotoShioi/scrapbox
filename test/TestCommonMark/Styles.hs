@@ -20,13 +20,12 @@ import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..))
 
-import           Types                 (Block (..), InlineBlock (..),
-                                        ScrapText (..), Segment (..),
-                                        Style (..), isSimpleText)
-
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, getHeadSegment,
                                         getParagraph)
+import           Types                 (Block (..), InlineBlock (..),
+                                        ScrapText (..), Segment (..),
+                                        Style (..), isSimpleText)
 
 -- | Test suites for parsing styled text
 styleSpec :: Spec

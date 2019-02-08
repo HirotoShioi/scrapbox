@@ -19,15 +19,14 @@ import           Test.QuickCheck       (Arbitrary (..), choose, elements,
                                         listOf1, vectorOf)
 
 import           Render                (renderBlock, renderContent, renderText)
+import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
+                                        genPrintableText, genPrintableUrl,
+                                        genRandomText, getParagraph)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Level (..), TableContent (..), Url (..),
                                         isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
-
-import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        genPrintableText, genPrintableUrl,
-                                        genRandomText, getParagraph)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec
