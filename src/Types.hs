@@ -123,7 +123,9 @@ newtype ScrapText = ScrapText [Context]
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Context is an content which are associated with an 'Style'
-data Context = Context !Style !Content
+data Context 
+    = CONTEXT !Style !Content
+    | CODE_NOTATION !Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Content is list of 'Segment's
@@ -131,9 +133,7 @@ type Content = [Segment]
 
 -- | Segment
 data Segment
-    = CODE_NOTATION !Text
-    -- ^ CodeNotation
-    | HASHTAG !Text
+    = HASHTAG !Text
     -- ^ Hashtag
     | LINK !(Maybe Text) !Url
     -- ^ Link, it can have named as href
@@ -191,8 +191,9 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
     verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
 
     mkVerboseContext :: Context -> [Context]
-    mkVerboseContext (Context style segments) =
-        foldr (\segment acc -> [Context style [segment]] <> acc) mempty segments
+    mkVerboseContext (CONTEXT style segments) =
+        foldr (\segment acc -> [CONTEXT style [segment]] <> acc) mempty segments
+    mkVerboseContext others                   = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure
 unverbose :: Scrapbox -> Scrapbox
@@ -206,16 +207,23 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
         other                  -> other
 
     unVerboseScrapText :: ScrapText -> ScrapText
-    unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy
-        (\(Context style1 _) (Context style2 _) -> style1 == style2) ctxs
+    unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy isSameStyle ctxs
+
+    isSameStyle :: Context -> Context -> Bool
+    isSameStyle (CONTEXT style1 _) (CONTEXT style2 _) = style1 == style2
+    isSameStyle _ _                                   = False
 
 -- | Concatinate 'CONTEXT' with same style
 concatContext :: [Context] -> [Context]
 concatContext []       = []
 concatContext [ctx]    = [ctx]
-concatContext (c1@(Context style1 ctx1):c2@(Context style2 ctx2):rest)
-    | style1 == style2 = concatContext (Context style1 (ctx1 <> ctx2) : rest)
+concatContext (c1@(CONTEXT style1 ctx1):c2@(CONTEXT style2 ctx2):rest)
+    | style1 == style2 = concatContext (CONTEXT style1 (ctx1 <> ctx2) : rest)
     | otherwise        = c1 : c2 : concatContext rest
+concatContext (CODE_NOTATION txt : rest) = 
+    CODE_NOTATION txt : concatContext rest
+concatContext (c1@(CONTEXT _ _) : c2@(CODE_NOTATION _) : rest) = 
+    c1 : c2 : concatContext rest
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
@@ -224,7 +232,7 @@ concatScrapText (ScrapText ctx1) (ScrapText ctx2) = ScrapText $ concatContext $ 
 
 -- | Context with no content
 emptyContext :: Context
-emptyContext = Context NoStyle []
+emptyContext = CONTEXT NoStyle []
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -271,7 +279,7 @@ isLink (LINK _ _) = True
 isLink _          = False
 
 -- | Checks whether given 'Segment' is 'CODE_NOTATION'
-isCodeNotation :: Segment -> Bool
+isCodeNotation :: Context -> Bool
 isCodeNotation (CODE_NOTATION _) = True
 isCodeNotation _                 = False
 

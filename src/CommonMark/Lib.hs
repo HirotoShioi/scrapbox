@@ -119,7 +119,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.EMPH                     -> [paragraph [italic (concatMap toSegments contents)]]
     C.STRONG                   -> [paragraph [bold (concatMap toSegments contents)]]
     C.TEXT textContent         -> [paragraph [noStyle [text textContent]]]
-    C.CODE codeContent         -> [paragraph [noStyle [codeNotation codeContent]]]
+    C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo code]
     C.LIST _                   -> [toBulletPoint contents]
     C.ITEM                     -> concatMap toBlocks contents
@@ -141,7 +141,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
 toSegments :: Node -> [Segment]
 toSegments (Node _ nodeType contents) = case nodeType of
     TEXT textContent -> [text textContent]
-    CODE codeContent -> [codeNotation codeContent]
+    -- CODE codeContent -> [text codeContent] What's going to happen?
     LINK url title   -> [toLink contents url title]
     IMAGE url title  -> [toLink contents url title]
     _                -> concatMap toSegments contents
@@ -156,7 +156,7 @@ toContext = concatContext . convertToContext
         EMPH             -> [italic (concatMap toSegments contents)]
         STRONG           -> [bold (concatMap toSegments contents)]
         TEXT textContent -> [noStyle [text textContent]]
-        CODE codeContent -> [noStyle [codeNotation codeContent]]
+        CODE codeContent -> [codeNotation codeContent]
         LINK url title   -> [noStyle [toLink contents url title]]
         IMAGE url title  -> [noStyle [toLink contents url title]]
         _                -> concatMap toContext contents

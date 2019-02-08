@@ -90,27 +90,31 @@ lineBreak = LINEBREAK
 
 -- | Create context wigh given 'Style' and 'Content'
 context :: Style -> Content -> Context
-context = Context
+context = CONTEXT
 
 -- | Creates 'Context' with no style
 noStyle :: [Segment] -> Context
-noStyle = Context NoStyle
+noStyle = CONTEXT NoStyle
 
 -- | Create 'Context' with bold style
 bold :: [Segment] -> Context
-bold = Context Bold
+bold = CONTEXT Bold
 
 -- | Creates 'Context' with italic style
 italic :: [Segment] -> Context
-italic = Context Italic
+italic = CONTEXT Italic
 
 -- | Creates 'Context' with strikethrough style
 strikeThrough :: [Segment] -> Context
-strikeThrough = Context StrikeThrough
+strikeThrough = CONTEXT StrikeThrough
 
 -- | Creates 'Context' wigh given 'StyleData' and 'Segment'
 customStyle :: StyleData -> [Segment] -> Context
-customStyle sData = Context (CustomStyle sData)
+customStyle sData = CONTEXT (CustomStyle sData)
+
+-- | Creates 'CODE_NOTATION' segment with given 'Text'
+codeNotation :: Text -> Context
+codeNotation = CODE_NOTATION
 
 --------------------------------------------------------------------------------
 -- Segment
@@ -119,10 +123,6 @@ customStyle sData = Context (CustomStyle sData)
 -- | Creates 'TEXT' segment with given 'Text'
 text :: Text -> Segment
 text = TEXT
-
--- | Creates 'CODE_NOTATION' segment with given 'Text'
-codeNotation :: Text -> Segment
-codeNotation = CODE_NOTATION
 
 -- | Creates 'HASHTAG' segment with given 'Text'
 hashtag :: Text -> Segment
