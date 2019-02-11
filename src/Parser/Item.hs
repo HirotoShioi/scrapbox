@@ -1,10 +1,10 @@
-{-| Inline parser module
+{-| Item parser module
 -}
 
-module Parser.Inline
-    ( runInlineParser
-    , runInlineParserM
-    , inlineParser
+module Parser.Item
+    ( runItemParser
+    , runItemParserM
+    , itemParser
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -130,8 +130,8 @@ segmentParser =
     <?> "failed to parse segment"
 
 -- | Parser for inline text
-inlineParser :: Parser [Segment]
-inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
+itemParser :: Parser [Segment]
+itemParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
 
 -- | Run inline text parser on given 'String'
 --
@@ -146,13 +146,13 @@ inlineParser = manyTill segmentParser eof-- May want to switch over to many1 to 
 --     , HashTag "someHashtag"
 --     ]
 -- @
-runInlineParser :: String -> Either ParseError [Segment]
-runInlineParser = parse inlineParser "Inline text parser"
+runItemParser :: String -> Either ParseError [Segment]
+runItemParser = parse itemParser "Inline text parser"
 
 -- | Monadic version of 'runInlineParser'
-runInlineParserM :: String -> Parser [Segment]
-runInlineParserM content =
+runItemParserM :: String -> Parser [Segment]
+runItemParserM content =
     eitherM
         (\_ -> unexpected "Failed to parse inline text")
         return
-        (return $ runInlineParser content)
+        (return $ runItemParser content)

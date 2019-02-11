@@ -16,18 +16,16 @@ module Types
     , TableName(..)
     , Url(..)
     , Segment(..)
-    , Content
-    , Context(..)
+    , InlineBlock(..)
     , ScrapText(..)
     , Style(..)
     , StyleData(..)
     , TableContent(..)
     -- * Helper functions
-    , concatContext
+    , concatInline
     , concatScrapText
     , verbose
     , unverbose
-    , emptyContext
     , emptyStyle
     -- * Predicates
     , isBlockQuote
@@ -104,7 +102,7 @@ data Block
     -- ^ Bulletpoint styled line
     | CODE_BLOCK !CodeName !CodeSnippet
     -- ^ Code blocks
-    | HEADING !Level !Content
+    | HEADING !Level ![Segment]
     -- ^ Header
     | PARAGRAPH !ScrapText
     -- ^ Paragraph
@@ -118,18 +116,18 @@ data Block
 -- ScrapText
 --------------------------------------------------------------------------------
 
--- | ScrapText are consisted by list of 'Context'
-newtype ScrapText = ScrapText [Context]
+-- | ScrapText are consisted by list of 'InlineBlock'
+newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
--- | Context is an content which are associated with an 'Style'
-data Context 
-    = CONTEXT !Style !Content
+-- | InlineBlock
+data InlineBlock
+    = ITEM !Style ![Segment]
+    -- ^ ITEM are blocks which can have styles
     | CODE_NOTATION !Text
+    -- ^ Code notation
+    -- | MATH_EXPRESSION !TEXT (TODO)
     deriving (Eq, Show, Generic, Read, Ord)
-
--- | Content is list of 'Segment's
-type Content = [Segment]
 
 -- | Segment
 data Segment
@@ -188,12 +186,12 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
         other                  -> other
 
     verboseScrapText :: ScrapText -> ScrapText
-    verboseScrapText (ScrapText ctxs) = ScrapText $ concatMap mkVerboseContext ctxs
+    verboseScrapText (ScrapText inlines) = ScrapText $ concatMap mkVerboseInlineBlock inlines
 
-    mkVerboseContext :: Context -> [Context]
-    mkVerboseContext (CONTEXT style segments) =
-        foldr (\segment acc -> [CONTEXT style [segment]] <> acc) mempty segments
-    mkVerboseContext others                   = [others]
+    mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
+    mkVerboseInlineBlock (ITEM style segments) =
+        foldr (\segment acc -> [ITEM style [segment]] <> acc) mempty segments
+    mkVerboseInlineBlock others                = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure
 unverbose :: Scrapbox -> Scrapbox
@@ -207,32 +205,28 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
         other                  -> other
 
     unVerboseScrapText :: ScrapText -> ScrapText
-    unVerboseScrapText (ScrapText ctxs) = ScrapText $ concatMap concatContext $ groupBy isSameStyle ctxs
+    unVerboseScrapText (ScrapText inlines) = ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
 
-    isSameStyle :: Context -> Context -> Bool
-    isSameStyle (CONTEXT style1 _) (CONTEXT style2 _) = style1 == style2
-    isSameStyle _ _                                   = False
+    isSameStyle :: InlineBlock -> InlineBlock -> Bool
+    isSameStyle (ITEM style1 _) (ITEM style2 _) = style1 == style2
+    isSameStyle _ _                             = False
 
--- | Concatinate 'CONTEXT' with same style
-concatContext :: [Context] -> [Context]
-concatContext []       = []
-concatContext [ctx]    = [ctx]
-concatContext (c1@(CONTEXT style1 ctx1):c2@(CONTEXT style2 ctx2):rest)
-    | style1 == style2 = concatContext (CONTEXT style1 (ctx1 <> ctx2) : rest)
-    | otherwise        = c1 : c2 : concatContext rest
-concatContext (CODE_NOTATION txt : rest) = 
-    CODE_NOTATION txt : concatContext rest
-concatContext (c1@(CONTEXT _ _) : c2@(CODE_NOTATION _) : rest) = 
-    c1 : c2 : concatContext rest
+-- | Concatinate 'ITEM' with same style
+concatInline :: [InlineBlock] -> [InlineBlock]
+concatInline []       = []
+concatInline [inline]    = [inline]
+concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
+    | style1 == style2 = concatInline (ITEM style1 (inline1 <> inline2) : rest)
+    | otherwise        = c1 : c2 : concatInline rest
+concatInline (CODE_NOTATION txt : rest) =
+    CODE_NOTATION txt : concatInline rest
+concatInline (c1@(ITEM _ _) : c2@(CODE_NOTATION _) : rest) =
+    c1 : c2 : concatInline rest
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
-concatScrapText (ScrapText ctx1) (ScrapText ctx2) = ScrapText $ concatContext $ ctx1 <> ctx2
-
--- | Context with no content
-emptyContext :: Context
-emptyContext = CONTEXT NoStyle []
+concatScrapText (ScrapText inline1) (ScrapText inline2) = ScrapText $ concatInline $ inline1 <> inline2
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -279,7 +273,7 @@ isLink (LINK _ _) = True
 isLink _          = False
 
 -- | Checks whether given 'Segment' is 'CODE_NOTATION'
-isCodeNotation :: Context -> Bool
+isCodeNotation :: InlineBlock -> Bool
 isCodeNotation (CODE_NOTATION _) = True
 isCodeNotation _                 = False
 

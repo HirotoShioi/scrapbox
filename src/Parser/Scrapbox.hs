@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Parser.Scrapbox
-    ( runScrapboxParser
+    ( parseScrapbox
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
@@ -17,14 +17,13 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 oneOf, parse, sepBy1, space,
                                                 string, try, unexpected, (<|>))
 
+import           Parser.Item                   (runItemParserM)
+import           Parser.ScrapText              (runScrapTextParserM)
 import           Types                         (Block (..), CodeName (..),
                                                 CodeSnippet (..), Level (..),
                                                 Scrapbox (..), Start (..),
                                                 TableContent (..),
                                                 TableName (..), Url (..))
-
-import           Parser.Inline                 (runInlineParserM)
-import           Parser.Text                   (runScrapTextParserM)
 
 --------------------------------------------------------------------------------
 -- Block parser
@@ -69,7 +68,7 @@ headingParser = do
     str       <- many (noneOf "]")
     _         <- char ']'
     _         <- endOfLine
-    segments  <- runInlineParserM str
+    segments  <- runItemParserM str
     return $ HEADING (Level symbolLen) segments
 
 -- | Parser for 'BULLET_POINT'
@@ -137,8 +136,8 @@ scrapboxParser :: Parser Scrapbox
 scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
-runScrapboxParser :: String -> Either ParseError Scrapbox
-runScrapboxParser = parse scrapboxParser "Scrapbox parser"
+parseScrapbox :: String -> Either ParseError Scrapbox
+parseScrapbox = parse scrapboxParser "Scrapbox parser"
 
 --------------------------------------------------------------------------------
 -- Helper function
