@@ -19,11 +19,12 @@ module Constructors
     , bold
     , italic
     , strikeThrough
-    , customStyle
+    , mathExpr
+    , codeNotation
     -- * For creating custom style
     , styleData
+    , customStyle
     -- * Segment
-    , codeNotation
     , hashtag
     , link
     , text
@@ -113,9 +114,13 @@ strikeThrough = ITEM StrikeThrough
 customStyle :: StyleData -> [Segment] -> InlineBlock
 customStyle sData = ITEM (CustomStyle sData)
 
--- | Creates 'CODE_NOTATION' segment with given 'Text'
+-- | Creates 'CODE_NOTATION' inline block with given 'Text'
 codeNotation :: Text -> InlineBlock
 codeNotation = CODE_NOTATION
+
+-- | Creates 'CODE_NOTATION' inline block with given 'Text'
+mathExpr :: Text -> InlineBlock
+mathExpr = MATH_EXPRESSION
 
 --------------------------------------------------------------------------------
 -- Segment
