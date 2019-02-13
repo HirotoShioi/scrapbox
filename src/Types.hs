@@ -126,7 +126,7 @@ data InlineBlock
     -- ^ ITEM are blocks which can have styles
     | CODE_NOTATION !Text
     -- ^ Code notation
-    -- | MATH_EXPRESSION !TEXT (TODO)
+    | MATH_EXPRESSION !Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Segment
@@ -218,10 +218,7 @@ concatInline [inline]    = [inline]
 concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
     | style1 == style2 = concatInline (ITEM style1 (inline1 <> inline2) : rest)
     | otherwise        = c1 : c2 : concatInline rest
-concatInline (CODE_NOTATION txt : rest) =
-    CODE_NOTATION txt : concatInline rest
-concatInline (c1@(ITEM _ _) : c2@(CODE_NOTATION _) : rest) =
-    c1 : c2 : concatInline rest
+concatInline (a : b : rest) = a : b : concatInline rest
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)

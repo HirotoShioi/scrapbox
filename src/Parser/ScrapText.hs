@@ -68,6 +68,7 @@ scrapTextParser = ScrapText <$> manyTill inlineBlockParser eof
 inlineBlockParser :: Parser InlineBlock
 inlineBlockParser =
         try codeNotationParser
+    <|> try mathExpressionParser
     <|> try boldParser
     <|> try styledTextParser
     <|> try noStyleParser
@@ -233,6 +234,12 @@ codeNotationParser :: Parser InlineBlock
 codeNotationParser = do
     content <- between (char '`') (char '`') $ many1 (noneOf "`")
     return $ CODE_NOTATION $ fromString content
+
+-- | Parser for 'MATH_EXPRESSION'
+mathExpressionParser :: Parser InlineBlock
+mathExpressionParser = do
+    content <- between (string "[$") (char ']') $ many1 (noneOf "]")
+    return $ MATH_EXPRESSION $ fromString content
 
 --------------------------------------------------------------------------------
 -- Needs attention
