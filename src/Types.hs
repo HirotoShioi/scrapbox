@@ -214,10 +214,10 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
 -- | Concatinate 'ITEM' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []       = []
-concatInline [inline]    = [inline]
+concatInline [inline] = [inline]
 concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
     | style1 == style2 = concatInline (ITEM style1 (inline1 <> inline2) : rest)
-    | otherwise        = c1 : c2 : concatInline rest
+    | otherwise        = c1 : concatInline (c2:rest)
 concatInline (a : c@(ITEM _ _) : rest) = a : concatInline (c:rest)
 concatInline (a : b : rest)            = a : b : concatInline rest
 
