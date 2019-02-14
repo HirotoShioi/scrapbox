@@ -32,6 +32,7 @@ module Types
     , isBulletPoint
     , isCodeBlock
     , isCodeNotation
+    , isMathExpr
     , isHeader
     , isLink
     , isParagraph
@@ -270,10 +271,15 @@ isLink :: Segment -> Bool
 isLink (LINK _ _) = True
 isLink _          = False
 
--- | Checks whether given 'Segment' is 'CODE_NOTATION'
+-- | Checks whether given 'InlineBlock' is 'CODE_NOTATION'
 isCodeNotation :: InlineBlock -> Bool
 isCodeNotation (CODE_NOTATION _) = True
 isCodeNotation _                 = False
+
+-- | Checks whether given 'Inline' is 'MATH_EXPRESSION'
+isMathExpr :: InlineBlock -> Bool
+isMathExpr (MATH_EXPRESSION _) = True
+isMathExpr _                   = False
 
 -- | Checks whether given 'Segment' is 'TEXT'
 isSimpleText :: Segment -> Bool

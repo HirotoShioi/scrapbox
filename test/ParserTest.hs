@@ -9,13 +9,15 @@ module ParserTest
     ) where
 
 import           RIO                     hiding (assert)
+import           RIO.List                (headMaybe)
 import qualified RIO.Text                as T
 
 import           Test.Hspec              (Spec, describe, it)
 import           Test.Hspec.QuickCheck   (modifyMaxSuccess, prop)
-import           Test.QuickCheck         (Arbitrary (..), PrintableString (..),
-                                          Property, arbitraryPrintableChar,
-                                          listOf1)
+import           Test.QuickCheck         (Arbitrary (..), Gen,
+                                          PrintableString (..), Property,
+                                          arbitraryPrintableChar, elements,
+                                          listOf1, Testable(..))
 import           Test.QuickCheck.Monadic (assert, monadicIO)
 import           Text.Parsec             (ParseError)
 
@@ -28,7 +30,7 @@ import           Types                   (Block (..), CodeName (..),
                                           Scrapbox (..), Segment (..),
                                           Start (..), Style (..),
                                           TableContent (..), TableName (..),
-                                          Url (..))
+                                          Url (..), isMathExpr)
 import           Utils                   (eitherM, whenRight)
 
 -- | Test specs for scrapbox parser
@@ -85,6 +87,15 @@ scrapTextParserSpec =
 
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
+
+        describe "Math Expressions" $ modifyMaxSuccess (const 200) $
+            prop "Should parse math expression syntax as MATH_EXPRESSION" $
+                \(mathExpr :: MathExpr) ->
+                    checkParsed
+                        mathExpr
+                        runScrapTextParser
+                        (\(ScrapText inlines) -> headMaybe inlines)
+                        isMathExpr
   where
     exampleText :: String
     exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text `code_notation` [* test [link] test [partial]"
@@ -549,3 +560,41 @@ propParseAsExpected example expected parser = monadicIO $ eitherM
     (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
     (\parsedContent -> assert $ parsedContent == expected)
     (return $ parser example)
+
+newtype MathExpr = MathExpr Text
+    deriving Show
+
+instance Arbitrary MathExpr where
+    arbitrary = MathExpr <$> genPrintableText
+
+instance ScrapboxSyntax MathExpr where
+    render (MathExpr txt) = "[$" <> txt <> "]"
+
+class ScrapboxSyntax a where
+    render :: a -> Text
+
+-- | Generate arbitrary Text
+-- this is needed as some characters like
+-- '`' and `>` will be parsed as blockquote, code notation, etc.
+genPrintableText :: Gen Text
+genPrintableText = T.unwords <$> listOf1 genRandomText
+
+-- | Generate random text
+genRandomText :: Gen Text
+genRandomText = fmap fromString <$> listOf1
+    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+
+checkParsed :: (ScrapboxSyntax syntax)
+            => syntax
+            -- ^ Syntax that we want to test on
+            -> (String -> Either ParseError a)
+            -- ^ Parser
+            -> (a -> Maybe b)
+            -- ^ Getter
+            -> (b -> Bool)
+            -- ^ Predicate
+            -> Property
+checkParsed syntax parser getter pre = property $ either
+    (const False)
+    (maybe False pre . getter)
+    (parser $ T.unpack $ render syntax)
