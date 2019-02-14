@@ -5,13 +5,13 @@ module Main where
 
 import           RIO
 
-import           Test.Hspec              (describe, hspec)
-import           Test.Hspec.QuickCheck   (modifyMaxSuccess)
+import           Test.Hspec                    (describe, hspec)
+import           Test.Hspec.QuickCheck         (modifyMaxSuccess)
 
-import           ParserTest              (parserSpec)
-import           TestCommonMark.Blocks   (blockSpec)
-import           TestCommonMark.Segments (segmentSpec)
-import           TestCommonMark.Styles   (styleSpec)
+import           TestCommonMark.Blocks         (blockSpec)
+import           TestCommonMark.Segments       (segmentSpec)
+import           TestCommonMark.Styles         (styleSpec)
+import           TestScrapboxParser.ParserTest (parserSpec)
 
 main :: IO ()
 main = hspec $ do
