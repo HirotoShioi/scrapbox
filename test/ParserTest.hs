@@ -575,6 +575,7 @@ propParseAsExpected example expected parser = monadicIO $ eitherM
     (\parsedContent -> assert $ parsedContent == expected)
     (return $ parser example)
 
+-- | Math expression syntax
 newtype MathExpr = MathExpr Text
     deriving Show
 
@@ -585,6 +586,7 @@ instance ScrapboxSyntax MathExpr where
     render (MathExpr txt)     = "[$" <> txt <> "]"
     getContent (MathExpr txt) = txt
 
+-- | Type class used to render/get content of given syntax
 class ScrapboxSyntax a where
     render     :: a -> Text
     getContent :: a -> Text
@@ -600,6 +602,7 @@ genRandomText :: Gen Text
 genRandomText = fmap fromString <$> listOf1
     $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
+-- | Check parsed
 checkParsed :: (ScrapboxSyntax syntax)
             => syntax
             -- ^ Syntax that we want to test on
@@ -615,6 +618,7 @@ checkParsed syntax parser getter pre = property $ either
     (maybe False pre . getter)
     (parser $ T.unpack $ render syntax)
 
+-- | Test case to check whether the parsed thing still preserves its content
 checkContent :: (ScrapboxSyntax syntax)
              => syntax
              -- ^ Syntax that we want to test on
