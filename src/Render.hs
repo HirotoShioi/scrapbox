@@ -71,6 +71,7 @@ renderText (ScrapText inlines) =
 renderScrapText :: InlineBlock -> Text
 renderScrapText (ITEM style content)    = renderWithStyle style content
 renderScrapText (CODE_NOTATION content) = "`" <> content <> "`"
+renderScrapText (MATH_EXPRESSION expr)  = "[$" <> expr <> "]"
 
 -- | Render given 'Content' to 'Text'
 renderContent :: [Segment] -> Text

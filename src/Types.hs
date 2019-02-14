@@ -32,6 +32,7 @@ module Types
     , isBulletPoint
     , isCodeBlock
     , isCodeNotation
+    , isMathExpr
     , isHeader
     , isLink
     , isParagraph
@@ -126,7 +127,7 @@ data InlineBlock
     -- ^ ITEM are blocks which can have styles
     | CODE_NOTATION !Text
     -- ^ Code notation
-    -- | MATH_EXPRESSION !TEXT (TODO)
+    | MATH_EXPRESSION !Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Segment
@@ -214,14 +215,12 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
 -- | Concatinate 'ITEM' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []       = []
-concatInline [inline]    = [inline]
+concatInline [inline] = [inline]
 concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
     | style1 == style2 = concatInline (ITEM style1 (inline1 <> inline2) : rest)
-    | otherwise        = c1 : c2 : concatInline rest
-concatInline (CODE_NOTATION txt : rest) =
-    CODE_NOTATION txt : concatInline rest
-concatInline (c1@(ITEM _ _) : c2@(CODE_NOTATION _) : rest) =
-    c1 : c2 : concatInline rest
+    | otherwise        = c1 : concatInline (c2:rest)
+concatInline (a : c@(ITEM _ _) : rest) = a : concatInline (c:rest)
+concatInline (a : b : rest)            = a : b : concatInline rest
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
@@ -272,10 +271,15 @@ isLink :: Segment -> Bool
 isLink (LINK _ _) = True
 isLink _          = False
 
--- | Checks whether given 'Segment' is 'CODE_NOTATION'
+-- | Checks whether given 'InlineBlock' is 'CODE_NOTATION'
 isCodeNotation :: InlineBlock -> Bool
 isCodeNotation (CODE_NOTATION _) = True
 isCodeNotation _                 = False
+
+-- | Checks whether given 'Inline' is 'MATH_EXPRESSION'
+isMathExpr :: InlineBlock -> Bool
+isMathExpr (MATH_EXPRESSION _) = True
+isMathExpr _                   = False
 
 -- | Checks whether given 'Segment' is 'TEXT'
 isSimpleText :: Segment -> Bool
