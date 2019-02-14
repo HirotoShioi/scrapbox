@@ -13,7 +13,7 @@ import           Test.QuickCheck         (Arbitrary (..), Gen,
                                           Testable (..), arbitraryPrintableChar,
                                           elements, listOf1)
 import           Test.QuickCheck.Monadic (assert, monadicIO)
-import           Text.Parsec
+import           Text.Parsec             (ParseError)
 
 import           Utils                   (eitherM)
 --------------------------------------------------------------------------------
@@ -45,17 +45,6 @@ propParseAsExpected example expected parser = monadicIO $ eitherM
     (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
     (\parsedContent -> assert $ parsedContent == expected)
     (return $ parser example)
-
--- | Math expression syntax
-newtype MathExpr = MathExpr Text
-    deriving Show
-
-instance Arbitrary MathExpr where
-    arbitrary = MathExpr <$> genPrintableText
-
-instance ScrapboxSyntax MathExpr where
-    render (MathExpr txt)     = "[$" <> txt <> "]"
-    getContent (MathExpr txt) = txt
 
 -- | Type class used to render/get content of given syntax
 class ScrapboxSyntax a where
