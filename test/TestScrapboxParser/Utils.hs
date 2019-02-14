@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Utils 
+module TestScrapboxParser.Utils
     ( NonEmptyPrintableString(..)
     , ScrapboxSyntax(..)
     , propParseAsExpected
