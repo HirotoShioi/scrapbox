@@ -1,7 +1,12 @@
+{-| Test suites for 'runScrapTextParser'
+-}
+
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.ScrapText where
+module TestScrapboxParser.ScrapText
+    ( scrapTextParserSpec
+    ) where
 
 import           RIO                      hiding (assert)
 

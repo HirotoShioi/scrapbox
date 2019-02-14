@@ -1,7 +1,12 @@
+{-| Test suites for 'runItemParser'
+-}
+
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Inline where
+module TestScrapboxParser.Inline
+    ( inlineParserSpec
+    ) where
 
 import           RIO                      hiding (assert)
 

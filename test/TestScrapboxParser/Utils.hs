@@ -1,7 +1,18 @@
+{-| Utility functions used within TestScrapboxParser
+-}
+
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Utils where
+module TestScrapboxParser.Utils 
+    ( NonEmptyPrintableString(..)
+    , ScrapboxSyntax(..)
+    , propParseAsExpected
+    , shouldParseSpec
+    , checkContent
+    , checkParsed
+    , genPrintableText
+    ) where
 
 import           RIO                     hiding (assert)
 
