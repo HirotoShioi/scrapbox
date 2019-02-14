@@ -88,7 +88,7 @@ scrapTextParserSpec =
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
 
-        describe "Math Expressions" $ modifyMaxSuccess (const 200) $
+        describe "Math Expressions" $ modifyMaxSuccess (const 200) $ do
             prop "Should parse math expression syntax as MATH_EXPRESSION" $
                 \(mathExpr :: MathExpr) ->
                     checkParsed
@@ -96,7 +96,21 @@ scrapTextParserSpec =
                         runScrapTextParser
                         (\(ScrapText inlines) -> headMaybe inlines)
                         isMathExpr
+
+            prop "Should preserve its content" $
+                \(mathExpr :: MathExpr) ->
+                    checkContent
+                        mathExpr
+                        runScrapTextParser
+                        (\(ScrapText inlines) -> do
+                            inline  <- headMaybe inlines
+                            getMathExprContent inline
+                        )
   where
+    getMathExprContent :: InlineBlock -> Maybe Text
+    getMathExprContent (MATH_EXPRESSION expr) = Just expr
+    getMathExprContent _                      = Nothing
+
     exampleText :: String
     exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text `code_notation` [* test [link] test [partial]"
 
@@ -568,10 +582,12 @@ instance Arbitrary MathExpr where
     arbitrary = MathExpr <$> genPrintableText
 
 instance ScrapboxSyntax MathExpr where
-    render (MathExpr txt) = "[$" <> txt <> "]"
+    render (MathExpr txt)     = "[$" <> txt <> "]"
+    getContent (MathExpr txt) = txt
 
 class ScrapboxSyntax a where
-    render :: a -> Text
+    render     :: a -> Text
+    getContent :: a -> Text
 
 -- | Generate arbitrary Text
 -- this is needed as some characters like
@@ -598,3 +614,14 @@ checkParsed syntax parser getter pre = property $ either
     (const False)
     (maybe False pre . getter)
     (parser $ T.unpack $ render syntax)
+
+checkContent :: (ScrapboxSyntax syntax)
+             => syntax
+             -- ^ Syntax that we want to test on
+             -> (String -> Either ParseError a)
+             -- ^ Parser
+             -> (a -> Maybe Text)
+             -- ^ Getter
+             -> Property
+checkContent syntax parser getter = 
+    checkParsed syntax parser getter (\txt -> txt == getContent syntax)
