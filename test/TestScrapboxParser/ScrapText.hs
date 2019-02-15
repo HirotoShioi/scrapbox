@@ -23,7 +23,7 @@ import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            propParseAsExpected, shouldParseSpec)
 import           Types                    (InlineBlock (..), ScrapText (..),
                                            Segment (..), Style (..), Url (..),
-                                           isMathExpr)
+                                           isCodeNotation, isMathExpr)
 import           Utils                    (whenRight)
 
 -- | Test spec for scrap text parser
@@ -43,29 +43,11 @@ scrapTextParserSpec =
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
 
-        describe "Math Expressions" $ modifyMaxSuccess (const 200) $ do
-            prop "Should parse math expression syntax as MATH_EXPRESSION" $
-                \(mathExpr :: MathExpr) ->
-                    checkParsed
-                        mathExpr
-                        runScrapTextParser
-                        (\(ScrapText inlines) -> headMaybe inlines)
-                        isMathExpr
+        describe "Indivisual data" $ modifyMaxSuccess (const 200) $ do
+            mathExprSpec
+            codeNotationSpec
 
-            prop "Should preserve its content" $
-                \(mathExpr :: MathExpr) ->
-                    checkContent
-                        mathExpr
-                        runScrapTextParser
-                        (\(ScrapText inlines) -> do
-                            inline  <- headMaybe inlines
-                            getMathExprContent inline
-                        )
   where
-    getMathExprContent :: InlineBlock -> Maybe Text
-    getMathExprContent (MATH_EXPRESSION expr) = Just expr
-    getMathExprContent _                      = Nothing
-
     exampleText :: String
     exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text `code_notation` [* test [link] test [partial]"
 
@@ -96,3 +78,66 @@ instance Arbitrary MathExpr where
 instance ScrapboxSyntax MathExpr where
     render (MathExpr txt)     = "[$" <> txt <> "]"
     getContent (MathExpr txt) = txt
+
+-- math expressions
+mathExprSpec :: Spec
+mathExprSpec = describe "Math Expressions" $ do
+    prop "Should parse math expression syntax as MATH_EXPRESSION" $
+        \(mathExpr :: MathExpr) ->
+            checkParsed
+                mathExpr
+                runScrapTextParser
+                (\(ScrapText inlines) -> headMaybe inlines)
+                isMathExpr
+
+    prop "Should preserve its content" $
+        \(mathExpr :: MathExpr) ->
+            checkContent
+                mathExpr
+                runScrapTextParser
+                (\(ScrapText inlines) -> do
+                    inline  <- headMaybe inlines
+                    getMathExprContent inline
+                )
+  where
+    getMathExprContent :: InlineBlock -> Maybe Text
+    getMathExprContent (MATH_EXPRESSION expr) = Just expr
+    getMathExprContent _                      = Nothing
+
+-- code notation
+newtype CodeNotation = CodeNotation Text
+    deriving Show
+
+instance Arbitrary CodeNotation where
+    arbitrary = CodeNotation <$> genPrintableText
+
+instance ScrapboxSyntax CodeNotation where
+    render (CodeNotation text)     = "`" <> text <> "`"
+    getContent (CodeNotation text) = text
+
+codeNotationSpec :: Spec
+codeNotationSpec = describe "Code notation" $ do
+    prop "should parse code notation as it should be" $
+        \(codeNotation :: CodeNotation) ->
+            checkParsed codeNotation runScrapTextParser
+                (\(ScrapText inlines) -> headMaybe inlines)
+                isCodeNotation
+    
+    prop "should preserve its content" $
+        \(codeNotation :: CodeNotation) ->
+            checkContent codeNotation runScrapTextParser
+                (\(ScrapText inlines) -> do
+                    guard (length inlines == 1)
+                    inline <- headMaybe inlines
+                    (CODE_NOTATION txt) <- getCodes inline
+                    return txt
+                )
+  where
+    getCodes :: InlineBlock -> Maybe InlineBlock
+    getCodes c@(CODE_NOTATION _) = Just c
+    getCodes _                   = Nothing
+
+-- item
+-- bold
+-- italic
+-- strikethrough
