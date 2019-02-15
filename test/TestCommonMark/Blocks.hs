@@ -18,7 +18,7 @@ import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..), choose, elements,
                                         listOf1, vectorOf)
 
-import           Render                (renderBlock, renderContent, renderText)
+import           Render                (renderBlock, renderSegments, renderText)
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         genPrintableText, genPrintableUrl,
                                         genRandomText, getParagraph)
@@ -141,7 +141,7 @@ headerTextSpec = describe "Header text" $ do
                 (\content -> do
                     blockContent             <- headMaybe content
                     (HEADING _ headerContent) <- getHeader blockContent
-                    return $ renderContent headerContent
+                    return $ renderSegments headerContent
                 )
   where
     getHeader :: Block -> Maybe Block

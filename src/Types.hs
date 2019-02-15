@@ -1,8 +1,9 @@
 {-| Datatypes used to represent the scrapbox AST as well as some of the helper functions.
 -}
 
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Types
     ( -- * Datatypes
@@ -23,6 +24,7 @@ module Types
     , TableContent(..)
     -- * Helper functions
     , concatInline
+    , concatSegment
     , concatScrapText
     , verbose
     , unverbose
@@ -40,11 +42,18 @@ module Types
     , isTable
     , isText
     , isHashTag
+    , isBold
+    , isItalic
+    , isStrikeThrough
+    , isNoStyle
     ) where
 
 import           RIO
 
-import           Data.List (groupBy)
+import           Data.List       (groupBy)
+import           Test.QuickCheck (Arbitrary (..), choose, elements)
+import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
+                                  genText)
 
 -- https://scrapbox.io/help/Syntax
 
@@ -141,6 +150,15 @@ data Segment
     -- ^ Just an simple text
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Segment where
+    arbitrary = do
+        randomHashTag <- HASHTAG <$> genText
+        randomLink    <- LINK
+            <$> genMaybe genPrintableText
+            <*> (Url <$> genPrintableUrl)
+        randomText    <- TEXT <$> genPrintableText
+        elements [randomHashTag, randomLink, randomText]
+
 -- | Style that can be applied to the 'Segment'
 data Style
     = CustomStyle StyleData
@@ -156,6 +174,18 @@ data Style
     | UserStyle Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Style where
+    arbitrary = do
+        customStyle <- CustomStyle <$> arbitrary
+        elements
+            [ customStyle
+            , UserStyle "!?%"
+            , Bold
+            , Italic
+            , NoStyle
+            , StrikeThrough
+            ]
+
 -- | StyleData
 data StyleData = StyleData
     { sHeaderSize    :: !Int
@@ -167,6 +197,13 @@ data StyleData = StyleData
     , sStrikeThrough :: !Bool
     -- ^ Strike through
     } deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary StyleData where
+    arbitrary = StyleData
+        <$> choose (0,4)
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
 
 --------------------------------------------------------------------------------
 -- Verbose/Unverbose
@@ -188,7 +225,8 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
         other                  -> other
 
     verboseScrapText :: ScrapText -> ScrapText
-    verboseScrapText (ScrapText inlines) = ScrapText $ concatMap mkVerboseInlineBlock inlines
+    verboseScrapText (ScrapText inlines) = 
+        ScrapText $ concatMap mkVerboseInlineBlock inlines
 
     mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
     mkVerboseInlineBlock (ITEM style segments) =
@@ -207,7 +245,8 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
         other                  -> other
 
     unVerboseScrapText :: ScrapText -> ScrapText
-    unVerboseScrapText (ScrapText inlines) = ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
+    unVerboseScrapText (ScrapText inlines) = 
+        ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
 
     isSameStyle :: InlineBlock -> InlineBlock -> Bool
     isSameStyle (ITEM style1 _) (ITEM style2 _) = style1 == style2
@@ -226,7 +265,14 @@ concatInline (a : b : rest)            = a : b : concatInline rest
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
-concatScrapText (ScrapText inline1) (ScrapText inline2) = ScrapText $ concatInline $ inline1 <> inline2
+concatScrapText (ScrapText inline1) (ScrapText inline2) = 
+    ScrapText $ concatInline $ inline1 <> inline2
+
+concatSegment :: [Segment] -> [Segment]
+concatSegment [] = []
+concatSegment (TEXT txt1 : TEXT txt2 : rest) = 
+    concatSegment $ (TEXT $ txt1 <> txt2) : rest
+concatSegment (a : rest) = a : concatSegment rest
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -291,3 +337,20 @@ isLink _          = False
 isHashTag :: Segment -> Bool
 isHashTag (HASHTAG _) = True
 isHashTag _           = False
+
+-- | Checks whether given 'Style' is 'Bold'
+isBold :: Style -> Bool
+isBold Bold = True
+isBold _    = False
+
+isItalic :: Style -> Bool
+isItalic Italic = True
+isItalic _      = False
+
+isStrikeThrough :: Style -> Bool
+isStrikeThrough StrikeThrough = True
+isStrikeThrough _             = False
+
+isNoStyle :: Style -> Bool
+isNoStyle NoStyle = True
+isNoStyle _       = False

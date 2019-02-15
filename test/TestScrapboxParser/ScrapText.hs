@@ -1,8 +1,13 @@
 {-| Test suites for 'runScrapTextParser'
 -}
 
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module TestScrapboxParser.ScrapText
     ( scrapTextParserSpec
@@ -13,17 +18,20 @@ import           RIO                      hiding (assert)
 import           RIO.List                 (headMaybe)
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck
+import           Test.QuickCheck          (Arbitrary (..), Property, listOf1)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.ScrapText         (runScrapTextParser)
+import           Render                   (renderSegments)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
                                            checkParsed, genPrintableText,
                                            propParseAsExpected, shouldParseSpec)
 import           Types                    (InlineBlock (..), ScrapText (..),
                                            Segment (..), Style (..), Url (..),
-                                           isCodeNotation, isMathExpr)
+                                           concatSegment, isBold,
+                                           isCodeNotation, isItalic, isMathExpr,
+                                           isNoStyle, isStrikeThrough)
 import           Utils                    (whenRight)
 
 -- | Test spec for scrap text parser
@@ -43,9 +51,10 @@ scrapTextParserSpec =
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
 
-        describe "Indivisual data" $ modifyMaxSuccess (const 200) $ do
+        describe "Inline blocks" $ modifyMaxSuccess (const 100) $ do
             mathExprSpec
             codeNotationSpec
+            styledItemSpec
 
   where
     exampleText :: String
@@ -122,7 +131,7 @@ codeNotationSpec = describe "Code notation" $ do
             checkParsed codeNotation runScrapTextParser
                 (\(ScrapText inlines) -> headMaybe inlines)
                 isCodeNotation
-    
+
     prop "should preserve its content" $
         \(codeNotation :: CodeNotation) ->
             checkContent codeNotation runScrapTextParser
@@ -139,5 +148,103 @@ codeNotationSpec = describe "Code notation" $ do
 
 -- item
 -- bold
+-- heading
 -- italic
 -- strikethrough
+
+data ItemStyle
+    = PlainItem
+    | BoldItem
+    | ItalicItem
+    | StrikeThroughItem
+
+newtype StyledItem (a :: ItemStyle) = StyledItem
+    { getStyledItem :: [Segment]
+    } deriving Show
+
+instance Arbitrary (StyledItem a) where
+    arbitrary = StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
+        where
+          -- Add space after hashtag
+          addSpace :: [Segment] -> [Segment]
+          addSpace []                 = []
+          addSpace [HASHTAG txt]      = [HASHTAG txt]
+          addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
+          addSpace (x:xs)             = x : addSpace xs
+
+instance ScrapboxSyntax (StyledItem 'PlainItem) where
+    render (StyledItem segments)     = renderSegments segments
+    getContent (StyledItem segments) = renderSegments segments
+
+instance ScrapboxSyntax (StyledItem 'BoldItem) where
+    render (StyledItem segments)     = "[* " <> renderSegments segments <> "]"
+    getContent (StyledItem segments) = renderSegments segments
+
+instance ScrapboxSyntax (StyledItem 'ItalicItem) where
+    render (StyledItem segments)     = "[/ " <> renderSegments segments <> "]"
+    getContent (StyledItem segments) = renderSegments segments
+
+instance ScrapboxSyntax (StyledItem 'StrikeThroughItem) where
+    render (StyledItem segments)     = "[- " <> renderSegments segments <> "]"
+    getContent (StyledItem segments) = renderSegments segments
+
+styledItemSpec :: Spec
+styledItemSpec = describe "Styled inlines" $ do
+    describe "Non-Styled" $ do
+        prop "should parse as Non-styled" $
+            \(plainInline :: StyledItem 'PlainItem) ->
+                testParse plainInline isNoStyle
+        prop "should preserve its content" $
+            \(plainInline :: StyledItem 'PlainItem) ->
+                testContent plainInline
+
+    describe "Bold" $ do
+        prop "should parse as Bold" $
+            \(boldInline :: StyledItem 'BoldItem) ->
+                testParse boldInline isBold
+        prop "should preserve its content" $
+            \(boldInline :: StyledItem 'BoldItem) ->
+                testContent boldInline
+
+    describe "Italic" $ do
+        prop "should parse as Bold" $
+            \(italicInline :: StyledItem 'ItalicItem) ->
+                testParse italicInline isItalic
+        prop "should preserve its content" $
+            \(italicInline :: StyledItem 'ItalicItem) ->
+                testContent italicInline
+
+    describe "StrikeThrough" $ do
+        prop "should parse as StrikeThrough" $
+            \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
+                testParse strikeThroughInline isStrikeThrough
+
+        prop "should preserve its content" $
+            \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
+                testContent strikeThroughInline
+  where
+    getItem :: InlineBlock -> Maybe InlineBlock
+    getItem item@(ITEM _ _) = Just item
+    getItem _               = Nothing
+
+    testParse :: (ScrapboxSyntax (StyledItem a))
+              => StyledItem a
+              -> (Style -> Bool)
+              -> Property
+    testParse inlineBlock = checkParsed inlineBlock runScrapTextParser
+        (\(ScrapText inlines) -> do
+            guard (length inlines == 1)
+            inline <- headMaybe inlines
+            (ITEM style _) <- getItem inline
+            return style
+        )
+
+    testContent :: (ScrapboxSyntax (StyledItem a)) => StyledItem a -> Property
+    testContent inlineBlock = checkParsed inlineBlock runScrapTextParser
+        (\(ScrapText inlines) -> do
+            guard (length inlines == 1)
+            inline <- headMaybe inlines
+            (ITEM _ segments) <- getItem inline
+            return segments
+        )
+        (== getStyledItem inlineBlock)
