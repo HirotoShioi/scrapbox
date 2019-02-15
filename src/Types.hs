@@ -36,9 +36,10 @@ module Types
     , isHeader
     , isLink
     , isParagraph
-    , isSimpleText
     , isThumbnail
     , isTable
+    , isText
+    , isHashTag
     ) where
 
 import           RIO
@@ -266,11 +267,6 @@ isTable :: Block -> Bool
 isTable (TABLE _ _) = True
 isTable _           = False
 
--- | Checks whether given 'Segment' is 'LINK'
-isLink :: Segment -> Bool
-isLink (LINK _ _) = True
-isLink _          = False
-
 -- | Checks whether given 'InlineBlock' is 'CODE_NOTATION'
 isCodeNotation :: InlineBlock -> Bool
 isCodeNotation (CODE_NOTATION _) = True
@@ -282,6 +278,16 @@ isMathExpr (MATH_EXPRESSION _) = True
 isMathExpr _                   = False
 
 -- | Checks whether given 'Segment' is 'TEXT'
-isSimpleText :: Segment -> Bool
-isSimpleText (TEXT _) = True
-isSimpleText _        = False
+isText :: Segment -> Bool
+isText (TEXT _) = True
+isText _        = False
+
+-- | Checks whether given 'Segment' is 'LINK'
+isLink :: Segment -> Bool
+isLink (LINK _ _) = True
+isLink _          = False
+
+-- | Checks whether given 'Segment' is 'HASHTAG'
+isHashTag :: Segment -> Bool
+isHashTag (HASHTAG _) = True
+isHashTag _           = False

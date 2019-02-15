@@ -21,7 +21,7 @@ import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         getHeadSegment, getParagraph)
 import           Types                 (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..), Url (..),
-                                        isCodeNotation, isLink, isSimpleText)
+                                        isCodeNotation, isLink, isText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
@@ -130,7 +130,7 @@ plainTextSpec :: Spec
 plainTextSpec = describe "Plain text" $ do
     prop "should parse plain text as TEXT" $
         \(textSegment :: TextSegment) ->
-            checkScrapbox textSegment isSimpleText getHeadSegment
+            checkScrapbox textSegment isText getHeadSegment
 
     prop "should preserve its content" $
         \(textSegment :: TextSegment) ->
