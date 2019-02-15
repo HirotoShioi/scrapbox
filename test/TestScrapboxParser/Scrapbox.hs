@@ -1,136 +1,31 @@
-{- Test suites for scrapbox parser
+{-| Test suites for 'parseScrapbox'
 -}
 
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module ParserTest
-    ( parserSpec
+module TestScrapboxParser.Scrapbox
+    ( scrapboxParserSpec
     ) where
 
-import           RIO                     hiding (assert)
-import           RIO.List                (headMaybe)
-import qualified RIO.Text                as T
+import           RIO                      hiding (assert)
 
-import           Test.Hspec              (Spec, describe, it)
-import           Test.Hspec.QuickCheck   (modifyMaxSuccess, prop)
-import           Test.QuickCheck         (Arbitrary (..), Gen,
-                                          PrintableString (..), Property,
-                                          arbitraryPrintableChar, elements,
-                                          listOf1, Testable(..))
-import           Test.QuickCheck.Monadic (assert, monadicIO)
-import           Text.Parsec             (ParseError)
+import qualified RIO.Text                 as T
+import           Test.Hspec               (Spec, describe, it)
+import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
+import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
-import           Parser.Item             (runItemParser)
-import           Parser.Scrapbox         (parseScrapbox)
-import           Parser.ScrapText        (runScrapTextParser)
-import           Types                   (Block (..), CodeName (..),
-                                          CodeSnippet (..), InlineBlock (..),
-                                          Level (..), ScrapText (..),
-                                          Scrapbox (..), Segment (..),
-                                          Start (..), Style (..),
-                                          TableContent (..), TableName (..),
-                                          Url (..), isMathExpr)
-import           Utils                   (eitherM, whenRight)
-
--- | Test specs for scrapbox parser
-parserSpec :: Spec
-parserSpec = do
-    inlineParserSpec
-    scrapTextParserSpec
-    scrapboxParserSpec
-
-
--- | Spec for inline text parser
-inlineParserSpec :: Spec
-inlineParserSpec =
-    describe "Item parser" $ modifyMaxSuccess (const 10000) $ do
-        shouldParseSpec runItemParser
-
-        prop "should return non-empty list of segments if given string is non-empty" $
-            \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runItemParser $ getNonEmptyPrintableString someText
-
-                assert $ isRight eParseredText
-                whenRight eParseredText $ \parsedContent ->
-                    assert $ not $ null parsedContent
-
-        it "should parse given text as expected" $
-            propParseAsExpected exampleText expected runItemParser
-  where
-    exampleText :: String
-    exampleText = "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `partial code [partial url #someHashtag"
-
-    expected :: [Segment]
-    expected =
-        [ TEXT "hello "
-        , LINK ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
-        , TEXT " "
-        , LINK Nothing ( Url "hello" )
-        , TEXT " [] `partial code [partial url "
-        , HASHTAG "someHashtag"
-        ]
-
--- | Test spec for scrap text parser
-scrapTextParserSpec :: Spec
-scrapTextParserSpec =
-    describe "ScrapText parser" $ modifyMaxSuccess (const 10000) $ do
-        shouldParseSpec runScrapTextParser
-
-        prop "should return non-empty list of contexts if the given string is non-empty" $
-            \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runScrapTextParser $ getNonEmptyPrintableString someText
-
-                assert $ isRight eParseredText
-                whenRight eParseredText $ \(ScrapText inlines) ->
-                    assert $ not $ null inlines
-
-        it "should parse given example text as expected" $
-             propParseAsExpected exampleText expectedParsedText runScrapTextParser
-
-        describe "Math Expressions" $ modifyMaxSuccess (const 200) $ do
-            prop "Should parse math expression syntax as MATH_EXPRESSION" $
-                \(mathExpr :: MathExpr) ->
-                    checkParsed
-                        mathExpr
-                        runScrapTextParser
-                        (\(ScrapText inlines) -> headMaybe inlines)
-                        isMathExpr
-
-            prop "Should preserve its content" $
-                \(mathExpr :: MathExpr) ->
-                    checkContent
-                        mathExpr
-                        runScrapTextParser
-                        (\(ScrapText inlines) -> do
-                            inline  <- headMaybe inlines
-                            getMathExprContent inline
-                        )
-  where
-    getMathExprContent :: InlineBlock -> Maybe Text
-    getMathExprContent (MATH_EXPRESSION expr) = Just expr
-    getMathExprContent _                      = Nothing
-
-    exampleText :: String
-    exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text `code_notation` [* test [link] test [partial]"
-
-    expectedParsedText :: ScrapText
-    expectedParsedText = ScrapText
-        [ ITEM Bold [ TEXT "bold text" ]
-        , ITEM NoStyle [ TEXT " " ]
-        , ITEM StrikeThrough [ TEXT "strikethrough text" ]
-        , ITEM NoStyle [ TEXT " " ]
-        , ITEM Italic [ TEXT "italic text" ]
-        , ITEM NoStyle [ TEXT " simple text " ]
-        , CODE_NOTATION "code_notation"
-        , ITEM NoStyle [ TEXT " " ]
-        , ITEM Bold
-            [ TEXT "test "
-            , LINK Nothing ( Url "link" )
-            , TEXT " test [partial"
-            ]
-        ]
-
+import           Parser.Scrapbox          (parseScrapbox)
+import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
+                                           propParseAsExpected, shouldParseSpec)
+import           Types                    (Block (..), CodeName (..),
+                                           CodeSnippet (..), InlineBlock (..),
+                                           Level (..), ScrapText (..),
+                                           Scrapbox (..), Segment (..),
+                                           Start (..), Style (..),
+                                           TableContent (..), TableName (..),
+                                           Url (..))
+import           Utils                    (whenRight)
 
 --------------------------------------------------------------------------------
 -- Scrapbox parser
@@ -544,88 +439,3 @@ scrapboxParserSpec =
             )
         , LINEBREAK
         ]
-
---------------------------------------------------------------------------------
--- Helper functions
---------------------------------------------------------------------------------
-
--- | Non-empty version of 'PrintableString'
-newtype NonEmptyPrintableString =  NonEmptyPrintableString
-    { getNonEmptyPrintableString :: String
-    } deriving Show
-
-instance Arbitrary NonEmptyPrintableString where
-    arbitrary = NonEmptyPrintableString <$> listOf1 arbitraryPrintableChar
-
--- | General testing spec for parser
-shouldParseSpec :: (String -> Either ParseError a) -> Spec
-shouldParseSpec parser =
-        prop "should be able to parse any text without failing or cause infinite loop" $
-            \(someText :: PrintableString) ->
-                isRight $ parser $ getPrintableString someText
-
--- | General unit testing to see the parser can parse given data as expected
-propParseAsExpected :: (Eq parsed)
-                    => toParse
-                    -> parsed
-                    -> (toParse -> Either ParseError parsed)
-                    -> Property
-propParseAsExpected example expected parser = monadicIO $ eitherM
-    (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
-    (\parsedContent -> assert $ parsedContent == expected)
-    (return $ parser example)
-
--- | Math expression syntax
-newtype MathExpr = MathExpr Text
-    deriving Show
-
-instance Arbitrary MathExpr where
-    arbitrary = MathExpr <$> genPrintableText
-
-instance ScrapboxSyntax MathExpr where
-    render (MathExpr txt)     = "[$" <> txt <> "]"
-    getContent (MathExpr txt) = txt
-
--- | Type class used to render/get content of given syntax
-class ScrapboxSyntax a where
-    render     :: a -> Text
-    getContent :: a -> Text
-
--- | Generate arbitrary Text
--- this is needed as some characters like
--- '`' and `>` will be parsed as blockquote, code notation, etc.
-genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genRandomText
-
--- | Generate random text
-genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
-
--- | Check parsed
-checkParsed :: (ScrapboxSyntax syntax)
-            => syntax
-            -- ^ Syntax that we want to test on
-            -> (String -> Either ParseError a)
-            -- ^ Parser
-            -> (a -> Maybe b)
-            -- ^ Getter
-            -> (b -> Bool)
-            -- ^ Predicate
-            -> Property
-checkParsed syntax parser getter pre = property $ either
-    (const False)
-    (maybe False pre . getter)
-    (parser $ T.unpack $ render syntax)
-
--- | Test case to check whether the parsed thing still preserves its content
-checkContent :: (ScrapboxSyntax syntax)
-             => syntax
-             -- ^ Syntax that we want to test on
-             -> (String -> Either ParseError a)
-             -- ^ Parser
-             -> (a -> Maybe Text)
-             -- ^ Getter
-             -> Property
-checkContent syntax parser getter = 
-    checkParsed syntax parser getter (\txt -> txt == getContent syntax)
