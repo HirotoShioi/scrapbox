@@ -51,7 +51,8 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Test.QuickCheck (Arbitrary (..), choose, elements)
+import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
+                                  listOf1)
 import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
 
@@ -131,6 +132,10 @@ data Block
 newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Needs shrink strategy
+instance Arbitrary ScrapText where
+    arbitrary = ScrapText . concatInline <$> listOf1 arbitrary
+
 -- | InlineBlock
 data InlineBlock
     = ITEM !Style ![Segment]
@@ -139,6 +144,14 @@ data InlineBlock
     -- ^ Code notation
     | MATH_EXPRESSION !Text
     deriving (Eq, Show, Generic, Read, Ord)
+
+-- | Needs shrink strategy
+instance Arbitrary InlineBlock where
+    arbitrary = do
+        let randItem     = ITEM <$> arbitrary <*> listOf1 arbitrary
+        let randCode     = CODE_NOTATION <$> genPrintableText
+        let randMathExpr = MATH_EXPRESSION <$> genPrintableText
+        frequency [(7, randItem), (1, randCode), (1, randMathExpr)]
 
 -- | Segment
 data Segment
@@ -152,12 +165,15 @@ data Segment
 
 instance Arbitrary Segment where
     arbitrary = do
-        randomHashTag <- HASHTAG <$> genText
-        randomLink    <- LINK
-            <$> genMaybe genPrintableText
-            <*> (Url <$> genPrintableUrl)
-        randomText    <- TEXT <$> genPrintableText
-        elements [randomHashTag, randomLink, randomText]
+        let randomHashTag = HASHTAG <$> genText
+        let randomLink    = LINK
+                <$> genMaybe genPrintableText
+                <*> (Url <$> genPrintableUrl)
+        let randomText    = TEXT <$> genPrintableText
+        frequency [ (1, randomHashTag)
+                  , (2,randomLink)
+                  , (7, randomText)
+                  ]
 
 -- | Style that can be applied to the 'Segment'
 data Style
@@ -225,7 +241,7 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
         other                  -> other
 
     verboseScrapText :: ScrapText -> ScrapText
-    verboseScrapText (ScrapText inlines) = 
+    verboseScrapText (ScrapText inlines) =
         ScrapText $ concatMap mkVerboseInlineBlock inlines
 
     mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
@@ -245,7 +261,7 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
         other                  -> other
 
     unVerboseScrapText :: ScrapText -> ScrapText
-    unVerboseScrapText (ScrapText inlines) = 
+    unVerboseScrapText (ScrapText inlines) =
         ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
 
     isSameStyle :: InlineBlock -> InlineBlock -> Bool
@@ -257,20 +273,20 @@ concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []       = []
 concatInline [inline] = [inline]
 concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
-    | style1 == style2 = concatInline (ITEM style1 (inline1 <> inline2) : rest)
+    | style1 == style2 = concatInline (ITEM style1 (concatSegment $ inline1 <> inline2) : rest)
     | otherwise        = c1 : concatInline (c2:rest)
-concatInline (a : c@(ITEM _ _) : rest) = a : concatInline (c:rest)
-concatInline (a : b : rest)            = a : b : concatInline rest
+concatInline (ITEM style inline : rest) = ITEM style (concatSegment inline) : concatInline rest
+concatInline (a : rest)                 = a : concatInline rest
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
-concatScrapText (ScrapText inline1) (ScrapText inline2) = 
+concatScrapText (ScrapText inline1) (ScrapText inline2) =
     ScrapText $ concatInline $ inline1 <> inline2
 
 concatSegment :: [Segment] -> [Segment]
 concatSegment [] = []
-concatSegment (TEXT txt1 : TEXT txt2 : rest) = 
+concatSegment (TEXT txt1 : TEXT txt2 : rest) =
     concatSegment $ (TEXT $ txt1 <> txt2) : rest
 concatSegment (a : rest) = a : concatSegment rest
 
