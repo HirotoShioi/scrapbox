@@ -60,6 +60,10 @@ inlineParserSpec =
         , HASHTAG "someHashtag"
         ]
 
+--------------------------------------------------------------------------------
+-- Text
+--------------------------------------------------------------------------------
+
 newtype TextItem = TextItem Text
     deriving Show
 
@@ -90,7 +94,9 @@ textSpec = describe "TEXT" $ do
     getText (TEXT text) = Just text
     getText _           = Nothing
 
+--------------------------------------------------------------------------------
 -- Link
+--------------------------------------------------------------------------------
 
 data LinkItem = LinkItem !(Maybe Text) !Text
     deriving Show
@@ -121,7 +127,10 @@ linkSpec = describe "LINK" $ do
     getLink l@(LINK _ _) = Just l
     getLink _            = Nothing
 
+--------------------------------------------------------------------------------
 -- HashTag
+--------------------------------------------------------------------------------
+
 newtype HashTagItem = HashTagItem Text
     deriving Show
 
