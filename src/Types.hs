@@ -51,8 +51,8 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency,
-                                  listOf1, resize)
+import           Test.QuickCheck (Arbitrary (..), choose, frequency, listOf1,
+                                  resize, sized)
 import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
 
@@ -133,7 +133,9 @@ newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary ScrapText where
-    arbitrary = resize 4 $ ScrapText . concatInline <$> listOf1 arbitrary
+    arbitrary = sized $ \size -> if size < 5
+        then ScrapText . concatInline <$> listOf1 arbitrary
+        else resize 5 $ ScrapText . concatInline <$> listOf1 arbitrary
 
 -- | InlineBlock
 data InlineBlock

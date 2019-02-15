@@ -162,8 +162,9 @@ newtype StyledItem (a :: ItemStyle) = StyledItem
     } deriving Show
 
 instance Arbitrary (StyledItem a) where
-    arbitrary = sized $ \size -> resize (size `div` 2) 
-            $ StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
+    arbitrary = sized $ \size -> if size < 5
+        then StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
+        else resize 5 $ StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
         where
           -- Add space after hashtag
           addSpace :: [Segment] -> [Segment]
