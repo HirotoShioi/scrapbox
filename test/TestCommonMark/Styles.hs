@@ -25,7 +25,7 @@ import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         getParagraph)
 import           Types                 (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..),
-                                        Style (..), isSimpleText)
+                                        Style (..), isText)
 
 -- | Test suites for parsing styled text
 styleSpec :: Spec
@@ -72,7 +72,7 @@ checkStyledTextContent styledText =
   where
     getText :: Segment -> Maybe Segment
     getText segment =
-        if isSimpleText segment
+        if isText segment
         then Just segment
         else Nothing
 
