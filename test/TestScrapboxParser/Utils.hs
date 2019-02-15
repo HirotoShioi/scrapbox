@@ -12,6 +12,9 @@ module TestScrapboxParser.Utils
     , checkContent
     , checkParsed
     , genPrintableText
+    , genPrintableUrl
+    , genRandomText
+    , genMaybe
     ) where
 
 import           RIO                     hiding (assert)
@@ -100,3 +103,15 @@ checkContent :: (ScrapboxSyntax syntax)
              -> Property
 checkContent syntax parser getter =
     checkParsed syntax parser getter (\txt -> txt == getContent syntax)
+
+-- | Generate random url
+genPrintableUrl :: Gen Text
+genPrintableUrl = do
+    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
+    randomSite <- genRandomText
+    return $ "http://www." <> randomSite <> end
+
+genMaybe :: Gen a -> Gen (Maybe a)
+genMaybe gen = do
+    gened <- gen
+    elements [Just gened, Nothing]

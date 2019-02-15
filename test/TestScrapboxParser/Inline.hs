@@ -13,14 +13,16 @@ import           RIO                      hiding (assert)
 import           RIO.List                 (headMaybe)
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck
+import           Test.QuickCheck          (Arbitrary (..))
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.Item              (runItemParser)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
-                                           checkParsed, genPrintableText,
-                                           propParseAsExpected, shouldParseSpec)
+                                           checkParsed, genMaybe,
+                                           genPrintableText, genPrintableUrl,
+                                           genRandomText, propParseAsExpected,
+                                           shouldParseSpec)
 import           Types                    (Segment (..), Url (..), isHashTag,
                                            isLink, isText)
 import           Utils                    (whenRight)
@@ -144,7 +146,7 @@ instance ScrapboxSyntax HashTagItem where
 hashTagSpec :: Spec
 hashTagSpec = describe "HASHTAG" $ do
     prop "should parse hashtag as HASHTAG" $
-        \(hashTag :: HashTagItem) -> 
+        \(hashTag :: HashTagItem) ->
             checkParsed hashTag runItemParser headMaybe isHashTag
 
     prop "should preserve its content" $
@@ -160,24 +162,3 @@ hashTagSpec = describe "HASHTAG" $ do
     getHashTag :: Segment -> Maybe Segment
     getHashTag h@(HASHTAG _) = Just h
     getHashTag _             = Nothing
-
---------------------------------------------------------------------------------
--- helper
---------------------------------------------------------------------------------
-
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
-    randomSite <- genRandomText
-    return $ "http://www." <> randomSite <> end
-
--- | Generate random text
-genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
-
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe gen = do
-    gened <- gen
-    elements [Just gened, Nothing]
