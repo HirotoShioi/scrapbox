@@ -192,14 +192,14 @@ data Style
 
 instance Arbitrary Style where
     arbitrary = do
-        customStyle <- CustomStyle <$> arbitrary
-        elements
-            [ customStyle
-            , UserStyle "!?%"
-            , Bold
-            , Italic
-            , NoStyle
-            , StrikeThrough
+        let randCustomStyle = CustomStyle <$> arbitrary
+        frequency
+            [ (1, randCustomStyle)
+            , (1, return $ UserStyle "!?%")
+            , (1, return Bold)
+            , (1, return Italic)
+            , (1, return StrikeThrough)
+            , (8, return NoStyle)
             ]
 
 -- | StyleData
