@@ -17,7 +17,7 @@ import           RIO                      hiding (assert)
 import           RIO.List                 (headMaybe)
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck          (Arbitrary (..), Property, listOf1)
+import           Test.QuickCheck          (Arbitrary (..), Property, listOf1, sized, resize)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.ScrapText         (runScrapTextParser)
@@ -162,7 +162,8 @@ newtype StyledItem (a :: ItemStyle) = StyledItem
     } deriving Show
 
 instance Arbitrary (StyledItem a) where
-    arbitrary = StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
+    arbitrary = sized $ \size -> resize (size `div` 2) 
+            $ StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
         where
           -- Add space after hashtag
           addSpace :: [Segment] -> [Segment]

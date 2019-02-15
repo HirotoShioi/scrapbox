@@ -51,8 +51,8 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
-                                  listOf1)
+import           Test.QuickCheck (Arbitrary (..), choose, frequency,
+                                  listOf1, resize)
 import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
 
@@ -132,9 +132,8 @@ data Block
 newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
--- | Needs shrink strategy
 instance Arbitrary ScrapText where
-    arbitrary = ScrapText . concatInline <$> listOf1 arbitrary
+    arbitrary = resize 4 $ ScrapText . concatInline <$> listOf1 arbitrary
 
 -- | InlineBlock
 data InlineBlock
@@ -145,7 +144,6 @@ data InlineBlock
     | MATH_EXPRESSION !Text
     deriving (Eq, Show, Generic, Read, Ord)
 
--- | Needs shrink strategy
 instance Arbitrary InlineBlock where
     arbitrary = do
         let randItem     = ITEM <$> arbitrary <*> listOf1 arbitrary
