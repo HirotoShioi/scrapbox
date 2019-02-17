@@ -51,8 +51,8 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency, listOf1,
-                                  scale)
+import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
+                                  listOf1, scale, vectorOf)
 import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
 
@@ -72,6 +72,12 @@ data Page = Page
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Scrapbox where
+    arbitrary = do
+        newSize <- choose (1,10)
+        scale (\size -> if size < 10 then size else newSize) $ 
+            Scrapbox <$> listOf1 arbitrary
+
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
 --------------------------------------------------------------------------------
@@ -80,29 +86,54 @@ newtype Scrapbox = Scrapbox [Block]
 newtype Start = Start Int
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Start where
+    arbitrary = Start <$> choose (1,3)
+
 -- | Name of the code block
 newtype CodeName = CodeName Text
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary CodeName where
+    arbitrary = CodeName <$> genText
 
 -- | Code snippet
 newtype CodeSnippet = CodeSnippet Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary CodeSnippet where
+    arbitrary = CodeSnippet <$> genPrintableText
+
 -- | Heading level
 newtype Level = Level Int
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary Level where
+    arbitrary = Level <$> choose (1, 4)
 
 -- | Name of the table
 newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary TableName where
+    arbitrary = TableName <$> genText
+
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary TableContent where
+    arbitrary = do
+        newSize <- choose (1,5)
+        scale (\size -> if size < 5 then size else newSize) $ do
+            num <- getSize
+            TableContent <$> listOf1 (vectorOf num genText)
+
 -- | Url for Link/Thumbnail
 newtype Url = Url Text
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary Url where
+    arbitrary = Url <$> genPrintableUrl
 
 -- | Scrapbox page is consisted by list of Blocks
 data Block
@@ -124,6 +155,19 @@ data Block
     -- ^ Thumbnail
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Block where
+    arbitrary = do
+        newSize <- choose (1,10)
+        scale (\size -> if size < 10 then size else newSize) $ frequency
+            [ (2, return LINEBREAK)
+            , (1, BLOCK_QUOTE <$> arbitrary)
+            , (1, BULLET_POINT <$> arbitrary <*> listOf1 arbitrary)
+            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
+            , (2, HEADING <$> arbitrary <*> listOf1 arbitrary)
+            , (7, PARAGRAPH <$> arbitrary)
+            , (1, TABLE <$> arbitrary <*> arbitrary)
+            , (2, THUMBNAIL <$> arbitrary)
+            ]
 --------------------------------------------------------------------------------
 -- ScrapText
 --------------------------------------------------------------------------------
