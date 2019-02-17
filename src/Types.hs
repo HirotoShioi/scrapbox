@@ -104,7 +104,7 @@ newtype TableContent = TableContent [[Text]]
 newtype Url = Url Text
     deriving (Eq, Show, Generic, Read, Ord)
 
--- | Blocks are contents
+-- | Scrapbox page is consisted by list of Blocks
 data Block
     = LINEBREAK
     -- ^ Linebreak
@@ -151,7 +151,10 @@ instance Arbitrary InlineBlock where
         let randItem     = ITEM <$> arbitrary <*> listOf1 arbitrary
         let randCode     = CODE_NOTATION <$> genPrintableText
         let randMathExpr = MATH_EXPRESSION <$> genPrintableText
-        frequency [(7, randItem), (1, randCode), (1, randMathExpr)]
+        frequency [ (7, randItem)
+                  , (1, randCode)
+                  , (1, randMathExpr)
+                  ]
 
 -- | Segment
 data Segment
@@ -171,7 +174,7 @@ instance Arbitrary Segment where
                 <*> (Url <$> genPrintableUrl)
         let randomText    = TEXT <$> genPrintableText
         frequency [ (1, randomHashTag)
-                  , (2,randomLink)
+                  , (2, randomLink)
                   , (7, randomText)
                   ]
 
@@ -282,8 +285,9 @@ concatInline (a : rest)                 = a : concatInline rest
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
 concatScrapText :: ScrapText -> ScrapText -> ScrapText
 concatScrapText (ScrapText inline1) (ScrapText inline2) =
-    ScrapText $ concatInline $ inline1 <> inline2
+    ScrapText . concatInline $ inline1 <> inline2
 
+-- | Concatenate 'Segment'
 concatSegment :: [Segment] -> [Segment]
 concatSegment [] = []
 concatSegment (TEXT txt1 : TEXT txt2 : rest) =
@@ -359,14 +363,17 @@ isBold :: Style -> Bool
 isBold Bold = True
 isBold _    = False
 
+-- | Checks whether given 'Style' is 'Italic'
 isItalic :: Style -> Bool
 isItalic Italic = True
 isItalic _      = False
 
+-- | Checks whether given 'Style' is 'StrikeThrough'
 isStrikeThrough :: Style -> Bool
 isStrikeThrough StrikeThrough = True
 isStrikeThrough _             = False
 
+-- | Checks whether given 'Style' is 'NoStyle'
 isNoStyle :: Style -> Bool
 isNoStyle NoStyle = True
 isNoStyle _       = False

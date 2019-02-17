@@ -72,6 +72,7 @@ genPrintableUrl = do
     randomSite <- genText
     return $ "http://www." <> randomSite <> end
 
+-- | Wrap 'Gen a' with 'Maybe'
 genMaybe :: Gen a -> Gen (Maybe a)
 genMaybe gen = do
     gened <- gen
