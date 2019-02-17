@@ -7,8 +7,7 @@
 
 module Types
     ( -- * Datatypes
-      Page (..)
-    , Scrapbox (..)
+      Scrapbox (..)
     , Start(..)
     , Block(..)
     , CodeName(..)
@@ -55,18 +54,6 @@ import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
                                   listOf1, scale, vectorOf)
 import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
-
--- https://scrapbox.io/help/Syntax
-
--- TODO: Make naming more easy to understand/ makes sense
-
--- | Data structure of an scrapbox page in JSON format
-data Page = Page
-    { pContent :: !Scrapbox
-    -- ^ Content of the page
-    , pTitle   :: !Text
-    -- ^ Title
-    } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]
