@@ -18,7 +18,7 @@ import           RIO.List                 (headMaybe)
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
 import           Test.QuickCheck          (Arbitrary (..), Property, listOf1,
-                                           resize, sized)
+                                           scale, choose)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.ScrapText         (runScrapTextParser)
@@ -163,9 +163,10 @@ newtype StyledItem (a :: ItemStyle) = StyledItem
     } deriving Show
 
 instance Arbitrary (StyledItem a) where
-    arbitrary = sized $ \size -> if size < 5
-        then StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
-        else resize 5 $ StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
+    arbitrary = do
+        newSize <- choose (0, sizeNum)
+        scale (\size -> if size < sizeNum then size else newSize) $
+            StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
         where
           -- Add space after hashtag
           addSpace :: [Segment] -> [Segment]
@@ -173,6 +174,9 @@ instance Arbitrary (StyledItem a) where
           addSpace [HASHTAG txt]      = [HASHTAG txt]
           addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
           addSpace (x:xs)             = x : addSpace xs
+          
+          sizeNum :: Int
+          sizeNum = 10
 
 instance ScrapboxSyntax (StyledItem 'PlainItem) where
     render (StyledItem segments)     = renderSegments segments
@@ -235,7 +239,7 @@ styledItemSpec = describe "Styled inlines" $ do
               -> Property
     testParse inlineBlock = checkParsed inlineBlock runScrapTextParser
         (\(ScrapText inlines) -> do
-            guard (length inlines == 1)
+            guard $ length inlines == 1
             inline <- headMaybe inlines
             (ITEM style _) <- getItem inline
             return style
@@ -244,7 +248,7 @@ styledItemSpec = describe "Styled inlines" $ do
     testContent :: (ScrapboxSyntax (StyledItem a)) => StyledItem a -> Property
     testContent inlineBlock = checkParsed inlineBlock runScrapTextParser
         (\(ScrapText inlines) -> do
-            guard (length inlines == 1)
+            guard $ length inlines == 1
             inline <- headMaybe inlines
             (ITEM _ segments) <- getItem inline
             return segments

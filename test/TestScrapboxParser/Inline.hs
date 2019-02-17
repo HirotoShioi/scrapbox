@@ -86,7 +86,7 @@ textSpec = describe "TEXT" $ do
         \(someText ::TextItem) ->
             checkContent someText runItemParser
                 (\segments -> do
-                  guard (length segments == 1)
+                  guard $ length segments == 1
                   segment <- headMaybe segments
                   getText segment
                 )
@@ -118,7 +118,7 @@ linkSpec = describe "LINK" $ do
     prop "should preserve its content" $
         \(linkItem :: LinkItem) -> checkContent linkItem runItemParser
             (\segments -> do
-                guard (length segments == 1)
+                guard $ length segments == 1
                 segment <- headMaybe segments
                 (LINK mName (Url url)) <- getLink segment
                 return $ fromMaybe mempty mName <> url
@@ -152,7 +152,7 @@ hashTagSpec = describe "HASHTAG" $ do
         \(hashTag :: HashTagItem) ->
             checkContent hashTag runItemParser
                 (\segments -> do
-                    guard (length segments == 1)
+                    guard $ length segments == 1
                     segment       <- headMaybe segments
                     (HASHTAG txt) <- getHashTag segment
                     return txt
