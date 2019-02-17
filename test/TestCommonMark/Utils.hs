@@ -6,24 +6,19 @@
 module TestCommonMark.Utils
     ( CommonMark(..)
     , checkScrapbox
-    , genPrintableText
     , getHeadSegment
     , getHeadInlineBlock
     , getParagraph
-    , genRandomText
-    , genPrintableUrl
     ) where
 
 import           RIO
 
 import           RIO.List        (headMaybe)
-import qualified RIO.Text        as T
-import           Test.QuickCheck (Gen, elements, listOf1)
 
 import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
+import           Test.QuickCheck (Property, Testable(..))
 import           Types           (Block (..), InlineBlock (..), ScrapText (..),
                                   Scrapbox (..), Segment)
-
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
@@ -32,32 +27,14 @@ import           Types           (Block (..), InlineBlock (..), ScrapText (..),
 class CommonMark a where
     render :: a -> Text
 
--- | Generate arbitrary Text
--- this is needed as some characters like
--- '`' and `>` will be parsed as blockquote, code notation, etc.
-genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genRandomText
-
--- | Generate random text
-genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
-
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
-    randomSite <- genRandomText
-    return $ "http://www." <> randomSite <> end
-
 -- | General function used to test if given 'CommonMark' can be properly parsed
 -- and extract the expected element
 checkScrapbox :: (CommonMark a)
               => a
               -> (parsedContent -> Bool)
               -> ([Block] -> Maybe parsedContent)
-              -> Bool
-checkScrapbox markdown pre extractionFunc = do
+              -> Property
+checkScrapbox markdown pre extractionFunc = property $ do
     let (Scrapbox content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
   where

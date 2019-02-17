@@ -11,10 +11,6 @@ module TestScrapboxParser.Utils
     , shouldParseSpec
     , checkContent
     , checkParsed
-    , genPrintableText
-    , genPrintableUrl
-    , genRandomText
-    , genMaybe
     ) where
 
 import           RIO                     hiding (assert)
@@ -22,10 +18,9 @@ import           RIO                     hiding (assert)
 import qualified RIO.Text                as T
 import           Test.Hspec              (Spec)
 import           Test.Hspec.QuickCheck   (prop)
-import           Test.QuickCheck         (Arbitrary (..), Gen,
-                                          PrintableString (..), Property,
-                                          Testable (..), arbitraryPrintableChar,
-                                          elements, listOf1)
+import           Test.QuickCheck         (Arbitrary (..), PrintableString (..),
+                                          Property, Testable (..),
+                                          arbitraryPrintableChar, listOf1)
 import           Test.QuickCheck.Monadic (assert, monadicIO)
 import           Text.Parsec             (ParseError)
 
@@ -65,17 +60,6 @@ class ScrapboxSyntax a where
     render     :: a -> Text
     getContent :: a -> Text
 
--- | Generate arbitrary Text
--- this is needed as some characters like
--- '`' and `>` will be parsed as blockquote, code notation, etc.
-genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genRandomText
-
--- | Generate random text
-genRandomText :: Gen Text
-genRandomText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
-
 -- | Check parsed
 checkParsed :: (ScrapboxSyntax syntax)
             => syntax
@@ -103,15 +87,3 @@ checkContent :: (ScrapboxSyntax syntax)
              -> Property
 checkContent syntax parser getter =
     checkParsed syntax parser getter (\txt -> txt == getContent syntax)
-
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
-    randomSite <- genRandomText
-    return $ "http://www." <> randomSite <> end
-
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe gen = do
-    gened <- gen
-    elements [Just gened, Nothing]

@@ -13,15 +13,16 @@ import           RIO
 import           RIO.List              (headMaybe)
 import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck       (Arbitrary (..))
+import           Test.QuickCheck       (Arbitrary (..), Property)
 
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        genPrintableText, genPrintableUrl,
-                                        genRandomText, getHeadInlineBlock,
-                                        getHeadSegment, getParagraph)
+                                        getHeadInlineBlock, getHeadSegment,
+                                        getParagraph)
 import           Types                 (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..), Url (..),
                                         isCodeNotation, isLink, isText)
+import           Utils                 (genPrintableText, genPrintableUrl,
+                                        genText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
@@ -44,7 +45,7 @@ instance CommonMark LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
 
 instance Arbitrary LinkSegment where
-    arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
+    arbitrary = LinkSegment <$> genText <*> genPrintableUrl
 
 -- | Test spec for parsing 'LINK'
 linkSpec :: Spec
@@ -150,17 +151,17 @@ plainTextSpec = describe "Plain text" $ do
     getText _                    = Nothing
 
 -- | General test case to check whether the segment was parsed properly
-testSegment :: (CommonMark section) => section -> Bool
+testSegment :: (CommonMark section) => section -> Property
 testSegment someSegment =
     checkScrapbox someSegment
         (\(content', inlines, segments) ->
                length content' == 1
-            && length inlines     == 1
+            && length inlines  == 1
             && length segments == 1
         )
         (\content -> do
-            blockContent                 <- headMaybe content
+            blockContent                    <- headMaybe content
             (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
-            (ITEM _ segments)         <- headMaybe inlines
+            (ITEM _ segments)               <- headMaybe inlines
             return (content, inlines, segments)
         )

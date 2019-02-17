@@ -19,13 +19,12 @@ import           Test.QuickCheck.Monadic  (assert, monadicIO)
 import           Parser.Item              (runItemParser)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
-                                           checkParsed, genMaybe,
-                                           genPrintableText, genPrintableUrl,
-                                           genRandomText, propParseAsExpected,
+                                           checkParsed, propParseAsExpected,
                                            shouldParseSpec)
 import           Types                    (Segment (..), Url (..), isHashTag,
                                            isLink, isText)
-import           Utils                    (whenRight)
+import           Utils                    (genMaybe, genPrintableText,
+                                           genPrintableUrl, genText, whenRight)
 -- | Spec for inline text parser
 inlineParserSpec :: Spec
 inlineParserSpec =
@@ -87,7 +86,7 @@ textSpec = describe "TEXT" $ do
         \(someText ::TextItem) ->
             checkContent someText runItemParser
                 (\segments -> do
-                  guard (length segments == 1)
+                  guard $ length segments == 1
                   segment <- headMaybe segments
                   getText segment
                 )
@@ -119,7 +118,7 @@ linkSpec = describe "LINK" $ do
     prop "should preserve its content" $
         \(linkItem :: LinkItem) -> checkContent linkItem runItemParser
             (\segments -> do
-                guard (length segments == 1)
+                guard $ length segments == 1
                 segment <- headMaybe segments
                 (LINK mName (Url url)) <- getLink segment
                 return $ fromMaybe mempty mName <> url
@@ -137,7 +136,7 @@ newtype HashTagItem = HashTagItem Text
     deriving Show
 
 instance Arbitrary HashTagItem where
-    arbitrary = HashTagItem <$> genRandomText
+    arbitrary = HashTagItem <$> genText
 
 instance ScrapboxSyntax HashTagItem where
     render (HashTagItem text)     = "#" <> text
@@ -153,7 +152,7 @@ hashTagSpec = describe "HASHTAG" $ do
         \(hashTag :: HashTagItem) ->
             checkContent hashTag runItemParser
                 (\segments -> do
-                    guard (length segments == 1)
+                    guard $ length segments == 1
                     segment       <- headMaybe segments
                     (HASHTAG txt) <- getHashTag segment
                     return txt

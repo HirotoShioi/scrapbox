@@ -5,15 +5,25 @@ extra: http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra.
 either: http://hackage.haskell.org/package/either-5.0.1
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Utils
     ( eitherM
     , maybeM
     , fromMaybeM
     , whenRight
     , whenJust
+    -- * Testing utilities
+    , genPrintableText
+    , genText
+    , genPrintableUrl
+    , genMaybe
     ) where
 
 import           RIO
+
+import qualified RIO.Text        as T
+import           Test.QuickCheck (Gen, listOf1, elements)
 
 --------------------------------------------------------------------------------
 -- Helper function
@@ -44,3 +54,26 @@ whenRight _         _ = pure ()
 -- | Monadic generalisation of 'either'.
 eitherM :: Monad m => (a -> m c) -> (b -> m c) -> m (Either a b) -> m c
 eitherM l r x = either l r =<< x
+
+-- | Generate arbitrary Text
+-- this is needed as some characters like
+-- '`' and `>` will be parsed as blockquote, code notation, etc.
+genPrintableText :: Gen Text
+genPrintableText = T.unwords <$> listOf1 genText
+
+-- | Generate random text
+genText :: Gen Text
+genText = fmap fromString <$> listOf1
+    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+-- | Generate random url
+genPrintableUrl :: Gen Text
+genPrintableUrl = do
+    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
+    randomSite <- genText
+    return $ "http://www." <> randomSite <> end
+
+-- | Wrap 'Gen a' with 'Maybe'
+genMaybe :: Gen a -> Gen (Maybe a)
+genMaybe gen = do
+    gened <- gen
+    elements [Just gened, Nothing]

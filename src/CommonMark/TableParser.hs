@@ -58,23 +58,22 @@ columnParser = do
         rest    <- P.takeText
         return (currList ++ [element], rest)
 
--- | Parse given @[Text]@ into 'CommonMarkTable'
-parseTable' :: [Text] -> Either String CommonMarkTable
-parseTable' texts =
-    let header = take 1 texts
-        rest   = drop 2 texts
-    in go (CommonMarkTable mempty) (header <> rest)
-  where
-    go :: CommonMarkTable -> [Text] -> Either String CommonMarkTable
-    go commonMarkTable []                = return commonMarkTable
-    go (CommonMarkTable currList) (t:ts) = do
-        column <- P.parseOnly columnParser t
-        go (CommonMarkTable (currList <> [column])) ts
-
 -- | Convert given common mark table into 'TABLE' block
 commonmarkTableToTable :: CommonMarkTable -> Block
 commonmarkTableToTable (CommonMarkTable columns) =
     table "table" (map getColumn columns)
 
+-- | Parse given @[Text]@ into 'CommonMarkTable'
 parseTable :: [Text] -> Either String Block
 parseTable txt = commonmarkTableToTable <$> parseTable' txt
+  where
+    parseTable' :: [Text] -> Either String CommonMarkTable
+    parseTable' texts =
+        let header = take 1 texts
+            rest   = drop 2 texts
+        in go (CommonMarkTable mempty) (header <> rest)
+    go :: CommonMarkTable -> [Text] -> Either String CommonMarkTable
+    go commonMarkTable []                = return commonMarkTable
+    go (CommonMarkTable currList) (t:ts) = do
+        column <- P.parseOnly columnParser t
+        go (CommonMarkTable (currList <> [column])) ts

@@ -45,7 +45,7 @@ hashtag = HASHTAG . fromString
 hashTagParser :: Parser Segment
 hashTagParser = do
     _ <- char '#'
-    content <- many1 (noneOf " ")
+    content <- many1 (noneOf " [")
     return $ hashtag content
 
 -- | Parser for 'LINK'

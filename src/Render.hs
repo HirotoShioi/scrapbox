@@ -14,8 +14,9 @@ module Render
     , writeScrapbox
     -- * Exposed for testing
     , renderBlock
-    , renderContent
+    , renderSegments
     , renderText
+    , renderInline
     ) where
 
 import           RIO
@@ -65,17 +66,17 @@ renderBlock = \case
 -- | Render given 'ScrapText' into 'Text'
 renderText :: ScrapText -> Text
 renderText (ScrapText inlines) =
-    foldr (\scrap acc-> renderScrapText scrap <> acc) mempty inlines
+    foldr (\scrap acc-> renderInline scrap <> acc) mempty inlines
 
 -- | Render given 'InlineBlock' into 'Text'
-renderScrapText :: InlineBlock -> Text
-renderScrapText (ITEM style content)    = renderWithStyle style content
-renderScrapText (CODE_NOTATION content) = "`" <> content <> "`"
-renderScrapText (MATH_EXPRESSION expr)  = "[$" <> expr <> "]"
+renderInline :: InlineBlock -> Text
+renderInline (ITEM style content)    = renderWithStyle style content
+renderInline (CODE_NOTATION content) = "`" <> content <> "`"
+renderInline (MATH_EXPRESSION expr)  = "[$" <> expr <> "]"
 
 -- | Render given 'Content' to 'Text'
-renderContent :: [Segment] -> Text
-renderContent = foldr (\inline acc -> renderSegment inline <> acc) mempty
+renderSegments :: [Segment] -> Text
+renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
   where
     renderSegment :: Segment -> Text
     renderSegment = \case
@@ -112,7 +113,7 @@ blocked content = "[" <> content <> "]"
 -- | Render with style
 renderWithStyle :: Style -> [Segment] -> Text
 renderWithStyle style inline = case style of
-    NoStyle -> renderContent inline
+    NoStyle -> renderSegments inline
     Bold ->
         let boldStyle = StyleData 0 True False False
         in renderCustomStyle boldStyle inline
@@ -123,7 +124,7 @@ renderWithStyle style inline = case style of
         let strikeThroughStyle = StyleData 0 False False True
         in renderCustomStyle strikeThroughStyle inline
     CustomStyle customStyle -> renderCustomStyle customStyle inline
-    UserStyle userStyle -> "[" <> userStyle <> " " <> renderContent inline <> "]"
+    UserStyle userStyle -> "[" <> userStyle <> " " <> renderSegments inline <> "]"
 
 renderCustomStyle :: StyleData -> [Segment] -> Text
 renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =
@@ -138,7 +139,7 @@ renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content 
             , strikeThroughSymbol
             , " "
             ]
-    in blocked $ combinedSyntax <> renderContent content
+    in blocked $ combinedSyntax <> renderSegments content
 
 -- | Render 'HEADING' block
 renderHeading :: Level -> [Segment] -> Text
