@@ -18,7 +18,7 @@ import           RIO
 import           RIO.List              (headMaybe)
 import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck       (Arbitrary (..))
+import           Test.QuickCheck       (Arbitrary (..), Property)
 
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         getHeadSegment, getParagraph)
@@ -61,7 +61,7 @@ instance Arbitrary (StyledText a) where
     arbitrary = StyledText <$> genPrintableText
 
 -- | Generalized test case for checking whether the content of the text has same content
-checkStyledTextContent :: (CommonMark (StyledText style)) => StyledText style -> Bool
+checkStyledTextContent :: (CommonMark (StyledText style)) => StyledText style -> Property
 checkStyledTextContent styledText =
     checkScrapbox styledText
         (\txt -> txt == getStyledText styledText)

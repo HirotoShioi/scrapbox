@@ -13,7 +13,7 @@ import           RIO
 import           RIO.List              (headMaybe)
 import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck       (Arbitrary (..))
+import           Test.QuickCheck       (Arbitrary (..), Property)
 
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         getHeadInlineBlock, getHeadSegment,
@@ -151,17 +151,17 @@ plainTextSpec = describe "Plain text" $ do
     getText _                    = Nothing
 
 -- | General test case to check whether the segment was parsed properly
-testSegment :: (CommonMark section) => section -> Bool
+testSegment :: (CommonMark section) => section -> Property
 testSegment someSegment =
     checkScrapbox someSegment
         (\(content', inlines, segments) ->
                length content' == 1
-            && length inlines     == 1
+            && length inlines  == 1
             && length segments == 1
         )
         (\content -> do
-            blockContent                 <- headMaybe content
+            blockContent                    <- headMaybe content
             (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
-            (ITEM _ segments)         <- headMaybe inlines
+            (ITEM _ segments)               <- headMaybe inlines
             return (content, inlines, segments)
         )

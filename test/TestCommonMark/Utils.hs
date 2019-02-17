@@ -13,12 +13,12 @@ module TestCommonMark.Utils
 
 import           RIO
 
-import           RIO.List       (headMaybe)
+import           RIO.List        (headMaybe)
 
-import           CommonMark.Lib (commonmarkToScrapboxNode, optDefault)
-import           Types          (Block (..), InlineBlock (..), ScrapText (..),
-                                 Scrapbox (..), Segment)
-
+import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
+import           Test.QuickCheck (Property, Testable(..))
+import           Types           (Block (..), InlineBlock (..), ScrapText (..),
+                                  Scrapbox (..), Segment)
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
@@ -33,8 +33,8 @@ checkScrapbox :: (CommonMark a)
               => a
               -> (parsedContent -> Bool)
               -> ([Block] -> Maybe parsedContent)
-              -> Bool
-checkScrapbox markdown pre extractionFunc = do
+              -> Property
+checkScrapbox markdown pre extractionFunc = property $ do
     let (Scrapbox content) = parseMarkdown markdown
     maybe False pre (extractionFunc content)
   where
