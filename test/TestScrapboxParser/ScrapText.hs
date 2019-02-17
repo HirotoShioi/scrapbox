@@ -17,21 +17,22 @@ import           RIO                      hiding (assert)
 import           RIO.List                 (headMaybe)
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck          (Arbitrary (..), Property, listOf1, sized, resize)
+import           Test.QuickCheck          (Arbitrary (..), Property, listOf1,
+                                           resize, sized)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.ScrapText         (runScrapTextParser)
 import           Render                   (renderSegments)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
-                                           checkParsed, genPrintableText,
-                                           propParseAsExpected, shouldParseSpec)
+                                           checkParsed, propParseAsExpected,
+                                           shouldParseSpec)
 import           Types                    (InlineBlock (..), ScrapText (..),
                                            Segment (..), Style (..), Url (..),
                                            concatSegment, isBold,
                                            isCodeNotation, isItalic, isMathExpr,
                                            isNoStyle, isStrikeThrough)
-import           Utils                    (whenRight)
+import           Utils                    (genPrintableText, whenRight)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec

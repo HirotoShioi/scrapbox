@@ -20,13 +20,14 @@ import           Test.QuickCheck       (Arbitrary (..), choose, elements,
 
 import           Render                (renderBlock, renderSegments, renderText)
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        genPrintableText, genPrintableUrl,
-                                        genRandomText, getParagraph)
+                                        getParagraph)
 import           Types                 (Block (..), CodeSnippet (..),
                                         Level (..), TableContent (..), Url (..),
                                         isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
+import           Utils                 (genPrintableText, genPrintableUrl,
+                                        genText)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec
@@ -316,7 +317,7 @@ instance CommonMark ImageSection where
     render (ImageSection title someLink) = "![" <> title <> "](" <> someLink <> ")"
 
 instance Arbitrary ImageSection where
-    arbitrary = ImageSection <$> genRandomText <*> genPrintableUrl
+    arbitrary = ImageSection <$> genText <*> genPrintableUrl
 
 -- | Test spec for parsing image
 imageSpec :: Spec
@@ -370,8 +371,8 @@ instance CommonMark TableSection where
 instance Arbitrary TableSection where
     arbitrary = do
         rowNum   <- choose (2,10)
-        header   <- vectorOf rowNum genRandomText
-        contents <- listOf1 $ vectorOf rowNum genRandomText
+        header   <- vectorOf rowNum genText
+        contents <- listOf1 $ vectorOf rowNum genText
         return $ TableSection header contents
 
 -- | Test spec for parsing table

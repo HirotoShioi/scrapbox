@@ -23,7 +23,7 @@ module Utils
 import           RIO
 
 import qualified RIO.Text        as T
-import           Test.QuickCheck
+import           Test.QuickCheck (Gen, listOf1, elements)
 
 --------------------------------------------------------------------------------
 -- Helper function

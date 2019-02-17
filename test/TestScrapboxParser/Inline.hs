@@ -19,13 +19,12 @@ import           Test.QuickCheck.Monadic  (assert, monadicIO)
 import           Parser.Item              (runItemParser)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
-                                           checkParsed, genMaybe,
-                                           genPrintableText, genPrintableUrl,
-                                           genRandomText, propParseAsExpected,
+                                           checkParsed, propParseAsExpected,
                                            shouldParseSpec)
 import           Types                    (Segment (..), Url (..), isHashTag,
                                            isLink, isText)
-import           Utils                    (whenRight)
+import           Utils                    (genMaybe, genPrintableText,
+                                           genPrintableUrl, genText, whenRight)
 -- | Spec for inline text parser
 inlineParserSpec :: Spec
 inlineParserSpec =
@@ -137,7 +136,7 @@ newtype HashTagItem = HashTagItem Text
     deriving Show
 
 instance Arbitrary HashTagItem where
-    arbitrary = HashTagItem <$> genRandomText
+    arbitrary = HashTagItem <$> genText
 
 instance ScrapboxSyntax HashTagItem where
     render (HashTagItem text)     = "#" <> text

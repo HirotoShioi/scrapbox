@@ -16,12 +16,13 @@ import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..))
 
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        genPrintableText, genPrintableUrl,
-                                        genRandomText, getHeadInlineBlock,
-                                        getHeadSegment, getParagraph)
+                                        getHeadInlineBlock, getHeadSegment,
+                                        getParagraph)
 import           Types                 (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..), Url (..),
                                         isCodeNotation, isLink, isText)
+import           Utils                 (genPrintableText, genPrintableUrl,
+                                        genText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
@@ -44,7 +45,7 @@ instance CommonMark LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
 
 instance Arbitrary LinkSegment where
-    arbitrary = LinkSegment <$> genRandomText <*> genPrintableUrl
+    arbitrary = LinkSegment <$> genText <*> genPrintableUrl
 
 -- | Test spec for parsing 'LINK'
 linkSpec :: Spec
