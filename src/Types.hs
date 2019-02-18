@@ -27,7 +27,6 @@ module Types
     , concatScrapText
     , verbose
     , unverbose
-    , unverboseScrapText
     , emptyStyle
     -- * Predicates
     , isBlockQuote
@@ -302,25 +301,19 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
   where
     unVerboseBlock :: Block -> Block
     unVerboseBlock = \case
-        BLOCK_QUOTE stext      -> BLOCK_QUOTE $ unverboseScrapText stext
+        BLOCK_QUOTE stext      -> BLOCK_QUOTE $ unVerboseScrapText stext
         BULLET_POINT num block -> BULLET_POINT num $ map unVerboseBlock block
         HEADING level segments -> HEADING level $ concatSegment segments
-        PARAGRAPH stext        -> PARAGRAPH $ unverboseScrapText stext
+        PARAGRAPH stext        -> PARAGRAPH $ unVerboseScrapText stext
         other                  -> other
 
-unverboseScrapText :: ScrapText -> ScrapText
-unverboseScrapText (ScrapText inlines) =
-    ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
-  where
+    unVerboseScrapText :: ScrapText -> ScrapText
+    unVerboseScrapText (ScrapText inlines) =
+        ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
+
     isSameStyle :: InlineBlock -> InlineBlock -> Bool
     isSameStyle (ITEM style1 _) (ITEM style2 _) = style1 == style2
     isSameStyle _ _                             = False
-
--- | Concatenate 'ScrapText'
--- This could be Semigroup, but definitely not Monoid (there's no mempty)
-concatScrapText :: ScrapText -> ScrapText -> ScrapText
-concatScrapText (ScrapText inline1) (ScrapText inline2) =
-    ScrapText . concatInline $ inline1 <> inline2
 
 -- | Concatinate 'ITEM' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
@@ -337,6 +330,12 @@ concatInline (a : rest)               = a : concatInline rest
 concatItem :: InlineBlock -> InlineBlock
 concatItem (ITEM style inline) = ITEM style (concatSegment inline)
 concatItem others              = others
+
+-- | Concatenate 'ScrapText'
+-- This could be Semigroup, but definitely not Monoid (there's no mempty)
+concatScrapText :: ScrapText -> ScrapText -> ScrapText
+concatScrapText (ScrapText inline1) (ScrapText inline2) =
+    ScrapText . concatInline $ inline1 <> inline2
 
 -- | Concatenate 'Segment'
 concatSegment :: [Segment] -> [Segment]

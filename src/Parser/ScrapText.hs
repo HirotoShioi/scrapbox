@@ -26,7 +26,7 @@ import           Parser.Utils                  (lookAheadMaybe)
 import           Types                         (InlineBlock (..),
                                                 ScrapText (..), Segment (..),
                                                 Style (..), StyleData (..),
-                                                emptyStyle, unverboseScrapText)
+                                                emptyStyle)
 import           Utils                         (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
@@ -62,7 +62,7 @@ runScrapTextParserM content =
 
 -- | Parser for 'ScrapText'
 scrapTextParser :: Parser ScrapText
-scrapTextParser = unverboseScrapText . ScrapText <$> manyTill inlineBlockParser eof
+scrapTextParser = ScrapText <$> manyTill inlineBlockParser eof
 
 -- | InlineBlock parser
 inlineBlockParser :: Parser InlineBlock
