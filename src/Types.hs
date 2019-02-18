@@ -7,8 +7,7 @@
 
 module Types
     ( -- * Datatypes
-      Page (..)
-    , Scrapbox (..)
+      Scrapbox (..)
     , Start(..)
     , Block(..)
     , CodeName(..)
@@ -51,26 +50,20 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency, listOf1,
-                                  scale)
+import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
+                                  listOf1, scale, vectorOf)
 import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
-
--- https://scrapbox.io/help/Syntax
-
--- TODO: Make naming more easy to understand/ makes sense
-
--- | Data structure of an scrapbox page in JSON format
-data Page = Page
-    { pContent :: !Scrapbox
-    -- ^ Content of the page
-    , pTitle   :: !Text
-    -- ^ Title
-    } deriving (Eq, Show, Generic, Read, Ord)
 
 -- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary Scrapbox where
+    arbitrary = do
+        newSize <- choose (1,10)
+        scale (\size -> if size < 10 then size else newSize) $ 
+            unverbose . Scrapbox <$> listOf1 arbitrary
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -80,29 +73,54 @@ newtype Scrapbox = Scrapbox [Block]
 newtype Start = Start Int
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Start where
+    arbitrary = Start <$> choose (1,3)
+
 -- | Name of the code block
 newtype CodeName = CodeName Text
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary CodeName where
+    arbitrary = CodeName <$> genText
 
 -- | Code snippet
 newtype CodeSnippet = CodeSnippet Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary CodeSnippet where
+    arbitrary = CodeSnippet <$> genPrintableText
+
 -- | Heading level
 newtype Level = Level Int
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary Level where
+    arbitrary = Level <$> choose (1, 4)
 
 -- | Name of the table
 newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary TableName where
+    arbitrary = TableName <$> genText
+
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary TableContent where
+    arbitrary = do
+        newSize <- choose (1,5)
+        scale (\size -> if size < 5 then size else newSize) $ do
+            num <- getSize
+            TableContent <$> listOf1 (vectorOf num genText)
+
 -- | Url for Link/Thumbnail
 newtype Url = Url Text
     deriving (Eq, Show, Generic, Read, Ord)
+
+instance Arbitrary Url where
+    arbitrary = Url <$> genPrintableUrl
 
 -- | Scrapbox page is consisted by list of Blocks
 data Block
@@ -124,6 +142,20 @@ data Block
     -- ^ Thumbnail
     deriving (Eq, Show, Generic, Read, Ord)
 
+instance Arbitrary Block where
+    arbitrary = do
+        newSize <- choose (1,10)
+        scale (\size -> if size < 10 then size else newSize) $ frequency
+            [ (2, return LINEBREAK)
+            , (1, BLOCK_QUOTE <$> arbitrary)
+            , (1, BULLET_POINT <$> arbitrary <*> listOf1 arbitrary)
+            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
+            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
+            , (7, PARAGRAPH <$> arbitrary)
+            , (1, TABLE <$> arbitrary <*> arbitrary)
+            , (2, THUMBNAIL <$> arbitrary)
+            ]
+
 --------------------------------------------------------------------------------
 -- ScrapText
 --------------------------------------------------------------------------------
@@ -136,8 +168,15 @@ instance Arbitrary ScrapText where
     arbitrary = do
         newSize <- choose (0, sizeNum)
         scale (\size -> if size < sizeNum then size else newSize) $
-            ScrapText . concatInline <$> listOf1 arbitrary
+            ScrapText . concatInline . format <$> listOf1 arbitrary
       where
+        format :: [InlineBlock] -> [InlineBlock]
+        format [] = []
+        format [ITEM style segments]    = [ITEM style $ addSpace segments]
+        format [inline]                 = [inline]
+        format (ITEM style segments:xs) = ITEM style (addSpace segments) : format xs
+        format (x:xs)                   = x : format xs
+
         sizeNum :: Int
         sizeNum = 10
 
@@ -264,6 +303,7 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
     unVerboseBlock = \case
         BLOCK_QUOTE stext      -> BLOCK_QUOTE $ unVerboseScrapText stext
         BULLET_POINT num block -> BULLET_POINT num $ map unVerboseBlock block
+        HEADING level segments -> HEADING level $ concatSegment segments
         PARAGRAPH stext        -> PARAGRAPH $ unVerboseScrapText stext
         other                  -> other
 
@@ -278,10 +318,12 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
 -- | Concatinate 'ITEM' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []       = []
+concatInline [ITEM style inline] = [ITEM style (concatSegment inline)]
 concatInline [inline] = [inline]
-concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
+concatInline (ITEM style1 inline1: ITEM style2 inline2 :rest)
     | style1 == style2 = concatInline (ITEM style1 (concatSegment $ inline1 <> inline2) : rest)
-    | otherwise        = c1 : concatInline (c2:rest)
+    | otherwise        = 
+        ITEM style1 (concatSegment inline1) : concatInline (ITEM style2 (concatSegment inline2):rest)
 concatInline (ITEM style inline : rest) = ITEM style (concatSegment inline) : concatInline rest
 concatInline (a : rest)                 = a : concatInline rest
 
@@ -381,3 +423,14 @@ isStrikeThrough _             = False
 isNoStyle :: Style -> Bool
 isNoStyle NoStyle = True
 isNoStyle _       = False
+
+--------------------------------------------------------------------------------
+-- For Artbitrary typeclass instance
+--------------------------------------------------------------------------------
+
+-- Add space after hashtag
+addSpace :: [Segment] -> [Segment]
+addSpace []                 = []
+addSpace [HASHTAG txt]      = [HASHTAG txt]
+addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
+addSpace (x:xs)             = x : addSpace xs

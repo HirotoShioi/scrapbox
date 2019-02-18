@@ -21,9 +21,7 @@ module Constructors
     , strikeThrough
     , mathExpr
     , codeNotation
-    -- * For creating custom style
-    , styleData
-    , customStyle
+    , customStyleBlock
     -- * Segment
     , hashtag
     , link
@@ -111,8 +109,8 @@ strikeThrough :: [Segment] -> InlineBlock
 strikeThrough = ITEM StrikeThrough
 
 -- | Creates 'InlineBlock' wigh given 'StyleData' and 'Segment'
-customStyle :: StyleData -> [Segment] -> InlineBlock
-customStyle sData = ITEM (CustomStyle sData)
+customStyleBlock :: StyleData -> [Segment] -> InlineBlock
+customStyleBlock sData = ITEM (CustomStyle sData)
 
 -- | Creates 'CODE_NOTATION' inline block with given 'Text'
 codeNotation :: Text -> InlineBlock
@@ -137,7 +135,3 @@ hashtag = HASHTAG
 -- | Creates 'LINK' with given name and url
 link :: Maybe Text -> Text -> Segment
 link mName url = LINK mName (Url url)
-
--- | Creates 'StyleData' with given params
-styleData :: Int -> Bool -> Bool -> Bool -> StyleData
-styleData = StyleData
