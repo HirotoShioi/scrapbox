@@ -4,8 +4,8 @@ module Main where
 
 import           RIO
 
-import           CMark
-
+import           CMark (Node, commonmarkToNode, optHardBreaks, optSafe)
+import           Types
 --------------------------------------------------------------------------------
 -- Test files
 --------------------------------------------------------------------------------
@@ -135,3 +135,27 @@ example5 = unlines [
 
 main :: IO ()
 main = undefined
+
+problem :: String
+problem = "[!?% #oF c7fQVC9 4fx r5Md 4lpz rKlv5 fP Cl]jP5 SrDI[http://www.z78.org Br S K]`8P9 K2``ahsoX 3 md m9Ud 41oJ`[http://www.A.io]AQYlS tu 33Uh a5p uhxMxdv ZOv zMCx qd yKzt"
+
+expected :: Scrapbox
+expected = Scrapbox
+    [ PARAGRAPH
+        ( ScrapText
+            [ ITEM ( UserStyle "!?%" )
+                [ HASHTAG "oF"
+                , TEXT " c7fQVC9 4fx r5Md 4lpz rKlv5 fP Cl"
+                ]
+            , ITEM NoStyle
+                [ TEXT "jP5 SrDI"
+                , LINK ( Just "Br S K" ) ( Url "http://www.z78.org" )
+                ]
+            , CODE_NOTATION "8P9 K2"
+            , ITEM NoStyle
+                [ LINK Nothing ( Url "http://www.A.io" )
+                , TEXT "AQYlS tu 33Uh a5p uhxMxdv ZOv zMCx qd yKzt"
+                ]
+            ]
+        )
+    ]

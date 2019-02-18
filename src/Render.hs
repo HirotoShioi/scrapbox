@@ -57,10 +57,10 @@ renderBlock = \case
     LINEBREAK                    -> [""]
     BLOCK_QUOTE stext            -> [">" <> renderText stext]
     BULLET_POINT start blocks    -> renderBulletPoint start blocks
-    CODE_BLOCK codeName code     -> renderCodeBlock codeName code <> renderBlock LINEBREAK
+    CODE_BLOCK codeName code     -> renderCodeBlock codeName code
     PARAGRAPH stext              -> [renderText stext]
     HEADING level contents       -> [renderHeading level contents]
-    TABLE tableName tableContent -> renderTable tableName tableContent <> renderBlock LINEBREAK
+    TABLE tableName tableContent -> renderTable tableName tableContent
     THUMBNAIL (Url url)          -> [blocked url]
 
 -- | Render given 'ScrapText' into 'Text'
@@ -72,7 +72,7 @@ renderText (ScrapText inlines) =
 renderInline :: InlineBlock -> Text
 renderInline (ITEM style content)    = renderWithStyle style content
 renderInline (CODE_NOTATION content) = "`" <> content <> "`"
-renderInline (MATH_EXPRESSION expr)  = "[$" <> expr <> "]"
+renderInline (MATH_EXPRESSION expr)  = "[$ " <> expr <> "]"
 
 -- | Render given 'Content' to 'Text'
 renderSegments :: [Segment] -> Text

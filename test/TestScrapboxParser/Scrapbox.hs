@@ -16,6 +16,7 @@ import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.Scrapbox          (parseScrapbox)
+import           Render                   (renderPretty)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            propParseAsExpected, shouldParseSpec)
 import           Types                    (Block (..), CodeName (..),
@@ -26,7 +27,6 @@ import           Types                    (Block (..), CodeName (..),
                                            TableContent (..), TableName (..),
                                            Url (..))
 import           Utils                    (whenRight)
-
 --------------------------------------------------------------------------------
 -- Scrapbox parser
 --------------------------------------------------------------------------------
@@ -44,6 +44,9 @@ scrapboxParserSpec =
                 whenRight eParseredText $ \(Scrapbox blocks) ->
                     assert $ not $ null blocks
 
+        describe "Blocks" $ modifyMaxSuccess (const 200) $ 
+            blockSpec
+    
         describe "Parsing \"syntax\" page with scrapbox parser" $
           modifyMaxSuccess (const 1) $ do
             it "should parse section1 as expected" $
@@ -439,3 +442,16 @@ scrapboxParserSpec =
             )
         , LINEBREAK
         ]
+
+blockSpec :: Spec
+blockSpec = describe "Scrapbox" $
+    prop "should be able to parse any Scrapbox" $
+        \(scrapbox :: Scrapbox) -> monadicIO $ do
+            let rendered = renderPretty scrapbox
+            let eParsed  = parseScrapbox $ T.unpack rendered
+
+            assert $ isRight eParsed
+            
+            whenRight eParsed $ \parsed ->
+                assert $ parsed == scrapbox
+

@@ -18,7 +18,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 string, try, unexpected, (<|>))
 
 import           Parser.Item                   (runItemParserM)
-import           Parser.ScrapText              (runScrapTextParserM)
+import           Parser.ScrapText              (runScrapTextParserM, extractParagraph)
 import           Types                         (Block (..), CodeName (..),
                                                 CodeSnippet (..), Level (..),
                                                 Scrapbox (..), Start (..),
@@ -65,7 +65,7 @@ headingParser = do
     _         <- char '['
     symbolLen <- length <$> many1 (char '*')
     _         <- space
-    str       <- many (noneOf "]")
+    str       <- extractParagraph
     _         <- char ']'
     _         <- endOfLine
     segments  <- runItemParserM str
@@ -86,7 +86,7 @@ codeBlockParser :: Int -> Parser Block
 codeBlockParser indentNum = do
     _        <- string "code:"
     codeName <- manyTill anyChar endOfLine
-    snippet  <- T.unlines <$> many codeSnippetParser
+    snippet  <- T.unlines <$> manyTill codeSnippetParser endOfLine
     return $ CODE_BLOCK (CodeName $ fromString codeName) (CodeSnippet snippet)
   where
     codeSnippetParser :: Parser Text

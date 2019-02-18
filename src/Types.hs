@@ -63,7 +63,14 @@ instance Arbitrary Scrapbox where
     arbitrary = do
         newSize <- choose (1,10)
         scale (\size -> if size < 10 then size else newSize) $ 
-            unverbose . Scrapbox <$> listOf1 arbitrary
+            unverbose . Scrapbox . addLineBreak <$> listOf1 arbitrary
+        where
+          addLineBreak :: [Block] -> [Block]
+          addLineBreak []                      = []
+          addLineBreak [x]                     = [x]
+          addLineBreak (c@(CODE_BLOCK _ _):xs) = c : LINEBREAK : addLineBreak xs
+          addLineBreak (t@(TABLE _ _): xs)     = t : LINEBREAK : addLineBreak xs
+          addLineBreak (x:xs)                  = x : addLineBreak xs
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -95,7 +102,7 @@ newtype Level = Level Int
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Level where
-    arbitrary = Level <$> choose (1, 4)
+    arbitrary = Level <$> choose (2, 5)
 
 -- | Name of the table
 newtype TableName = TableName Text

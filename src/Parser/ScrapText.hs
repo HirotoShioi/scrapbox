@@ -10,11 +10,11 @@ module Parser.ScrapText
     , styledTextParser
     , boldParser
     , noStyleParser
+    , extractParagraph
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
 
-import           RIO.List                      (nub)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
@@ -110,7 +110,7 @@ styledTextParser :: Parser InlineBlock
 styledTextParser = do
     _         <- char '['
      -- Need to check if there's missing symobols
-    symbols   <- manyTill (oneOf "*/-!^~$%&") space
+    symbols   <- manyTill (oneOf "*/-!^~$%&?") space
     paragraph <- extractParagraph
     let style = mkStyle symbols
     segments  <- runItemParserM paragraph
@@ -200,7 +200,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
             (   try (string "[[")
             <|> try (string "[")
             <|> try (string "`")
-            <|> try (many1 (noneOf "["))
+            <|> try (many1 (noneOf "[`"))
             )
         case someChar of
             Nothing   -> runItemParserM content
@@ -221,12 +221,12 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
             then runItemParserM content'
-            else continue symbolStr (nub symbolStr) content'
+            else continue symbolStr content'
 
-    continue :: String -> String -> String -> Parser [Segment]
-    continue symbol till curr = do
+    continue :: String -> String -> Parser [Segment]
+    continue symbol curr = do
         someSymbol <- string symbol
-        rest       <- many (noneOf till)
+        rest       <- many (noneOf "[`")
         go $ curr <> someSymbol <> rest
 
 -- | Parser for 'CODENOTATION'
@@ -238,8 +238,9 @@ codeNotationParser = do
 -- | Parser for 'MATH_EXPRESSION'
 mathExpressionParser :: Parser InlineBlock
 mathExpressionParser = do
-    content <- between (string "[$") (char ']') $ many1 (noneOf "]")
+    content <- between (string "[$ ") (char ']') $ many1 (noneOf "]")
     return $ MATH_EXPRESSION $ fromString content
+
 --------------------------------------------------------------------------------
 -- Needs attention
 --------------------------------------------------------------------------------
