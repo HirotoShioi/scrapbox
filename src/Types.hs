@@ -63,7 +63,7 @@ instance Arbitrary Scrapbox where
     arbitrary = do
         newSize <- choose (1,10)
         scale (\size -> if size < 10 then size else newSize) $ 
-            Scrapbox <$> listOf1 arbitrary
+            unverbose . Scrapbox <$> listOf1 arbitrary
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -150,11 +150,12 @@ instance Arbitrary Block where
             , (1, BLOCK_QUOTE <$> arbitrary)
             , (1, BULLET_POINT <$> arbitrary <*> listOf1 arbitrary)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*> listOf1 arbitrary)
+            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
             , (7, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
             ]
+
 --------------------------------------------------------------------------------
 -- ScrapText
 --------------------------------------------------------------------------------
@@ -167,8 +168,15 @@ instance Arbitrary ScrapText where
     arbitrary = do
         newSize <- choose (0, sizeNum)
         scale (\size -> if size < sizeNum then size else newSize) $
-            ScrapText . concatInline <$> listOf1 arbitrary
+            ScrapText . concatInline . format <$> listOf1 arbitrary
       where
+        format :: [InlineBlock] -> [InlineBlock]
+        format [] = []
+        format [ITEM style segments]    = [ITEM style $ addSpace segments]
+        format [inline]                 = [inline]
+        format (ITEM style segments:xs) = ITEM style (addSpace segments) : format xs
+        format (x:xs)                   = x : format xs
+
         sizeNum :: Int
         sizeNum = 10
 
@@ -295,6 +303,7 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
     unVerboseBlock = \case
         BLOCK_QUOTE stext      -> BLOCK_QUOTE $ unVerboseScrapText stext
         BULLET_POINT num block -> BULLET_POINT num $ map unVerboseBlock block
+        HEADING level segments -> HEADING level $ concatSegment segments
         PARAGRAPH stext        -> PARAGRAPH $ unVerboseScrapText stext
         other                  -> other
 
@@ -309,10 +318,12 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
 -- | Concatinate 'ITEM' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []       = []
+concatInline [ITEM style inline] = [ITEM style (concatSegment inline)]
 concatInline [inline] = [inline]
-concatInline (c1@(ITEM style1 inline1):c2@(ITEM style2 inline2):rest)
+concatInline (ITEM style1 inline1: ITEM style2 inline2 :rest)
     | style1 == style2 = concatInline (ITEM style1 (concatSegment $ inline1 <> inline2) : rest)
-    | otherwise        = c1 : concatInline (c2:rest)
+    | otherwise        = 
+        ITEM style1 (concatSegment inline1) : concatInline (ITEM style2 (concatSegment inline2):rest)
 concatInline (ITEM style inline : rest) = ITEM style (concatSegment inline) : concatInline rest
 concatInline (a : rest)                 = a : concatInline rest
 
@@ -412,3 +423,14 @@ isStrikeThrough _             = False
 isNoStyle :: Style -> Bool
 isNoStyle NoStyle = True
 isNoStyle _       = False
+
+--------------------------------------------------------------------------------
+-- For Artbitrary typeclass instance
+--------------------------------------------------------------------------------
+
+-- Add space after hashtag
+addSpace :: [Segment] -> [Segment]
+addSpace []                 = []
+addSpace [HASHTAG txt]      = [HASHTAG txt]
+addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
+addSpace (x:xs)             = x : addSpace xs
