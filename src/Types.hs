@@ -317,15 +317,19 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
 
 -- | Concatinate 'ITEM' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
-concatInline []       = []
-concatInline [ITEM style inline] = [ITEM style (concatSegment inline)]
-concatInline [inline] = [inline]
-concatInline (ITEM style1 inline1: ITEM style2 inline2 :rest)
+concatInline []                       = []
+concatInline [ITEM style inline]      = [ITEM style (concatSegment inline)]
+concatInline [inline]                 = [inline]
+concatInline (item1@(ITEM style1 inline1): item2@(ITEM style2 inline2) :rest)
     | style1 == style2 = concatInline (ITEM style1 (concatSegment $ inline1 <> inline2) : rest)
-    | otherwise        = 
-        ITEM style1 (concatSegment inline1) : concatInline (ITEM style2 (concatSegment inline2):rest)
-concatInline (ITEM style inline : rest) = ITEM style (concatSegment inline) : concatInline rest
-concatInline (a : rest)                 = a : concatInline rest
+    | otherwise        = concatItem item1 : concatItem item2 : rest
+concatInline (item@(ITEM _ _) : rest) = concatItem item : concatInline rest
+concatInline (a : rest)               = a : concatInline rest
+
+-- | Concatenate the content of 'ITEM'
+concatItem :: InlineBlock -> InlineBlock
+concatItem (ITEM style inline) = ITEM style (concatSegment inline)
+concatItem others              = others
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
