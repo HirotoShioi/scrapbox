@@ -23,7 +23,8 @@ import           Types                         (Block (..), CodeName (..),
                                                 CodeSnippet (..), Level (..),
                                                 Scrapbox (..), Start (..),
                                                 TableContent (..),
-                                                TableName (..), Url (..))
+                                                TableName (..), Url (..),
+                                                unverbose)
 
 --------------------------------------------------------------------------------
 -- Block parser
@@ -133,7 +134,7 @@ blockParser indentNum =
 
 -- | Parser for 'Scrapbox'
 scrapboxParser :: Parser Scrapbox
-scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
+scrapboxParser = unverbose . Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
 parseScrapbox :: String -> Either ParseError Scrapbox
