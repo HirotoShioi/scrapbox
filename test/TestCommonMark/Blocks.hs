@@ -220,7 +220,7 @@ codeBlockSpec = describe "Code block" $ do
     prop "should preserve its content" $
         \(codeBlock :: CodeBlockSection) ->
             checkScrapbox codeBlock
-                (\codeContent -> codeContent == T.unlines (getCodeBlockContent codeBlock))
+                (\codeContent -> codeContent == getCodeBlockContent codeBlock)
                 (\content -> do
                     blockContent <- headMaybe content
                     (CODE_BLOCK _ (CodeSnippet snippet)) <- getCodeBlock blockContent

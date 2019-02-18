@@ -121,16 +121,16 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.STRONG                   -> [paragraph [bold (concatMap toSegments contents)]]
     C.TEXT textContent         -> [paragraph [noStyle [text textContent]]]
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
-    C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo code]
+    C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
     C.ITEM                     -> concatMap toBlocks contents
     C.SOFTBREAK                -> [paragraph [noStyle [text "\t"]]]
      -- Workaround need to pay attention
     C.LINEBREAK                -> [paragraph [noStyle [text "\n"]]]
     C.LINK url title           -> [paragraph [noStyle [toLink contents url title]]]
-    C.HTML_BLOCK htmlContent   -> [codeBlock "html" htmlContent]
+    C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
     C.IMAGE url _              -> [thumbnail url]
-    C.HTML_INLINE htmlContent  -> [codeBlock "html" htmlContent]
+    C.HTML_INLINE htmlContent  -> [codeBlock "html" (T.lines htmlContent)]
     C.BLOCK_QUOTE              -> [blockQuote $ concatMap toInlineBlock contents]
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
@@ -175,7 +175,7 @@ toLink nodes url title
         | otherwise     = link (Just title') url'
 
 -- | Convert CODE_BLOCK
-toCodeBlock :: Text -> Text -> Block
+toCodeBlock :: Text -> [Text] -> Block
 toCodeBlock codeInfo code
     | T.null codeInfo = codeBlock "code" code
     | otherwise       = codeBlock codeInfo code

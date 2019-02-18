@@ -401,13 +401,13 @@ scrapboxParserSpec =
                 )
             , BULLET_POINT ( Start 1 ) [ PARAGRAPH ( ScrapText [ ITEM NoStyle [ TEXT "Language names may be abbreviated" ] ] ) ]
             ]
-        , CODE_BLOCK ( CodeName "hello.js" ) ( CodeSnippet (T.unlines
+        , CODE_BLOCK ( CodeName "hello.js" ) ( CodeSnippet 
             [ "function () {"
             , "  alert(document.location.href)"
             , "  console.log(\"hello\")"
             , "  // You can also write comments!"
             , "}"
-            ])
+            ]
         )
         , LINEBREAK
         , PARAGRAPH ( ScrapText [ ITEM Bold [ TEXT "Tables" ] ] )

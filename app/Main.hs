@@ -136,26 +136,24 @@ example5 = unlines [
 main :: IO ()
 main = undefined
 
-problem :: String
-problem = "[!?% #oF c7fQVC9 4fx r5Md 4lpz rKlv5 fP Cl]jP5 SrDI[http://www.z78.org Br S K]`8P9 K2``ahsoX 3 md m9Ud 41oJ`[http://www.A.io]AQYlS tu 33Uh a5p uhxMxdv ZOv zMCx qd yKzt"
-
-expected :: Scrapbox
-expected = Scrapbox
-    [ PARAGRAPH
-        ( ScrapText
-            [ ITEM ( UserStyle "!?%" )
-                [ HASHTAG "oF"
-                , TEXT " c7fQVC9 4fx r5Md 4lpz rKlv5 fP Cl"
-                ]
-            , ITEM NoStyle
-                [ TEXT "jP5 SrDI"
-                , LINK ( Just "Br S K" ) ( Url "http://www.z78.org" )
-                ]
-            , CODE_NOTATION "8P9 K2"
-            , ITEM NoStyle
-                [ LINK Nothing ( Url "http://www.A.io" )
-                , TEXT "AQYlS tu 33Uh a5p uhxMxdv ZOv zMCx qd yKzt"
-                ]
-            ]
+problem :: Scrapbox
+problem = Scrapbox 
+    [ HEADING ( Level 4 ) 
+        [ TEXT "Ex1 s hid6R"
+        , HASHTAG "X"
+        , TEXT " sJXod y fn 9uZmE9qoz 8ZuXxM uYeMX DDw"
+        ] 
+    , PARAGRAPH 
+        ( ScrapText 
+            [ ITEM Bold 
+                [ LINK Nothing ( Url "http://www.D3LV.com" )
+                , TEXT "trBvTI"
+                ] 
+            , CODE_NOTATION "4X 8C2 rB4 0uGK"
+            , ITEM Bold 
+                [ TEXT "TnY5KN78 h fXA1N5XK2 lmPv YOdZF p6QyW Bv"
+                , LINK Nothing ( Url "http://www.xyf.edu" )
+                ] 
+            ] 
         )
-    ]
+    ] 

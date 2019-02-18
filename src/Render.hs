@@ -89,17 +89,18 @@ renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
-    let codeContent = map (" " <>) (T.lines code)
+    let codeContent = map (" " <>) code
     [codeName] <> codeContent
 
 -- | Render 'TABLE'
 renderTable :: TableName -> TableContent -> [Text]
+renderTable (TableName name) (TableContent [[]])    = ["table:" <> name]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
-        renderdTable = map
-                       (foldr (\someText acc -> "\t" <> someText <> acc) mempty)
-                       content
-    in title <> renderdTable
+        renderedTable = map
+                 (foldr (\someText acc -> "\t" <> someText <> acc) mempty)
+                 content
+    in title <> renderedTable
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
@@ -114,9 +115,7 @@ blocked content = "[" <> content <> "]"
 renderWithStyle :: Style -> [Segment] -> Text
 renderWithStyle style inline = case style of
     NoStyle -> renderSegments inline
-    Bold ->
-        let boldStyle = StyleData 0 True False False
-        in renderCustomStyle boldStyle inline
+    Bold   -> "[[" <> renderSegments inline <> "]]"
     Italic ->
         let italicStyle = StyleData 0 False True False
         in renderCustomStyle italicStyle inline

@@ -63,14 +63,19 @@ instance Arbitrary Scrapbox where
     arbitrary = do
         newSize <- choose (1,10)
         scale (\size -> if size < 10 then size else newSize) $ 
-            unverbose . Scrapbox . addLineBreak <$> listOf1 arbitrary
+            unverbose . Scrapbox . format <$> listOf1 arbitrary
         where
-          addLineBreak :: [Block] -> [Block]
-          addLineBreak []                      = []
-          addLineBreak [x]                     = [x]
-          addLineBreak (c@(CODE_BLOCK _ _):xs) = c : LINEBREAK : addLineBreak xs
-          addLineBreak (t@(TABLE _ _): xs)     = t : LINEBREAK : addLineBreak xs
-          addLineBreak (x:xs)                  = x : addLineBreak xs
+          format :: [Block] -> [Block]
+          format []                      = []
+          format [x]                     = [x]
+          format (BULLET_POINT start blocks : xs) 
+             = BULLET_POINT start (format blocks) : format xs
+          format (c@(CODE_BLOCK _ _):xs) = c : LINEBREAK : format xs
+          format (t@(TABLE _ _): xs)     = t : LINEBREAK : format xs
+          format (PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]]): xs) = 
+            THUMBNAIL url : format xs
+          format (x:xs)                  = x : format xs
+
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -91,11 +96,11 @@ instance Arbitrary CodeName where
     arbitrary = CodeName <$> genText
 
 -- | Code snippet
-newtype CodeSnippet = CodeSnippet Text
+newtype CodeSnippet = CodeSnippet [Text]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary CodeSnippet where
-    arbitrary = CodeSnippet <$> genPrintableText
+    arbitrary = CodeSnippet <$> listOf1 genPrintableText
 
 -- | Heading level
 newtype Level = Level Int
@@ -118,7 +123,7 @@ newtype TableContent = TableContent [[Text]]
 instance Arbitrary TableContent where
     arbitrary = do
         newSize <- choose (1,5)
-        scale (\size -> if size < 5 then size else newSize) $ do
+        scale (\size -> if size < 5 && size > 0 then size else newSize) $ do
             num <- getSize
             TableContent <$> listOf1 (vectorOf num genText)
 
@@ -175,7 +180,7 @@ instance Arbitrary ScrapText where
     arbitrary = do
         newSize <- choose (0, sizeNum)
         scale (\size -> if size < sizeNum then size else newSize) $
-            ScrapText . concatInline . format <$> listOf1 arbitrary
+            ScrapText . format . concatInline <$> listOf1 arbitrary
       where
         format :: [InlineBlock] -> [InlineBlock]
         format [] = []
@@ -270,7 +275,7 @@ data StyleData = StyleData
 instance Arbitrary StyleData where
     arbitrary = StyleData
         <$> choose (0,4)
-        <*> arbitrary
+        <*> return False
         <*> arbitrary
         <*> arbitrary
 

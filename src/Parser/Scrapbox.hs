@@ -8,14 +8,13 @@ module Parser.Scrapbox
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
-import qualified RIO.Text                      as T
 
 import           Network.URI                   (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, lookAhead,
                                                 many, many1, manyTill, noneOf,
                                                 oneOf, parse, sepBy1, space,
-                                                string, try, unexpected, (<|>))
+                                                string, try, unexpected, (<|>), notFollowedBy)
 
 import           Parser.Item                   (runItemParserM)
 import           Parser.ScrapText              (runScrapTextParserM, extractParagraph)
@@ -86,7 +85,7 @@ codeBlockParser :: Int -> Parser Block
 codeBlockParser indentNum = do
     _        <- string "code:"
     codeName <- manyTill anyChar endOfLine
-    snippet  <- T.unlines <$> manyTill codeSnippetParser endOfLine
+    snippet  <- manyTill codeSnippetParser (notFollowedBy codeSnippetParser)
     return $ CODE_BLOCK (CodeName $ fromString codeName) (CodeSnippet snippet)
   where
     codeSnippetParser :: Parser Text
@@ -101,14 +100,15 @@ tableParser :: Int -> Parser Block
 tableParser indentNum = do
     _            <- string "table:"
     tableName    <- manyTill anyChar endOfLine
-    tableContent <- manyTill rowParser endOfLine
+    -- notFollowedBy lets you consume until it fails
+    tableContent <- manyTill rowParser (notFollowedBy rowParser)
     return $ TABLE (TableName $ fromString tableName) (TableContent tableContent)
   where
     rowParser :: Parser [Text]
     rowParser = do
         consumeIndent indentNum
         _    <- oneOf indent
-        row  <- sepBy1 (many $ noneOf "\t\n") (try $ char '\t')
+        row  <- sepBy1 (many $ noneOf "\t\n") (char '\t')
         _    <- endOfLine
         return $ map fromString row
 
@@ -122,9 +122,9 @@ blockParser indentNum =
     <|> try (consumeIndent indentNum *> headingParser)
     <|> try (consumeIndent indentNum *> thumbnailParser)
     <|> try (consumeIndent indentNum *> blockQuoteParser)
+    <|> try (consumeIndent indentNum *> tableParser indentNum)
     <|> try (bulletPointParser indentNum)
     <|> try (consumeIndent indentNum *> codeBlockParser indentNum)
-    <|> try (consumeIndent indentNum *> tableParser indentNum)
     <|> try (consumeIndent indentNum *> paragraphParser)
 
 --------------------------------------------------------------------------------
