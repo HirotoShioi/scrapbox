@@ -1,8 +1,6 @@
 {-| Utility functions used to test commonmark parser
 -}
 
-{-# LANGUAGE OverloadedStrings #-}
-
 module TestCommonMark.Utils
     ( CommonMark(..)
     , checkScrapbox
@@ -16,7 +14,7 @@ import           RIO
 import           RIO.List        (headMaybe)
 
 import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
-import           Test.QuickCheck (Property, Testable(..))
+import           Test.QuickCheck (Property, Testable (..))
 import           Types           (Block (..), InlineBlock (..), ScrapText (..),
                                   Scrapbox (..), Segment)
 --------------------------------------------------------------------------------

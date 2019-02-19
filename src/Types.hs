@@ -64,28 +64,35 @@ instance Arbitrary Scrapbox where
         newSize <- choose (1,10)
         scale (\size -> if size < 10 then size else newSize) $ do
             (Scrapbox blocks) <- unverbose . Scrapbox <$> listOf1 arbitrary
-            return $ Scrapbox $ format blocks
+            return $ Scrapbox $ removeAmbiguity blocks
         where
-          -- Need to refactor
-          format :: [Block] -> [Block]
-          format []                      = []
-          format [PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]])]
-              = [THUMBNAIL url]
-          format [BULLET_POINT start blocks] = [BULLET_POINT start (format blocks)]
-          format [x]                         = [x]
+          removeAmbiguity :: [Block] -> [Block]
+          removeAmbiguity = \case
+            [] -> []
+            
+             -- Replace Link with THUMBNAIL
+            [PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]])] -> [THUMBNAIL url]
 
-          format (BULLET_POINT start blocks : xs) 
-             = BULLET_POINT start (format blocks) : LINEBREAK : format xs
-          format (c@(CODE_BLOCK _ _):xs) = c : LINEBREAK : format xs
-          format (t@(TABLE _ _): xs)     = t : LINEBREAK : format xs
-          format (PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]]): xs) = 
-            THUMBNAIL url : format xs
-          format (PARAGRAPH (ScrapText inlines): xs) = 
-            PARAGRAPH (ScrapText $ formatInline inlines) : format xs
-          format (BLOCK_QUOTE (ScrapText inlines): xs) = 
-            BLOCK_QUOTE (ScrapText $ formatInline inlines) : format xs
-          format (x:xs)                  = x : format xs
+            -- Apply function to bulletpoint blocks
+            [BULLET_POINT start blocks] -> [BULLET_POINT start (removeAmbiguity blocks)]
+            [x] -> [x]
 
+            -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
+            (BULLET_POINT start blocks : xs) ->
+                BULLET_POINT start (removeAmbiguity blocks) : LINEBREAK : removeAmbiguity xs
+            (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
+            (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
+            
+            -- Replace Link with THUMBNAIL
+            (PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]]): xs) ->
+                THUMBNAIL url : removeAmbiguity xs
+            
+            -- Apply formatInlines to blocks
+            (PARAGRAPH (ScrapText inlines): xs) ->
+                PARAGRAPH (ScrapText $ formatInline inlines) : removeAmbiguity xs
+            (BLOCK_QUOTE (ScrapText inlines): xs) ->
+                BLOCK_QUOTE (ScrapText $ formatInline inlines) : removeAmbiguity xs
+            (x:xs) -> x : removeAmbiguity xs
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
