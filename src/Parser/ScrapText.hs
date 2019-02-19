@@ -79,6 +79,7 @@ boldParser = do
     _         <- string "[["
     paragraph <- extractStr
     segments  <- runItemParserM paragraph
+    _         <- string "]]"
     return $ ITEM Bold segments
   where
     extractStr :: Parser String
@@ -86,18 +87,24 @@ boldParser = do
     go :: String -> Parser String
     go content = do
         -- Check if we have enough closing brackets ahead
-        hasEnoughClosingBracket <- isJust <$> lookAheadMaybe
-            (manyTill anyChar (try $ char ']') *> manyTill anyChar (try $ string "]]"))
-        if hasEnoughClosingBracket
-            -- We do have enough closing brackets ahead, move on
-            then do
-                parsed <- many (noneOf  "]")
+        aheadContent <- lookAheadMaybe $ 
+                try (string "]]]")
+            <|> try (string "]]")
+            <|> try (many1 $ noneOf "]")
+        case aheadContent of
+            Nothing -> return content
+            Just "]]]" -> do
                 symbol <- anyChar
-                go $ content <> parsed <> [symbol]
-            -- If not, consume until double closing bracket
-            else do
-                tillClose'' <- manyTill anyChar (try $ string "]]")
-                return $ content <> tillClose''
+                return $ content <> [symbol]
+            Just "]]"  -> return content
+            Just _     -> do
+                more   <- many1 $ noneOf "]"
+                doubleSymbol <- isJust <$> lookAheadMaybe (try (string "]]"))
+                if doubleSymbol
+                    then go $ content <> more
+                    else do
+                        symbol <- anyChar
+                        go $ content <> more <> [symbol]
 
 -- | Parse styled text
 --
