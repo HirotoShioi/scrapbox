@@ -85,7 +85,7 @@ instance Arbitrary MathExpr where
     arbitrary = MathExpr <$> genPrintableText
 
 instance ScrapboxSyntax MathExpr where
-    render (MathExpr txt)     = "[$" <> txt <> "]"
+    render (MathExpr txt)     = "[$ " <> txt <> "]"
     getContent (MathExpr txt) = txt
 
 -- math expressions
