@@ -137,23 +137,95 @@ main :: IO ()
 main = undefined
 
 problem :: Scrapbox
-problem = Scrapbox 
-    [ HEADING ( Level 4 ) 
-        [ TEXT "Ex1 s hid6R"
-        , HASHTAG "X"
-        , TEXT " sJXod y fn 9uZmE9qoz 8ZuXxM uYeMX DDw"
+problem =Scrapbox 
+    [ BULLET_POINT ( Start 2 ) 
+        [ BLOCK_QUOTE 
+            ( ScrapText 
+                [ ITEM Italic 
+                    [ TEXT "iqE"
+                    , LINK ( Just "n O37Ac 3pyL jAp Vid" ) ( Url "http://www.u0I.tv" )
+                    , LINK ( Just "KhT CFi niK D QNHn" ) ( Url "http://www.s.com" )
+                    , LINK ( Just "E5q2 v" ) ( Url "http://www.4A.com" )
+                    ] 
+                , ITEM NoStyle [ TEXT "6 JXF d5M mJW Etem4WjWau" ]
+                ] 
+            )
+        , PARAGRAPH 
+            ( ScrapText 
+                [ ITEM NoStyle 
+                    [ LINK ( Just "jDG s xJFH" ) ( Url "http://www.44B.co.jp" )
+                    , TEXT "j ZHj b"
+                    , LINK Nothing ( Url "http://www.N.io" )
+                    ] 
+                , CODE_NOTATION "Ohg cBV1t T 74"
+                , CODE_NOTATION "S iub"
+                , CODE_NOTATION "y6 t nGTc w"
+                , ITEM NoStyle [ TEXT "6 cR40In t 3G i5aK hKe" ]
+                ] 
+            )
+        , PARAGRAPH ( ScrapText [ CODE_NOTATION "Dj6bK PWc9l xQ M Hp" ] )
         ] 
-    , PARAGRAPH 
-        ( ScrapText 
-            [ ITEM Bold 
-                [ LINK Nothing ( Url "http://www.D3LV.com" )
-                , TEXT "trBvTI"
+    , BULLET_POINT ( Start 3 ) 
+        [ CODE_BLOCK ( CodeName "c4o" ) 
+            ( CodeSnippet 
+                [ "GmX"
+                , "DZ5bE 19 1w dJLTJ"
+                , "t re M0Z"
+                , "T7e"
                 ] 
-            , CODE_NOTATION "4X 8C2 rB4 0uGK"
-            , ITEM Bold 
-                [ TEXT "TnY5KN78 h fXA1N5XK2 lmPv YOdZF p6QyW Bv"
-                , LINK Nothing ( Url "http://www.xyf.edu" )
+            )
+        , LINEBREAK
+        , PARAGRAPH 
+            ( ScrapText 
+                [ MATH_EXPRESSION "q"
+                , ITEM NoStyle 
+                    [ LINK ( Just "h72ha mfIOH u" ) ( Url "http://www.htVcG.edu" )
+                    , HASHTAG "W8"
+                    , TEXT "  t ujbmd"
+                    ] 
+                , ITEM Bold 
+                    [ LINK ( Just "cR Db 1IYl jB" ) ( Url "http://www.ak.org" )
+                    , TEXT "jGHLy 3QnNi C1 54P2 Dg US aeOBV mFlow"
+                    ] 
+                , ITEM Italic 
+                    [ LINK ( Just "Wbiy jN" ) ( Url "http://www.BD.org" )
+                    , TEXT "C9h62 oM DgvO Xt GQn"
+                    , HASHTAG "h"
+                    , TEXT "  tr jNd2S ALaB"
+                    ] 
                 ] 
-            ] 
-        )
+            )
+        , TABLE ( TableName "Ivk" ) 
+            ( TableContent 
+                [ 
+                    [ "R"
+                    , "Hlkc"
+                    , "tMb"
+                    , "4"
+                    ] 
+                , 
+                    [ "tWD"
+                    , "XGO"
+                    , "v"
+                    , "7"
+                    ] 
+                , 
+                    [ "nu"
+                    , "efM"
+                    , "d"
+                    , "lLCc"
+                    ] 
+                , 
+                    [ "M"
+                    , "3"
+                    , "R8"
+                    , "k"
+                    ] 
+                ] 
+            )
+        , LINEBREAK
+        , CODE_BLOCK ( CodeName "Brtk" ) ( CodeSnippet [ "tdO HqLwE xMNJG bE" ] )
+        ] 
+    , THUMBNAIL ( Url "http://www.FGdO.edu" )
+    , LINEBREAK
     ] 

@@ -62,18 +62,28 @@ newtype Scrapbox = Scrapbox [Block]
 instance Arbitrary Scrapbox where
     arbitrary = do
         newSize <- choose (1,10)
-        scale (\size -> if size < 10 then size else newSize) $ 
-            unverbose . Scrapbox . format <$> listOf1 arbitrary
+        scale (\size -> if size < 10 then size else newSize) $ do
+            (Scrapbox blocks) <- unverbose . Scrapbox <$> listOf1 arbitrary
+            return $ Scrapbox $ format blocks
         where
+          -- Need to refactor
           format :: [Block] -> [Block]
           format []                      = []
-          format [x]                     = [x]
+          format [PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]])]
+              = [THUMBNAIL url]
+          format [BULLET_POINT start blocks] = [BULLET_POINT start (format blocks)]
+          format [x]                         = [x]
+
           format (BULLET_POINT start blocks : xs) 
-             = BULLET_POINT start (format blocks) : format xs
+             = BULLET_POINT start (format blocks) : LINEBREAK : format xs
           format (c@(CODE_BLOCK _ _):xs) = c : LINEBREAK : format xs
           format (t@(TABLE _ _): xs)     = t : LINEBREAK : format xs
           format (PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]]): xs) = 
             THUMBNAIL url : format xs
+          format (PARAGRAPH (ScrapText inlines): xs) = 
+            PARAGRAPH (ScrapText $ formatInline inlines) : format xs
+          format (BLOCK_QUOTE (ScrapText inlines): xs) = 
+            BLOCK_QUOTE (ScrapText $ formatInline inlines) : format xs
           format (x:xs)                  = x : format xs
 
 
@@ -150,7 +160,7 @@ data Block
     -- ^ Paragraph
     | TABLE !TableName !TableContent
     -- ^ Table
-    | THUMBNAIL !Url
+    | THUMBNAIL !Url -- ambigious, maybe remove this
     -- ^ Thumbnail
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -160,7 +170,16 @@ instance Arbitrary Block where
         scale (\size -> if size < 10 then size else newSize) $ frequency
             [ (2, return LINEBREAK)
             , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> listOf1 arbitrary)
+            , (1, BULLET_POINT <$> arbitrary <*> listOf1 bulletPointFreq)
+            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
+            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
+            , (7, PARAGRAPH <$> arbitrary)
+            , (1, TABLE <$> arbitrary <*> arbitrary)
+            , (2, THUMBNAIL <$> arbitrary)
+            ]
+        where
+          bulletPointFreq = frequency
+            [ (1, BLOCK_QUOTE <$> arbitrary)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
             , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
             , (7, PARAGRAPH <$> arbitrary)
@@ -176,19 +195,13 @@ instance Arbitrary Block where
 newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- FIND ME
 instance Arbitrary ScrapText where
     arbitrary = do
         newSize <- choose (0, sizeNum)
         scale (\size -> if size < sizeNum then size else newSize) $
-            ScrapText . format . concatInline <$> listOf1 arbitrary
+            ScrapText . formatInline . concatInline <$> listOf1 arbitrary
       where
-        format :: [InlineBlock] -> [InlineBlock]
-        format [] = []
-        format [ITEM style segments]    = [ITEM style $ addSpace segments]
-        format [inline]                 = [inline]
-        format (ITEM style segments:xs) = ITEM style (addSpace segments) : format xs
-        format (x:xs)                   = x : format xs
-
         sizeNum :: Int
         sizeNum = 10
 
@@ -274,10 +287,10 @@ data StyleData = StyleData
 
 instance Arbitrary StyleData where
     arbitrary = StyleData
-        <$> choose (0,4)
+        <$> choose (2,4)
         <*> return False
-        <*> arbitrary
-        <*> arbitrary
+        <*> return True
+        <*> return True
 
 --------------------------------------------------------------------------------
 -- Verbose/Unverbose
@@ -444,9 +457,17 @@ isNoStyle _       = False
 -- For Artbitrary typeclass instance
 --------------------------------------------------------------------------------
 
+formatInline :: [InlineBlock] -> [InlineBlock]
+formatInline [] = []
+formatInline [ITEM style segments]    = [ITEM style $ addSpace segments]
+formatInline [inline]                 = [inline]
+formatInline (ITEM style segments:xs) = ITEM style (addSpace segments) : formatInline xs
+formatInline (x:xs)                   = x : formatInline xs
+
 -- Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                 = []
-addSpace [HASHTAG txt]      = [HASHTAG txt]
+addSpace [HASHTAG txt]      = [HASHTAG txt, TEXT " "]
+addSpace (HASHTAG txt: TEXT text : rest) = HASHTAG txt : TEXT (" " <> text) : addSpace rest
 addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
 addSpace (x:xs)             = x : addSpace xs

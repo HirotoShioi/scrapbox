@@ -77,7 +77,7 @@ bulletPointParser indentNum = do
     numOfIndents <- length <$> lookAhead (try $ many1 $ oneOf indent)
     when (numOfIndents <= indentNum) $ fail "less indent"
     blocks      <- many1 $ blockParser numOfIndents
-    let start = numOfIndents - indentNum
+    let start = numOfIndents - indentNum -- Bug
     return $ BULLET_POINT (Start start) blocks
 
 -- | Parser for 'CODE_BLOCK'

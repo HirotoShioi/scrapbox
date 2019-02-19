@@ -34,6 +34,8 @@ import           Utils                    (whenRight)
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
     describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
+        describe "Blocks" blockSpec
+
         shouldParseSpec parseScrapbox
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
@@ -43,9 +45,6 @@ scrapboxParserSpec =
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \(Scrapbox blocks) ->
                     assert $ not $ null blocks
-
-        describe "Blocks" $ modifyMaxSuccess (const 200) $ 
-            blockSpec
     
         describe "Parsing \"syntax\" page with scrapbox parser" $
           modifyMaxSuccess (const 1) $ do
@@ -136,6 +135,7 @@ scrapboxParserSpec =
         ""
         ]
 
+    example5 :: String
     example5 = unlines [
         "[[Code block notation]]",
         " Typing `code:filename.extension`or`code:filename`can be used to create a new code snippet and and display it as a block",
@@ -387,61 +387,63 @@ scrapboxParserSpec =
 
 
     expected5 :: Scrapbox
-    expected5 =Scrapbox
+    expected5 = Scrapbox 
         [ PARAGRAPH ( ScrapText [ ITEM Bold [ TEXT "Code block notation" ] ] )
-        , BULLET_POINT ( Start 1 )
-            [ PARAGRAPH
-                ( ScrapText
+        , BULLET_POINT ( Start 1 ) 
+            [ PARAGRAPH 
+                ( ScrapText 
                     [ ITEM NoStyle [ TEXT "Typing " ]
                     , CODE_NOTATION "code:filename.extension"
                     , ITEM NoStyle [ TEXT "or" ]
                     , CODE_NOTATION "code:filename"
                     , ITEM NoStyle [ TEXT "can be used to create a new code snippet and and display it as a block" ]
-                    ]
+                    ] 
                 )
             , BULLET_POINT ( Start 1 ) [ PARAGRAPH ( ScrapText [ ITEM NoStyle [ TEXT "Language names may be abbreviated" ] ] ) ]
-            ]
-        , CODE_BLOCK ( CodeName "hello.js" ) ( CodeSnippet 
-            [ "function () {"
-            , "  alert(document.location.href)"
-            , "  console.log(\"hello\")"
-            , "  // You can also write comments!"
-            , "}"
-            ]
-        )
+            ] 
+        , CODE_BLOCK ( CodeName "hello.js" ) 
+            ( CodeSnippet 
+                [ "function () {"
+                , "  alert(document.location.href)"
+                , "  console.log(\"hello\")"
+                , "  // You can also write comments!"
+                , "}"
+                ] 
+            )
         , LINEBREAK
         , PARAGRAPH ( ScrapText [ ITEM Bold [ TEXT "Tables" ] ] )
-        , BULLET_POINT ( Start 1 )
+        , BULLET_POINT ( Start 1 ) 
             [ PARAGRAPH ( ScrapText [ ITEM NoStyle [ TEXT "Type table: tablename to create a table" ] ] )
             , PARAGRAPH ( ScrapText [ ITEM NoStyle [ TEXT "Use tab to move to the next column, use enter to move to the next row." ] ] )
             , PARAGRAPH ( ScrapText [ ITEM NoStyle [ TEXT "An example:" ] ] )
-            ]
-        , TABLE ( TableName "hello" )
-            ( TableContent
-                [
+            ] 
+        , TABLE ( TableName "hello" ) 
+            ( TableContent 
+                [ 
                     [ "1"
                     , "2"
                     , "3"
-                    ]
-                ,
+                    ] 
+                , 
                     [ "1 "
                     , "2 "
                     , "3"
-                    ]
-                ,
+                    ] 
+                , 
                     [ "------"
                     , "------"
                     , "------"
-                    ]
-                ,
+                    ] 
+                , 
                     [ "a"
                     , "b"
                     , "c"
-                    ]
-                ]
+                    ] 
+                ] 
             )
         , LINEBREAK
-        ]
+        , LINEBREAK
+        ] 
 
 blockSpec :: Spec
 blockSpec = describe "Scrapbox" $
