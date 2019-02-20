@@ -1,17 +1,27 @@
-module DiffFinder where
+{-| This module is intended to be used on diagnosing the failing round trip test.
+'findDiff' will perform an roundtrip on given 'Scrapbox' and returns diff between
+the original data and the parsed data.
+-}
+module DiffFinder
+    ( findDiffs
+    ) where
 
 import           RIO
 import qualified RIO.Text        as T
 
-import           Parser.Scrapbox
-import           Render
-import           Types
+import           Parser.Scrapbox (parseScrapbox)
+import           Render (renderPretty)
+import           Types (Scrapbox(..), Block(..))
 
 data DiffPair = DiffPair
     { original :: !Block
+    -- ^ Original block data
     , parsed   :: !Block
+    -- ^ Parsed data
     } deriving Show
 
+-- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares two
+-- block data.
 findDiffs :: Scrapbox -> Either String [DiffPair]
 findDiffs sb@(Scrapbox blocks) = do
     let eParsed = parseScrapbox . T.unpack $ renderPretty sb

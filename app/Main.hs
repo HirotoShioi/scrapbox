@@ -5,7 +5,7 @@ module Main where
 import           RIO
 
 import           CMark (Node, commonmarkToNode, optHardBreaks, optSafe)
-import           Types
+
 --------------------------------------------------------------------------------
 -- Test files
 --------------------------------------------------------------------------------

@@ -1,4 +1,5 @@
-{-| Datatypes used to represent the scrapbox AST as well as some of the helper functions.
+{-| Datatypes used to represent the scrapbox AST as well as some of the helper
+-- functions.
 -}
 
 {-# LANGUAGE DeriveGeneric     #-}
@@ -59,6 +60,11 @@ import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
+--------------------------------------------------------------------------------
+-- Many of the Arbitrary instance are implemented in such a way that it can be
+-- tested on roundtrip test. (i.e. Remove ambiguity so the parsing is trivial)
+--------------------------------------------------------------------------------
+
 instance Arbitrary Scrapbox where
     arbitrary = do
         newSize <- choose (1,10)
@@ -69,24 +75,17 @@ instance Arbitrary Scrapbox where
           removeAmbiguity :: [Block] -> [Block]
           removeAmbiguity = \case
             [] -> []
-            
-             -- Replace Link with THUMBNAIL
-            [PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]])] -> [THUMBNAIL url]
-
-            -- Apply function to bulletpoint blocks
-            [BULLET_POINT start blocks] -> [BULLET_POINT start (removeAmbiguity blocks)]
-            [x] -> [x]
 
             -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
             (BULLET_POINT start blocks : xs) ->
                 BULLET_POINT start (removeAmbiguity blocks) : LINEBREAK : removeAmbiguity xs
             (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
             (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
-            
+
             -- Replace Link with THUMBNAIL
             (PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]]): xs) ->
                 THUMBNAIL url : removeAmbiguity xs
-            
+
             -- Apply formatInlines to blocks
             (PARAGRAPH (ScrapText inlines): xs) ->
                 PARAGRAPH (ScrapText $ formatInline inlines) : removeAmbiguity xs
@@ -461,9 +460,10 @@ isNoStyle NoStyle = True
 isNoStyle _       = False
 
 --------------------------------------------------------------------------------
--- For Artbitrary typeclass instance
+-- These functions are used to define typeclass instance of Arbitrary
 --------------------------------------------------------------------------------
 
+-- | Format 'InlineBlock'
 formatInline :: [InlineBlock] -> [InlineBlock]
 formatInline [] = []
 formatInline [ITEM style segments]    = [ITEM style $ addSpace segments]
@@ -474,7 +474,6 @@ formatInline (x:xs)                   = x : formatInline xs
 -- Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                 = []
-addSpace [HASHTAG txt]      = [HASHTAG txt, TEXT " "]
 addSpace (HASHTAG txt: TEXT text : rest) = HASHTAG txt : TEXT (" " <> text) : addSpace rest
 addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
 addSpace (x:xs)             = x : addSpace xs

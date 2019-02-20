@@ -87,7 +87,7 @@ boldParser = do
     go :: String -> Parser String
     go content = do
         -- Check if we have enough closing brackets ahead
-        aheadContent <- lookAheadMaybe $ 
+        aheadContent <- lookAheadMaybe $
                 try (string "]]]")
             <|> try (string "]]")
             <|> try (many1 $ noneOf "]")

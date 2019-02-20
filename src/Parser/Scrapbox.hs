@@ -13,11 +13,13 @@ import           Network.URI                   (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, lookAhead,
                                                 many, many1, manyTill, noneOf,
-                                                oneOf, parse, sepBy1, space,
-                                                string, try, unexpected, (<|>), notFollowedBy)
+                                                notFollowedBy, oneOf, parse,
+                                                sepBy1, space, string, try,
+                                                unexpected, (<|>))
 
 import           Parser.Item                   (runItemParserM)
-import           Parser.ScrapText              (runScrapTextParserM, extractParagraph)
+import           Parser.ScrapText              (extractParagraph,
+                                                runScrapTextParserM)
 import           Types                         (Block (..), CodeName (..),
                                                 CodeSnippet (..), Level (..),
                                                 Scrapbox (..), Start (..),
