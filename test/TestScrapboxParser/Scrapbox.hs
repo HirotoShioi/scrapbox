@@ -34,8 +34,7 @@ import           Utils                    (whenRight)
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
     describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
-        describe "Blocks" blockSpec
-
+        roundTripSpec
         shouldParseSpec parseScrapbox
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
@@ -445,9 +444,10 @@ scrapboxParserSpec =
         , LINEBREAK
         ]
 
-blockSpec :: Spec
-blockSpec = describe "Scrapbox" $
-    prop "should be able to given Scrapbox if there's no ambiguous syntax" $
+-- | Performs roundtrips test
+roundTripSpec :: Spec
+roundTripSpec = describe "Scrapbox" $
+    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
         \(scrapbox :: Scrapbox) -> monadicIO $ do
             let rendered = renderPretty scrapbox
             let eParsed  = parseScrapbox $ T.unpack rendered
