@@ -57,10 +57,10 @@ renderBlock = \case
     LINEBREAK                    -> [""]
     BLOCK_QUOTE stext            -> [">" <> renderText stext]
     BULLET_POINT start blocks    -> renderBulletPoint start blocks
-    CODE_BLOCK codeName code     -> renderCodeBlock codeName code <> renderBlock LINEBREAK
+    CODE_BLOCK codeName code     -> renderCodeBlock codeName code
     PARAGRAPH stext              -> [renderText stext]
     HEADING level contents       -> [renderHeading level contents]
-    TABLE tableName tableContent -> renderTable tableName tableContent <> renderBlock LINEBREAK
+    TABLE tableName tableContent -> renderTable tableName tableContent
     THUMBNAIL (Url url)          -> [blocked url]
 
 -- | Render given 'ScrapText' into 'Text'
@@ -72,7 +72,7 @@ renderText (ScrapText inlines) =
 renderInline :: InlineBlock -> Text
 renderInline (ITEM style content)    = renderWithStyle style content
 renderInline (CODE_NOTATION content) = "`" <> content <> "`"
-renderInline (MATH_EXPRESSION expr)  = "[$" <> expr <> "]"
+renderInline (MATH_EXPRESSION expr)  = "[$ " <> expr <> "]"
 
 -- | Render given 'Content' to 'Text'
 renderSegments :: [Segment] -> Text
@@ -89,17 +89,18 @@ renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
     let codeName = "code:" <> name
-    let codeContent = map (" " <>) (T.lines code)
+    let codeContent = map (" " <>) code
     [codeName] <> codeContent
 
 -- | Render 'TABLE'
 renderTable :: TableName -> TableContent -> [Text]
+renderTable (TableName name) (TableContent [[]])    = ["table:" <> name]
 renderTable (TableName name) (TableContent content) =
     let title = ["table:" <> name]
-        renderdTable = map
-                       (foldr (\someText acc -> "\t" <> someText <> acc) mempty)
-                       content
-    in title <> renderdTable
+        renderedTable = map
+                 (foldr (\someText acc -> "\t" <> someText <> acc) mempty)
+                 content
+    in title <> renderedTable
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
@@ -114,9 +115,7 @@ blocked content = "[" <> content <> "]"
 renderWithStyle :: Style -> [Segment] -> Text
 renderWithStyle style inline = case style of
     NoStyle -> renderSegments inline
-    Bold ->
-        let boldStyle = StyleData 0 True False False
-        in renderCustomStyle boldStyle inline
+    Bold   -> "[[" <> renderSegments inline <> "]]"
     Italic ->
         let italicStyle = StyleData 0 False True False
         in renderCustomStyle italicStyle inline

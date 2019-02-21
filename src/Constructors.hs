@@ -53,7 +53,7 @@ blockQuote :: [InlineBlock] -> Block
 blockQuote = BLOCK_QUOTE . ScrapText
 
 -- | Constructors for creating 'CODE_BLOCK' block
-codeBlock :: Text -> Text -> Block
+codeBlock :: Text -> [Text] -> Block
 codeBlock codeName codeSnippet = CODE_BLOCK (CodeName codeName) (CodeSnippet codeSnippet)
 
 -- | Constructors for creating 'PARAGRAPH' block

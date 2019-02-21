@@ -17,8 +17,8 @@ import           RIO                      hiding (assert)
 import           RIO.List                 (headMaybe)
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck          (Arbitrary (..), Property, listOf1,
-                                           scale, choose)
+import           Test.QuickCheck          (Arbitrary (..), Property, choose,
+                                           listOf1, scale)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.ScrapText         (runScrapTextParser)
@@ -85,7 +85,7 @@ instance Arbitrary MathExpr where
     arbitrary = MathExpr <$> genPrintableText
 
 instance ScrapboxSyntax MathExpr where
-    render (MathExpr txt)     = "[$" <> txt <> "]"
+    render (MathExpr txt)     = "[$ " <> txt <> "]"
     getContent (MathExpr txt) = txt
 
 -- math expressions
@@ -174,7 +174,7 @@ instance Arbitrary (StyledItem a) where
           addSpace [HASHTAG txt]      = [HASHTAG txt]
           addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
           addSpace (x:xs)             = x : addSpace xs
-          
+
           sizeNum :: Int
           sizeNum = 10
 

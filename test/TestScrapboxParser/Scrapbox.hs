@@ -16,6 +16,7 @@ import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Parser.Scrapbox          (parseScrapbox)
+import           Render                   (renderPretty)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            propParseAsExpected, shouldParseSpec)
 import           Types                    (Block (..), CodeName (..),
@@ -26,7 +27,6 @@ import           Types                    (Block (..), CodeName (..),
                                            TableContent (..), TableName (..),
                                            Url (..))
 import           Utils                    (whenRight)
-
 --------------------------------------------------------------------------------
 -- Scrapbox parser
 --------------------------------------------------------------------------------
@@ -34,6 +34,7 @@ import           Utils                    (whenRight)
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
     describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
+        roundTripSpec
         shouldParseSpec parseScrapbox
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
@@ -133,6 +134,7 @@ scrapboxParserSpec =
         ""
         ]
 
+    example5 :: String
     example5 = unlines [
         "[[Code block notation]]",
         " Typing `code:filename.extension`or`code:filename`can be used to create a new code snippet and and display it as a block",
@@ -384,7 +386,7 @@ scrapboxParserSpec =
 
 
     expected5 :: Scrapbox
-    expected5 =Scrapbox
+    expected5 = Scrapbox
         [ PARAGRAPH ( ScrapText [ ITEM Bold [ TEXT "Code block notation" ] ] )
         , BULLET_POINT ( Start 1 )
             [ PARAGRAPH
@@ -398,14 +400,15 @@ scrapboxParserSpec =
                 )
             , BULLET_POINT ( Start 1 ) [ PARAGRAPH ( ScrapText [ ITEM NoStyle [ TEXT "Language names may be abbreviated" ] ] ) ]
             ]
-        , CODE_BLOCK ( CodeName "hello.js" ) ( CodeSnippet (T.unlines
-            [ "function () {"
-            , "  alert(document.location.href)"
-            , "  console.log(\"hello\")"
-            , "  // You can also write comments!"
-            , "}"
-            ])
-        )
+        , CODE_BLOCK ( CodeName "hello.js" )
+            ( CodeSnippet
+                [ "function () {"
+                , "  alert(document.location.href)"
+                , "  console.log(\"hello\")"
+                , "  // You can also write comments!"
+                , "}"
+                ]
+            )
         , LINEBREAK
         , PARAGRAPH ( ScrapText [ ITEM Bold [ TEXT "Tables" ] ] )
         , BULLET_POINT ( Start 1 )
@@ -438,4 +441,19 @@ scrapboxParserSpec =
                 ]
             )
         , LINEBREAK
+        , LINEBREAK
         ]
+
+-- | Performs roundtrips test
+roundTripSpec :: Spec
+roundTripSpec = describe "Scrapbox" $
+    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
+        \(scrapbox :: Scrapbox) -> monadicIO $ do
+            let rendered = renderPretty scrapbox
+            let eParsed  = parseScrapbox $ T.unpack rendered
+
+            assert $ isRight eParsed
+
+            whenRight eParsed $ \parsed ->
+                assert $ parsed == scrapbox
+
