@@ -39,7 +39,7 @@ import           Types                  as Scrapbox (Block (..),
                                                      InlineBlock (..),
                                                      Scrapbox (..), Segment,
                                                      concatInline,
-                                                     concatScrapText)
+                                                     concatScrapText, unverbose)
 
 import           CommonMark.TableParser (parseTable)
 
@@ -89,8 +89,21 @@ commonmarkToScrapbox parseOption cmark =
 
 -- | Parse given CMark 'Node' into 'Scrapbox'
 parseNode :: ParseOption -> Node -> Scrapbox
-parseNode Default node        = scrapbox $ toBlocks node
-parseNode SectionHeading node = scrapbox $ applyLinebreak $ toBlocks node
+parseNode Default node        = unverbose . scrapbox $ parse node
+parseNode SectionHeading node = unverbose . scrapbox $ applyLinebreak $ parse node
+
+-- | Apply linebreak after TABLE and CODE_BLOCK if there's BULLET_POINT right after it
+-- this prevents the weird rendering to occur
+parse :: Node -> [Block]
+parse node =  format $ toBlocks node
+  where
+    format :: [Block] -> [Block]
+    format [] = []
+    format (t@(TABLE _ _): b@(BULLET_POINT _ _) : rest) =
+        t : Scrapbox.LINEBREAK : b : format rest
+    format (c@(Scrapbox.CODE_BLOCK _ _): b@(BULLET_POINT _ _) : rest) =
+        c : Scrapbox.LINEBREAK : b : format rest
+    format (x:xs) = x : format xs
 
 --------------------------------------------------------------------------------
 -- Conversion logic from Node to Block
