@@ -3,7 +3,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser.Scrapbox
+module Scrapbox.Parser.Scrapbox
     ( parseScrapbox
     ) where
 
@@ -17,10 +17,10 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, string, try,
                                                 unexpected, (<|>))
 
-import           Parser.Item                   (runItemParserM)
-import           Parser.ScrapText              (extractParagraph,
+import           Scrapbox.Parser.Item          (runItemParserM)
+import           Scrapbox.Parser.ScrapText     (extractParagraph,
                                                 runScrapTextParserM)
-import           Types                         (Block (..), CodeName (..),
+import           Scrapbox.Types                (Block (..), CodeName (..),
                                                 CodeSnippet (..), Level (..),
                                                 Scrapbox (..), Start (..),
                                                 TableContent (..),

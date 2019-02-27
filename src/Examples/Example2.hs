@@ -9,13 +9,14 @@ module Examples.Example2
     ( example2
     ) where
 
-import           RIO          hiding (link)
+import           RIO                   hiding (link)
 
-import           Constructors (blockQuote, bold, bulletPoint, codeBlock,
-                               codeNotation, heading, italic, lineBreak, link,
-                               noStyle, p, scrapbox, strikeThrough, table, text,
-                               thumbnail)
-import           Types        (Block (..), Scrapbox)
+import           Scrapbox.Constructors (blockQuote, bold, bulletPoint,
+                                        codeBlock, codeNotation, heading,
+                                        italic, lineBreak, link, noStyle, p,
+                                        scrapbox, strikeThrough, table, text,
+                                        thumbnail)
+import           Scrapbox.Types        (Block (..), Scrapbox)
 
 
 syntax :: [Block]

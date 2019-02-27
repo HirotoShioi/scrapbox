@@ -2,16 +2,16 @@
 'findDiff' will perform an roundtrip on given 'Scrapbox' and returns diff between
 the original data and the parsed data.
 -}
-module DiffFinder
+module Scrapbox.DiffFinder
     ( findDiffs
     ) where
 
 import           RIO
-import qualified RIO.Text        as T
+import qualified RIO.Text                 as T
 
-import           Parser.Scrapbox (parseScrapbox)
-import           Render (renderPretty)
-import           Types (Scrapbox(..), Block(..))
+import           Scrapbox.Parser.Scrapbox (parseScrapbox)
+import           Scrapbox.Render          (renderPretty)
+import           Scrapbox.Types           (Block (..), Scrapbox (..))
 
 data DiffPair = DiffPair
     { original :: !Block

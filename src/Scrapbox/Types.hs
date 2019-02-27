@@ -6,7 +6,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Types
+module Scrapbox.Types
     ( -- * Datatypes
       Scrapbox (..)
     , Start(..)
@@ -51,10 +51,10 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
+import           Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
+                                  genText)
 import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
                                   listOf1, scale, vectorOf)
-import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
-                                  genText)
 
 -- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]

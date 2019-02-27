@@ -21,17 +21,16 @@ import           Test.QuickCheck          (Arbitrary (..), Property, choose,
                                            listOf1, scale)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
-import           Parser.ScrapText         (runScrapTextParser)
-import           Render                   (renderSegments)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           ScrapboxSyntax (..), checkContent,
-                                           checkParsed, propParseAsExpected,
-                                           shouldParseSpec)
-import           Types                    (InlineBlock (..), ScrapText (..),
+import           Scrapbox.Internal        (renderSegments, runScrapTextParser)
+import           Scrapbox.Types           (InlineBlock (..), ScrapText (..),
                                            Segment (..), Style (..), Url (..),
                                            concatSegment, isBold,
                                            isCodeNotation, isItalic, isMathExpr,
                                            isNoStyle, isStrikeThrough)
+import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
+                                           ScrapboxSyntax (..), checkContent,
+                                           checkParsed, propParseAsExpected,
+                                           shouldParseSpec)
 import           Utils                    (genPrintableText, whenRight)
 
 -- | Test spec for scrap text parser

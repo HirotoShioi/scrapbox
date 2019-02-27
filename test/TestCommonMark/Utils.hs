@@ -13,10 +13,11 @@ import           RIO
 
 import           RIO.List        (headMaybe)
 
-import           CommonMark.Lib  (commonmarkToScrapboxNode, optDefault)
-import           Test.QuickCheck (Property, Testable (..))
-import           Types           (Block (..), InlineBlock (..), ScrapText (..),
+import           Scrapbox        (commonmarkToScrapboxNode, optDefault)
+import           Scrapbox.Types  (Block (..), InlineBlock (..), ScrapText (..),
                                   Scrapbox (..), Segment)
+import           Test.QuickCheck (Property, Testable (..))
+
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------

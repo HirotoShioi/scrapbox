@@ -15,17 +15,16 @@ import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
-import           Parser.Scrapbox          (parseScrapbox)
-import           Render                   (renderPretty)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           propParseAsExpected, shouldParseSpec)
-import           Types                    (Block (..), CodeName (..),
+import           Scrapbox                 (parseScrapbox, renderPretty)
+import           Scrapbox.Types           (Block (..), CodeName (..),
                                            CodeSnippet (..), InlineBlock (..),
                                            Level (..), ScrapText (..),
                                            Scrapbox (..), Segment (..),
                                            Start (..), Style (..),
                                            TableContent (..), TableName (..),
                                            Url (..))
+import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
+                                           propParseAsExpected, shouldParseSpec)
 import           Utils                    (whenRight)
 --------------------------------------------------------------------------------
 -- Scrapbox parser

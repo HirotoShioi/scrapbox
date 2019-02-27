@@ -1,7 +1,7 @@
 {-| Item parser module
 -}
 
-module Parser.Item
+module Scrapbox.Parser.Item
     ( runItemParser
     , runItemParserM
     , itemParser
@@ -20,9 +20,9 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, try, unexpected,
                                                 (<?>), (<|>))
 
-import           Parser.Utils                  (lookAheadMaybe)
-import           Types                         (Segment (..), Url (..))
-import           Utils                         (eitherM, fromMaybeM)
+import           Scrapbox.Parser.Utils                  (lookAheadMaybe)
+import           Scrapbox.Types                         (Segment (..), Url (..))
+import           Scrapbox.Utils                         (eitherM, fromMaybeM)
 
 --------------------------------------------------------------------------------
 -- Smart contstructors

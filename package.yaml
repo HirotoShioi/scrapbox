@@ -47,17 +47,21 @@ default-extensions:
 
 library:
   source-dirs: src
-
-executables:
-  scrapbox-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - scrapbox
+  exposed-modules: Scrapbox
+                   Scrapbox.Types
+                   Scrapbox.Internal
+  other-modules: Examples.Example1
+                 Examples.Example2
+                 Scrapbox.CommonMark.Lib
+                 Scrapbox.CommonMark.TableParser
+                 Scrapbox.Constructors
+                 Scrapbox.DiffFinder
+                 Scrapbox.Parser.Item
+                 Scrapbox.Parser.Scrapbox
+                 Scrapbox.Parser.ScrapText
+                 Scrapbox.Parser.Utils
+                 Scrapbox.Render
+                 Scrapbox.Utils
 
 tests:
   scrapbox-test:

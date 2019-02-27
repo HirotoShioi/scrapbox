@@ -7,7 +7,7 @@ You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Render
+module Scrapbox.Render
     ( -- * Exposed interface
       renderPretty
     , renderRaw
@@ -20,13 +20,13 @@ module Render
     ) where
 
 import           RIO
-import qualified RIO.Text as T
+import qualified RIO.Text       as T
 
-import           Types    (Block (..), CodeName (..), CodeSnippet (..),
-                           InlineBlock (..), Level (..), ScrapText (..),
-                           Scrapbox (..), Segment (..), Start (..), Style (..),
-                           StyleData (..), TableContent (..), TableName (..),
-                           Url (..))
+import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
+                                 InlineBlock (..), Level (..), ScrapText (..),
+                                 Scrapbox (..), Segment (..), Start (..),
+                                 Style (..), StyleData (..), TableContent (..),
+                                 TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Exposed interface

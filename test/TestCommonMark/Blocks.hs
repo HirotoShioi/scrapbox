@@ -18,14 +18,14 @@ import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..), choose, elements,
                                         listOf1, vectorOf)
 
-import           Render                (renderBlock, renderSegments, renderText)
-import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        getParagraph)
-import           Types                 (Block (..), CodeSnippet (..),
+import           Scrapbox.Internal     (renderBlock, renderSegments, renderText)
+import           Scrapbox.Types        (Block (..), CodeSnippet (..),
                                         Level (..), TableContent (..), Url (..),
                                         isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail)
+import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
+                                        getParagraph)
 import           Utils                 (genPrintableText, genPrintableUrl,
                                         genText)
 
