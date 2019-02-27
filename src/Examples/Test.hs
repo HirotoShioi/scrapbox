@@ -1,8 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-| These are used to test the functionality of the library
+-}
+module Example.Test where
 
-module Main where
-
-import           RIO
+import RIO
 
 import           CMark (Node, commonmarkToNode, optHardBreaks, optSafe)
 
@@ -134,6 +134,3 @@ example5 = unlines [
     "",
     ""
     ]
-
-main :: IO ()
-main = undefined

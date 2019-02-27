@@ -6,7 +6,7 @@ Example page: https://scrapbox.io/toSrapbox/Syntax
 {-# LANGUAGE OverloadedStrings #-}
 
 module Examples.Example2
-    ( example2
+    ( example2'
     ) where
 
 import           RIO                   hiding (link)
@@ -353,8 +353,8 @@ section bs = bs <> [lineBreak]
 
 -- | Example Page
 -- https://scrapbox.io/toSrapbox/Syntax
-example2 :: Scrapbox
-example2 = scrapbox $ concatMap section
+example2' :: Scrapbox
+example2' = scrapbox $ concatMap section
     [ syntax
     , mouseBased
     , internalLinks
