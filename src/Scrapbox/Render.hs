@@ -8,11 +8,9 @@ You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 {-# LANGUAGE OverloadedStrings #-}
 
 module Scrapbox.Render
-    ( -- * Exposed interface
-      renderPretty
+    ( renderPretty
     , renderRaw
     , writeScrapbox
-    -- * Exposed for testing
     , renderBlock
     , renderSegments
     , renderText

@@ -1,13 +1,14 @@
 module Scrapbox
-    ( -- * For converting commonmark to scrapbox
+    ( -- * Converting commonmark to scrapbox
       commonmarkToScrapbox
     , commonmarkToScrapboxNode
+    -- ** Parse options
     , ParseOption
     , optDefault
     , optSectionHeading
-    -- * For parsing Scrapbox
+    -- * Parsing Scrapbox
     , parseScrapbox
-    -- * For rendering Scrapbox
+    -- * Rendering Scrapbox
     , renderPretty
     ) where
 
