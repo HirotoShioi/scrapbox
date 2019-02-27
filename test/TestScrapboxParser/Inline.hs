@@ -11,11 +11,9 @@ module TestScrapboxParser.Inline
 import           RIO                      hiding (assert)
 
 import           RIO.List                 (headMaybe)
-import qualified RIO.Text                 as T
 import           Test.Hspec               (Spec, describe, it)
 import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck          (Arbitrary (..), Gen, elements,
-                                           listOf1)
+import           Test.QuickCheck          (Arbitrary (..))
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
 import           Scrapbox.Internal        (runItemParser)
@@ -25,6 +23,9 @@ import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected,
                                            shouldParseSpec)
+import           Utils                    (genMaybe, genPrintableText,
+                                           genPrintableUrl, genText, whenRight)
+
 -- | Spec for inline text parser
 inlineParserSpec :: Spec
 inlineParserSpec =
@@ -161,33 +162,3 @@ hashTagSpec = describe "HASHTAG" $ do
     getHashTag :: Segment -> Maybe Segment
     getHashTag h@(HASHTAG _) = Just h
     getHashTag _             = Nothing
-
--- | The 'whenRight' function takes an 'Either' value and a function which returns a monad.
--- The monad is only executed when the given argument takes the form @'Right' _@, otherwise
--- it does nothing.
-whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
-whenRight (Right x) f = f x
-whenRight _         _ = pure ()
-
--- | Generate arbitrary Text
--- this is needed as some characters like
--- '`' and `>` will be parsed as blockquote, code notation, etc.
-genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genText
-
--- | Generate random text
-genText :: Gen Text
-genText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
-    randomSite <- genText
-    return $ "http://www." <> randomSite <> end
-
--- | Wrap 'Gen a' with 'Maybe'
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe gen = do
-    gened <- gen
-    elements [Just gened, Nothing]
