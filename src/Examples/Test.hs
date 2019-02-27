@@ -2,7 +2,7 @@
 -}
 module Example.Test where
 
-import RIO
+import           RIO
 
 import           CMark (Node, commonmarkToNode, optHardBreaks, optSafe)
 
