@@ -50,9 +50,9 @@ library:
   exposed-modules: Scrapbox
                    Scrapbox.Types
                    Scrapbox.Internal
-                   Example.Test
-                   Example.Example1
-                   Example.Example2
+                   Examples.Test
+                   Examples.Example1
+                   Examples.Example2
   other-modules:   Scrapbox.CommonMark.Lib
                    Scrapbox.CommonMark.TableParser
                    Scrapbox.Constructors
