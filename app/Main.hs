@@ -10,6 +10,8 @@ import           CMark (Node, commonmarkToNode, optHardBreaks, optSafe)
 -- Test files
 --------------------------------------------------------------------------------
 
+-- Move these to somewhere accessable
+
 -- | Test data for example.md
 test :: IO Node
 test = testWith "./docs/example.md"
