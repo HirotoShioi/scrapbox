@@ -13,9 +13,9 @@ import           RIO
 
 import           RIO.List        (headMaybe)
 
-import           Scrapbox        (commonmarkToScrapboxNode, optDefault)
-import           Scrapbox.Types  (Block (..), InlineBlock (..), ScrapText (..),
-                                  Scrapbox (..), Segment)
+import           Scrapbox        (Block (..), InlineBlock (..), ScrapText (..),
+                                  Scrapbox (..), Segment,
+                                  commonmarkToScrapboxNode, optDefault)
 import           Test.QuickCheck (Property, Testable (..))
 
 --------------------------------------------------------------------------------

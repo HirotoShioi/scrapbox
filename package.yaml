@@ -48,11 +48,10 @@ default-extensions:
 library:
   source-dirs: src
   exposed-modules: Scrapbox
-                   Scrapbox.Types
                    Scrapbox.Internal
-                   Examples.Test
-                   Examples.Example1
-                   Examples.Example2
+                   Scrapbox.Examples.Test
+                   Scrapbox.Examples.Example1
+                   Scrapbox.Examples.Example2
   other-modules:   Scrapbox.CommonMark.Lib
                    Scrapbox.CommonMark.TableParser
                    Scrapbox.Constructors
@@ -63,6 +62,7 @@ library:
                    Scrapbox.Parser.Utils
                    Scrapbox.Render
                    Scrapbox.Utils
+                   Scrapbox.Types
 
 tests:
   scrapbox-test:

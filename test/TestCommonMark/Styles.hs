@@ -20,9 +20,10 @@ import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..), Property)
 
-import           Scrapbox.Types        (Block (..), InlineBlock (..),
+import           Scrapbox              (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..),
-                                        Style (..), isText)
+                                        Style (..))
+import           Scrapbox.Internal     (isText)
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         getHeadSegment, getParagraph)
 
