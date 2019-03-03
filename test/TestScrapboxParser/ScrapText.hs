@@ -206,7 +206,9 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "Bold" $ do
         prop "should parse as Bold" $
             \(boldInline :: StyledItem 'BoldItem) ->
-                testParse boldInline (all isBold)
+                testParse
+                    boldInline
+                    (\styles -> length styles == 1 && all isBold styles)
         prop "should preserve its content" $
             \(boldInline :: StyledItem 'BoldItem) ->
                 testContent boldInline
@@ -214,7 +216,9 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "Italic" $ do
         prop "should parse as Bold" $
             \(italicInline :: StyledItem 'ItalicItem) ->
-                testParse italicInline (all isItalic)
+                testParse
+                    italicInline
+                    (\styles -> length styles == 1 && all isItalic styles)
         prop "should preserve its content" $
             \(italicInline :: StyledItem 'ItalicItem) ->
                 testContent italicInline
@@ -222,7 +226,9 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "StrikeThrough" $ do
         prop "should parse as StrikeThrough" $
             \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
-                testParse strikeThroughInline (all isStrikeThrough)
+                testParse 
+                    strikeThroughInline 
+                    (\styles -> length styles == 1 && all isStrikeThrough styles)
 
         prop "should preserve its content" $
             \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
