@@ -23,8 +23,8 @@ import qualified RIO.Text       as T
 import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  InlineBlock (..), Level (..), ScrapText (..),
                                  Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), StyleData (..), TableContent (..),
-                                 TableName (..), Url (..))
+                                 Style (..), TableContent (..), TableName (..),
+                                 Url (..))
 
 --------------------------------------------------------------------------------
 -- Exposed interface
@@ -110,36 +110,29 @@ blocked :: Text -> Text
 blocked content = "[" <> content <> "]"
 
 -- | Render with style
-renderWithStyle :: Style -> [Segment] -> Text
-renderWithStyle style inline = case style of
-    NoStyle -> renderSegments inline
-    Bold   -> "[[" <> renderSegments inline <> "]]"
-    Italic ->
-        let italicStyle = StyleData 0 False True False
-        in renderCustomStyle italicStyle inline
-    StrikeThrough ->
-        let strikeThroughStyle = StyleData 0 False False True
-        in renderCustomStyle strikeThroughStyle inline
-    CustomStyle customStyle -> renderCustomStyle customStyle inline
-    UserStyle userStyle -> "[" <> userStyle <> " " <> renderSegments inline <> "]"
+renderWithStyle :: [Style] -> [Segment] -> Text
+renderWithStyle styles inline = case styles of
+    []     -> renderSegments inline
+    [Bold] -> "[[" <> renderSegments inline <> "]]"
+    others ->
+        let syntax = mkStyleSyntax others
+            renderedSegments = renderSegments inline
+        in "[" <> syntax <> " " <> renderedSegments <> "]"
 
-renderCustomStyle :: StyleData -> [Segment] -> Text
-renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =
-    let italicSymbol         = if isItalic then "/" else mempty
-        strikeThroughSymbol  = if isStrikeThrough then "-" else mempty
-        boldSymbol           = if isBold then "*" else mempty
-        headerNum'           = if isBold then 0 else headerNum
-        combinedSyntax       = mconcat
-            [ T.replicate headerNum' "*"
-            , boldSymbol
-            , italicSymbol
-            , strikeThroughSymbol
-            , " "
-            ]
-    in blocked $ combinedSyntax <> renderSegments content
+mkStyleSyntax :: [Style] -> Text
+mkStyleSyntax = go mempty -- Need to sort
+  where
+    go :: Text -> [Style] -> Text
+    go styleSyntax []                = styleSyntax
+    go syntax  (Bold:xs)             = go ("*" <> syntax) xs
+    go syntax (Italic:xs)            = go ("/" <> syntax) xs
+    go syntax (StrikeThrough:xs)     = go ("-" <> syntax) xs
+    go syntax (Sized (Level num):xs) = go (T.replicate num "*" <> syntax) xs
+    go syntax (UserStyle style:xs)   = go (style <> syntax) xs
 
 -- | Render 'HEADING' block
 renderHeading :: Level -> [Segment] -> Text
 renderHeading (Level headerSize) content =
-    let style = StyleData headerSize False False False
-    in renderCustomStyle style content
+    let syntax = T.replicate headerSize "*"
+        renderedContent = renderSegments content
+    in "[" <> syntax <> " " <> renderedContent <> "]"

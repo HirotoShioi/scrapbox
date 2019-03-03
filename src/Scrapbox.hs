@@ -25,7 +25,6 @@ module Scrapbox
     , InlineBlock(..)
     , Segment(..)
     , Style(..)
-    , StyleData(..)
     ) where
 
 import           Scrapbox.CommonMark.Lib  (ParseOption, commonmarkToScrapbox,
@@ -37,6 +36,6 @@ import           Scrapbox.Types           (Block (..), CodeName (..),
                                            CodeSnippet (..), InlineBlock (..),
                                            Level (..), ScrapText (..),
                                            Scrapbox (..), Segment (..),
-                                           Style (..), StyleData (..),
+                                           Style (..),
                                            TableContent (..), TableName (..),
                                            Url (..), Start(..))

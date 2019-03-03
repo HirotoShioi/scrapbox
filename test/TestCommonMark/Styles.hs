@@ -78,16 +78,16 @@ checkStyledTextContent styledText =
         then Just segment
         else Nothing
 
-getHeadInlineBlock :: [Block] -> Maybe Style
+getHeadInlineBlock :: [Block] -> Maybe [Style]
 getHeadInlineBlock blocks = do
-    blockContent                 <- headMaybe blocks
+    blockContent                    <- headMaybe blocks
     (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
     inline                          <- headMaybe inlines
     getStyle inline
   where
-    getStyle :: InlineBlock -> Maybe Style
-    getStyle (ITEM style _) = Just style
-    getStyle _              = Nothing
+    getStyle :: InlineBlock -> Maybe [Style]
+    getStyle (ITEM styles _) = Just styles
+    getStyle _               = Nothing
 
 --------------------------------------------------------------------------------
 -- No style
@@ -101,7 +101,7 @@ noStyleTextSpec =
            \(noStyleText :: StyledText 'NoStyles) ->
                checkScrapbox
                  noStyleText
-                 (== NoStyle)
+                 null
                  getHeadInlineBlock
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
@@ -117,7 +117,7 @@ boldTextSpec = describe "Bold text" $ do
         \(boldText :: StyledText 'BoldStyle) ->
             checkScrapbox
                 boldText
-                (== Bold)
+                (== [Bold])
                 getHeadInlineBlock
     prop "should preserve its content" $
         \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
@@ -133,7 +133,7 @@ italicTextSpec = describe "Italic text" $ do
         \(italicText :: StyledText 'ItalicStyle) ->
             checkScrapbox
                 italicText
-                (== Italic)
+                (== [Italic])
                 getHeadInlineBlock
     prop "should preserve its content" $
         \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText

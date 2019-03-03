@@ -25,8 +25,8 @@ import           Scrapbox                 (InlineBlock (..), ScrapText (..),
                                            Segment (..), Style (..), Url (..))
 import           Scrapbox.Internal        (concatSegment, isBold,
                                            isCodeNotation, isItalic, isMathExpr,
-                                           isNoStyle, isStrikeThrough,
-                                           renderSegments, runScrapTextParser)
+                                           isStrikeThrough, renderSegments,
+                                           runScrapTextParser)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected,
@@ -61,15 +61,15 @@ scrapTextParserSpec =
 
     expectedParsedText :: ScrapText
     expectedParsedText = ScrapText
-        [ ITEM Bold [ TEXT "bold text" ]
-        , ITEM NoStyle [ TEXT " " ]
-        , ITEM StrikeThrough [ TEXT "strikethrough text" ]
-        , ITEM NoStyle [ TEXT " " ]
-        , ITEM Italic [ TEXT "italic text" ]
-        , ITEM NoStyle [ TEXT " simple text " ]
+        [ ITEM [ Bold ] [ TEXT "bold text" ]
+        , ITEM [] [ TEXT " " ]
+        , ITEM [ StrikeThrough ] [ TEXT "strikethrough text" ]
+        , ITEM [] [ TEXT " " ]
+        , ITEM [ Italic ] [ TEXT "italic text" ]
+        , ITEM [] [ TEXT " simple text " ]
         , CODE_NOTATION "code_notation"
-        , ITEM NoStyle [ TEXT " " ]
-        , ITEM Bold
+        , ITEM [] [ TEXT " " ]
+        , ITEM [ Bold ]
             [ TEXT "test "
             , LINK Nothing ( Url "link" )
             , TEXT " test [partial"
@@ -198,7 +198,7 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "Non-Styled" $ do
         prop "should parse as Non-styled" $
             \(plainInline :: StyledItem 'PlainItem) ->
-                testParse plainInline isNoStyle
+                testParse plainInline null
         prop "should preserve its content" $
             \(plainInline :: StyledItem 'PlainItem) ->
                 testContent plainInline
@@ -206,7 +206,7 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "Bold" $ do
         prop "should parse as Bold" $
             \(boldInline :: StyledItem 'BoldItem) ->
-                testParse boldInline isBold
+                testParse boldInline (all isBold)
         prop "should preserve its content" $
             \(boldInline :: StyledItem 'BoldItem) ->
                 testContent boldInline
@@ -214,7 +214,7 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "Italic" $ do
         prop "should parse as Bold" $
             \(italicInline :: StyledItem 'ItalicItem) ->
-                testParse italicInline isItalic
+                testParse italicInline (all isItalic)
         prop "should preserve its content" $
             \(italicInline :: StyledItem 'ItalicItem) ->
                 testContent italicInline
@@ -222,7 +222,7 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "StrikeThrough" $ do
         prop "should parse as StrikeThrough" $
             \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
-                testParse strikeThroughInline isStrikeThrough
+                testParse strikeThroughInline (all isStrikeThrough)
 
         prop "should preserve its content" $
             \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
@@ -234,7 +234,7 @@ styledItemSpec = describe "Styled inlines" $ do
 
     testParse :: (ScrapboxSyntax (StyledItem a))
               => StyledItem a
-              -> (Style -> Bool)
+              -> ([Style] -> Bool)
               -> Property
     testParse inlineBlock = checkParsed inlineBlock runScrapTextParser
         (\(ScrapText inlines) -> do

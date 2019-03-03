@@ -21,7 +21,6 @@ module Scrapbox.Constructors
     , strikeThrough
     , mathExpr
     , codeNotation
-    , customStyleBlock
     -- * Segment
     , hashtag
     , link
@@ -33,7 +32,7 @@ import           RIO            hiding (link)
 import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  InlineBlock (..), Level (..), ScrapText (..),
                                  Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), StyleData (..), TableContent (..),
+                                 Style (..), TableContent (..),
                                  TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
@@ -89,28 +88,24 @@ lineBreak = LINEBREAK
 --------------------------------------------------------------------------------
 
 -- | Create inline wigh given 'Style' and 'Segment'
-inline :: Style -> [Segment] -> InlineBlock
+inline :: [Style] -> [Segment] -> InlineBlock
 inline = ITEM
 
 -- | Creates 'InlineBlock' with no style
 noStyle :: [Segment] -> InlineBlock
-noStyle = ITEM NoStyle
+noStyle = ITEM []
 
 -- | Create 'InlineBlock' with bold style
 bold :: [Segment] -> InlineBlock
-bold = ITEM Bold
+bold = ITEM [Bold]
 
 -- | Creates 'InlineBlock' with italic style
 italic :: [Segment] -> InlineBlock
-italic = ITEM Italic
+italic = ITEM [Italic]
 
 -- | Creates 'InlineBlock' with strikethrough style
 strikeThrough :: [Segment] -> InlineBlock
-strikeThrough = ITEM StrikeThrough
-
--- | Creates 'InlineBlock' wigh given 'StyleData' and 'Segment'
-customStyleBlock :: StyleData -> [Segment] -> InlineBlock
-customStyleBlock sData = ITEM (CustomStyle sData)
+strikeThrough = ITEM [StrikeThrough]
 
 -- | Creates 'CODE_NOTATION' inline block with given 'Text'
 codeNotation :: Text -> InlineBlock

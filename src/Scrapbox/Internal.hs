@@ -15,7 +15,6 @@ module Scrapbox.Internal
     , concatScrapText
     , verbose
     , unverbose
-    , emptyStyle
     -- * Predicates
     , isBlockQuote
     , isBulletPoint
@@ -32,19 +31,20 @@ module Scrapbox.Internal
     , isBold
     , isItalic
     , isStrikeThrough
-    , isNoStyle
+    -- * For testing
+    , findDiffs
     ) where
 
+import           Scrapbox.DiffFinder       (findDiffs)
 import           Scrapbox.Parser.Item      (runItemParser)
 import           Scrapbox.Parser.ScrapText (runScrapTextParser)
 import           Scrapbox.Render           (renderBlock, renderInline,
                                             renderSegments, renderText)
 import           Scrapbox.Types            (concatInline, concatScrapText,
-                                            concatSegment, emptyStyle,
-                                            isBlockQuote, isBold, isBulletPoint,
-                                            isCodeBlock, isCodeNotation,
-                                            isHashTag, isHeader, isItalic,
-                                            isLink, isMathExpr, isNoStyle,
+                                            concatSegment, isBlockQuote, isBold,
+                                            isBulletPoint, isCodeBlock,
+                                            isCodeNotation, isHashTag, isHeader,
+                                            isItalic, isLink, isMathExpr,
                                             isParagraph, isStrikeThrough,
                                             isTable, isText, isThumbnail,
                                             unverbose, verbose)
