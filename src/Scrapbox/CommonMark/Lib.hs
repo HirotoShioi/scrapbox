@@ -21,7 +21,7 @@ module Scrapbox.CommonMark.Lib
     , optSectionHeading
     ) where
 
-import           RIO                             hiding (link)
+import           RIO                             hiding (link, span)
 
 import           CMark                           (Node (..), NodeType (..),
                                                   Title, Url, commonmarkToNode,
@@ -33,8 +33,8 @@ import qualified RIO.Text                        as T
 import           Scrapbox.Constructors           (blockQuote, bold, bulletPoint,
                                                   codeBlock, codeNotation,
                                                   heading, italic, link,
-                                                  noStyle, paragraph, scrapbox,
-                                                  text, thumbnail)
+                                                  paragraph, scrapbox, text,
+                                                  thumbnail, span)
 import           Scrapbox.Render                 (renderPretty)
 import           Scrapbox.Types                  as Scrapbox (Block (..),
                                                               InlineBlock (..),
@@ -133,17 +133,17 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.PARAGRAPH                -> parseParagraph contents
     C.DOCUMENT                 -> concatMap toBlocks contents
     C.HEADING headingNum        -> [toHeading headingNum contents]
-    C.EMPH                     -> [paragraph [italic (concatMap toSegments contents)]]
-    C.STRONG                   -> [paragraph [bold (concatMap toSegments contents)]]
-    C.TEXT textContent         -> [paragraph [noStyle [text textContent]]]
+    C.EMPH                     -> [paragraph [span [italic] (concatMap toSegments contents)]]
+    C.STRONG                   -> [paragraph [span [bold] (concatMap toSegments contents)]]
+    C.TEXT textContent         -> [paragraph [span [] [text textContent]]]
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
     C.ITEM                     -> concatMap toBlocks contents
-    C.SOFTBREAK                -> [paragraph [noStyle [text "\t"]]]
+    C.SOFTBREAK                -> [paragraph [span [] [text "\t"]]]
      -- Workaround need to pay attention
-    C.LINEBREAK                -> [paragraph [noStyle [text "\n"]]]
-    C.LINK url title           -> [paragraph [noStyle [toLink contents url title]]]
+    C.LINEBREAK                -> [paragraph [span [] [text "\n"]]]
+    C.LINK url title           -> [paragraph [span [] [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
     C.IMAGE url _              -> [thumbnail url]
     C.HTML_INLINE htmlContent  -> [codeBlock "html" (T.lines htmlContent)]
@@ -152,7 +152,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     -- Use placeholder for now. Need to investigate what these actually are
     C.CUSTOM_INLINE _ _        -> parseParagraph contents
     C.CUSTOM_BLOCK _ _         -> parseParagraph contents
-    C.THEMATIC_BREAK           -> [paragraph [noStyle [text "\n"]]]
+    C.THEMATIC_BREAK           -> [paragraph [span [] [text "\n"]]]
 
 -- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]
@@ -170,12 +170,12 @@ toInlineBlock = concatInline . convertToInlineBlock
   where
     convertToInlineBlock :: Node -> [InlineBlock]
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
-        EMPH             -> [italic (concatMap toSegments contents)]
-        STRONG           -> [bold (concatMap toSegments contents)]
-        TEXT textContent -> [noStyle [text textContent]]
+        EMPH             -> [span [italic] (concatMap toSegments contents)]
+        STRONG           -> [span [bold] (concatMap toSegments contents)]
+        TEXT textContent -> [span [] [text textContent]]
         CODE codeContent -> [codeNotation codeContent]
-        LINK url title   -> [noStyle [toLink contents url title]]
-        IMAGE url title  -> [noStyle [toLink contents url title]]
+        LINK url title   -> [span [] [toLink contents url title]]
+        IMAGE url title  -> [span [] [toLink contents url title]]
         _                -> concatMap toInlineBlock contents
 
 -- | Convert given LINK into 'Segment'

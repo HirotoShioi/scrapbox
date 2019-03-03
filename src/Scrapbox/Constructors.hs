@@ -14,8 +14,7 @@ module Scrapbox.Constructors
     , table
     , thumbnail
     -- * InlineBlock
-    , inline
-    , noStyle
+    , span
     , bold
     , italic
     , strikeThrough
@@ -27,7 +26,7 @@ module Scrapbox.Constructors
     , text
     ) where
 
-import           RIO            hiding (link)
+import           RIO            hiding (link, span)
 
 import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  InlineBlock (..), Level (..), ScrapText (..),
@@ -91,21 +90,21 @@ lineBreak = LINEBREAK
 inline :: [Style] -> [Segment] -> InlineBlock
 inline = ITEM
 
--- | Creates 'InlineBlock' with no style
-noStyle :: [Segment] -> InlineBlock
-noStyle = ITEM []
+-- | Create 'ITEM' inline block
+span :: [Style] -> [Segment] -> InlineBlock
+span = inline
 
 -- | Create 'InlineBlock' with bold style
-bold :: [Segment] -> InlineBlock
-bold = ITEM [Bold]
+bold :: Style
+bold = Bold
 
 -- | Creates 'InlineBlock' with italic style
-italic :: [Segment] -> InlineBlock
-italic = ITEM [Italic]
+italic :: Style
+italic = Italic
 
 -- | Creates 'InlineBlock' with strikethrough style
-strikeThrough :: [Segment] -> InlineBlock
-strikeThrough = ITEM [StrikeThrough]
+strikeThrough :: Style
+strikeThrough = StrikeThrough
 
 -- | Creates 'CODE_NOTATION' inline block with given 'Text'
 codeNotation :: Text -> InlineBlock

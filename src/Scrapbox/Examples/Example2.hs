@@ -9,19 +9,19 @@ module Scrapbox.Examples.Example2
     ( example2'
     ) where
 
-import           RIO                   hiding (link)
+import           RIO                   hiding (link, span)
 
 import           Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                         codeBlock, codeNotation, heading,
-                                        italic, lineBreak, link, noStyle, p,
+                                        italic, lineBreak, link, p,
                                         scrapbox, strikeThrough, table, text,
-                                        thumbnail)
+                                        thumbnail, span)
 import           Scrapbox.Types        (Block (..), Scrapbox)
 
 
 syntax :: [Block]
 syntax =
-    [ p [ noStyle [text "Syntax"]]
+    [ p [ span [] [text "Syntax"]]
     , thumbnail "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815"
     ]
 
@@ -32,8 +32,8 @@ mouseBased =
     [ heading 1 [text "Mouse-based editing"]
     , thumbnail "https://gyazo.com/a515ab169b1e371641f7e04bfa92adbc"
     , p
-        [ bold [text "Internal Links"]
-        , noStyle [text " (linking to another page on scrapbox)"]
+        [ span [bold] [text "Internal Links"]
+        , span [] [text " (linking to another page on scrapbox)"]
         ]
     ]
 
@@ -42,13 +42,13 @@ mouseBased =
 internalLinks :: [Block]
 internalLinks =
     [ p
-        [ bold [text "Internal Links"]
-        , noStyle [text " (linking to another page on scrapbox)"]
+        [ span [bold] [text "Internal Links"]
+        , span [] [text " (linking to another page on scrapbox)"]
         ]
     , bulletPoint 1
         [ p
             [ codeNotation "[link]"
-            , noStyle
+            , span []
                 [ text " ⇒ "
                 , link Nothing "Link"
                 ]
@@ -64,20 +64,20 @@ internalLinks =
 externalLinks :: [Block]
 externalLinks =
     [ p
-        [ bold [text "External Links"]
-        , noStyle [text " (linking to another page on scrapbox)"]
+        [ span [bold] [text "External Links"]
+        , span [] [text " (linking to another page on scrapbox)"]
         ]
     , bulletPoint 1
         [ p
             [ codeNotation "http://google.com"
-            , noStyle [text " ⇒ http://google.com"]
+            , span [] [text " ⇒ http://google.com"]
             ]
         ]
-    , p [noStyle [text "or"]]
+    , p [span [] [text "or"]]
     , bulletPoint 1
         [ p
             [ codeNotation "[Google http://google.com]"
-            , noStyle
+            , span []
                 [ text " ⇒ "
                 , link (Just "Google") "http://google.com"
                 ]
@@ -90,14 +90,14 @@ externalLinks =
 -- " [https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]",
 directImageLink :: [Block]
 directImageLink =
-    [ p [ bold [text "Images"]]
+    [ p [ span [] [text "Images"]]
     , bulletPoint 1
         [ p
-            [ noStyle [ text "Direct mage link ↓" ]
+            [ span [] [ text "Direct mage link ↓" ]
             , codeNotation "[https://gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]"
             ]
         ]
-    , p [ noStyle [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
+    , p [ span [] [link Nothing "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]
     ]
 
 -- "[[Clickable Thumbnail Links]]",
@@ -107,14 +107,14 @@ directImageLink =
 -- "  `[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]`",
 clickableThumbnail :: [Block]
 clickableThumbnail =
-    [ p [bold [text "Clickable Thumbnail Links"]]
+    [ p [span [bold] [text "Clickable Thumbnail Links"]]
     , p
-        [ noStyle [text "t↓ "]
+        [ span [] [text "t↓ "]
         , codeNotation "`[http://cutedog.com https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png]`"
-        , noStyle [text " "]
+        , span [] [text " "]
         ]
-    , bulletPoint 1 [ p [noStyle [link (Just "http://cutedog.com") "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]]
-    , bulletPoint 1 [ p [noStyle [text "Adding the link at the end also works, as before:"]]]
+    , bulletPoint 1 [ p [span [] [link (Just "http://cutedog.com") "https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png"]]]
+    , bulletPoint 1 [ p [span [] [text "Adding the link at the end also works, as before:"]]]
     , bulletPoint 2 [ p [codeNotation "[https://i.gyazo.com/da78df293f9e83a74b5402411e2f2e01.png http://cutedog.com]"]]
     ]
 
@@ -123,11 +123,11 @@ clickableThumbnail =
 -- " `[/projectname]` ⇛ [/icons]",
 linkToOther :: [Block]
 linkToOther =
-    [ p [ bold [text "Linking to other scrapbox projects"]]
+    [ p [ span [bold] [text "Linking to other scrapbox projects"]]
     , bulletPoint 1
         [ p
             [ codeNotation "[/projectname/pagename]"
-            , noStyle
+            , span []
                 [ text " ⇛ "
                 , link Nothing "/icons/check"
                 ]
@@ -136,7 +136,7 @@ linkToOther =
     , bulletPoint 1
         [ p
             [ codeNotation "[/projectname]"
-            , noStyle
+            , span []
                 [ text " ⇛ "
                 , link Nothing "/icons"
                 ]
@@ -149,11 +149,11 @@ linkToOther =
 -- " `[/icons/todo.icon]` ⇛ [/icons/todo.icon]",
 iconSection :: [Block]
 iconSection =
-    [ p [bold [text "Icons"]]
+    [ p [span [bold] [text "Icons"]]
     , bulletPoint 1
         [ p
             [ codeNotation "[ben.icon]"
-            , noStyle
+            , span []
                 [ text " ⇛  "
                 , link Nothing "ben.icon"
                 ]
@@ -162,7 +162,7 @@ iconSection =
     , bulletPoint 1
         [ p
             [ codeNotation "[/icons/todo.icon]"
-            , noStyle
+            , span []
                 [ text " ⇛ "
                 , link Nothing "/icons/todo.icon"
                 ]
@@ -174,14 +174,14 @@ iconSection =
 -- "\t`[[Bold]]` or `[* Bold]`⇒ [[Bold]]",
 boldSection :: [Block]
 boldSection =
-    [ p [bold [text "Bold text"]]
+    [ p [span [bold] [text "Bold text"]]
     , bulletPoint 1
         [ p
             [ codeNotation "[[Bold]]"
-            , noStyle [text " or "]
+            , span [] [text " or "]
             , codeNotation "[* Bold]"
-            , noStyle [text "⇒ "]
-            , bold [text "Bold"]
+            , span [] [text "⇒ "]
+            , span [bold] [text "Bold"]
             ]
         ]
     ]
@@ -190,12 +190,12 @@ boldSection =
 -- "\t`[/ italic]`⇛ [/ italic]",
 italicSection :: [Block]
 italicSection =
-    [ p [bold [text "Italic text"]]
+    [ p [span [bold] [text "Italic text"]]
     , bulletPoint 1
         [ p
             [ codeNotation "[/ italic]"
-            , noStyle [text "⇛ "]
-            , italic [text "italic"]
+            , span [] [text "⇛ "]
+            , span [italic] [text "italic"]
             ]
         ]
     ]
@@ -205,12 +205,12 @@ italicSection =
 -- "[https://gyazo.com/00ab07461d502db91c8ae170276d1396]",
 strikeThroughSection :: [Block]
 strikeThroughSection =
-    [ p [bold [text " Strikethrough text"]]
+    [ p [span [bold] [text " Strikethrough text"]]
     , bulletPoint 1
         [ p
             [ codeNotation "[- strikethrough]"
-            , noStyle [text "⇛ "]
-            , strikeThrough [text "strikethrough"]
+            , span [] [text "⇛ "]
+            , span [strikeThrough] [text "strikethrough"]
             ]
         ]
     , thumbnail "https://gyazo.com/00ab07461d502db91c8ae170276d1396"
@@ -221,12 +221,12 @@ strikeThroughSection =
 -- " \tPress backspace to remove the indent  / bullet point",
 bulletPointSection :: [Block]
 bulletPointSection =
-    [ p [bold [text "Bullet points"]]
+    [ p [span [bold] [text "Bullet points"]]
     , bulletPoint 1
-        [ p [noStyle [text "Press space or tab on a new line to indent and create a bullet point"]]
+        [ p [span [] [text "Press space or tab on a new line to indent and create a bullet point"]]
         ]
     , bulletPoint 2
-        [ p [noStyle [text "Press backspace to remove the indent  / bullet point"]]
+        [ p [span [] [text "Press backspace to remove the indent  / bullet point"]]
         ]
     ]
 
@@ -235,18 +235,18 @@ bulletPointSection =
 -- " Add links in the middle of a sentence to branch off as you type or add tags at the end to organize.",
 hashtagSection :: [Block]
 hashtagSection =
-    [ p [ bold [text "Hashtags / internal links"]]
+    [ p [ span [bold] [text "Hashtags / internal links"]]
     , bulletPoint 1
         [ p
             [ codeNotation "#tag"
-            , noStyle [ text " and "]
+            , span [] [ text " and "]
             , codeNotation "link"
-            , noStyle [ text " work the same to create a link but also define related pages you can find later"]
+            , span [] [ text " work the same to create a link but also define related pages you can find later"]
             ]
         ]
     , bulletPoint 1
         [ p
-            [ noStyle [text "Add links in the middle of a sentence to branch off as you type \
+            [ span [] [text "Add links in the middle of a sentence to branch off as you type \
                 \or add tags at the end to organize."]
             ]
         ]
@@ -256,11 +256,11 @@ hashtagSection =
 -- "> use the right arrow `>` at the beginning of a line to get a block quote ",
 blockQuoteSection :: [Block]
 blockQuoteSection =
-    [ p [bold [text "Block quote"]]
+    [ p [span [bold] [text "Block quote"]]
     , blockQuote
-        [ noStyle [text "> use the right arrow "]
+        [ span [] [text "> use the right arrow "]
         , codeNotation ">"
-        , noStyle [text " at the beginning of a line to get a block quote "]
+        , span [] [text " at the beginning of a line to get a block quote "]
         ]
     ]
 
@@ -269,13 +269,13 @@ blockQuoteSection =
 -- " e.g. `function() {  return true }`",
 codeNotationSection :: [Block]
 codeNotationSection =
-    [ p [bold [link Nothing "Code notation"]]
+    [ p [span [bold] [link Nothing "Code notation"]]
     , bulletPoint 1
-        [ p [ noStyle [text "Use backquotes or backticks, `,  to highlight code  "]]
+        [ p [ span [] [text "Use backquotes or backticks, `,  to highlight code  "]]
         ]
     , bulletPoint 1
         [ p
-            [ noStyle [ text " e.g. "]
+            [ span [] [ text " e.g. "]
             , codeNotation "function() {  return true }"
             ]
         ]
@@ -286,15 +286,15 @@ codeNotationSection =
 -- "  Language names may be abbreviated",
 codeBlockSection :: [Block]
 codeBlockSection =
-    [ p [bold [link Nothing "[Code block notation]"]]
+    [ p [span [bold] [link Nothing "[Code block notation]"]]
     , p
-        [ noStyle [text " Typing "]
+        [ span [] [text " Typing "]
         , codeNotation "code:filename.extension"
-        , noStyle [text "or"]
+        , span [] [text "or"]
         , codeNotation "code:filename"
-        , noStyle [text "can be used to create a new code snippet and and display it as a block"]
+        , span [] [text "can be used to create a new code snippet and and display it as a block"]
         ]
-    , p [ noStyle [text "  Language names may be abbreviated"]]
+    , p [ span [] [text "  Language names may be abbreviated"]]
     , codeContent
     ]
   where
@@ -326,10 +326,10 @@ codeBlockSection =
 -- " a\tb\tc",
 tableSection :: [Block]
 tableSection =
-    [ p [ bold [link Nothing "Tables"]]
-    , bulletPoint 1 [ p [ noStyle [text "Type table: tablename to create a table"]]]
-    , bulletPoint 1 [ p [ noStyle [text "Use tab to move to the next column, use enter to move to the next row."]]]
-    , bulletPoint 1 [ p [ noStyle [text "An example:"]]]
+    [ p [ span [bold] [link Nothing "Tables"]]
+    , bulletPoint 1 [ p [ span [] [text "Type table: tablename to create a table"]]]
+    , bulletPoint 1 [ p [ span [] [text "Use tab to move to the next column, use enter to move to the next row."]]]
+    , bulletPoint 1 [ p [ span [] [text "An example:"]]]
     , tableExample
     ]
   where
