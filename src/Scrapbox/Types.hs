@@ -5,8 +5,10 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+-- This is to avoid warnings regarding defining typeclass instance of 'Text' 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Types
+module Scrapbox.Types
     ( -- * Datatypes
       Scrapbox (..)
     , Start(..)
@@ -51,10 +53,10 @@ module Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
-                                  listOf1, scale, vectorOf)
-import           Utils           (genMaybe, genPrintableText, genPrintableUrl,
+import           Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
+import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
+                                  listOf1, scale, vectorOf, genericShrink)
 
 -- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]
@@ -92,6 +94,7 @@ instance Arbitrary Scrapbox where
             (BLOCK_QUOTE (ScrapText inlines): xs) ->
                 BLOCK_QUOTE (ScrapText $ formatInline inlines) : removeAmbiguity xs
             (x:xs) -> x : removeAmbiguity xs
+    shrink = genericShrink
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -117,6 +120,7 @@ newtype CodeSnippet = CodeSnippet [Text]
 
 instance Arbitrary CodeSnippet where
     arbitrary = CodeSnippet <$> listOf1 genPrintableText
+    shrink    = genericShrink
 
 -- | Heading level
 newtype Level = Level Int
@@ -142,6 +146,7 @@ instance Arbitrary TableContent where
         scale (\size -> if size < 5 && size > 0 then size else newSize) $ do
             num <- getSize
             TableContent <$> listOf1 (vectorOf num genText)
+    shrink = genericShrink
 
 -- | Url for Link/Thumbnail
 newtype Url = Url Text
@@ -192,6 +197,7 @@ instance Arbitrary Block where
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
             ]
+    shrink = genericShrink
 
 --------------------------------------------------------------------------------
 -- ScrapText
@@ -210,6 +216,7 @@ instance Arbitrary ScrapText where
       where
         sizeNum :: Int
         sizeNum = 10
+    shrink = genericShrink
 
 -- | InlineBlock
 data InlineBlock
@@ -229,6 +236,10 @@ instance Arbitrary InlineBlock where
                   , (1, randCode)
                   , (1, randMathExpr)
                   ]
+    shrink = genericShrink
+
+instance Arbitrary Text where
+    arbitrary = fromString <$> arbitrary
 
 -- | Segment
 data Segment
@@ -251,6 +262,7 @@ instance Arbitrary Segment where
                   , (2, randomLink)
                   , (7, randomText)
                   ]
+    shrink = genericShrink
 
 -- | Style that can be applied to the 'Segment'
 data Style

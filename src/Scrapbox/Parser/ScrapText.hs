@@ -3,7 +3,7 @@
 
 {-# LANGUAGE LambdaCase #-}
 
-module Parser.ScrapText
+module Scrapbox.Parser.ScrapText
     ( runScrapTextParser
     , runScrapTextParserM
     , scrapTextParser
@@ -21,13 +21,13 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 space, string, try, unexpected,
                                                 (<|>))
 
-import           Parser.Item                   (runItemParserM)
-import           Parser.Utils                  (lookAheadMaybe)
-import           Types                         (InlineBlock (..),
+import           Scrapbox.Parser.Item          (runItemParserM)
+import           Scrapbox.Parser.Utils         (lookAheadMaybe)
+import           Scrapbox.Types                (InlineBlock (..),
                                                 ScrapText (..), Segment (..),
                                                 Style (..), StyleData (..),
                                                 emptyStyle)
-import           Utils                         (eitherM)
+import           Scrapbox.Utils                (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
 --
@@ -148,6 +148,9 @@ styledTextParser = do
         | otherwise            = CustomStyle styleData
 
 -- | Extract paragraph that are surronded by brackets
+extractParagraph :: Parser String
+extractParagraph = go mempty
+  where
 -- As you can see, this is very dangerous
 -- Logic
 --
@@ -162,9 +165,6 @@ styledTextParser = do
 -- 6. If 5 is True, consume until ']' as well as ']' and continue parsing
 -- 7. If 5 is False, consume until ']' and return
 -- @
-extractParagraph :: Parser String
-extractParagraph = go mempty
-  where
     go :: String -> Parser String
     go content = do
         mContent1 <- lookAheadMaybe (manyTill anyChar (char ']'))
