@@ -73,5 +73,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
+    - +RTS -N -RTS
     dependencies:
     - scrapbox
