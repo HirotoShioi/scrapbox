@@ -1,3 +1,13 @@
+-- |
+-- Module:      Scrapbox
+-- Copyright:   (c) 2019 Hiroto Shioi
+-- License:     BSD3
+-- Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
+-- Stability:   experimental
+-- Portability: portable
+--
+-- Scrapbox <https://scrapbox.io/product> parser.
+
 module Scrapbox
     ( -- * Converting commonmark to scrapbox
       commonmarkToScrapbox

@@ -1,12 +1,12 @@
 {-| Exposed modules used for testing
 -}
 module Scrapbox.Internal
-    ( -- Render functions
+    ( -- * Render functions
       renderBlock
     , renderSegments
     , renderText
     , renderInline
-    -- Parsers
+    -- * Parsers
     , runScrapTextParser
     , runItemParser
     -- * Helper functions
