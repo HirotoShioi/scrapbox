@@ -27,7 +27,6 @@ import           Scrapbox.Types                (InlineBlock (..),
                                                 ScrapText (..), Segment (..),
                                                 Style (..), StyleData (..),
                                                 emptyStyle)
-import           Scrapbox.Utils                (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
 --
@@ -55,10 +54,10 @@ runScrapTextParser = parse scrapTextParser "Scrap text parser"
 -- | Monadic version of 'runScrapTextParser'
 runScrapTextParserM :: String -> Parser ScrapText
 runScrapTextParserM content =
-    eitherM
+    either
         (\_ -> unexpected "Failed to parse scrap text")
         return
-        (return $ runScrapTextParser content)
+        (runScrapTextParser content)
 
 -- | Parser for 'ScrapText'
 scrapTextParser :: Parser ScrapText

@@ -1,18 +1,13 @@
 {-| Utility funcitons used in this Library. They are from extra and either package.
 
-extra: http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra.html
-
-either: http://hackage.haskell.org/package/either-5.0.1
+extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra.html>
 
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
 
 module Utils
-    ( eitherM
-    , maybeM
-    , fromMaybeM
-    , whenRight
+    ( whenRight
     , whenJust
     -- * Testing utilities
     , genPrintableText
@@ -30,14 +25,6 @@ import           Test.QuickCheck (Gen, elements, listOf1)
 -- Helper function
 --------------------------------------------------------------------------------
 
--- | Monadic 'maybe'
-maybeM :: Monad m => m b -> (a -> m b) -> m (Maybe a) -> m b
-maybeM n j x = maybe n j =<< x
-
--- | Monadic 'fromMaybe'
-fromMaybeM :: Monad m => m a -> m (Maybe a) -> m a
-fromMaybeM n = maybeM n return
-
 -- | Perform some operation on 'Just', given the field inside the 'Just'.
 --
 -- > whenJust Nothing  print == return ()
@@ -51,10 +38,6 @@ whenJust mg f = maybe (pure ()) f mg
 whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
 whenRight (Right x) f = f x
 whenRight _         _ = pure ()
-
--- | Monadic generalisation of 'either'.
-eitherM :: Monad m => (a -> m c) -> (b -> m c) -> m (Either a b) -> m c
-eitherM l r x = either l r =<< x
 
 -- | Generate arbitrary Text
 -- this is needed as some characters like
