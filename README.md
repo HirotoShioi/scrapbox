@@ -13,3 +13,5 @@ AST can be rendered, then parsed as original AST.
 ## Known issue
 - When parsing commonmark, it cannot parse strikethrough text
 - When parsing commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
+- When parsing commonmark, it cannot render relative link correctly.
+- When parsing scrapbox, some of the inline styles cannot be parsed correctly
