@@ -11,7 +11,7 @@
 --------------------------------------------------------------------------------
 
 module Scrapbox
-    ( 
+    (
     -- * Converting commonmark to scrapbox
       commonmarkToScrapbox
     , commonmarkToScrapboxNode
@@ -50,6 +50,6 @@ import           Scrapbox.Types           (Block (..), CodeName (..),
                                            CodeSnippet (..), InlineBlock (..),
                                            Level (..), ScrapText (..),
                                            Scrapbox (..), Segment (..),
-                                           Style (..), StyleData (..),
-                                           TableContent (..), TableName (..),
-                                           Url (..), Start(..))
+                                           Start (..), Style (..),
+                                           StyleData (..), TableContent (..),
+                                           TableName (..), Url (..))

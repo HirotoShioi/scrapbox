@@ -20,8 +20,8 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, try, unexpected,
                                                 (<?>), (<|>))
 
-import           Scrapbox.Parser.Utils                  (lookAheadMaybe)
-import           Scrapbox.Types                         (Segment (..), Url (..))
+import           Scrapbox.Parser.Utils         (lookAheadMaybe)
+import           Scrapbox.Types                (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart contstructors

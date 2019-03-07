@@ -5,7 +5,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
--- This is to avoid warnings regarding defining typeclass instance of 'Text' 
+-- This is to avoid warnings regarding defining typeclass instance of 'Text'
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Scrapbox.Types
@@ -55,8 +55,9 @@ import           RIO
 import           Data.List       (groupBy)
 import           Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency, getSize,
-                                  listOf1, scale, vectorOf, genericShrink)
+import           Test.QuickCheck (Arbitrary (..), choose, frequency,
+                                  genericShrink, getSize, listOf1, scale,
+                                  vectorOf)
 
 -- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]
