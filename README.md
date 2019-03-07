@@ -1,18 +1,20 @@
 # scrapbox
 
-`scrapbox` is a library which can be used in several ways:
+`scrapbox` is a parser library for [scrapbox](https://scrapbox.io/product).
+
+`scrapbox` can be used in several ways:
 - Parse given scrapbox page and express them as AST
 - Convert given commonmark text into scrapbox page
 - (TODO) Convert given scrapbox page into commonmark
 
-The library is well-tested including round-trip test which tests whether given arbitrary
-AST can be rendered and parsed as is.
+The library is well-tested including round-trip test which tests whether given rendered arbitrary
+AST can be parsed as original AST.
 
 ## Usage
 
 ### Convert given commonmark text into scrapbox page
 
-Using, function `commonMarkToScrapbox`, you can convert any commonmark into scrapbox format.
+Using function `commonMarkToScrapbox`, you can convert any commonmark into scrapbox format.
 
 ```
 # Diary
@@ -81,5 +83,5 @@ Scrapbox
     ] 
 ```
 ## Known issue
-- On commonmark, it cannot parse strike through text
-- On commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
+- When parsing commonmark, it cannot parse strikethrough text
+- When parsing commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
