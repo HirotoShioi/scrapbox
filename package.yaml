@@ -49,9 +49,6 @@ library:
   source-dirs: src
   exposed-modules: Scrapbox
                    Scrapbox.Internal
-                   Scrapbox.Examples.Test
-                   Scrapbox.Examples.Example1
-                   Scrapbox.Examples.Example2
   other-modules:   Scrapbox.CommonMark.Lib
                    Scrapbox.CommonMark.TableParser
                    Scrapbox.Constructors
@@ -63,6 +60,9 @@ library:
                    Scrapbox.Render
                    Scrapbox.Utils
                    Scrapbox.Types
+                   Scrapbox.Examples.Test
+                   Scrapbox.Examples.Example1
+                   Scrapbox.Examples.Example2
 
 tests:
   scrapbox-test:
