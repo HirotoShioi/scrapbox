@@ -1,5 +1,7 @@
 # scrapbox
 
+[![Build Status](https://travis-ci.org/HirotoShioi/scrapbox.svg?branch=master)](https://travis-ci.org/HirotoShioi/scrapbox)
+
 `scrapbox` is a parser library for [scrapbox](https://scrapbox.io/product).
 
 `scrapbox` can be used in several ways:
