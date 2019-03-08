@@ -20,9 +20,8 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, try, unexpected,
                                                 (<?>), (<|>))
 
-import           Scrapbox.Parser.Utils                  (lookAheadMaybe)
-import           Scrapbox.Types                         (Segment (..), Url (..))
-import           Scrapbox.Utils                         (eitherM, fromMaybeM)
+import           Scrapbox.Parser.Utils         (lookAheadMaybe)
+import           Scrapbox.Types                (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart contstructors
@@ -83,7 +82,7 @@ linkParser = do
       foldr (\someText acc -> someText <> " " <> acc) mempty wholecontent
 
     getElement :: Maybe a -> Parser a
-    getElement mf = fromMaybeM (unexpected "failed to parse link content") (return mf)
+    getElement = maybe (unexpected "failed to parse link content") return
 
 -- | Parser for 'TEXT'
 simpleTextParser :: Parser Segment
@@ -152,7 +151,7 @@ runItemParser = parse itemParser "Inline text parser"
 -- | Monadic version of 'runInlineParser'
 runItemParserM :: String -> Parser [Segment]
 runItemParserM content =
-    eitherM
+    either
         (\_ -> unexpected "Failed to parse inline text")
         return
-        (return $ runItemParser content)
+        (runItemParser content)

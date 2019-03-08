@@ -24,7 +24,6 @@ import           Test.QuickCheck         (Arbitrary (..), PrintableString (..),
 import           Test.QuickCheck.Monadic (assert, monadicIO)
 import           Text.Parsec             (ParseError)
 
-import           Utils                   (eitherM)
 --------------------------------------------------------------------------------
 -- Helper functions
 --------------------------------------------------------------------------------
@@ -50,10 +49,10 @@ propParseAsExpected :: (Eq parsed)
                     -> parsed
                     -> (toParse -> Either ParseError parsed)
                     -> Property
-propParseAsExpected example expected parser = monadicIO $ eitherM
+propParseAsExpected example expected parser = monadicIO $ either
     (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
     (\parsedContent -> assert $ parsedContent == expected)
-    (return $ parser example)
+    (parser example)
 
 -- | Type class used to render/get content of given syntax
 class ScrapboxSyntax a where

@@ -32,7 +32,7 @@ import           Utils                    (whenRight)
 
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
-    describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
+    describe "Scrapbox parser" $ modifyMaxSuccess (const 5000) $ do
         roundTripSpec
         shouldParseSpec parseScrapbox
 

@@ -1,5 +1,18 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module:      Scrapbox
+-- Copyright:   (c) 2018-2019 Hiroto Shioi
+-- License:     BSD3
+-- Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
+-- Stability:   experimental
+-- Portability: portable
+--
+-- Scrapbox <https://scrapbox.io/product> parser.
+--------------------------------------------------------------------------------
+
 module Scrapbox
-    ( -- * Converting commonmark to scrapbox
+    (
+    -- * Converting commonmark to scrapbox
       commonmarkToScrapbox
     , commonmarkToScrapboxNode
     -- ** Parse options
@@ -37,6 +50,6 @@ import           Scrapbox.Types           (Block (..), CodeName (..),
                                            CodeSnippet (..), InlineBlock (..),
                                            Level (..), ScrapText (..),
                                            Scrapbox (..), Segment (..),
-                                           Style (..), StyleData (..),
-                                           TableContent (..), TableName (..),
-                                           Url (..), Start(..))
+                                           Start (..), Style (..),
+                                           StyleData (..), TableContent (..),
+                                           TableName (..), Url (..))
