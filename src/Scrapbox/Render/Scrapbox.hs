@@ -7,7 +7,7 @@ You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Render
+module Scrapbox.Render.Scrapbox
     ( renderPretty
     , renderRaw
     , writeScrapbox

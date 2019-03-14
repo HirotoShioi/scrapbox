@@ -1,7 +1,7 @@
 {-| Test suites for commonmark parser
 -}
 
-module TestCommonMark.CommonMark where
+module TestCommonMark.Commonmark where
 
 import           RIO
 import           Test.Hspec

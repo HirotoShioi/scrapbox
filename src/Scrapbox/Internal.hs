@@ -37,7 +37,7 @@ module Scrapbox.Internal
 
 import           Scrapbox.Parser.Item      (runItemParser)
 import           Scrapbox.Parser.ScrapText (runScrapTextParser)
-import           Scrapbox.Render           (renderBlock, renderInline,
+import           Scrapbox.Render.Scrapbox  (renderBlock, renderInline,
                                             renderSegments, renderText)
 import           Scrapbox.Types            (concatInline, concatScrapText,
                                             concatSegment, emptyStyle,

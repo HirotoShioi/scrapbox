@@ -4,4 +4,5 @@ Here's an image of Barbados
 
 Here's a sentence after it.
 
-![test me](someRandomText)
+[test me](someRandomText)
+[www.test.com]

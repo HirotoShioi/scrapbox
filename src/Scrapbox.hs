@@ -45,7 +45,7 @@ import           Scrapbox.CommonMark.Lib  (ParseOption, commonmarkToScrapbox,
                                            commonmarkToScrapboxNode, optDefault,
                                            optSectionHeading)
 import           Scrapbox.Parser.Scrapbox (parseScrapbox)
-import           Scrapbox.Render          (renderPretty)
+import           Scrapbox.Render.Scrapbox (renderPretty)
 import           Scrapbox.Types           (Block (..), CodeName (..),
                                            CodeSnippet (..), InlineBlock (..),
                                            Level (..), ScrapText (..),

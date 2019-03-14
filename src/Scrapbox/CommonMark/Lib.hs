@@ -35,7 +35,7 @@ import           Scrapbox.Constructors           (blockQuote, bold, bulletPoint,
                                                   heading, italic, link,
                                                   noStyle, paragraph, scrapbox,
                                                   text, thumbnail)
-import           Scrapbox.Render                 (renderPretty)
+import           Scrapbox.Render.Scrapbox        (renderPretty)
 import           Scrapbox.Types                  as Scrapbox (Block (..),
                                                               InlineBlock (..),
                                                               Scrapbox (..),
