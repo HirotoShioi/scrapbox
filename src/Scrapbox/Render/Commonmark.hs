@@ -9,22 +9,36 @@ module Scrapbox.Render.Commonmark
     ) where
 
 import           RIO
+import           RIO.List       (headMaybe, tailMaybe)
 import qualified RIO.Text       as T
-import           Scrapbox.Types
+import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
+                                 InlineBlock (..), Level (..), ScrapText (..),
+                                 Scrapbox (..), Segment (..), Start (..),
+                                 Style (..), TableContent (..), TableName (..),
+                                 Url (..))
 
 
 renderToCommonmark :: Scrapbox -> Text
-renderToCommonmark (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
+renderToCommonmark (Scrapbox blocks) = T.unlines
+    $ concatMap renderBlock
+    $ addLineBreaks blocks
+  where
+    addLineBreaks :: [Block] -> [Block]
+    addLineBreaks []               = []
+    addLineBreaks [x]              = [x]
+    addLineBreaks (LINEBREAK:xs)   = LINEBREAK : addLineBreaks xs
+    addLineBreaks (x:LINEBREAK:xs) = x : LINEBREAK : addLineBreaks xs
+    addLineBreaks (x:xs)           = x : LINEBREAK : addLineBreaks xs
 
 renderBlock :: Block -> [Text]
 renderBlock = \case
-    LINEBREAK                       -> ["\\"]
+    LINEBREAK                       -> [""]
     BLOCK_QUOTE scraptext           -> [">" <> renderScrapText scraptext]
-    BULLET_POINT start blocks       -> renderBulletPoint start blocks -- (map renderBlock blocks)
+    BULLET_POINT start blocks       -> renderBulletPoint start blocks
     CODE_BLOCK codeName codeSnippet -> renderCodeblock codeName codeSnippet
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
-    TABLE tableName tableContent    -> [""]
+    TABLE tableName tableContent    -> renderTable tableName tableContent
     THUMBNAIL (Url url)             -> ["![image](" <> url <> ")"]
 
 renderScrapText :: ScrapText -> Text
@@ -33,7 +47,21 @@ renderScrapText (ScrapText inlineBlocks) =
     T.unwords $ map renderInlineBlock inlineBlocks
 
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start startnum) blocks = [""]
+renderBulletPoint (Start startNum) blocks =
+    let renderedStart = T.replicate (startNum - 1) "\t" <> "- "
+    in foldr (\block acc ->
+        let rendered = case block of
+                -- Filtering codeblock and table since it cannot be rendered as bulletpoint
+                CODE_BLOCK codeName codeSnippet ->
+                    renderCodeblock codeName codeSnippet
+                TABLE tableName tableContent ->
+                    renderTable tableName tableContent
+                BULLET_POINT (Start num) blocks' ->
+                    renderBulletPoint (Start (num + startNum)) blocks'
+                others ->
+                    map (\line -> renderedStart <> line) $ renderBlock others
+        in rendered <> acc
+        ) mempty blocks
 
 renderHeading :: Level -> [Segment] -> Text
 renderHeading (Level headingNum) segments =
@@ -54,17 +82,40 @@ renderSegment = \case
     LINK (Just name) (Url url) -> "[" <> name <> "]" <> "(" <> url <> ")"
     TEXT text                  -> text
 
+ -- Does commonmark support math expressions?
 renderInlineBlock :: InlineBlock -> Text
-renderInlineBlock (CODE_NOTATION text)   = "`" <> text <> "`"
-renderInlineBlock (MATH_EXPRESSION text) = "`" <> text <> "`" -- Does commonmark support math expressions?
-renderInlineBlock (ITEM style segments)  =
-    let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
-    in case style of
-        Bold          -> "**" <> renderedSegments <> "**"
-        Italic        -> "_" <> renderedSegments <> "_"
-        NoStyle       -> renderedSegments
-        StrikeThrough -> "~~" <> renderedSegments <> "~~"
+renderInlineBlock = \case
+    CODE_NOTATION text   -> "`" <> text <> "`"
+    MATH_EXPRESSION text -> "`" <> text <> "`"
+    ITEM style segments  ->
+        let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
+        in case style of
+            Bold          -> "**" <> renderedSegments <> "**"
+            Italic        -> "_" <> renderedSegments <> "_"
+            StrikeThrough -> "~~" <> renderedSegments <> "~~"
+            NoStyle       -> renderedSegments
+            CustomStyle _ -> "**" <> renderedSegments <> "**"
+            UserStyle   _ -> "**" <> renderedSegments <> "**"
 
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
     [name] <> ["```"] <> snippet <> ["```"]
+
+renderTable :: TableName -> TableContent -> [Text]
+renderTable (TableName name) (TableContent contents) =
+    let renderedContent = fromMaybe (map T.unwords contents) renderTableM
+    in [name] <> renderedContent
+  where
+    renderTableM :: Maybe [Text]
+    renderTableM = do
+        headColumn <- headMaybe contents
+        rest       <- tailMaybe contents
+        return $ [renderColumn headColumn] <> [middle (length headColumn)] <> map renderColumn rest
+
+    renderColumn :: [Text] -> Text
+    renderColumn items = "|" <> foldr (\item acc -> " " <> item <> " |" <> acc) mempty items
+
+    middle :: Int -> Text
+    middle rowNum =
+        let rows = T.replicate rowNum "--- |"
+        in "|" <> rows
