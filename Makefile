@@ -8,6 +8,7 @@ stylish-haskell: ## Apply stylish-haskell on all *.hs files
 
 ghci: ## Run repl
 	@stack ghci $(PROJECT_NAME):lib --haddock-deps --ghci-options=-fobject-code
+
 ghcid:  ## Run ghcid
 	@ghcid --command "stack ghci $(PROJECT_NAME):lib --ghci-options=-fobject-code"
 
@@ -16,7 +17,7 @@ run-test: ## Build & run test
 	stack test --fast
 
 test-ghci: ## Run repl on test suites
-	@stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test
+	@stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code
 
 test-ghcid: ## Run ghcid on test suites
 	@ghcid --command "stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code"

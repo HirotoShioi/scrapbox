@@ -15,7 +15,7 @@ import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  InlineBlock (..), Level (..), ScrapText (..),
                                  Scrapbox (..), Segment (..), Start (..),
                                  Style (..), TableContent (..), TableName (..),
-                                 Url (..))
+                                 Url (..), StyleData(..))
 
 
 renderToCommonmark :: Scrapbox -> Text
@@ -52,6 +52,7 @@ renderBulletPoint (Start startNum) blocks =
     in foldr (\block acc ->
         let rendered = case block of
                 -- Filtering codeblock and table since it cannot be rendered as bulletpoint
+                -- Special case on bullet point
                 CODE_BLOCK codeName codeSnippet ->
                     renderCodeblock codeName codeSnippet
                 TABLE tableName tableContent ->
@@ -90,13 +91,29 @@ renderInlineBlock = \case
     ITEM style segments  ->
         let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
         in case style of
-            Bold          -> "**" <> renderedSegments <> "**"
-            Italic        -> "_" <> renderedSegments <> "_"
-            StrikeThrough -> "~~" <> renderedSegments <> "~~"
-            NoStyle       -> renderedSegments
-            CustomStyle _ -> "**" <> renderedSegments <> "**"
-            UserStyle   _ -> "**" <> renderedSegments <> "**"
+            Bold                    -> "**" <> renderedSegments <> "**"
+            Italic                  -> "_" <> renderedSegments <> "_"
+            StrikeThrough           -> "~~" <> renderedSegments <> "~~"
+            NoStyle                 -> renderedSegments
+            CustomStyle customStyle -> renderWithStyle customStyle renderedSegments
+            UserStyle   _           -> "**" <> renderedSegments <> "**"
+  where
+    -- (TODO) Look into how you can apply header fonts
+    renderWithStyle :: StyleData -> Text -> Text
+    renderWithStyle (StyleData _ isBold isItalic isStrikeThrough) text =
+        foldr (\(hasStyle, apply) acc -> if hasStyle then apply acc else acc) text $
+            zip
+                [isBold, isStrikeThrough, isItalic]
+                [withBold, withStrikeThrough, withItalic]
+    withBold :: Text -> Text
+    withBold txt          = "**" <> txt <> "**"
 
+    withStrikeThrough :: Text -> Text
+    withStrikeThrough txt = "~~" <> txt <> "~~"
+
+    withItalic :: Text -> Text
+    withItalic txt        = "_" <> txt <> "_"
+    
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
     [name] <> ["```"] <> snippet <> ["```"]
