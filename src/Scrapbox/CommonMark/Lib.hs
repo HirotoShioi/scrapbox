@@ -35,7 +35,7 @@ import           Scrapbox.Constructors           (blockQuote, bold, bulletPoint,
                                                   heading, italic, link,
                                                   noStyle, paragraph, scrapbox,
                                                   text, thumbnail)
-import           Scrapbox.Render.Scrapbox        (renderPretty)
+import           Scrapbox.Render.Scrapbox        (renderToScrapbox)
 import           Scrapbox.Types                  as Scrapbox (Block (..),
                                                               InlineBlock (..),
                                                               Scrapbox (..),
@@ -88,7 +88,7 @@ commonmarkToScrapboxNode parseOption cmark =
 -- | Convert given common mark text into 'Scrapbox' format
 commonmarkToScrapbox :: ParseOption -> Text -> Text
 commonmarkToScrapbox parseOption cmark =
-    renderPretty $ commonmarkToScrapboxNode parseOption cmark
+    renderToScrapbox $ commonmarkToScrapboxNode parseOption cmark
 
 -- | Parse given CMark 'Node' into 'Scrapbox'
 parseNode :: ParseOption -> Node -> Scrapbox
@@ -218,7 +218,7 @@ extractTextFromNodes = foldr
     extractText :: NodeType -> Text
     extractText = \case
         TEXT textContent -> textContent
-        CODE codeContent -> codeContent
+        CODE codeContent -> "`" <> codeContent <> "`"
         -- For now, we're going to ignore everything else
         _         -> mempty
 
