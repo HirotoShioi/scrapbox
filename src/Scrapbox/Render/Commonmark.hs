@@ -9,13 +9,13 @@ module Scrapbox.Render.Commonmark
     ) where
 
 import           RIO
-import           RIO.List       (headMaybe, tailMaybe, foldl')
+import           RIO.List       (foldl', headMaybe, tailMaybe)
 import qualified RIO.Text       as T
 import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  InlineBlock (..), Level (..), ScrapText (..),
                                  Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), TableContent (..), TableName (..),
-                                 Url (..), StyleData(..))
+                                 Style (..), StyleData (..), TableContent (..),
+                                 TableName (..), Url (..))
 
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmark :: Scrapbox -> Text
@@ -113,7 +113,7 @@ renderInlineBlock = \case
 
     withItalic :: Text -> Text
     withItalic txt        = "_" <> txt <> "_"
-    
+
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
     [name] <> ["```"] <> snippet <> ["```"]
@@ -134,4 +134,4 @@ renderTable (TableName name) (TableContent contents) =
     renderColumn items = "|" <> foldr (\item acc -> item <> "|" <> acc) mempty items
 
     middle :: [Int] -> Text
-    middle rowNums = foldl' (\acc num -> acc <> T.replicate num "-" <> "|") "|" rowNums
+    middle = foldl' (\acc num -> acc <> T.replicate num "-" <> "|") "|"

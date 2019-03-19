@@ -54,7 +54,7 @@ columnParser = do
     getElem :: [Text] -> Parser ([Text], Text)
     getElem currList = do
         _       <- P.char '|'
-        element <- P.takeWhile (/= '|') -- fmmmmm
+        element <- T.strip <$> P.takeWhile (/= '|') -- fmmmmm
         rest    <- P.takeText
         return (currList ++ [element], rest)
 
