@@ -2,3 +2,4 @@
 scrapbox.cabal
 *~
 .ghci
+test-docs/
