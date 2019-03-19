@@ -9,7 +9,7 @@ module Scrapbox.Render.Commonmark
     ) where
 
 import           RIO
-import           RIO.List       (headMaybe, tailMaybe)
+import           RIO.List       (headMaybe, tailMaybe, foldl')
 import qualified RIO.Text       as T
 import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  InlineBlock (..), Level (..), ScrapText (..),
@@ -127,12 +127,11 @@ renderTable (TableName name) (TableContent contents) =
     renderTableM = do
         headColumn <- headMaybe contents
         rest       <- tailMaybe contents
-        return $ [renderColumn headColumn] <> [middle (length headColumn)] <> map renderColumn rest
+        let headColumnNums = map T.length headColumn
+        return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
 
     renderColumn :: [Text] -> Text
-    renderColumn items = "|" <> foldr (\item acc -> " " <> item <> " |" <> acc) mempty items
+    renderColumn items = "|" <> foldr (\item acc -> item <> "|" <> acc) mempty items
 
-    middle :: Int -> Text
-    middle rowNum =
-        let rows = T.replicate rowNum "--- |"
-        in "|" <> rows
+    middle :: [Int] -> Text
+    middle rowNums = foldl' (\acc num -> acc <> T.replicate num "-" <> "|") "|" rowNums
