@@ -9,8 +9,6 @@ You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 
 module Scrapbox.Render.Scrapbox
     ( renderToScrapbox
-    , renderRaw
-    , writeScrapbox
     , renderBlock
     , renderSegments
     , renderText
@@ -33,17 +31,6 @@ import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
 -- | Render given 'Scrapbox' AST into Scrapbox page
 renderToScrapbox :: Scrapbox -> Text
 renderToScrapbox (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
-
--- | Render given 'Scrapbox' into list of 'ByteString'
-renderRaw :: Scrapbox -> [ByteString]
-renderRaw (Scrapbox blocks) =
-    concatMap (map encodeUtf8 . renderBlock) blocks
-
--- | Write given 'Scrapbox' to given path
-writeScrapbox :: FilePath -> Scrapbox -> IO ()
-writeScrapbox path (Scrapbox blocks) = do
-    let renderedScrapbox = T.unlines $ concatMap renderBlock blocks
-    writeFileUtf8 path renderedScrapbox
 
 --------------------------------------------------------------------------------
 -- Rendering logics
