@@ -9,6 +9,7 @@ module Scrapbox.Internal
     -- * Parsers
     , runScrapTextParser
     , runItemParser
+    , runScrapboxParser
     -- * Helper functions
     , concatInline
     , concatSegment
@@ -36,6 +37,7 @@ module Scrapbox.Internal
     ) where
 
 import           Scrapbox.Parser.Item      (runItemParser)
+import           Scrapbox.Parser.Scrapbox  (runScrapboxParser)
 import           Scrapbox.Parser.ScrapText (runScrapTextParser)
 import           Scrapbox.Render.Scrapbox  (renderBlock, renderInline,
                                             renderSegments, renderText)

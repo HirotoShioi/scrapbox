@@ -17,9 +17,11 @@ run-test: ## Build & run test
 	stack test --fast
 
 test-ghci: ## Run repl on test suites
-	@stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code
+	@stack build $(PROJECT_NAME):lib --fast && \
+	stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code
 
 test-ghcid: ## Run ghcid on test suites
-	@ghcid --command "stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code"
+	@stack build $(PROJECT_NAME):lib --fast && \
+	ghcid --command "stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code"
 
 .PHONY: stylish-haskell ghci ghcid run-test test-ghcid test-ghci help

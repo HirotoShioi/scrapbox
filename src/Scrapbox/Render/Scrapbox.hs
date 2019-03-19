@@ -30,7 +30,7 @@ import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
 -- Exposed interface
 --------------------------------------------------------------------------------
 
--- | Pretty print 'Scrapbox'
+-- | Render given 'Scrapbox' AST into Scrapbox page
 renderToScrapbox :: Scrapbox -> Text
 renderToScrapbox (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
 

@@ -17,7 +17,7 @@ import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
                                  Style (..), TableContent (..), TableName (..),
                                  Url (..), StyleData(..))
 
-
+-- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmark :: Scrapbox -> Text
 renderToCommonmark (Scrapbox blocks) = T.unlines
     $ concatMap renderBlock
