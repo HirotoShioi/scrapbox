@@ -22,7 +22,7 @@ import           Scrapbox                 (Block (..), CodeName (..),
                                            Start (..), Style (..),
                                            TableContent (..), TableName (..),
                                            Url (..), parseScrapbox,
-                                           renderPretty)
+                                           renderToScrapbox)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            propParseAsExpected, shouldParseSpec)
 import           Utils                    (whenRight)
@@ -448,7 +448,7 @@ roundTripSpec :: Spec
 roundTripSpec = describe "Scrapbox" $
     prop "should be able to perform roundtrip if there's no ambiguous syntax" $
         \(scrapbox :: Scrapbox) -> monadicIO $ do
-            let rendered = renderPretty scrapbox
+            let rendered = renderToScrapbox scrapbox
             let eParsed  = parseScrapbox $ T.unpack rendered
 
             assert $ isRight eParsed

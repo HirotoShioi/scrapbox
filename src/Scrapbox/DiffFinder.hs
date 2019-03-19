@@ -10,7 +10,7 @@ import           RIO
 import qualified RIO.Text                 as T
 
 import           Scrapbox.Parser.Scrapbox (parseScrapbox)
-import           Scrapbox.Render.Scrapbox (renderPretty)
+import           Scrapbox.Render.Scrapbox (renderToScrapbox)
 import           Scrapbox.Types           (Block (..), Scrapbox (..))
 
 data DiffPair = DiffPair
@@ -27,7 +27,7 @@ findDiffs sb@(Scrapbox blocks) =
     either
         (\_ -> Left "Failed to parse")
         (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
-        (parseScrapbox . T.unpack $ renderPretty sb)
+        (parseScrapbox . T.unpack $ renderToScrapbox sb)
   where
     diffs :: [Block] -> [Block] -> [DiffPair]
     diffs = go mempty

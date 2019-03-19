@@ -22,7 +22,8 @@ module Scrapbox
     -- * Parsing Scrapbox
     , parseScrapbox
     -- * Rendering Scrapbox
-    , renderPretty
+    , renderToScrapbox
+    , renderToCommonmark
     -- * Data types
     , Scrapbox(..)
     , Block(..)
@@ -41,15 +42,16 @@ module Scrapbox
     , StyleData(..)
     ) where
 
-import           Scrapbox.CommonMark.Lib  (ParseOption, commonmarkToScrapbox,
-                                           commonmarkToScrapboxNode, optDefault,
-                                           optSectionHeading)
-import           Scrapbox.Parser.Scrapbox (parseScrapbox)
-import           Scrapbox.Render.Scrapbox (renderPretty)
-import           Scrapbox.Types           (Block (..), CodeName (..),
-                                           CodeSnippet (..), InlineBlock (..),
-                                           Level (..), ScrapText (..),
-                                           Scrapbox (..), Segment (..),
-                                           Start (..), Style (..),
-                                           StyleData (..), TableContent (..),
-                                           TableName (..), Url (..))
+import           Scrapbox.CommonMark.Lib    (ParseOption, commonmarkToScrapbox,
+                                             commonmarkToScrapboxNode,
+                                             optDefault, optSectionHeading)
+import           Scrapbox.Parser.Scrapbox   (parseScrapbox)
+import           Scrapbox.Render.Commonmark (renderToCommonmark)
+import           Scrapbox.Render.Scrapbox   (renderToScrapbox)
+import           Scrapbox.Types             (Block (..), CodeName (..),
+                                             CodeSnippet (..), InlineBlock (..),
+                                             Level (..), ScrapText (..),
+                                             Scrapbox (..), Segment (..),
+                                             Start (..), Style (..),
+                                             StyleData (..), TableContent (..),
+                                             TableName (..), Url (..))
