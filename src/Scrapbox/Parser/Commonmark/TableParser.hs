@@ -3,7 +3,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.CommonMark.TableParser
+module Scrapbox.Parser.Commonmark.TableParser
     ( parseTable
     , CommonMarkTable
     , Column

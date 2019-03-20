@@ -106,28 +106,28 @@ renderInlineBlock = \case
     -- Render given text with 'StyleData'
     renderWithStyle :: StyleData -> Text -> Text
     renderWithStyle (StyleData fontSize isBold isItalic isStrikeThrough) text =
-        foldr (\(hasStyle, apply) acc -> if hasStyle then apply acc else acc) text $
+        foldr (\(applicable, apply) acc -> if applicable then apply acc else acc) text $
             zip
                 [fontSize > 0, isBold, isStrikeThrough, isItalic]
-                [withSize fontSize, withBold, withStrikeThrough, withItalic]
+                [applySize fontSize, applyBold, applyStrikeThrough, applyItalic]
     -- Add font size
-    withSize :: Int -> Text -> Text
-    withSize fontSize text = mconcat
+    applySize :: Int -> Text -> Text
+    applySize fontSize text = mconcat
         [ "<span style=\"font-size:"
-        , tshow (fromIntegral fontSize * 0.7) -- Might tweak the numbers
+        , tshow (fromIntegral fontSize * 0.7 :: Double) -- Might tweak the numbers
         , "em\">"
         , text
         , "</span>"
         ]
     -- Add bold style
-    withBold :: Text -> Text
-    withBold txt          = "**" <> txt <> "**"
+    applyBold :: Text -> Text
+    applyBold txt          = "**" <> txt <> "**"
     -- Add strikethrough style
-    withStrikeThrough :: Text -> Text
-    withStrikeThrough txt = "~~" <> txt <> "~~"
+    applyStrikeThrough :: Text -> Text
+    applyStrikeThrough txt = "~~" <> txt <> "~~"
     -- Add italic style
-    withItalic :: Text -> Text
-    withItalic txt        = "_" <> txt <> "_"
+    applyItalic :: Text -> Text
+    applyItalic txt        = "_" <> txt <> "_"
 
 -- | Render 'CODE_BLOCK'
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]

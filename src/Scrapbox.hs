@@ -1,27 +1,31 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 --------------------------------------------------------------------------------
--- |
--- Module:      Scrapbox
--- Copyright:   (c) 2018-2019 Hiroto Shioi
--- License:     BSD3
--- Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
--- Stability:   experimental
--- Portability: portable
---
--- Scrapbox <https://scrapbox.io/product> parser.
+{-|
+Module:      Scrapbox
+Copyright:   (c) 2018-2019 Hiroto Shioi
+License:     BSD3
+Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
+Stability:   experimental
+Portability: portable
+
+Scrapbox <https://scrapbox.io/product> parser.
+-}
 --------------------------------------------------------------------------------
 
 module Scrapbox
     (
     -- * Converting commonmark to scrapbox
       commonmarkToScrapbox
-    , commonmarkToScrapboxNode
+    , commonmarkToNode
     -- ** Parse options
     , ParseOption
     , optDefault
     , optSectionHeading
-    -- * Parsing Scrapbox
-    , parseScrapbox
-    -- * Rendering Scrapbox
+    -- * Converting scrapbox
+    , scrapboxToCommonmark
+    , scrapboxToNode
+    -- * Rendering Scrapbox AST
     , renderToScrapbox
     , renderToCommonmark
     -- * Data types
@@ -42,16 +46,31 @@ module Scrapbox
     , StyleData(..)
     ) where
 
-import           Scrapbox.CommonMark.Lib    (ParseOption, commonmarkToScrapbox,
-                                             commonmarkToScrapboxNode,
-                                             optDefault, optSectionHeading)
-import           Scrapbox.Parser.Scrapbox   (parseScrapbox)
-import           Scrapbox.Render.Commonmark (renderToCommonmark)
-import           Scrapbox.Render.Scrapbox   (renderToScrapbox)
-import           Scrapbox.Types             (Block (..), CodeName (..),
-                                             CodeSnippet (..), InlineBlock (..),
-                                             Level (..), ScrapText (..),
-                                             Scrapbox (..), Segment (..),
-                                             Start (..), Style (..),
-                                             StyleData (..), TableContent (..),
-                                             TableName (..), Url (..))
+import           RIO
+import qualified RIO.Text                      as T
+
+import           Scrapbox.Parser.Commonmark    (ParseOption, commonmarkToNode,
+                                                commonmarkToScrapbox,
+                                                optDefault, optSectionHeading)
+import           Scrapbox.Parser.Scrapbox      (runScrapboxParser)
+import           Scrapbox.Render.Commonmark    (renderToCommonmark)
+import           Scrapbox.Render.Scrapbox      (renderToScrapbox)
+import           Scrapbox.Types                (Block (..), CodeName (..),
+                                                CodeSnippet (..),
+                                                InlineBlock (..), Level (..),
+                                                ScrapText (..), Scrapbox (..),
+                                                Segment (..), Start (..),
+                                                Style (..), StyleData (..),
+                                                TableContent (..),
+                                                TableName (..), Url (..))
+import           Text.ParserCombinators.Parsec (ParseError)
+
+-- Perhaps add option?
+
+-- | Convert given scrapbox format text into commonmark format
+scrapboxToCommonmark :: Text -> Either ParseError Text
+scrapboxToCommonmark scrapbox = renderToCommonmark <$> scrapboxToNode scrapbox
+
+-- | Parse given scrapbox formatted text into 'Scrapbox' AST
+scrapboxToNode :: Text -> Either ParseError Scrapbox
+scrapboxToNode = runScrapboxParser . T.unpack
