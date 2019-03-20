@@ -49,9 +49,8 @@ module Scrapbox
 import           RIO
 import qualified RIO.Text                      as T
 
-import           Scrapbox.Parser.Commonmark    (ParseOption,
+import           Scrapbox.Parser.Commonmark    (ParseOption, commonmarkToNode,
                                                 commonmarkToScrapbox,
-                                                commonmarkToNode,
                                                 optDefault, optSectionHeading)
 import           Scrapbox.Parser.Scrapbox      (runScrapboxParser)
 import           Scrapbox.Render.Commonmark    (renderToCommonmark)
