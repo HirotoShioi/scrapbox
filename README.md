@@ -7,7 +7,7 @@
 `scrapbox` can be used in several ways:
 - Parse given scrapbox page and express them as AST
 - Convert given commonmark text into scrapbox page
-- (TODO) Convert given scrapbox page into commonmark
+- (Experimental) Convert given scrapbox page into commonmark
 
 The library is well-tested including round-trip test which tests whether given arbitrary
 AST can be rendered, then parsed as original AST.
