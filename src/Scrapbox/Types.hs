@@ -486,7 +486,7 @@ formatInline (x:xs)                   = x : formatInline xs
 
 -- Add space after hashtag
 addSpace :: [Segment] -> [Segment]
-addSpace []                 = []
-addSpace (HASHTAG txt: TEXT text : rest) = HASHTAG txt : TEXT (" " <> text) : addSpace rest
-addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
-addSpace (x:xs)             = x : addSpace xs
+addSpace []                               = []
+addSpace (HASHTAG txt : TEXT text : rest) = HASHTAG txt : TEXT (" " <> text) : addSpace rest
+addSpace (HASHTAG txt : rest)             = HASHTAG txt : TEXT " " : addSpace rest
+addSpace (x:xs)                           = x : addSpace xs
