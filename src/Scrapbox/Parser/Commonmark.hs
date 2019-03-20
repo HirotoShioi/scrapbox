@@ -1,7 +1,7 @@
 {-| This module exposes parser functions. You must provide 'ParseOption'
 which is either 'optDefault' or 'optSectionHeading'
 
-To parse given Commonmark into 'Scrapbox' AST, use 'commonmarkToScrapboxNode'.
+To parse given Commonmark into 'Scrapbox' AST, use 'commonmarkToNode'.
 
 To parse given CommnMark and convert into 'Scrapbox' format,
 use 'commonmarkToScrapbox'.
@@ -13,7 +13,7 @@ use 'commonmarkToScrapbox'.
 module Scrapbox.Parser.Commonmark
     ( -- * Parser
       parseNode
-    , commonmarkToScrapboxNode
+    , commonmarkToNode
     , commonmarkToScrapbox
     -- * Parse option
     , ParseOption
@@ -25,8 +25,8 @@ import           RIO                                    hiding (link)
 
 import           CMark                                  (Node (..),
                                                          NodeType (..), Title,
-                                                         Url, commonmarkToNode,
-                                                         optHardBreaks, optSafe)
+                                                         Url, optHardBreaks,
+                                                         optSafe)
 import qualified CMark                                  as C
 import           Data.List.Split                        (splitWhen)
 import qualified RIO.Text                               as T
@@ -79,17 +79,17 @@ optSectionHeading = SectionHeading
 --- It would be nice if these functions are wrapped in Either like this:
 --  newtype Parser a = Parser (Either ParserException a)
 
--- | Convert given common mark into 'Scrapbox'
-commonmarkToScrapboxNode :: ParseOption -> Text -> Scrapbox
-commonmarkToScrapboxNode parseOption cmark =
+-- | Convert given common mark into 'Scrapbox' AST
+commonmarkToNode :: ParseOption -> Text -> Scrapbox
+commonmarkToNode parseOption cmark =
     let options = [optSafe, optHardBreaks]
-        node = commonmarkToNode options cmark
+        node = C.commonmarkToNode options cmark
     in parseNode parseOption node
 
 -- | Convert given common mark text into 'Scrapbox' format
 commonmarkToScrapbox :: ParseOption -> Text -> Text
 commonmarkToScrapbox parseOption cmark =
-    renderToScrapbox $ commonmarkToScrapboxNode parseOption cmark
+    renderToScrapbox $ commonmarkToNode parseOption cmark
 
 -- | Parse given CMark 'Node' into 'Scrapbox'
 parseNode :: ParseOption -> Node -> Scrapbox

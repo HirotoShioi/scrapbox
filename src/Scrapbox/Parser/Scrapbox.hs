@@ -5,11 +5,9 @@
 
 module Scrapbox.Parser.Scrapbox
     ( runScrapboxParser
-    , parseScrapbox
     ) where
 
 import           RIO                                hiding (many, try, (<|>))
-import qualified RIO.Text                           as T
 
 import           Network.URI                        (isURI)
 import           Text.ParserCombinators.Parsec      (ParseError, Parser,
@@ -145,10 +143,6 @@ scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 -- | Run scrapbox parser on given 'String'
 runScrapboxParser :: String -> Either ParseError Scrapbox
 runScrapboxParser = parse scrapboxParser "Scrapbox parser"
-
--- | Run scrapbox parser on given 'Text'
-parseScrapbox :: Text -> Either ParseError Scrapbox
-parseScrapbox = runScrapboxParser . T.unpack
 
 --------------------------------------------------------------------------------
 -- Helper function
