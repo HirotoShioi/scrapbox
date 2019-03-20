@@ -57,7 +57,8 @@ library:
                    Scrapbox.Parser.Scrapbox
                    Scrapbox.Parser.ScrapText
                    Scrapbox.Parser.Utils
-                   Scrapbox.Render
+                   Scrapbox.Render.Scrapbox
+                   Scrapbox.Render.Commonmark
                    Scrapbox.Utils
                    Scrapbox.Types
                    Scrapbox.Examples.Test

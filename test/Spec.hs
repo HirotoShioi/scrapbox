@@ -7,7 +7,7 @@ import           RIO
 
 import           Test.Hspec                    (describe, hspec, parallel)
 
-import           TestCommonMark.CommonMark     (commonmarkSpec)
+import           TestCommonMark.Commonmark     (commonmarkSpec)
 import           TestScrapboxParser.ParserTest (parserSpec)
 
 main :: IO ()

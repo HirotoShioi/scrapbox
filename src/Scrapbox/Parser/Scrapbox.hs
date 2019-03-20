@@ -4,10 +4,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Scrapbox.Parser.Scrapbox
-    ( parseScrapbox
+    ( runScrapboxParser
+    , parseScrapbox
     ) where
 
 import           RIO                           hiding (many, try, (<|>))
+import qualified RIO.Text                      as T
 
 import           Network.URI                   (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
@@ -138,8 +140,12 @@ scrapboxParser :: Parser Scrapbox
 scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
-parseScrapbox :: String -> Either ParseError Scrapbox
-parseScrapbox = parse scrapboxParser "Scrapbox parser"
+runScrapboxParser :: String -> Either ParseError Scrapbox
+runScrapboxParser = parse scrapboxParser "Scrapbox parser"
+
+-- | Run scrapbox parser on given 'Text'
+parseScrapbox :: Text -> Either ParseError Scrapbox
+parseScrapbox = runScrapboxParser . T.unpack
 
 --------------------------------------------------------------------------------
 -- Helper function

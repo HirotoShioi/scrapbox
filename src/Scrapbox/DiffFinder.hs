@@ -9,8 +9,8 @@ module Scrapbox.DiffFinder
 import           RIO
 import qualified RIO.Text                 as T
 
-import           Scrapbox.Parser.Scrapbox (parseScrapbox)
-import           Scrapbox.Render          (renderPretty)
+import           Scrapbox.Parser.Scrapbox (runScrapboxParser)
+import           Scrapbox.Render.Scrapbox (renderToScrapbox)
 import           Scrapbox.Types           (Block (..), Scrapbox (..))
 
 data DiffPair = DiffPair
@@ -23,11 +23,11 @@ data DiffPair = DiffPair
 -- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares two
 -- block data.
 findDiffs :: Scrapbox -> Either String [DiffPair]
-findDiffs sb@(Scrapbox blocks) = do
-    let eParsed = parseScrapbox . T.unpack $ renderPretty sb
-    case eParsed of
-        Left _                        -> Left "Failed"
-        Right (Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks
+findDiffs sb@(Scrapbox blocks) =
+    either
+        (\_ -> Left "Failed to parse")
+        (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
+        (runScrapboxParser . T.unpack $ renderToScrapbox sb)
   where
     diffs :: [Block] -> [Block] -> [DiffPair]
     diffs = go mempty

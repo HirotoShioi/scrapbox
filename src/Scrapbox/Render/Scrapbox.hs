@@ -1,5 +1,5 @@
 {-| Render module, these are used to render given 'Scrapbox' into 'Text' using
-'renderPretty' or 'renderRaw'
+'renderToScrapbox' or 'renderRaw'
 
 You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 -}
@@ -7,10 +7,8 @@ You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Render
-    ( renderPretty
-    , renderRaw
-    , writeScrapbox
+module Scrapbox.Render.Scrapbox
+    ( renderToScrapbox
     , renderBlock
     , renderSegments
     , renderText
@@ -30,20 +28,9 @@ import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
 -- Exposed interface
 --------------------------------------------------------------------------------
 
--- | Pretty print 'Scrapbox'
-renderPretty :: Scrapbox -> Text
-renderPretty (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
-
--- | Render given 'Scrapbox' into list of 'ByteString'
-renderRaw :: Scrapbox -> [ByteString]
-renderRaw (Scrapbox blocks) =
-    concatMap (map encodeUtf8 . renderBlock) blocks
-
--- | Write given 'Scrapbox' to given path
-writeScrapbox :: FilePath -> Scrapbox -> IO ()
-writeScrapbox path (Scrapbox blocks) = do
-    let renderedScrapbox = T.unlines $ concatMap renderBlock blocks
-    writeFileUtf8 path renderedScrapbox
+-- | Render given 'Scrapbox' AST into Scrapbox page
+renderToScrapbox :: Scrapbox -> Text
+renderToScrapbox (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
 
 --------------------------------------------------------------------------------
 -- Rendering logics
