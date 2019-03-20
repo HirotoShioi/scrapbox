@@ -41,22 +41,25 @@ renderBlock = \case
     TABLE tableName tableContent    -> renderTable tableName tableContent
     THUMBNAIL (Url url)             -> ["![image](" <> url <> ")"]
 
+-- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
-    -- Add space
+    -- Add spaces between inlineblocks to ensure each of them are rendered correctly
     T.unwords $ map renderInlineBlock inlineBlocks
 
+-- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
 renderBulletPoint (Start startNum) blocks =
     let renderedStart = T.replicate (startNum - 1) "\t" <> "- "
     in foldr (\block acc ->
         let rendered = case block of
-                -- Filtering codeblock and table since it cannot be rendered as bulletpoint
-                -- Special case on bullet point
+                -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
+                -- rendered as bulletpoint
                 CODE_BLOCK codeName codeSnippet ->
                     renderCodeblock codeName codeSnippet
                 TABLE tableName tableContent ->
                     renderTable tableName tableContent
+                -- Special case on 'BULLET_POINT'
                 BULLET_POINT (Start num) blocks' ->
                     renderBulletPoint (Start (num + startNum)) blocks'
                 others ->
@@ -64,6 +67,7 @@ renderBulletPoint (Start startNum) blocks =
         in rendered <> acc
         ) mempty blocks
 
+-- | Render 'HEADING'
 renderHeading :: Level -> [Segment] -> Text
 renderHeading (Level headingNum) segments =
     let level = case headingNum of
@@ -76,6 +80,7 @@ renderHeading (Level headingNum) segments =
         renderedLevel    = T.replicate level "#"
     in  renderedLevel <> " " <> renderedSegments
 
+-- | Render 'Segment'
 renderSegment ::  Segment -> Text
 renderSegment = \case
     HASHTAG text               -> "**#" <> text <> "**"
@@ -98,26 +103,38 @@ renderInlineBlock = \case
             CustomStyle customStyle -> renderWithStyle customStyle renderedSegments
             UserStyle   _           -> "**" <> renderedSegments <> "**"
   where
-    -- (TODO) Look into how you can apply header fonts
+    -- Render given text with 'StyleData'
     renderWithStyle :: StyleData -> Text -> Text
-    renderWithStyle (StyleData _ isBold isItalic isStrikeThrough) text =
+    renderWithStyle (StyleData fontSize isBold isItalic isStrikeThrough) text =
         foldr (\(hasStyle, apply) acc -> if hasStyle then apply acc else acc) text $
             zip
-                [isBold, isStrikeThrough, isItalic]
-                [withBold, withStrikeThrough, withItalic]
+                [fontSize > 0, isBold, isStrikeThrough, isItalic]
+                [withSize fontSize, withBold, withStrikeThrough, withItalic]
+    -- Add font size
+    withSize :: Int -> Text -> Text
+    withSize fontSize text = mconcat
+        [ "<span style=\"font-size:"
+        , tshow (fromIntegral fontSize * 0.7) -- Might tweak the numbers
+        , "em\">"
+        , text
+        , "</span>"
+        ]
+    -- Add bold style
     withBold :: Text -> Text
     withBold txt          = "**" <> txt <> "**"
-
+    -- Add strikethrough style
     withStrikeThrough :: Text -> Text
     withStrikeThrough txt = "~~" <> txt <> "~~"
-
+    -- Add italic style
     withItalic :: Text -> Text
     withItalic txt        = "_" <> txt <> "_"
 
+-- | Render 'CODE_BLOCK'
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
     [name] <> ["```"] <> snippet <> ["```"]
 
+-- | Render 'TABLE'
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent contents) =
     let renderedContent = fromMaybe (map T.unwords contents) renderTableM
