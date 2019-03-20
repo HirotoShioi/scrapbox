@@ -42,7 +42,7 @@ module Scrapbox
     , StyleData(..)
     ) where
 
-import           Scrapbox.CommonMark.Lib    (ParseOption, commonmarkToScrapbox,
+import           Scrapbox.Parser.Commonmark (ParseOption, commonmarkToScrapbox,
                                              commonmarkToScrapboxNode,
                                              optDefault, optSectionHeading)
 import           Scrapbox.Parser.Scrapbox   (parseScrapbox)

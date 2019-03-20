@@ -1,7 +1,7 @@
 {-| Utility function used within parser modules
 -}
 
-module Scrapbox.Parser.Utils
+module Scrapbox.Parser.Scrapbox.Utils
     ( lookAheadMaybe
     ) where
 

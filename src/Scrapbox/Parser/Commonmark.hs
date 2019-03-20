@@ -1,7 +1,7 @@
 {-| This module exposes parser functions. You must provide 'ParseOption'
 which is either 'optDefault' or 'optSectionHeading'
 
-To parse given CommonMark into 'Scrapbox' AST, use 'commonmarkToScrapboxNode'.
+To parse given Commonmark into 'Scrapbox' AST, use 'commonmarkToScrapboxNode'.
 
 To parse given CommnMark and convert into 'Scrapbox' format,
 use 'commonmarkToScrapbox'.
@@ -10,7 +10,7 @@ use 'commonmarkToScrapbox'.
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.CommonMark.Lib
+module Scrapbox.Parser.Commonmark
     ( -- * Parser
       parseNode
     , commonmarkToScrapboxNode
@@ -21,30 +21,31 @@ module Scrapbox.CommonMark.Lib
     , optSectionHeading
     ) where
 
-import           RIO                             hiding (link)
+import           RIO                                    hiding (link)
 
-import           CMark                           (Node (..), NodeType (..),
-                                                  Title, Url, commonmarkToNode,
-                                                  optHardBreaks, optSafe)
-import qualified CMark                           as C
-import           Data.List.Split                 (splitWhen)
-import qualified RIO.Text                        as T
+import           CMark                                  (Node (..),
+                                                         NodeType (..), Title,
+                                                         Url, commonmarkToNode,
+                                                         optHardBreaks, optSafe)
+import qualified CMark                                  as C
+import           Data.List.Split                        (splitWhen)
+import qualified RIO.Text                               as T
 
-import           Scrapbox.Constructors           (blockQuote, bold, bulletPoint,
-                                                  codeBlock, codeNotation,
-                                                  heading, italic, link,
-                                                  noStyle, paragraph, scrapbox,
-                                                  text, thumbnail)
-import           Scrapbox.Render.Scrapbox        (renderToScrapbox)
-import           Scrapbox.Types                  as Scrapbox (Block (..),
-                                                              InlineBlock (..),
-                                                              Scrapbox (..),
-                                                              Segment,
-                                                              concatInline,
-                                                              concatScrapText,
-                                                              unverbose)
+import           Scrapbox.Constructors                  (blockQuote, bold,
+                                                         bulletPoint, codeBlock,
+                                                         codeNotation, heading,
+                                                         italic, link, noStyle,
+                                                         paragraph, scrapbox,
+                                                         text, thumbnail)
+import           Scrapbox.Render.Scrapbox               (renderToScrapbox)
+import           Scrapbox.Types                         as Scrapbox (Block (..), InlineBlock (..),
+                                                                     Scrapbox (..),
+                                                                     Segment,
+                                                                     concatInline,
+                                                                     concatScrapText,
+                                                                     unverbose)
 
-import           Scrapbox.CommonMark.TableParser (parseTable)
+import           Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
 --------------------------------------------------------------------------------
 -- Options

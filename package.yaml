@@ -49,14 +49,14 @@ library:
   source-dirs: src
   exposed-modules: Scrapbox
                    Scrapbox.Internal
-  other-modules:   Scrapbox.CommonMark.Lib
-                   Scrapbox.CommonMark.TableParser
-                   Scrapbox.Constructors
+  other-modules:   Scrapbox.Constructors
                    Scrapbox.DiffFinder
-                   Scrapbox.Parser.Item
                    Scrapbox.Parser.Scrapbox
-                   Scrapbox.Parser.ScrapText
-                   Scrapbox.Parser.Utils
+                   Scrapbox.Parser.Scrapbox.Item
+                   Scrapbox.Parser.Scrapbox.ScrapText
+                   Scrapbox.Parser.Scrapbox.Utils
+                   Scrapbox.Parser.Commonmark
+                   Scrapbox.Parser.Commonmark.TableParser
                    Scrapbox.Render.Scrapbox
                    Scrapbox.Render.Commonmark
                    Scrapbox.Utils

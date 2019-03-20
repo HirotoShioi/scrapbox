@@ -114,7 +114,7 @@ renderInlineBlock = \case
     withSize :: Int -> Text -> Text
     withSize fontSize text = mconcat
         [ "<span style=\"font-size:"
-        , tshow (fromIntegral fontSize * 0.7) -- Might tweak the numbers
+        , tshow (fromIntegral fontSize * 0.7 :: Double) -- Might tweak the numbers
         , "em\">"
         , text
         , "</span>"

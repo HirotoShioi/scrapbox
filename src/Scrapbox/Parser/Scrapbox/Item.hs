@@ -1,27 +1,27 @@
 {-| Item parser module
 -}
 
-module Scrapbox.Parser.Item
+module Scrapbox.Parser.Scrapbox.Item
     ( runItemParser
     , runItemParserM
     , itemParser
     ) where
 
-import           RIO                           hiding (many, try, (<|>))
-import           RIO.List                      (headMaybe, initMaybe, lastMaybe,
-                                                tailMaybe)
+import           RIO                            hiding (many, try, (<|>))
+import           RIO.List                       (headMaybe, initMaybe,
+                                                 lastMaybe, tailMaybe)
 
-import           Data.String                   (fromString)
-import qualified Data.Text                     as T
-import           Network.URI                   (isURI)
-import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                between, char, eof, many, many1,
-                                                manyTill, noneOf, oneOf, parse,
-                                                sepBy1, space, try, unexpected,
-                                                (<?>), (<|>))
+import           Data.String                    (fromString)
+import qualified Data.Text                      as T
+import           Network.URI                    (isURI)
+import           Text.ParserCombinators.Parsec  (ParseError, Parser, anyChar,
+                                                 between, char, eof, many,
+                                                 many1, manyTill, noneOf, oneOf,
+                                                 parse, sepBy1, space, try,
+                                                 unexpected, (<?>), (<|>))
 
-import           Scrapbox.Parser.Utils         (lookAheadMaybe)
-import           Scrapbox.Types                (Segment (..), Url (..))
+import           Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
+import           Scrapbox.Types                 (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart contstructors
