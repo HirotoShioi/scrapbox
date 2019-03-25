@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 --------------------------------------------------------------------------------
 {-|
 Module:      Scrapbox
@@ -71,9 +69,9 @@ import           Text.ParserCombinators.Parsec (ParseError)
 -- | Parser option which user can provide
 data ParseOption
   = Default
-  -- ^ Will convert 'CommonMark' to 'Scrapbox' format as is
+  -- ^ Convert to 'Scrapbox' format as is when parsing
   | SectionHeading
-  -- ^ Will add 'LINEBREAK' before heading to make the content easier to read
+  -- ^ Add 'LINEBREAK' before heading to make the content easier to read
 
 -- | Default parse option
 optDefault :: ParseOption
@@ -113,10 +111,10 @@ scrapboxToNode :: ParseOption -> Text -> Either ParseError Scrapbox
 scrapboxToNode option scrapboxPage =
   applyOption option <$> runScrapboxParser (T.unpack scrapboxPage)
 
--- | Convert given common mark text into 'Scrapbox' format
+-- | Convert given commonmark text into 'Scrapbox' format
 commonmarkToScrapbox :: ParseOption -> Text -> Text
 commonmarkToScrapbox opt cmark = renderToScrapbox $ commonmarkToNode opt cmark
 
--- | Convert given common mark into 'Scrapbox' AST
+-- | Convert given commonmark into 'Scrapbox' AST
 commonmarkToNode :: ParseOption -> Text -> Scrapbox
 commonmarkToNode opt cmark = applyOption opt $ parseCommonmark cmark
