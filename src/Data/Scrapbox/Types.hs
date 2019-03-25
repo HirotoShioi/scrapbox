@@ -52,12 +52,12 @@ module Data.Scrapbox.Types
 
 import           RIO
 
-import           Data.List       (groupBy)
-import           Data.Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
-                                  genText)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency,
-                                  genericShrink, getSize, listOf1, scale,
-                                  vectorOf)
+import           Data.List           (groupBy)
+import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
+                                      genPrintableUrl, genText)
+import           Test.QuickCheck     (Arbitrary (..), choose, frequency,
+                                      genericShrink, getSize, listOf1, scale,
+                                      vectorOf)
 
 -- | Scrapbox page consist of list of 'Block'
 newtype Scrapbox = Scrapbox [Block]

@@ -16,8 +16,8 @@ import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
 import           Test.QuickCheck          (Arbitrary (..))
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
-import           Data.Scrapbox                 (Segment (..), Url (..))
-import           Data.Scrapbox.Internal        (isHashTag, isLink, isText,
+import           Data.Scrapbox            (Segment (..), Url (..))
+import           Data.Scrapbox.Internal   (isHashTag, isLink, isText,
                                            runItemParser)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,

@@ -21,9 +21,9 @@ import           Test.QuickCheck          (Arbitrary (..), Property, choose,
                                            listOf1, scale)
 import           Test.QuickCheck.Monadic  (assert, monadicIO)
 
-import           Data.Scrapbox                 (InlineBlock (..), ScrapText (..),
+import           Data.Scrapbox            (InlineBlock (..), ScrapText (..),
                                            Segment (..), Style (..), Url (..))
-import           Data.Scrapbox.Internal        (concatSegment, isBold,
+import           Data.Scrapbox.Internal   (concatSegment, isBold,
                                            isCodeNotation, isItalic, isMathExpr,
                                            isNoStyle, isStrikeThrough,
                                            renderSegments, runScrapTextParser)

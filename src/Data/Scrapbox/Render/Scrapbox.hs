@@ -16,13 +16,14 @@ module Data.Scrapbox.Render.Scrapbox
     ) where
 
 import           RIO
-import qualified RIO.Text       as T
+import qualified RIO.Text            as T
 
-import           Data.Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
-                                 InlineBlock (..), Level (..), ScrapText (..),
-                                 Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), StyleData (..), TableContent (..),
-                                 TableName (..), Url (..))
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      StyleData (..), TableContent (..),
+                                      TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Exposed interface

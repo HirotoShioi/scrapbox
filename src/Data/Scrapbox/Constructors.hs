@@ -28,13 +28,14 @@ module Data.Scrapbox.Constructors
     , text
     ) where
 
-import           RIO            hiding (link)
+import           RIO                 hiding (link)
 
-import           Data.Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
-                                 InlineBlock (..), Level (..), ScrapText (..),
-                                 Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), StyleData (..), TableContent (..),
-                                 TableName (..), Url (..))
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      StyleData (..), TableContent (..),
+                                      TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart constructors

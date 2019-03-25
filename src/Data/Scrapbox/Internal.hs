@@ -39,17 +39,23 @@ module Data.Scrapbox.Internal
 import           Data.Scrapbox.Parser.Scrapbox           (runScrapboxParser)
 import           Data.Scrapbox.Parser.Scrapbox.Item      (runItemParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
-import           Data.Scrapbox.Render.Scrapbox           (renderBlock, renderInline,
-                                                     renderSegments, renderText)
+import           Data.Scrapbox.Render.Scrapbox           (renderBlock,
+                                                          renderInline,
+                                                          renderSegments,
+                                                          renderText)
 import           Data.Scrapbox.Types                     (concatInline,
-                                                     concatScrapText,
-                                                     concatSegment, emptyStyle,
-                                                     isBlockQuote, isBold,
-                                                     isBulletPoint, isCodeBlock,
-                                                     isCodeNotation, isHashTag,
-                                                     isHeader, isItalic, isLink,
-                                                     isMathExpr, isNoStyle,
-                                                     isParagraph,
-                                                     isStrikeThrough, isTable,
-                                                     isText, isThumbnail,
-                                                     unverbose, verbose)
+                                                          concatScrapText,
+                                                          concatSegment,
+                                                          emptyStyle,
+                                                          isBlockQuote, isBold,
+                                                          isBulletPoint,
+                                                          isCodeBlock,
+                                                          isCodeNotation,
+                                                          isHashTag, isHeader,
+                                                          isItalic, isLink,
+                                                          isMathExpr, isNoStyle,
+                                                          isParagraph,
+                                                          isStrikeThrough,
+                                                          isTable, isText,
+                                                          isThumbnail,
+                                                          unverbose, verbose)

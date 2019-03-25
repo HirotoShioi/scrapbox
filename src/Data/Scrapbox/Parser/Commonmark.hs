@@ -15,27 +15,32 @@ module Data.Scrapbox.Parser.Commonmark
       parseCommonmark
     ) where
 
-import           RIO                                    hiding (link)
+import           RIO                                         hiding (link)
 
-import           CMark                                  (Node (..),
-                                                         NodeType (..), Title,
-                                                         Url, optHardBreaks,
-                                                         optSafe)
-import qualified CMark                                  as C
-import           Data.List.Split                        (splitWhen)
-import qualified RIO.Text                               as T
+import           CMark                                       (Node (..),
+                                                              NodeType (..),
+                                                              Title, Url,
+                                                              optHardBreaks,
+                                                              optSafe)
+import qualified CMark                                       as C
+import           Data.List.Split                             (splitWhen)
+import qualified RIO.Text                                    as T
 
 import           Data.Scrapbox.Constructors                  (blockQuote, bold,
-                                                         bulletPoint, codeBlock,
-                                                         codeNotation, heading,
-                                                         italic, link, noStyle,
-                                                         paragraph, scrapbox,
-                                                         text, thumbnail)
-import           Data.Scrapbox.Types                         as Scrapbox (Block (..), InlineBlock (..),
-                                                                     Scrapbox (..),
-                                                                     Segment,
-                                                                     concatInline,
-                                                                     concatScrapText)
+                                                              bulletPoint,
+                                                              codeBlock,
+                                                              codeNotation,
+                                                              heading, italic,
+                                                              link, noStyle,
+                                                              paragraph,
+                                                              scrapbox, text,
+                                                              thumbnail)
+import           Data.Scrapbox.Types                         as Scrapbox (Block (..),
+                                                                          InlineBlock (..),
+                                                                          Scrapbox (..),
+                                                                          Segment,
+                                                                          concatInline,
+                                                                          concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
