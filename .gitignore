@@ -1,5 +1,4 @@
 .stack-work/
-scrapbox.cabal
 *~
 .ghci
 test-docs/
