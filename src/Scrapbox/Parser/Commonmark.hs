@@ -12,13 +12,7 @@ use 'commonmarkToScrapbox'.
 
 module Scrapbox.Parser.Commonmark
     ( -- * Parser
-      parseNode
-    , commonmarkToNode
-    , commonmarkToScrapbox
-    -- * Parse option
-    , ParseOption
-    , optDefault
-    , optSectionHeading
+      parseCommonmark
     ) where
 
 import           RIO                                    hiding (link)
@@ -37,34 +31,13 @@ import           Scrapbox.Constructors                  (blockQuote, bold,
                                                          italic, link, noStyle,
                                                          paragraph, scrapbox,
                                                          text, thumbnail)
-import           Scrapbox.Render.Scrapbox               (renderToScrapbox)
 import           Scrapbox.Types                         as Scrapbox (Block (..), InlineBlock (..),
                                                                      Scrapbox (..),
                                                                      Segment,
                                                                      concatInline,
-                                                                     concatScrapText,
-                                                                     unverbose)
+                                                                     concatScrapText)
 
 import           Scrapbox.Parser.Commonmark.TableParser (parseTable)
-
---------------------------------------------------------------------------------
--- Options
---------------------------------------------------------------------------------
-
--- | Parser option which user can provide
-data ParseOption
-    = Default
-    -- ^ Will convert 'CommonMark' to 'Scrapbox' format as is
-    | SectionHeading
-    -- ^ Will add 'LINEBREAK' before heading to make it easier to see
-
--- | Default parse option
-optDefault :: ParseOption
-optDefault = Default
-
--- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier to see
-optSectionHeading :: ParseOption
-optSectionHeading = SectionHeading
 
 --------------------------------------------------------------------------------
 -- Exposed interface
@@ -80,26 +53,16 @@ optSectionHeading = SectionHeading
 --  newtype Parser a = Parser (Either ParserException a)
 
 -- | Convert given common mark into 'Scrapbox' AST
-commonmarkToNode :: ParseOption -> Text -> Scrapbox
-commonmarkToNode parseOption cmark =
+parseCommonmark :: Text -> Scrapbox
+parseCommonmark cmark =
     let options = [optSafe, optHardBreaks]
         node = C.commonmarkToNode options cmark
-    in parseNode parseOption node
-
--- | Convert given common mark text into 'Scrapbox' format
-commonmarkToScrapbox :: ParseOption -> Text -> Text
-commonmarkToScrapbox parseOption cmark =
-    renderToScrapbox $ commonmarkToNode parseOption cmark
-
--- | Parse given CMark 'Node' into 'Scrapbox'
-parseNode :: ParseOption -> Node -> Scrapbox
-parseNode Default node        = unverbose . scrapbox $ parse node
-parseNode SectionHeading node = unverbose . scrapbox $ applyLinebreak $ parse node
+    in parse node
 
 -- | Apply linebreak after TABLE and CODE_BLOCK if there's BULLET_POINT right after it
 -- this prevents the weird rendering to occur
-parse :: Node -> [Block]
-parse node =  format $ toBlocks node
+parse :: Node -> Scrapbox
+parse node =  scrapbox $ format $ toBlocks node
   where
     format :: [Block] -> [Block]
     format [] = []
@@ -226,18 +189,6 @@ extractTextFromNodes = foldr
 -- | Construct 'BULLET_POINT'
 toBulletPoint :: [Node] -> Block
 toBulletPoint nodes = bulletPoint 1 $ concatMap toBlocks nodes
-
--- | Apply 'LINEBREAK' between 'HEADING' section
---
--- [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
--- =>
--- [HEADING, b1, b2, b3, LINEBREAK, HEADING, b4, b5, b6, LINEBREAK, HEADING]
-applyLinebreak :: [Block] -> [Block]
-applyLinebreak []                                       = []
-applyLinebreak [b]                                      = [b]
-applyLinebreak (b:Scrapbox.HEADING hsize hcontent:rest) =
-    b : Scrapbox.LINEBREAK : applyLinebreak (Scrapbox.HEADING hsize hcontent : rest)
-applyLinebreak (b: rest)                        = b : applyLinebreak rest
 
 --------------------------------------------------------------------------------
 -- Paragraph parsing logic
