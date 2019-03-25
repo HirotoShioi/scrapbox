@@ -10,7 +10,7 @@ use 'commonmarkToScrapbox'.
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Parser.Commonmark
+module Data.Scrapbox.Parser.Commonmark
     ( -- * Parser
       parseCommonmark
     ) where
@@ -25,19 +25,19 @@ import qualified CMark                                  as C
 import           Data.List.Split                        (splitWhen)
 import qualified RIO.Text                               as T
 
-import           Scrapbox.Constructors                  (blockQuote, bold,
+import           Data.Scrapbox.Constructors                  (blockQuote, bold,
                                                          bulletPoint, codeBlock,
                                                          codeNotation, heading,
                                                          italic, link, noStyle,
                                                          paragraph, scrapbox,
                                                          text, thumbnail)
-import           Scrapbox.Types                         as Scrapbox (Block (..), InlineBlock (..),
+import           Data.Scrapbox.Types                         as Scrapbox (Block (..), InlineBlock (..),
                                                                      Scrapbox (..),
                                                                      Segment,
                                                                      concatInline,
                                                                      concatScrapText)
 
-import           Scrapbox.Parser.Commonmark.TableParser (parseTable)
+import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
 --------------------------------------------------------------------------------
 -- Exposed interface

@@ -11,7 +11,7 @@ Scrapbox <https://scrapbox.io/product> parser.
 -}
 --------------------------------------------------------------------------------
 
-module Scrapbox
+module Data.Scrapbox
     (
     -- * Converting commonmark to scrapbox
       commonmarkToScrapbox
@@ -47,11 +47,11 @@ module Scrapbox
 import           RIO
 import qualified RIO.Text                      as T
 
-import           Scrapbox.Parser.Commonmark    (parseCommonmark)
-import           Scrapbox.Parser.Scrapbox      (runScrapboxParser)
-import           Scrapbox.Render.Commonmark    (renderToCommonmark)
-import           Scrapbox.Render.Scrapbox      (renderToScrapbox)
-import           Scrapbox.Types                (Block (..), CodeName (..),
+import           Data.Scrapbox.Parser.Commonmark    (parseCommonmark)
+import           Data.Scrapbox.Parser.Scrapbox      (runScrapboxParser)
+import           Data.Scrapbox.Render.Commonmark    (renderToCommonmark)
+import           Data.Scrapbox.Render.Scrapbox      (renderToScrapbox)
+import           Data.Scrapbox.Types                (Block (..), CodeName (..),
                                                 CodeSnippet (..),
                                                 InlineBlock (..), Level (..),
                                                 ScrapText (..), Scrapbox (..),

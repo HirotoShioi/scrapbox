@@ -15,9 +15,9 @@ import           Test.Hspec            (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..), Property)
 
-import           Scrapbox              (Block (..), InlineBlock (..),
+import           Data.Scrapbox              (Block (..), InlineBlock (..),
                                         ScrapText (..), Segment (..), Url (..))
-import           Scrapbox.Internal     (isCodeNotation, isLink, isText)
+import           Data.Scrapbox.Internal     (isCodeNotation, isLink, isText)
 import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
                                         getHeadInlineBlock, getHeadSegment,
                                         getParagraph)

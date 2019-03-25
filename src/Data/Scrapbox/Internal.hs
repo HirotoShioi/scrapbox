@@ -1,6 +1,6 @@
 {-| Exposed modules used for testing
 -}
-module Scrapbox.Internal
+module Data.Scrapbox.Internal
     ( -- * Render functions
       renderBlock
     , renderSegments
@@ -36,12 +36,12 @@ module Scrapbox.Internal
     , isNoStyle
     ) where
 
-import           Scrapbox.Parser.Scrapbox           (runScrapboxParser)
-import           Scrapbox.Parser.Scrapbox.Item      (runItemParser)
-import           Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
-import           Scrapbox.Render.Scrapbox           (renderBlock, renderInline,
+import           Data.Scrapbox.Parser.Scrapbox           (runScrapboxParser)
+import           Data.Scrapbox.Parser.Scrapbox.Item      (runItemParser)
+import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
+import           Data.Scrapbox.Render.Scrapbox           (renderBlock, renderInline,
                                                      renderSegments, renderText)
-import           Scrapbox.Types                     (concatInline,
+import           Data.Scrapbox.Types                     (concatInline,
                                                      concatScrapText,
                                                      concatSegment, emptyStyle,
                                                      isBlockQuote, isBold,

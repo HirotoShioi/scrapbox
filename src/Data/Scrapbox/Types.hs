@@ -8,7 +8,7 @@
 -- This is to avoid warnings regarding defining typeclass instance of 'Text'
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Scrapbox.Types
+module Data.Scrapbox.Types
     ( -- * Datatypes
       Scrapbox (..)
     , Start(..)
@@ -53,7 +53,7 @@ module Scrapbox.Types
 import           RIO
 
 import           Data.List       (groupBy)
-import           Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
+import           Data.Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
 import           Test.QuickCheck (Arbitrary (..), choose, frequency,
                                   genericShrink, getSize, listOf1, scale,

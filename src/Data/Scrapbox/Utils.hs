@@ -7,7 +7,7 @@ either: http://hackage.haskell.org/package/either-5.0.1
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Utils
+module Data.Scrapbox.Utils
     ( whenRight
     , whenJust
     -- * Testing utilities

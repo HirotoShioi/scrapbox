@@ -3,7 +3,7 @@
 
 {-# LANGUAGE LambdaCase #-}
 
-module Scrapbox.Parser.Scrapbox.ScrapText
+module Data.Scrapbox.Parser.Scrapbox.ScrapText
     ( runScrapTextParser
     , runScrapTextParserM
     , scrapTextParser
@@ -21,9 +21,9 @@ import           Text.ParserCombinators.Parsec  (ParseError, Parser, anyChar,
                                                  parse, space, string, try,
                                                  unexpected, (<|>))
 
-import           Scrapbox.Parser.Scrapbox.Item  (runItemParserM)
-import           Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
-import           Scrapbox.Types                 (InlineBlock (..),
+import           Data.Scrapbox.Parser.Scrapbox.Item  (runItemParserM)
+import           Data.Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
+import           Data.Scrapbox.Types                 (InlineBlock (..),
                                                  ScrapText (..), Segment (..),
                                                  Style (..), StyleData (..),
                                                  emptyStyle)

@@ -13,7 +13,7 @@ import           RIO
 
 import           RIO.List        (headMaybe)
 
-import           Scrapbox        (Block (..), InlineBlock (..), ScrapText (..),
+import           Data.Scrapbox        (Block (..), InlineBlock (..), ScrapText (..),
                                   Scrapbox (..), Segment, commonmarkToNode)
 import           Test.QuickCheck (Property, Testable (..))
 

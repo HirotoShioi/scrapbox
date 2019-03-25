@@ -18,9 +18,9 @@ import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck       (Arbitrary (..), choose, elements,
                                         listOf1, vectorOf)
 
-import           Scrapbox              (Block (..), CodeSnippet (..),
+import           Data.Scrapbox              (Block (..), CodeSnippet (..),
                                         Level (..), TableContent (..), Url (..))
-import           Scrapbox.Internal     (isBlockQuote, isBulletPoint,
+import           Data.Scrapbox.Internal     (isBlockQuote, isBulletPoint,
                                         isCodeBlock, isHeader, isParagraph,
                                         isTable, isThumbnail, renderBlock,
                                         renderSegments, renderText)

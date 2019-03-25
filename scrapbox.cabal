@@ -27,22 +27,23 @@ source-repository head
   location: https://github.com/HirotoShioi/scrapbox
 
 library
-  exposed-modules:     Scrapbox Scrapbox.Internal
-  other-modules:       Scrapbox.Constructors
-                       Scrapbox.DiffFinder
-                       Scrapbox.Parser.Scrapbox
-                       Scrapbox.Parser.Scrapbox.Item
-                       Scrapbox.Parser.Scrapbox.ScrapText
-                       Scrapbox.Parser.Scrapbox.Utils
-                       Scrapbox.Parser.Commonmark
-                       Scrapbox.Parser.Commonmark.TableParser
-                       Scrapbox.Render.Scrapbox
-                       Scrapbox.Render.Commonmark
-                       Scrapbox.Utils
-                       Scrapbox.Types
-                       Scrapbox.Examples.Test
-                       Scrapbox.Examples.Example1
-                       Scrapbox.Examples.Example2
+  exposed-modules:     Data.Scrapbox
+                       Data.Scrapbox.Internal
+  other-modules:       Data.Scrapbox.Constructors
+                       Data.Scrapbox.DiffFinder
+                       Data.Scrapbox.Parser.Scrapbox
+                       Data.Scrapbox.Parser.Scrapbox.Item
+                       Data.Scrapbox.Parser.Scrapbox.ScrapText
+                       Data.Scrapbox.Parser.Scrapbox.Utils
+                       Data.Scrapbox.Parser.Commonmark
+                       Data.Scrapbox.Parser.Commonmark.TableParser
+                       Data.Scrapbox.Render.Scrapbox
+                       Data.Scrapbox.Render.Commonmark
+                       Data.Scrapbox.Utils
+                       Data.Scrapbox.Types
+                       Data.Scrapbox.Examples.Test
+                       Data.Scrapbox.Examples.Example1
+                       Data.Scrapbox.Examples.Example2
   hs-source-dirs:      src
   default-extensions:  NoImplicitPrelude
   ghc-options:         -Wall
