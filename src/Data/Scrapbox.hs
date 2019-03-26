@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 --------------------------------------------------------------------------------
 {-|
 Module:      Scrapbox
@@ -51,6 +53,7 @@ import           Data.Scrapbox.Parser.Commonmark (parseCommonmark)
 import           Data.Scrapbox.Parser.Scrapbox   (runScrapboxParser)
 import           Data.Scrapbox.Render.Commonmark (renderToCommonmark)
 import           Data.Scrapbox.Render.Scrapbox   (renderToScrapbox)
+import           Network.URI                         (isURI)
 import           Data.Scrapbox.Types             (Block (..), CodeName (..),
                                                   CodeSnippet (..),
                                                   InlineBlock (..), Level (..),
@@ -85,7 +88,7 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox options
   where
     apply :: ParseOption -> Scrapbox -> Scrapbox
     apply SectionHeading (Scrapbox blocks)         = Scrapbox $ applyLinebreak blocks
-    apply FilterRelativePathLink (Scrapbox blocks) = Scrapbox blocks
+    apply FilterRelativePathLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
     -- Apply 'LINEBREAK' between 'HEADING' section
     --
     -- >> [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
@@ -96,6 +99,27 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox options
     applyLinebreak (b:HEADING level content:rest) =
         b : LINEBREAK : applyLinebreak (HEADING level content : rest)
     applyLinebreak (b: rest)                       = b : applyLinebreak rest
+
+    applyFilterLink :: Block -> Block
+    applyFilterLink = \case
+        PARAGRAPH (ScrapText inlines)   -> PARAGRAPH (ScrapText (map filterItem inlines))
+        BULLET_POINT start blocks       -> BULLET_POINT start (map applyFilterLink blocks)
+        BLOCK_QUOTE (ScrapText inlines) -> BLOCK_QUOTE (ScrapText (map filterItem inlines))
+        HEADING level segments          -> HEADING level (map filterRelativeLink segments)
+        other                           -> other
+      where
+        filterItem :: InlineBlock -> InlineBlock
+        filterItem = \case
+          ITEM style segments -> ITEM style (map filterRelativeLink segments)
+          other               -> other
+        filterRelativeLink :: Segment -> Segment
+        filterRelativeLink = \case
+          LINK (Just name) (Url url) ->
+            if isURI (T.unpack url)
+              then LINK (Just name) (Url url)
+              else LINK Nothing (Url name)
+          other -> other
+
 
 --------------------------------------------------------------------------------
 -- Parse logic with options
