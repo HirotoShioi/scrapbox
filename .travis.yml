@@ -12,7 +12,6 @@ cabal: "2.4"
 env:
   global:
     - STACK_VERSION=1.9.3
-    - HPACK_VERSION=0.31.1
 
 matrix:
   fast_finish: true
@@ -73,16 +72,8 @@ install:
       ;;
     cabal)
       mkdir -p $HOME/.cabal/bin
-      
-      curl --progress-bar --location -o hpack.gz "https://github.com/sol/hpack/releases/download/$HPACK_VERSION/hpack_linux.gz"
-      gzip -d hpack.gz
-      chmod u+x ./hpack
-      mv hpack $HOME/.cabal/bin/
-      
-      hpack .
 
       cabal --numeric-version
-      hpack --version
       ghc --version
       ;;
     *)
@@ -93,7 +84,6 @@ install:
       stack upgrade --binary-version=$STACK_VERSION
 
       stack --numeric-version
-      stack --hpack-numeric-version
       ghc --version
       ;;
   esac
