@@ -13,9 +13,8 @@ import           RIO
 
 import           RIO.List        (headMaybe)
 
-import           Scrapbox        (Block (..), InlineBlock (..), ScrapText (..),
-                                  Scrapbox (..), Segment, commonmarkToNode,
-                                  optDefault)
+import           Data.Scrapbox   (Block (..), InlineBlock (..), ScrapText (..),
+                                  Scrapbox (..), Segment, commonmarkToNode)
 import           Test.QuickCheck (Property, Testable (..))
 
 --------------------------------------------------------------------------------
@@ -39,7 +38,7 @@ checkScrapbox markdown pre extractionFunc = property $ do
   where
     -- | Parse given datatype into 'Scrapbox'
     parseMarkdown :: CommonMark a => a -> Scrapbox
-    parseMarkdown = commonmarkToNode optDefault . render
+    parseMarkdown = commonmarkToNode [] . render
 
 -- | Return 'PARAGRAPH' if given 'Block' is 'PARAGRAPH'
 getParagraph :: Block -> Maybe Block

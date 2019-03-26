@@ -4,18 +4,19 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Render.Commonmark
+module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmark
     ) where
 
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      StyleData (..), TableContent (..),
+                                      TableName (..), Url (..))
 import           RIO
-import           RIO.List       (foldl', headMaybe, tailMaybe)
-import qualified RIO.Text       as T
-import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
-                                 InlineBlock (..), Level (..), ScrapText (..),
-                                 Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), StyleData (..), TableContent (..),
-                                 TableName (..), Url (..))
+import           RIO.List            (foldl', headMaybe, tailMaybe)
+import qualified RIO.Text            as T
 
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmark :: Scrapbox -> Text

@@ -1,7 +1,7 @@
 {-| Constructor that can be used to build scrapbox AST
 -}
 
-module Scrapbox.Constructors
+module Data.Scrapbox.Constructors
     ( scrapbox
     -- * Blocks
     , blockQuote
@@ -28,13 +28,14 @@ module Scrapbox.Constructors
     , text
     ) where
 
-import           RIO            hiding (link)
+import           RIO                 hiding (link)
 
-import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
-                                 InlineBlock (..), Level (..), ScrapText (..),
-                                 Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), StyleData (..), TableContent (..),
-                                 TableName (..), Url (..))
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      StyleData (..), TableContent (..),
+                                      TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart constructors

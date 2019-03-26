@@ -3,7 +3,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Parser.Commonmark.TableParser
+module Data.Scrapbox.Parser.Commonmark.TableParser
     ( parseTable
     , CommonMarkTable
     , Column
@@ -11,14 +11,14 @@ module Scrapbox.Parser.Commonmark.TableParser
 
 import           RIO
 
-import           Data.Attoparsec.Text  (Parser)
-import qualified Data.Attoparsec.Text  as P
-import           Data.Text             (Text)
-import qualified Data.Text             as T
-import           Prelude               (String)
+import           Data.Attoparsec.Text       (Parser)
+import qualified Data.Attoparsec.Text       as P
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import           Prelude                    (String)
 
-import           Scrapbox.Constructors (table)
-import           Scrapbox.Types        (Block)
+import           Data.Scrapbox.Constructors (table)
+import           Data.Scrapbox.Types        (Block)
 
 -- | Representation of CommonMark table
 newtype CommonMarkTable = CommonMarkTable [Column]

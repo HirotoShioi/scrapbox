@@ -3,7 +3,7 @@
 
 {-# LANGUAGE LambdaCase #-}
 
-module Scrapbox.Parser.Scrapbox.ScrapText
+module Data.Scrapbox.Parser.Scrapbox.ScrapText
     ( runScrapTextParser
     , runScrapTextParserM
     , scrapTextParser
@@ -13,20 +13,22 @@ module Scrapbox.Parser.Scrapbox.ScrapText
     , extractParagraph
     ) where
 
-import           RIO                            hiding (many, try, (<|>))
+import           RIO                                 hiding (many, try, (<|>))
 
-import           Text.ParserCombinators.Parsec  (ParseError, Parser, anyChar,
-                                                 between, char, eof, many,
-                                                 many1, manyTill, noneOf, oneOf,
-                                                 parse, space, string, try,
-                                                 unexpected, (<|>))
+import           Text.ParserCombinators.Parsec       (ParseError, Parser,
+                                                      anyChar, between, char,
+                                                      eof, many, many1,
+                                                      manyTill, noneOf, oneOf,
+                                                      parse, space, string, try,
+                                                      unexpected, (<|>))
 
-import           Scrapbox.Parser.Scrapbox.Item  (runItemParserM)
-import           Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
-import           Scrapbox.Types                 (InlineBlock (..),
-                                                 ScrapText (..), Segment (..),
-                                                 Style (..), StyleData (..),
-                                                 emptyStyle)
+import           Data.Scrapbox.Parser.Scrapbox.Item  (runItemParserM)
+import           Data.Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
+import           Data.Scrapbox.Types                 (InlineBlock (..),
+                                                      ScrapText (..),
+                                                      Segment (..), Style (..),
+                                                      StyleData (..),
+                                                      emptyStyle)
 
 -- | Run 'ScrapText' parser on given 'String'
 --

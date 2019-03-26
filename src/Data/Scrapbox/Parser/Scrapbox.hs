@@ -3,31 +3,35 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Parser.Scrapbox
+module Data.Scrapbox.Parser.Scrapbox
     ( runScrapboxParser
     ) where
 
-import           RIO                                hiding (many, try, (<|>))
+import           RIO                                     hiding (many, try,
+                                                          (<|>))
 
-import           Network.URI                        (isURI)
-import           Text.ParserCombinators.Parsec      (ParseError, Parser,
-                                                     anyChar, between, char,
-                                                     eof, lookAhead, many,
-                                                     many1, manyTill, noneOf,
-                                                     notFollowedBy, oneOf,
-                                                     parse, sepBy1, space,
-                                                     string, try, unexpected,
-                                                     (<|>))
+import           Network.URI                             (isURI)
+import           Text.ParserCombinators.Parsec           (ParseError, Parser,
+                                                          anyChar, between,
+                                                          char, eof, lookAhead,
+                                                          many, many1, manyTill,
+                                                          noneOf, notFollowedBy,
+                                                          oneOf, parse, sepBy1,
+                                                          space, string, try,
+                                                          unexpected, (<|>))
 
-import           Scrapbox.Parser.Scrapbox.Item      (runItemParserM)
-import           Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
-                                                     runScrapTextParserM)
-import           Scrapbox.Types                     (Block (..), CodeName (..),
-                                                     CodeSnippet (..),
-                                                     Level (..), Scrapbox (..),
-                                                     Start (..),
-                                                     TableContent (..),
-                                                     TableName (..), Url (..))
+import           Data.Scrapbox.Parser.Scrapbox.Item      (runItemParserM)
+import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
+                                                          runScrapTextParserM)
+import           Data.Scrapbox.Types                     (Block (..),
+                                                          CodeName (..),
+                                                          CodeSnippet (..),
+                                                          Level (..),
+                                                          Scrapbox (..),
+                                                          Start (..),
+                                                          TableContent (..),
+                                                          TableName (..),
+                                                          Url (..))
 
 --------------------------------------------------------------------------------
 -- Block parser
