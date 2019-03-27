@@ -9,13 +9,13 @@ Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
 Stability:   experimental
 Portability: portable
 
-Scrapbox <https://scrapbox.io/product> parser.
+Library which provides various tools for scrapbox. <https://scrapbox.io/product> 
 -}
 --------------------------------------------------------------------------------
 
 module Data.Scrapbox
     (
-    -- * Converting commonmark to scrapbox
+    -- * Converting commonmark
       commonmarkToScrapbox
     , commonmarkToNode
     -- * Converting scrapbox
@@ -49,6 +49,7 @@ module Data.Scrapbox
 import           RIO
 import qualified RIO.Text                        as T
 
+import           Data.List                       (nub)
 import           Data.Scrapbox.Parser.Commonmark (parseCommonmark)
 import           Data.Scrapbox.Parser.Scrapbox   (runScrapboxParser)
 import           Data.Scrapbox.Render.Commonmark (renderToCommonmark)
@@ -75,24 +76,27 @@ data ParseOption
   -- ^ Add 'LINEBREAK' before heading to make the content easier to read
   | FilterRelativePathLink
   -- ^ Remove relative paths such as @../foo/bar/baz.md@ when parsing link
+  deriving (Eq)
 
 -- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier to see
 optSectionHeading :: ParseOption
 optSectionHeading = SectionHeading
 
--- | Remove relative paths such as @../foo/bar/baz.md@ when parsing link
+-- | Remove relative path link such as @../foo/bar/baz.md@ when parsing 'LINK'
+-- 
+-- This option becomes useful when you use 'commonmarkToScrapbox'
 optFilterRelativePathLink :: ParseOption
 optFilterRelativePathLink = FilterRelativePathLink
 
+-- | Apply changes to 'Scrapbox' based on the given @[ParseOption]@
 applyOption :: [ParseOption] -> Scrapbox -> Scrapbox
-applyOption options scrapbox = unverbose $ foldr apply scrapbox options
+applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
   where
     apply :: ParseOption -> Scrapbox -> Scrapbox
     apply SectionHeading (Scrapbox blocks)         = Scrapbox $ applyLinebreak blocks
     apply FilterRelativePathLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
 
     -- Apply 'LINEBREAK' between 'HEADING' section
-    --
     -- >> [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
     -- >> [HEADING, b1, b2, b3, LINEBREAK, HEADING, b4, b5, b6, LINEBREAK, HEADING]
     applyLinebreak :: [Block] -> [Block]
@@ -128,12 +132,12 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox options
 -- Parse logic with options
 --------------------------------------------------------------------------------
 
--- | Convert given scrapbox format text into commonmark format
+-- | Convert given 'Scrapbox' format text into commonmark format
 scrapboxToCommonmark :: [ParseOption] -> Text -> Either ParseError Text
 scrapboxToCommonmark options scrapboxPage =
   renderToCommonmark <$> scrapboxToNode options scrapboxPage
 
--- | Parse given scrapbox formatted text into 'Scrapbox' AST
+-- | Parse given 'Scrapbox' formatted text into 'Scrapbox' AST
 scrapboxToNode :: [ParseOption] -> Text -> Either ParseError Scrapbox
 scrapboxToNode options scrapboxPage =
   applyOption options <$> runScrapboxParser (T.unpack scrapboxPage)
