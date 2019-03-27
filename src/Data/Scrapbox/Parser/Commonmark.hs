@@ -81,7 +81,7 @@ parse node =  scrapbox $ format $ convertToBlocks [node]
 -- Conversion logic from Node to Block
 --------------------------------------------------------------------------------
 
--- | Compute the diff between the blocks and apply LINEBREAK accordingly
+-- | Compute the diff between the @Nodes@ and apply 'LINEBREAK' accordingly
 convertToBlocks :: [Node] -> [Block]
 convertToBlocks []  = []
 convertToBlocks [x] = toBlocks x
