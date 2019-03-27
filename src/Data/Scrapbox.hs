@@ -102,8 +102,10 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
     applyLinebreak :: [Block] -> [Block]
     applyLinebreak []                             = []
     applyLinebreak [b]                            = [b]
-    applyLinebreak (b:HEADING level content:rest) =
-        b : LINEBREAK : applyLinebreak (HEADING level content : rest)
+    applyLinebreak (LINEBREAK : heading@(HEADING _ _) : rest) 
+        = LINEBREAK : heading : applyLinebreak rest
+    applyLinebreak (b:HEADING level content:rest)
+        = b : LINEBREAK : applyLinebreak (HEADING level content : rest)
     applyLinebreak (b: rest)                      = b : applyLinebreak rest
 
     applyFilterLink :: Block -> Block

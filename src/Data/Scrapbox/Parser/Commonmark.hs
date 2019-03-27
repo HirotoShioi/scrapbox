@@ -19,6 +19,7 @@ import           RIO                                         hiding (link)
 
 import           CMark                                       (Node (..),
                                                               NodeType (..),
+                                                              PosInfo (..),
                                                               Title, Url,
                                                               optHardBreaks,
                                                               optSafe)
@@ -66,7 +67,7 @@ parseCommonmark cmark =
 -- | Apply linebreak after TABLE and CODE_BLOCK if there's BULLET_POINT right after it
 -- this prevents the weird rendering to occur
 parse :: Node -> Scrapbox
-parse node =  scrapbox $ format $ toBlocks node
+parse node =  scrapbox $ format $ convertToBlocks [node]
   where
     format :: [Block] -> [Block]
     format [] = []
@@ -79,6 +80,20 @@ parse node =  scrapbox $ format $ toBlocks node
 --------------------------------------------------------------------------------
 -- Conversion logic from Node to Block
 --------------------------------------------------------------------------------
+
+-- | Compute the diff between the blocks and apply LINEBREAK accordingly
+convertToBlocks :: [Node] -> [Block]
+convertToBlocks []  = []
+convertToBlocks [x] = toBlocks x
+convertToBlocks ( node1@(Node (Just (PosInfo _ _ end _)) _ _) 
+                : node2@(Node (Just (PosInfo start _ _ _)) _ _) 
+                : rest
+                ) = do
+    let diff = start - end - 1
+    if diff >= 1
+        then toBlocks node1 <> replicate diff S.LINEBREAK <> convertToBlocks (node2 : rest)
+        else toBlocks node1 <> convertToBlocks (node2 : rest)
+convertToBlocks (x:xs) = toBlocks x <> convertToBlocks xs
 
 -- | Convert 'Node' into list of 'Block'
 --
@@ -99,7 +114,7 @@ parse node =  scrapbox $ format $ toBlocks node
 toBlocks :: Node -> [Block]
 toBlocks (Node _ nodeType contents) = case nodeType of
     C.PARAGRAPH                -> parseParagraph contents
-    C.DOCUMENT                 -> concatMap toBlocks contents
+    C.DOCUMENT                 -> convertToBlocks contents
     C.HEADING headingNum       -> [toHeading headingNum contents]
     C.EMPH                     -> [paragraph [italic (concatMap toSegments contents)]]
     C.STRONG                   -> [paragraph [bold (concatMap toSegments contents)]]
@@ -107,8 +122,8 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
-    C.ITEM                     -> concatMap toBlocks contents
-    C.SOFTBREAK                -> [paragraph [noStyle [text "\n"]]]
+    C.ITEM                     -> convertToBlocks contents
+    C.SOFTBREAK                -> [paragraph [noStyle [text ""]]]
      -- Workaround need to pay attention
     C.LINEBREAK                -> [paragraph [noStyle [text "\n"]]]
     C.LINK url title           -> [paragraph [noStyle [toLink contents url title]]]
@@ -192,7 +207,7 @@ extractTextFromNodes = foldr
 
 -- | Construct 'BULLET_POINT'
 toBulletPoint :: [Node] -> Block
-toBulletPoint nodes = bulletPoint 1 $ concatMap toBlocks nodes
+toBulletPoint nodes = bulletPoint 1 $ convertToBlocks nodes
 
 --------------------------------------------------------------------------------
 -- Paragraph parsing logic
@@ -234,7 +249,7 @@ parseParagraph nodes = if isTable nodes
 
     -- | Convert list of 'Node' into list of 'Block'
     toParagraph :: [Node] -> [Block]
-    toParagraph = concatParagraph . concatMap toBlocks
+    toParagraph = concatParagraph . convertToBlocks
 
     -- | Concatenate 'PARAGRAPH' blocks
     concatParagraph :: [Block] -> [Block]
