@@ -59,7 +59,7 @@ import           Test.QuickCheck     (Arbitrary (..), choose, frequency,
                                       genericShrink, getSize, listOf1, scale,
                                       vectorOf)
 
--- | Scrapbox page consist of list of 'Block'
+-- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -156,14 +156,14 @@ newtype Url = Url Text
 instance Arbitrary Url where
     arbitrary = Url <$> genPrintableUrl
 
--- | Scrapbox page is consisted by list of Blocks
+-- | 'Block' can be the following
 data Block
     = LINEBREAK
     -- ^ Linebreak
     | BLOCK_QUOTE !ScrapText
     -- ^ BlockQuote
     | BULLET_POINT !Start ![Block]
-    -- ^ Bulletpoint styled line
+    -- ^ Bulletpoint
     | CODE_BLOCK !CodeName !CodeSnippet
     -- ^ Code blocks
     | HEADING !Level ![Segment]
@@ -208,7 +208,6 @@ instance Arbitrary Block where
 newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
--- FIND ME
 instance Arbitrary ScrapText where
     arbitrary = do
         newSize <- choose (0, sizeNum)

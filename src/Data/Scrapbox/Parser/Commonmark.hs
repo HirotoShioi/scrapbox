@@ -35,12 +35,11 @@ import           Data.Scrapbox.Constructors                  (blockQuote, bold,
                                                               paragraph,
                                                               scrapbox, text,
                                                               thumbnail)
-import           Data.Scrapbox.Types                         as Scrapbox (Block (..),
-                                                                          InlineBlock (..),
-                                                                          Scrapbox (..),
-                                                                          Segment,
-                                                                          concatInline,
-                                                                          concatScrapText)
+import           Data.Scrapbox.Types                         as S (Block (..), InlineBlock (..),
+                                                                   Scrapbox (..),
+                                                                   Segment (..),
+                                                                   concatInline,
+                                                                   concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
@@ -72,9 +71,9 @@ parse node =  scrapbox $ format $ toBlocks node
     format :: [Block] -> [Block]
     format [] = []
     format (t@(TABLE _ _): b@(BULLET_POINT _ _) : rest) =
-        t : Scrapbox.LINEBREAK : b : format rest
-    format (c@(Scrapbox.CODE_BLOCK _ _): b@(BULLET_POINT _ _) : rest) =
-        c : Scrapbox.LINEBREAK : b : format rest
+        t : S.LINEBREAK : b : format rest
+    format (c@(S.CODE_BLOCK _ _): b@(BULLET_POINT _ _) : rest) =
+        c : S.LINEBREAK : b : format rest
     format (x:xs) = x : format xs
 
 --------------------------------------------------------------------------------
@@ -101,7 +100,7 @@ toBlocks :: Node -> [Block]
 toBlocks (Node _ nodeType contents) = case nodeType of
     C.PARAGRAPH                -> parseParagraph contents
     C.DOCUMENT                 -> concatMap toBlocks contents
-    C.HEADING headingNum        -> [toHeading headingNum contents]
+    C.HEADING headingNum       -> [toHeading headingNum contents]
     C.EMPH                     -> [paragraph [italic (concatMap toSegments contents)]]
     C.STRONG                   -> [paragraph [bold (concatMap toSegments contents)]]
     C.TEXT textContent         -> [paragraph [noStyle [text textContent]]]
@@ -109,7 +108,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
     C.ITEM                     -> concatMap toBlocks contents
-    C.SOFTBREAK                -> [paragraph [noStyle [text "\t"]]]
+    C.SOFTBREAK                -> [paragraph [noStyle [text "\n"]]]
      -- Workaround need to pay attention
     C.LINEBREAK                -> [paragraph [noStyle [text "\n"]]]
     C.LINK url title           -> [paragraph [noStyle [toLink contents url title]]]
@@ -126,11 +125,11 @@ toBlocks (Node _ nodeType contents) = case nodeType of
 -- | Convert 'Node' into list of 'Segment'
 toSegments :: Node -> [Segment]
 toSegments (Node _ nodeType contents) = case nodeType of
-    TEXT textContent -> [text textContent]
+    C.TEXT textContent -> [text textContent]
     -- CODE codeContent -> [text codeContent] What's going to happen?
-    LINK url title   -> [toLink contents url title]
-    IMAGE url title  -> [toLink contents url title]
-    _                -> concatMap toSegments contents
+    C.LINK url title   -> [toLink contents url title]
+    IMAGE url title    -> [toLink contents url title]
+    _                  -> concatMap toSegments contents
 
 -- | Convert 'Node' into list of 'InlineBlock'
 -- Need state monad to inherit style from parent node
@@ -139,13 +138,13 @@ toInlineBlock = concatInline . convertToInlineBlock
   where
     convertToInlineBlock :: Node -> [InlineBlock]
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
-        EMPH             -> [italic (concatMap toSegments contents)]
-        STRONG           -> [bold (concatMap toSegments contents)]
-        TEXT textContent -> [noStyle [text textContent]]
-        CODE codeContent -> [codeNotation codeContent]
-        LINK url title   -> [noStyle [toLink contents url title]]
-        IMAGE url title  -> [noStyle [toLink contents url title]]
-        _                -> concatMap toInlineBlock contents
+        EMPH               -> [italic (concatMap toSegments contents)]
+        STRONG             -> [bold (concatMap toSegments contents)]
+        C.TEXT textContent -> [noStyle [text textContent]]
+        CODE codeContent   -> [codeNotation codeContent]
+        C.LINK url title   -> [noStyle [toLink contents url title]]
+        IMAGE url title    -> [noStyle [toLink contents url title]]
+        _                  -> concatMap toInlineBlock contents
 
 -- | Convert given LINK into 'Segment'
 toLink :: [Node] -> CMark.Url -> Title -> Segment
@@ -159,13 +158,13 @@ toLink nodes url title
         | T.null title' = link Nothing url'
         | otherwise     = link (Just title') url'
 
--- | Convert CODE_BLOCK
+-- | Convert to 'CODE_BLOCK'
 toCodeBlock :: Text -> [Text] -> Block
 toCodeBlock codeInfo code
     | T.null codeInfo = codeBlock "code" code
     | otherwise       = codeBlock codeInfo code
 
--- | Convert HEADING
+-- | Convert to 'HEADING'
 toHeading :: Int -> [Node] -> Block
 toHeading headingNum nodes =
     -- Headers in scrapbox are opposite of what commonmark are
@@ -180,14 +179,14 @@ toHeading headingNum nodes =
 -- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
 extractTextFromNodes = foldr
-    (\(Node _ nodeType nodes') acc
-        -> extractText nodeType <> extractTextFromNodes nodes' <> acc
+    (\(Node _ nodeType nodes') acc ->
+        extractText nodeType <> extractTextFromNodes nodes' <> acc
     ) mempty
   where
     extractText :: NodeType -> Text
     extractText = \case
-        TEXT textContent -> textContent
-        CODE codeContent -> "`" <> codeContent <> "`"
+        C.TEXT textContent -> textContent
+        CODE codeContent   -> "`" <> codeContent <> "`"
         -- For now, we're going to ignore everything else
         _         -> mempty
 
@@ -235,16 +234,13 @@ parseParagraph nodes = if isTable nodes
 
     -- | Convert list of 'Node' into list of 'Block'
     toParagraph :: [Node] -> [Block]
-    toParagraph nodes' =
-        let blocks = concatMap toBlocks nodes'
-            consolidatedBlocks = concatParagraph blocks
-        in consolidatedBlocks
+    toParagraph = concatParagraph . concatMap toBlocks
 
     -- | Concatenate 'PARAGRAPH' blocks
     concatParagraph :: [Block] -> [Block]
     concatParagraph []  = []
     concatParagraph [n] = [n]
-    concatParagraph (Scrapbox.PARAGRAPH stext1 : Scrapbox.PARAGRAPH stext2 : rest) =
-        let concatedParagraph = Scrapbox.PARAGRAPH $ concatScrapText stext1 stext2
+    concatParagraph (S.PARAGRAPH stext1 : S.PARAGRAPH stext2 : rest) =
+        let concatedParagraph = S.PARAGRAPH $ concatScrapText stext1 stext2
         in concatParagraph $ [concatedParagraph] <> rest
     concatParagraph (a : b : rest) = a : b : concatParagraph rest
