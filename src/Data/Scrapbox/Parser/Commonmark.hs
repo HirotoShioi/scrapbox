@@ -180,8 +180,8 @@ toHeading headingNum nodes =
 -- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
 extractTextFromNodes = foldr
-    (\(Node _ nodeType nodes') acc
-        -> extractText nodeType <> extractTextFromNodes nodes' <> acc
+    (\(Node _ nodeType nodes') acc ->
+        extractText nodeType <> extractTextFromNodes nodes' <> acc
     ) mempty
   where
     extractText :: NodeType -> Text
@@ -235,10 +235,7 @@ parseParagraph nodes = if isTable nodes
 
     -- | Convert list of 'Node' into list of 'Block'
     toParagraph :: [Node] -> [Block]
-    toParagraph nodes' =
-        let blocks = concatMap toBlocks nodes'
-            consolidatedBlocks = concatParagraph blocks
-        in consolidatedBlocks
+    toParagraph = concatParagraph . concatMap toBlocks
 
     -- | Concatenate 'PARAGRAPH' blocks
     concatParagraph :: [Block] -> [Block]

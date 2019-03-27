@@ -9,7 +9,7 @@ Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
 Stability:   experimental
 Portability: portable
 
-Library which provides various tools for scrapbox. <https://scrapbox.io/product> 
+Library which provides various tools for scrapbox. <https://scrapbox.io/product>
 -}
 --------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ optSectionHeading :: ParseOption
 optSectionHeading = SectionHeading
 
 -- | Remove relative path link such as @../foo/bar/baz.md@ when parsing 'LINK'
--- 
+--
 -- This option becomes useful when you use 'commonmarkToScrapbox'
 optFilterRelativePathLink :: ParseOption
 optFilterRelativePathLink = FilterRelativePathLink
