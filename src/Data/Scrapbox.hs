@@ -74,8 +74,8 @@ import           Text.ParserCombinators.Parsec   (ParseError)
 data ParseOption
   = SectionHeading
   -- ^ Add 'LINEBREAK' before heading to make the content easier to read
-  | FilterRelativePathLink
-  -- ^ Remove relative paths such as @../foo/bar/baz.md@ when parsing link
+  | FilterRelativeLink
+  -- ^ Remove relative link such as @../foo/bar/baz.md@ when parsing link
   deriving (Eq)
 
 -- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier to see
@@ -86,7 +86,7 @@ optSectionHeading = SectionHeading
 --
 -- This option becomes useful when you use 'commonmarkToScrapbox'
 optFilterRelativePathLink :: ParseOption
-optFilterRelativePathLink = FilterRelativePathLink
+optFilterRelativePathLink = FilterRelativeLink
 
 -- | Apply changes to 'Scrapbox' based on the given @[ParseOption]@
 applyOption :: [ParseOption] -> Scrapbox -> Scrapbox
@@ -94,17 +94,20 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
   where
     apply :: ParseOption -> Scrapbox -> Scrapbox
     apply SectionHeading (Scrapbox blocks)         = Scrapbox $ applyLinebreak blocks
-    apply FilterRelativePathLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
+    apply FilterRelativeLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
 
     -- Apply 'LINEBREAK' between 'HEADING' section
     -- >> [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
     -- >> [HEADING, b1, b2, b3, LINEBREAK, HEADING, b4, b5, b6, LINEBREAK, HEADING]
     applyLinebreak :: [Block] -> [Block]
-    applyLinebreak []                             = []
-    applyLinebreak [b]                            = [b]
-    applyLinebreak (b:HEADING level content:rest) =
-        b : LINEBREAK : applyLinebreak (HEADING level content : rest)
-    applyLinebreak (b: rest)                      = b : applyLinebreak rest
+    applyLinebreak []  = []
+    applyLinebreak [b] = [b]
+    applyLinebreak (LINEBREAK : heading@(HEADING _ _) : rest) 
+        = LINEBREAK : heading : applyLinebreak rest
+    applyLinebreak (b:HEADING level content:rest)
+        = b : LINEBREAK : applyLinebreak (HEADING level content : rest)
+    applyLinebreak (b: rest)
+        = b : applyLinebreak rest
 
     applyFilterLink :: Block -> Block
     applyFilterLink = \case
