@@ -134,7 +134,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
 toSegments :: Node -> [Segment]
 toSegments (Node _ nodeType contents) = case nodeType of
     C.TEXT textContent -> [text textContent]
-    C.CODE codeContent -> [link codeContent]
+    C.CODE codeContent -> [link Nothing codeContent]
     C.LINK url title   -> [toLink contents url title]
     IMAGE url title    -> [toLink contents url title]
     _                  -> concatMap toSegments contents

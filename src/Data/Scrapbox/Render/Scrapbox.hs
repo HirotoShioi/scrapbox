@@ -74,7 +74,7 @@ renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
 -- | Render 'CODE_BLOCK'
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
-    let codeName = "code:" <> name
+    let codeName    = "code:" <> name
     let codeContent = map (" " <>) code
     [codeName] <> codeContent
 

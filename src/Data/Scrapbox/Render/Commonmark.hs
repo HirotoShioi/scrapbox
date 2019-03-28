@@ -133,7 +133,7 @@ renderInlineBlock = \case
 -- | Render 'CODE_BLOCK'
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
-    [name] <> ["```"] <> snippet <> ["```"]
+    ["```" <> name] <> snippet <> ["```"]
 
 -- | Render 'TABLE'
 renderTable :: TableName -> TableContent -> [Text]
