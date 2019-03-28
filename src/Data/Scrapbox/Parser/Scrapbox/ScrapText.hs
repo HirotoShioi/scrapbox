@@ -225,11 +225,11 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
 
     -- Run parser on ahead content to see if it can be parsed, if not, consume the text
     checkWith :: String -> Parser a -> String -> Parser [Segment]
-    checkWith symbolStr parser content' = do
+    checkWith symbolStr parser content = do
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
-            then runItemParserM content'
-            else continue symbolStr content'
+            then runItemParserM content
+            else continue symbolStr content
 
     continue :: String -> String -> Parser [Segment]
     continue symbol curr = do

@@ -168,14 +168,14 @@ toInlineBlock = concatInline . convertToInlineBlock
 -- | Convert given LINK into 'Segment'
 toLink :: [Node] -> CMark.Url -> Title -> Segment
 toLink nodes url title
-    | T.null title = mkLink url (extractTextFromNodes nodes)
-    | null nodes   = mkLink url title
-    | otherwise    = mkLink url title
+    | T.null title = mkLink (extractTextFromNodes nodes)
+    | null nodes   = mkLink title
+    | otherwise    = mkLink title
   where
-    mkLink :: CMark.Url -> Text -> Segment
-    mkLink url' title'
-        | T.null title' = link Nothing url'
-        | otherwise     = link (Just title') url'
+    mkLink :: Text -> Segment
+    mkLink title'
+        | T.null title' = link Nothing url
+        | otherwise     = link (Just title') url
 
 -- | Convert to 'CODE_BLOCK'
 toCodeBlock :: Text -> [Text] -> Block
