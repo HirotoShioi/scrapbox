@@ -91,7 +91,11 @@ convertToBlocks ( node1@(Node (Just (PosInfo _ _ end _)) _ _)
                 ) = do
     let diff = start - end - 1
     if diff >= 1
-        then toBlocks node1 <> replicate diff S.LINEBREAK <> convertToBlocks (node2 : rest)
+        then mconcat 
+            [ toBlocks node1
+            , replicate diff S.LINEBREAK
+            , convertToBlocks (node2 : rest)
+            ]
         else toBlocks node1 <> convertToBlocks (node2 : rest)
 convertToBlocks (x:xs) = toBlocks x <> convertToBlocks xs
 
