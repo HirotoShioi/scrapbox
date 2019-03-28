@@ -9,14 +9,14 @@ module Data.Scrapbox.Examples.Example2
     ( example2'
     ) where
 
-import           RIO                        hiding (link)
+import           RIO hiding (link)
 
 import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                              codeBlock, codeNotation, heading,
                                              italic, lineBreak, link, noStyle,
                                              p, scrapbox, strikeThrough, table,
                                              text, thumbnail)
-import           Data.Scrapbox.Types        (Block (..), Scrapbox)
+import           Data.Scrapbox.Types (Block (..), Scrapbox)
 
 
 syntax :: [Block]

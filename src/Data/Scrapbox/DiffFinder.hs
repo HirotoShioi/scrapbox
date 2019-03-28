@@ -7,11 +7,11 @@ module Data.Scrapbox.DiffFinder
     ) where
 
 import           RIO
-import qualified RIO.Text                      as T
+import qualified RIO.Text as T
 
 import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Render.Scrapbox (renderToScrapbox)
-import           Data.Scrapbox.Types           (Block (..), Scrapbox (..))
+import           Data.Scrapbox.Types (Block (..), Scrapbox (..))
 
 data DiffPair = DiffPair
     { original :: !Block

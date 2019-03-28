@@ -16,7 +16,7 @@ module Data.Scrapbox.Render.Scrapbox
     ) where
 
 import           RIO
-import qualified RIO.Text            as T
+import qualified RIO.Text as T
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),

@@ -36,26 +36,15 @@ module Data.Scrapbox.Internal
     , isNoStyle
     ) where
 
-import           Data.Scrapbox.Parser.Scrapbox           (runScrapboxParser)
-import           Data.Scrapbox.Parser.Scrapbox.Item      (runItemParser)
+import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
+import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
-import           Data.Scrapbox.Render.Scrapbox           (renderBlock,
-                                                          renderInline,
-                                                          renderSegments,
-                                                          renderText)
-import           Data.Scrapbox.Types                     (concatInline,
-                                                          concatScrapText,
-                                                          concatSegment,
-                                                          emptyStyle,
-                                                          isBlockQuote, isBold,
-                                                          isBulletPoint,
-                                                          isCodeBlock,
-                                                          isCodeNotation,
-                                                          isHashTag, isHeader,
-                                                          isItalic, isLink,
-                                                          isMathExpr, isNoStyle,
-                                                          isParagraph,
-                                                          isStrikeThrough,
-                                                          isTable, isText,
-                                                          isThumbnail,
-                                                          unverbose, verbose)
+import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
+                                                renderSegments, renderText)
+import           Data.Scrapbox.Types (concatInline, concatScrapText,
+                                      concatSegment, emptyStyle, isBlockQuote,
+                                      isBold, isBulletPoint, isCodeBlock,
+                                      isCodeNotation, isHashTag, isHeader,
+                                      isItalic, isLink, isMathExpr, isNoStyle,
+                                      isParagraph, isStrikeThrough, isTable,
+                                      isText, isThumbnail, unverbose, verbose)

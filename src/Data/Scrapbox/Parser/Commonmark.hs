@@ -15,32 +15,21 @@ module Data.Scrapbox.Parser.Commonmark
       parseCommonmark
     ) where
 
-import           RIO                                         hiding (link)
+import           RIO hiding (link)
 
-import           CMark                                       (Node (..),
-                                                              NodeType (..),
-                                                              PosInfo (..),
-                                                              Title, Url,
-                                                              optHardBreaks,
-                                                              optSafe)
-import qualified CMark                                       as C
-import           Data.List.Split                             (splitWhen)
-import qualified RIO.Text                                    as T
+import           CMark (Node (..), NodeType (..), PosInfo (..), Title, Url,
+                        optHardBreaks, optSafe)
+import qualified CMark as C
+import           Data.List.Split (splitWhen)
+import qualified RIO.Text as T
 
-import           Data.Scrapbox.Constructors                  (blockQuote, bold,
-                                                              bulletPoint,
-                                                              codeBlock,
-                                                              codeNotation,
-                                                              heading, italic,
-                                                              link, noStyle,
-                                                              paragraph,
-                                                              scrapbox, text,
-                                                              thumbnail)
-import           Data.Scrapbox.Types                         as S (Block (..), InlineBlock (..),
-                                                                   Scrapbox (..),
-                                                                   Segment (..),
-                                                                   concatInline,
-                                                                   concatScrapText)
+import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
+                                             codeBlock, codeNotation, heading,
+                                             italic, link, noStyle, paragraph,
+                                             scrapbox, text, thumbnail)
+import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
+                                           Scrapbox (..), Segment (..),
+                                           concatInline, concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
@@ -85,13 +74,13 @@ parse node =  scrapbox $ format $ convertToBlocks [node]
 convertToBlocks :: [Node] -> [Block]
 convertToBlocks []  = []
 convertToBlocks [x] = toBlocks x
-convertToBlocks ( node1@(Node (Just (PosInfo _ _ end _)) _ _) 
-                : node2@(Node (Just (PosInfo start _ _ _)) _ _) 
+convertToBlocks ( node1@(Node (Just (PosInfo _ _ end _)) _ _)
+                : node2@(Node (Just (PosInfo start _ _ _)) _ _)
                 : rest
                 ) = do
     let diff = start - end - 1
     if diff >= 1
-        then mconcat 
+        then mconcat
             [ toBlocks node1
             , replicate diff S.LINEBREAK
             , convertToBlocks (node2 : rest)
@@ -145,7 +134,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
 toSegments :: Node -> [Segment]
 toSegments (Node _ nodeType contents) = case nodeType of
     C.TEXT textContent -> [text textContent]
-    C.CODE codeContent -> [link Nothing codeContent]
+    C.CODE codeContent -> [link codeContent]
     C.LINK url title   -> [toLink contents url title]
     IMAGE url title    -> [toLink contents url title]
     _                  -> concatMap toSegments contents

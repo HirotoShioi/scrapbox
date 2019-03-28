@@ -15,8 +15,8 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       StyleData (..), TableContent (..),
                                       TableName (..), Url (..))
 import           RIO
-import           RIO.List            (foldl', headMaybe, tailMaybe)
-import qualified RIO.Text            as T
+import           RIO.List (foldl', headMaybe, tailMaybe)
+import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmark :: Scrapbox -> Text

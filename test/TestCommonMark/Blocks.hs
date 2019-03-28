@@ -12,23 +12,21 @@ module TestCommonMark.Blocks
 import           RIO
 
 import           RIO.List
-import qualified RIO.Text               as T
-import           Test.Hspec             (Spec, describe)
-import           Test.Hspec.QuickCheck  (prop)
-import           Test.QuickCheck        (Arbitrary (..), choose, elements,
-                                         listOf1, vectorOf)
+import qualified RIO.Text as T
+import           Test.Hspec (Spec, describe)
+import           Test.Hspec.QuickCheck (prop)
+import           Test.QuickCheck (Arbitrary (..), choose, elements, listOf1,
+                                  vectorOf)
 
-import           Data.Scrapbox          (Block (..), CodeSnippet (..),
-                                         Level (..), TableContent (..),
-                                         Url (..))
+import           Data.Scrapbox (Block (..), CodeSnippet (..), Level (..),
+                                TableContent (..), Url (..))
 import           Data.Scrapbox.Internal (isBlockQuote, isBulletPoint,
                                          isCodeBlock, isHeader, isParagraph,
                                          isTable, isThumbnail, renderBlock,
                                          renderSegments, renderText)
-import           TestCommonMark.Utils   (CommonMark (..), checkScrapbox,
-                                         getParagraph)
-import           Utils                  (genPrintableText, genPrintableUrl,
-                                         genText)
+import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
+                                       getParagraph)
+import           Utils (genPrintableText, genPrintableUrl, genText)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec

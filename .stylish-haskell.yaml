@@ -1,4 +1,5 @@
-# stylish-haskell configuration file
+# Stylish-haskell configuration file used for cardano-sl by Serokell.
+# It's based on default config provided by `stylish-haskell --defaults` but has some changes
 # ==================================
 
 # The stylish-haskell tool is mainly configured by specifying steps. These steps
@@ -81,7 +82,10 @@ steps:
       #   >                                           init, last, length)
       #
       # Default: true
-      pad_module_names: true
+
+      # Note: we intentionally disable it to make diffs less verbose and avoid
+      # merge conflicts in some cases.
+      pad_module_names: false
 
       # Long list align style takes effect when import is too long. This is
       # determined by 'columns' setting.
@@ -175,16 +179,6 @@ steps:
       # Default: vertical.
       style: vertical
 
-      # Align affects alignment of closing pragma brackets.
-      #
-      # - true: Brackets are aligned in same column.
-      #
-      # - false: Brackets are not aligned together. There is only one space
-      #   between actual import and closing bracket.
-      #
-      # Default: true
-      align: true
-
       # stylish-haskell can detect redundancy of some language pragmas. If this
       # is set to true, it will remove those redundant pragmas. Default: true.
       remove_redundant: true
@@ -197,11 +191,6 @@ steps:
 
   # Remove trailing whitespace
   - trailing_whitespace: {}
-
-  # Squash multiple spaces between the left and right hand sides of some
-  # elements into single spaces. Basically, this undoes the effect of
-  # simple_align but is a bit less conservative.
-  # - squash: {}
 
 # A common setting is the number of columns (parts of) code will be wrapped
 # to. Different steps take this into account. Default: 80.
@@ -219,11 +208,38 @@ columns: 80
 # Default: native.
 newline: native
 
-# Sometimes, language extensions are specified in a cabal file or from the
-# command line instead of using language pragmas in the file. stylish-haskell
-# needs to be aware of these, so it can parse the file correctly.
+# These syntax-affecting language extensions are enabled so that
+# stylish-haskell wouldn't fail with parsing errors when processing files
+# in projects that have those extensions enabled in the .cabal file
+# rather than locally.
 #
-# No language extensions are enabled by default.
-# language_extensions:
-  # - TemplateHaskell
-  # - QuasiQuotes
+# To my best knowledge, no harm should result from enabling an extension
+# that isn't actually used in the file/project. —@neongreen
+language_extensions:
+  - BangPatterns
+  - ConstraintKinds
+  - DataKinds
+  - DefaultSignatures
+  - DeriveDataTypeable
+  - DeriveGeneric
+  - ExistentialQuantification
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - LambdaCase
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NoImplicitPrelude
+  - OverloadedStrings
+  - PolyKinds
+  - RecordWildCards
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TemplateHaskell
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - ViewPatterns
+  - ExplicitNamespaces

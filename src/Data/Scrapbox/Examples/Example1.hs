@@ -12,14 +12,14 @@ module Data.Scrapbox.Examples.Example1
   , getStartedSB
   ) where
 
-import           RIO                        hiding (link)
+import           RIO hiding (link)
 
 import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                              codeNotation, heading, italic,
                                              lineBreak, link, noStyle, p,
                                              scrapbox, strikeThrough, text,
                                              thumbnail)
-import           Data.Scrapbox.Types        (Block, Scrapbox)
+import           Data.Scrapbox.Types (Block, Scrapbox)
 
 --------------------------------------------------------------------------------
 -- SECTION: Get started
