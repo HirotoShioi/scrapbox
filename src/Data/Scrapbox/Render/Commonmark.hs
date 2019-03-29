@@ -7,6 +7,7 @@
 module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmark
     ) where
+import           RIO
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
@@ -14,7 +15,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Segment (..), Start (..), Style (..),
                                       StyleData (..), TableContent (..),
                                       TableName (..), Url (..))
-import           RIO
+import           Network.URI (parseURI, uriPath, uriQuery)
 import           RIO.List (foldl', headMaybe, tailMaybe)
 import qualified RIO.Text as T
 
@@ -40,7 +41,27 @@ renderBlock = \case
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
     TABLE tableName tableContent    -> renderTable tableName tableContent
-    THUMBNAIL (Url url)             -> [url]
+    THUMBNAIL url                   -> [renderUrl url]
+
+-- | Render 'Url'
+renderUrl :: Url -> Text
+renderUrl (Url url)
+    | "https://gyazo.com/" `T.isPrefixOf` url =
+        maybe
+            url
+            (\uri -> "!()[https://i.gyazo.com" <> fromString (uriPath uri) <> ".png]")
+            (parseURI (T.unpack url))
+    | "https://www.youtube.com/" `T.isPrefixOf` url =
+        maybe
+            url
+            (\uri ->
+                -- Very naive
+                let youtubeId = fromString $ drop 3 $ uriQuery uri
+                in "![](https://img.youtube.com/vi/" <> youtubeId <> "0.jpg)](" <> url <> ")"
+            )
+            (parseURI (T.unpack url))
+    | any (`T.isSuffixOf` url) [".png", ".jpeg", ".gif"] = "![](" <> url <> ")"
+    | otherwise = url
 
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
