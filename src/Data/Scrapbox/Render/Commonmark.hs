@@ -41,25 +41,26 @@ renderBlock = \case
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
     TABLE tableName tableContent    -> renderTable tableName tableContent
-    THUMBNAIL url                   -> [renderUrl url]
+    THUMBNAIL url                   -> [renderUrl mempty url]
 
 -- | Render 'Url'
-renderUrl :: Url -> Text
-renderUrl (Url url)
+renderUrl :: Text -> Url -> Text
+renderUrl name (Url url)
     | "https://www.youtube.com/" `T.isPrefixOf` url =
         maybe
             url
             (\youtubeId ->
-                "[![youtube](https://img.youtube.com/vi/" <> youtubeId <> "/0.jpg)](" <> url <> ")"
+                "[![" <> name <> "](https://img.youtube.com/vi/" <> youtubeId <> "/0.jpg)](" <> url <> ")"
             )
             (do
                 uri      <- parseURI (T.unpack url)
                 stripped <- T.stripPrefix "?v=" $ fromString $ uriQuery uri
-                let youtubeId = T.takeWhile (`notElem` ['&', '?'])  stripped
+                let youtubeId = T.takeWhile (`notElem` ['&', '?']) stripped
                 return youtubeId
             )
-    | any (`T.isSuffixOf` url) [".png", ".jpeg", ".gif"] = "![](" <> url <> ")"
-    | otherwise = url
+    | any (`T.isSuffixOf` url) [".png", ".jpeg", ".gif"] = "![" <> name <> "](" <> url <> ")"
+    | T.null name = url
+    | otherwise   = "[" <> name <> "]" <> "(" <> url <> ")"
 
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
@@ -104,8 +105,8 @@ renderHeading (Level headingNum) segments =
 renderSegment ::  Segment -> Text
 renderSegment = \case
     HASHTAG text               -> "**#" <> text <> "**"
-    LINK Nothing (Url url)     -> url
-    LINK (Just name) (Url url) -> "[" <> name <> "]" <> "(" <> url <> ")"
+    LINK Nothing url           -> renderUrl mempty url
+    LINK (Just name) url       -> renderUrl name url
     TEXT text                  -> text
 
  -- Does commonmark support math expressions?
