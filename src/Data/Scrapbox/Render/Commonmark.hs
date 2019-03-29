@@ -49,7 +49,7 @@ renderUrl (Url url)
     | "https://gyazo.com/" `T.isPrefixOf` url =
         maybe
             url
-            (\uri -> "!()[https://i.gyazo.com" <> fromString (uriPath uri) <> ".png]")
+            (\uri -> "![](https://i.gyazo.com" <> fromString (uriPath uri) <> ".png)")
             (parseURI (T.unpack url))
     | "https://www.youtube.com/" `T.isPrefixOf` url =
         maybe
@@ -57,7 +57,7 @@ renderUrl (Url url)
             (\uri ->
                 -- Very naive
                 let youtubeId = fromString $ drop 3 $ uriQuery uri
-                in "![](https://img.youtube.com/vi/" <> youtubeId <> "0.jpg)](" <> url <> ")"
+                in "![youtube](https://img.youtube.com/vi/" <> youtubeId <> "0.jpg)](" <> url <> ")"
             )
             (parseURI (T.unpack url))
     | any (`T.isSuffixOf` url) [".png", ".jpeg", ".gif"] = "![](" <> url <> ")"
