@@ -11,10 +11,10 @@ module TestCommonMark.Utils
 
 import           RIO
 
-import           RIO.List        (headMaybe)
+import           RIO.List (headMaybe)
 
-import           Data.Scrapbox   (Block (..), InlineBlock (..), ScrapText (..),
-                                  Scrapbox (..), Segment, commonmarkToNode)
+import           Data.Scrapbox (Block (..), InlineBlock (..), ScrapText (..),
+                                Scrapbox (..), Segment, commonmarkToNode)
 import           Test.QuickCheck (Property, Testable (..))
 
 --------------------------------------------------------------------------------

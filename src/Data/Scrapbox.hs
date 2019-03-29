@@ -47,24 +47,21 @@ module Data.Scrapbox
     ) where
 
 import           RIO
-import qualified RIO.Text                        as T
+import qualified RIO.Text as T
 
-import           Data.List                       (nub)
+import           Data.List (nub)
 import           Data.Scrapbox.Parser.Commonmark (parseCommonmark)
-import           Data.Scrapbox.Parser.Scrapbox   (runScrapboxParser)
+import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Render.Commonmark (renderToCommonmark)
-import           Data.Scrapbox.Render.Scrapbox   (renderToScrapbox)
-import           Data.Scrapbox.Types             (Block (..), CodeName (..),
-                                                  CodeSnippet (..),
-                                                  InlineBlock (..), Level (..),
-                                                  ScrapText (..), Scrapbox (..),
-                                                  Segment (..), Start (..),
-                                                  Style (..), StyleData (..),
-                                                  TableContent (..),
-                                                  TableName (..), Url (..),
-                                                  unverbose)
-import           Network.URI                     (isURI)
-import           Text.ParserCombinators.Parsec   (ParseError)
+import           Data.Scrapbox.Render.Scrapbox (renderToScrapbox)
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      StyleData (..), TableContent (..),
+                                      TableName (..), Url (..), unverbose)
+import           Network.URI (isURI)
+import           Text.ParserCombinators.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Parse Option
@@ -102,7 +99,7 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
     applyLinebreak :: [Block] -> [Block]
     applyLinebreak []  = []
     applyLinebreak [b] = [b]
-    applyLinebreak (LINEBREAK : heading@(HEADING _ _) : rest) 
+    applyLinebreak (LINEBREAK : heading@(HEADING _ _) : rest)
         = LINEBREAK : heading : applyLinebreak rest
     applyLinebreak (b:HEADING level content:rest)
         = b : LINEBREAK : applyLinebreak (HEADING level content : rest)

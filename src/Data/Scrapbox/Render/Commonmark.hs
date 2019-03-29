@@ -15,8 +15,8 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       StyleData (..), TableContent (..),
                                       TableName (..), Url (..))
 import           RIO
-import           RIO.List            (foldl', headMaybe, tailMaybe)
-import qualified RIO.Text            as T
+import           RIO.List (foldl', headMaybe, tailMaybe)
+import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmark :: Scrapbox -> Text
@@ -133,7 +133,7 @@ renderInlineBlock = \case
 -- | Render 'CODE_BLOCK'
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
-    [name] <> ["```"] <> snippet <> ["```"]
+    ["```" <> name] <> snippet <> ["```"]
 
 -- | Render 'TABLE'
 renderTable :: TableName -> TableContent -> [Text]

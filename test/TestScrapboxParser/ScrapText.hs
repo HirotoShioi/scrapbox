@@ -12,26 +12,26 @@ module TestScrapboxParser.ScrapText
     ( scrapTextParserSpec
     ) where
 
-import           RIO                      hiding (assert)
+import           RIO hiding (assert)
 
-import           RIO.List                 (headMaybe)
-import           Test.Hspec               (Spec, describe, it)
-import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck          (Arbitrary (..), Property, choose,
-                                           listOf1, scale)
-import           Test.QuickCheck.Monadic  (assert, monadicIO)
+import           RIO.List (headMaybe)
+import           Test.Hspec (Spec, describe, it)
+import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
+import           Test.QuickCheck (Arbitrary (..), Property, choose, listOf1,
+                                  scale)
+import           Test.QuickCheck.Monadic (assert, monadicIO)
 
-import           Data.Scrapbox            (InlineBlock (..), ScrapText (..),
-                                           Segment (..), Style (..), Url (..))
-import           Data.Scrapbox.Internal   (concatSegment, isBold,
-                                           isCodeNotation, isItalic, isMathExpr,
-                                           isNoStyle, isStrikeThrough,
-                                           renderSegments, runScrapTextParser)
+import           Data.Scrapbox (InlineBlock (..), ScrapText (..), Segment (..),
+                                Style (..), Url (..))
+import           Data.Scrapbox.Internal (concatSegment, isBold, isCodeNotation,
+                                         isItalic, isMathExpr, isNoStyle,
+                                         isStrikeThrough, renderSegments,
+                                         runScrapTextParser)
 import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
                                            ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected,
                                            shouldParseSpec)
-import           Utils                    (genPrintableText, whenRight)
+import           Utils (genPrintableText, whenRight)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec

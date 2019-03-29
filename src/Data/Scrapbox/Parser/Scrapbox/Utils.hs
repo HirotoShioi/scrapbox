@@ -5,7 +5,7 @@ module Data.Scrapbox.Parser.Scrapbox.Utils
     ( lookAheadMaybe
     ) where
 
-import           RIO                           hiding (try)
+import           RIO hiding (try)
 
 import           Text.ParserCombinators.Parsec (Parser, lookAhead, optionMaybe,
                                                 try)

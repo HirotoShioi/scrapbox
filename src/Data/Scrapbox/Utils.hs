@@ -19,7 +19,7 @@ module Data.Scrapbox.Utils
 
 import           RIO
 
-import qualified RIO.Text        as T
+import qualified RIO.Text as T
 import           Test.QuickCheck (Gen, elements, listOf1)
 
 --------------------------------------------------------------------------------

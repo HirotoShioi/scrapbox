@@ -13,16 +13,16 @@ module TestScrapboxParser.Utils
     , checkParsed
     ) where
 
-import           RIO                     hiding (assert)
+import           RIO hiding (assert)
 
-import qualified RIO.Text                as T
-import           Test.Hspec              (Spec)
-import           Test.Hspec.QuickCheck   (prop)
-import           Test.QuickCheck         (Arbitrary (..), PrintableString (..),
-                                          Property, Testable (..),
-                                          arbitraryPrintableChar, listOf1)
+import qualified RIO.Text as T
+import           Test.Hspec (Spec)
+import           Test.Hspec.QuickCheck (prop)
+import           Test.QuickCheck (Arbitrary (..), PrintableString (..),
+                                  Property, Testable (..),
+                                  arbitraryPrintableChar, listOf1)
 import           Test.QuickCheck.Monadic (assert, monadicIO)
-import           Text.Parsec             (ParseError)
+import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper functions

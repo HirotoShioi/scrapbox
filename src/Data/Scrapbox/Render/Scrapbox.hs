@@ -16,7 +16,7 @@ module Data.Scrapbox.Render.Scrapbox
     ) where
 
 import           RIO
-import qualified RIO.Text            as T
+import qualified RIO.Text as T
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
@@ -74,7 +74,7 @@ renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
 -- | Render 'CODE_BLOCK'
 renderCodeBlock :: CodeName -> CodeSnippet -> [Text]
 renderCodeBlock (CodeName name) (CodeSnippet code) = do
-    let codeName = "code:" <> name
+    let codeName    = "code:" <> name
     let codeContent = map (" " <>) code
     [codeName] <> codeContent
 
