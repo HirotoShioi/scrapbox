@@ -15,7 +15,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Segment (..), Start (..), Style (..),
                                       StyleData (..), TableContent (..),
                                       TableName (..), Url (..))
-import           Network.URI (parseURI, uriPath, uriQuery)
+import           Network.URI (parseURI, uriQuery)
 import           RIO.List (foldl', headMaybe, tailMaybe)
 import qualified RIO.Text as T
 
@@ -46,20 +46,18 @@ renderBlock = \case
 -- | Render 'Url'
 renderUrl :: Url -> Text
 renderUrl (Url url)
-    | "https://gyazo.com/" `T.isPrefixOf` url =
-        maybe
-            url
-            (\uri -> "![](https://i.gyazo.com" <> fromString (uriPath uri) <> ".png)")
-            (parseURI (T.unpack url))
     | "https://www.youtube.com/" `T.isPrefixOf` url =
         maybe
             url
-            (\uri ->
-                -- Very naive
-                let youtubeId = fromString $ drop 3 $ uriQuery uri
-                in "![youtube](https://img.youtube.com/vi/" <> youtubeId <> "0.jpg)](" <> url <> ")"
+            (\youtubeId ->
+                "[![youtube](https://img.youtube.com/vi/" <> youtubeId <> "/0.jpg)](" <> url <> ")"
             )
-            (parseURI (T.unpack url))
+            (do
+                uri      <- parseURI (T.unpack url)
+                stripped <- T.stripPrefix "?v=" $ fromString $ uriQuery uri
+                let youtubeId = T.takeWhile (`notElem` ['&', '?'])  stripped
+                return youtubeId
+            )
     | any (`T.isSuffixOf` url) [".png", ".jpeg", ".gif"] = "![](" <> url <> ")"
     | otherwise = url
 
