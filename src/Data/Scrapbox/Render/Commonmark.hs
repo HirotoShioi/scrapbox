@@ -40,7 +40,7 @@ renderBlock = \case
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
     TABLE tableName tableContent    -> renderTable tableName tableContent
-    THUMBNAIL (Url url)             -> ["![image](" <> url <> ")"]
+    THUMBNAIL (Url url)             -> url
 
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
