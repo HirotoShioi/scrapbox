@@ -50,7 +50,7 @@ import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 parseCommonmark :: Text -> Scrapbox
 parseCommonmark cmark =
     let options = [optSafe, optHardBreaks]
-        node = C.commonmarkToNode options cmark
+        node    = C.commonmarkToNode options cmark
     in parse node
 
 -- | Apply linebreak after TABLE and CODE_BLOCK if there's BULLET_POINT right after it

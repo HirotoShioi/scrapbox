@@ -1,4 +1,5 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 --------------------------------------------------------------------------------
 {-|
@@ -127,7 +128,6 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
           else LINK Nothing (Url name)
       other -> other
 
-
 --------------------------------------------------------------------------------
 -- Parse logic with options
 --------------------------------------------------------------------------------
@@ -148,4 +148,23 @@ commonmarkToScrapbox opts cmark = renderToScrapbox $ commonmarkToNode opts cmark
 
 -- | Convert given commonmark into 'Scrapbox' AST
 commonmarkToNode :: [ParseOption] -> Text -> Scrapbox
-commonmarkToNode opts cmark = applyOption opts $ parseCommonmark cmark
+commonmarkToNode opts cmark = applyOption opts $ parseCommonmark (applyCorrection cmark)
+
+-- | Apply correction to ensure that the @CMark@ parses the syntaxes correctly
+--
+-- 1. Have a space inserted on heading
+--
+-- >> "##Example" -> "## Example"
+--
+-- 2. Have a space on both side of the bold, italic syntaxes
+--
+-- >> Hi**Hello**world -> Hi **Hello** world
+applyCorrection :: Text -> Text
+applyCorrection = T.unlines . map apply . T.lines
+  where
+    apply :: Text -> Text
+    apply line
+      | "#" `T.isPrefixOf` line && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
+        let (symbol, rest) = T.break (/= '#') line
+        in symbol <> " " <> rest
+      | otherwise = line
