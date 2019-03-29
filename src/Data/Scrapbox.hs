@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 --------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ applyCorrection = T.unlines . map apply . T.lines
   where
     apply :: Text -> Text
     apply line
-      | "#" `T.isPrefixOf` line && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) = 
+      | "#" `T.isPrefixOf` line && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
         let (symbol, rest) = T.break (/= '#') line
         in symbol <> " " <> rest
       | otherwise = line
