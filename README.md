@@ -17,3 +17,6 @@ AST can be rendered, then parsed as original AST.
 - When parsing commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
 - When parsing commonmark, it cannot render relative link correctly.
 - When parsing scrapbox, some of the inline styles cannot be parsed correctly
+- When using `scrapboxToCommonmark`, it will not render the `THUMBNAIL` correctly. This is due to the library
+missing the url parsing logic therefore the parser cannot know whether the given url isn a image url.
+Fixing this issue is the highest priority.
