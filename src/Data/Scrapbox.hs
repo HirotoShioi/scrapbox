@@ -10,7 +10,7 @@ Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
 Stability:   experimental
 Portability: portable
 
-Library which provides various tools for scrapbox. <https://scrapbox.io/product>
+Renderer and parser for scrapbox <https://scrapbox.io/product>
 -}
 --------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ module Data.Scrapbox
     , scrapboxToCommonmark
     , scrapboxToNode
     -- ** Parse options
-    , ParseOption
+    , ScrapboxOption
     , optSectionHeading
     , optFilterRelativePathLink
     -- * Rendering Scrapbox AST
@@ -45,6 +45,7 @@ module Data.Scrapbox
     , Segment(..)
     , Style(..)
     , StyleData(..)
+    , ParseError
     ) where
 
 import           RIO
@@ -53,8 +54,8 @@ import qualified RIO.Text as T
 import           Data.List (nub)
 import           Data.Scrapbox.Parser.Commonmark (parseCommonmark)
 import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
-import           Data.Scrapbox.Render.Commonmark (renderToCommonmark)
-import           Data.Scrapbox.Render.Scrapbox (renderToScrapbox)
+import           Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
+import           Data.Scrapbox.Render.Scrapbox (renderToScrapboxNoOption)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
@@ -68,8 +69,8 @@ import           Text.ParserCombinators.Parsec (ParseError)
 -- Parse Option
 --------------------------------------------------------------------------------
 
--- | Parser option which user can provide
-data ParseOption
+-- | Option which user can provide when parsing/rendering
+data ScrapboxOption
   = SectionHeading
   -- ^ Add 'LINEBREAK' before heading to make the content easier to read
   | FilterRelativeLink
@@ -77,20 +78,20 @@ data ParseOption
   deriving (Eq)
 
 -- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier to see
-optSectionHeading :: ParseOption
+optSectionHeading :: ScrapboxOption
 optSectionHeading = SectionHeading
 
 -- | Remove relative path link such as @../foo/bar/baz.md@ when parsing 'LINK'
 --
 -- This option becomes useful when you use 'commonmarkToScrapbox'
-optFilterRelativePathLink :: ParseOption
+optFilterRelativePathLink :: ScrapboxOption
 optFilterRelativePathLink = FilterRelativeLink
 
--- | Apply changes to 'Scrapbox' based on the given @[ParseOption]@
-applyOption :: [ParseOption] -> Scrapbox -> Scrapbox
+-- | Apply changes to 'Scrapbox' based on the given @[ScrapboxOption]@
+applyOption :: [ScrapboxOption] -> Scrapbox -> Scrapbox
 applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
   where
-    apply :: ParseOption -> Scrapbox -> Scrapbox
+    apply :: ScrapboxOption -> Scrapbox -> Scrapbox
     apply SectionHeading (Scrapbox blocks)         = Scrapbox $ applyLinebreak blocks
     apply FilterRelativeLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
 
@@ -133,32 +134,36 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
 --------------------------------------------------------------------------------
 
 -- | Convert given 'Scrapbox' format text into commonmark format
-scrapboxToCommonmark :: [ParseOption] -> Text -> Either ParseError Text
+scrapboxToCommonmark :: [ScrapboxOption] -> Text -> Either ParseError Text
 scrapboxToCommonmark options scrapboxPage =
-  renderToCommonmark <$> scrapboxToNode options scrapboxPage
+  renderToCommonmarkNoOption <$> scrapboxToNode options scrapboxPage
 
 -- | Parse given 'Scrapbox' formatted text into 'Scrapbox' AST
-scrapboxToNode :: [ParseOption] -> Text -> Either ParseError Scrapbox
+scrapboxToNode :: [ScrapboxOption] -> Text -> Either ParseError Scrapbox
 scrapboxToNode options scrapboxPage =
   applyOption options <$> runScrapboxParser (T.unpack scrapboxPage)
 
 -- | Convert given commonmark text into 'Scrapbox' format
-commonmarkToScrapbox :: [ParseOption] -> Text -> Text
-commonmarkToScrapbox opts cmark = renderToScrapbox $ commonmarkToNode opts cmark
+commonmarkToScrapbox :: [ScrapboxOption] -> Text -> Text
+commonmarkToScrapbox opts cmark = renderToScrapboxNoOption $ commonmarkToNode opts cmark
 
 -- | Convert given commonmark into 'Scrapbox' AST
-commonmarkToNode :: [ParseOption] -> Text -> Scrapbox
+commonmarkToNode :: [ScrapboxOption] -> Text -> Scrapbox
 commonmarkToNode opts cmark = applyOption opts $ parseCommonmark (applyCorrection cmark)
+
+-- | Render given 'Scrapbox' AST into commonmark with given @[ScrapboxOption]@
+renderToCommonmark :: [ScrapboxOption] -> Scrapbox -> Text
+renderToCommonmark opts scrapbox = renderToCommonmarkNoOption $ applyOption opts scrapbox
+
+-- | Render given 'Scrapbox' AST into Scrapbox page with given @[ScrapboxOption]@
+renderToScrapbox :: [ScrapboxOption] -> Scrapbox -> Text
+renderToScrapbox opts scrapbox = renderToScrapboxNoOption $ applyOption opts scrapbox
 
 -- | Apply correction to ensure that the @CMark@ parses the syntaxes correctly
 --
 -- 1. Have a space inserted on heading
 --
 -- >> "##Example" -> "## Example"
---
--- 2. Have a space on both side of the bold, italic syntaxes
---
--- >> Hi**Hello**world -> Hi **Hello** world
 applyCorrection :: Text -> Text
 applyCorrection = T.unlines . map apply . T.lines
   where

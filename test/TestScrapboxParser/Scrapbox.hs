@@ -28,6 +28,19 @@ import           Utils (whenRight)
 -- Scrapbox parser
 --------------------------------------------------------------------------------
 
+-- | Performs roundtrips test
+roundTripSpec :: Spec
+roundTripSpec = describe "Scrapbox" $
+    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
+        \(scrapbox :: Scrapbox) -> monadicIO $ do
+            let rendered = renderToScrapbox [] scrapbox
+            let eParsed  = runScrapboxParser $ T.unpack rendered
+
+            assert $ isRight eParsed
+
+            whenRight eParsed $ \parsed ->
+                assert $ parsed == scrapbox
+
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
     describe "Scrapbox parser" $ modifyMaxSuccess (const 5000) $ do
@@ -440,17 +453,4 @@ scrapboxParserSpec =
         , LINEBREAK
         , LINEBREAK
         ]
-
--- | Performs roundtrips test
-roundTripSpec :: Spec
-roundTripSpec = describe "Scrapbox" $
-    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
-        \(scrapbox :: Scrapbox) -> monadicIO $ do
-            let rendered = renderToScrapbox scrapbox
-            let eParsed  = runScrapboxParser $ T.unpack rendered
-
-            assert $ isRight eParsed
-
-            whenRight eParsed $ \parsed ->
-                assert $ parsed == scrapbox
 
