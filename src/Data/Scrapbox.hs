@@ -54,8 +54,8 @@ import qualified RIO.Text as T
 import           Data.List (nub)
 import           Data.Scrapbox.Parser.Commonmark (parseCommonmark)
 import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
-import           Data.Scrapbox.Render.Commonmark (renderToC)
-import           Data.Scrapbox.Render.Scrapbox (renderToS)
+import           Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
+import           Data.Scrapbox.Render.Scrapbox (renderToScrapboxNoOption)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
@@ -136,7 +136,7 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
 -- | Convert given 'Scrapbox' format text into commonmark format
 scrapboxToCommonmark :: [ScrapboxOption] -> Text -> Either ParseError Text
 scrapboxToCommonmark options scrapboxPage =
-  renderToC <$> scrapboxToNode options scrapboxPage
+  renderToCommonmarkNoOption <$> scrapboxToNode options scrapboxPage
 
 -- | Parse given 'Scrapbox' formatted text into 'Scrapbox' AST
 scrapboxToNode :: [ScrapboxOption] -> Text -> Either ParseError Scrapbox
@@ -145,7 +145,7 @@ scrapboxToNode options scrapboxPage =
 
 -- | Convert given commonmark text into 'Scrapbox' format
 commonmarkToScrapbox :: [ScrapboxOption] -> Text -> Text
-commonmarkToScrapbox opts cmark = renderToS $ commonmarkToNode opts cmark
+commonmarkToScrapbox opts cmark = renderToScrapboxNoOption $ commonmarkToNode opts cmark
 
 -- | Convert given commonmark into 'Scrapbox' AST
 commonmarkToNode :: [ScrapboxOption] -> Text -> Scrapbox
@@ -153,11 +153,11 @@ commonmarkToNode opts cmark = applyOption opts $ parseCommonmark (applyCorrectio
 
 -- | Render given 'Scrapbox' AST into commonmark with given @[ScrapboxOption]@
 renderToCommonmark :: [ScrapboxOption] -> Scrapbox -> Text
-renderToCommonmark opts scrapbox = renderToC $ applyOption opts scrapbox
+renderToCommonmark opts scrapbox = renderToCommonmarkNoOption $ applyOption opts scrapbox
 
 -- | Render given 'Scrapbox' AST into Scrapbox page with given @[ScrapboxOption]@
 renderToScrapbox :: [ScrapboxOption] -> Scrapbox -> Text
-renderToScrapbox opts scrapbox = renderToS $ applyOption opts scrapbox
+renderToScrapbox opts scrapbox = renderToScrapboxNoOption $ applyOption opts scrapbox
 
 -- | Apply correction to ensure that the @CMark@ parses the syntaxes correctly
 --

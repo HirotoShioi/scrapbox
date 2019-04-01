@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Scrapbox.Render.Commonmark
-    ( renderToC
+    ( renderToCommonmarkNoOption
     ) where
 import           RIO
 
@@ -20,8 +20,8 @@ import           RIO.List (foldl', headMaybe, tailMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
-renderToC :: Scrapbox -> Text
-renderToC (Scrapbox blocks) = T.unlines
+renderToCommonmarkNoOption :: Scrapbox -> Text
+renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
     $ concatMap renderBlock
     $ addLineBreaks blocks
   where
