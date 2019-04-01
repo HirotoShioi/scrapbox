@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Scrapbox.Render.Commonmark
-    ( renderToCommonmark
+    ( renderToC
     ) where
 import           RIO
 
@@ -20,8 +20,8 @@ import           RIO.List (foldl', headMaybe, tailMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
-renderToCommonmark :: Scrapbox -> Text
-renderToCommonmark (Scrapbox blocks) = T.unlines
+renderToC :: Scrapbox -> Text
+renderToC (Scrapbox blocks) = T.unlines
     $ concatMap renderBlock
     $ addLineBreaks blocks
   where
@@ -58,7 +58,7 @@ renderUrl name (Url url)
                 let youtubeId = T.takeWhile (`notElem` ['&', '?']) stripped
                 return youtubeId
             )
-  | any (`T.isSuffixOf` url) 
+  | any (`T.isSuffixOf` url)
         [ ".bmp"
         , ".gif"
         , ".jpg"

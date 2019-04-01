@@ -8,7 +8,7 @@ You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Scrapbox.Render.Scrapbox
-    ( renderToScrapbox
+    ( renderToS
     , renderBlock
     , renderSegments
     , renderText
@@ -30,8 +30,8 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
 --------------------------------------------------------------------------------
 
 -- | Render given 'Scrapbox' AST into Scrapbox page
-renderToScrapbox :: Scrapbox -> Text
-renderToScrapbox (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
+renderToS :: Scrapbox -> Text
+renderToS (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
 
 --------------------------------------------------------------------------------
 -- Rendering logics
