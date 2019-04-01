@@ -46,7 +46,7 @@ renderBlock = \case
 -- | Render 'Url'
 renderUrl :: Text -> Url -> Text
 renderUrl name (Url url)
-    | "https://www.youtube.com/" `T.isPrefixOf` url =
+  | "https://www.youtube.com/" `T.isPrefixOf` url =
         maybe
             url
             (\youtubeId ->
@@ -58,9 +58,15 @@ renderUrl name (Url url)
                 let youtubeId = T.takeWhile (`notElem` ['&', '?']) stripped
                 return youtubeId
             )
-    | any (`T.isSuffixOf` url) [".png", ".jpeg", ".gif"] = "![" <> name <> "](" <> url <> ")"
-    | T.null name = url
-    | otherwise   = "[" <> name <> "]" <> "(" <> url <> ")"
+  | any (`T.isSuffixOf` url) 
+        [ ".bmp"
+        , ".gif"
+        , ".jpg"
+        , ".jpeg"
+        , ".png"
+        ]       = "![" <> name <> "](" <> url <> ")"
+  | T.null name = url
+  | otherwise   = "[" <> name <> "]" <> "(" <> url <> ")"
 
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
