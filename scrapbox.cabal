@@ -1,11 +1,5 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
---
--- see: https://github.com/sol/hpack
---
--- hash: be20c97a14b6be3593999fa6d58b15361bffa9370d6b5bfe7957d3f8abcdc02b
-
 name:           scrapbox
 version:        0.1.0.0
 synopsis:       Renderer and parser for Scrapbox
@@ -56,14 +50,10 @@ library
   build-depends:       QuickCheck
                      , attoparsec
                      , base >=4.7 && <5
-                     , bytestring
                      , cmark
-                     , hspec
-                     , mtl
                      , network-uri
                      , parsec
                      , rio
-                     , say
                      , split
                      , text
   default-language:    Haskell2010
@@ -96,14 +86,11 @@ test-suite scrapbox-test
   build-depends:      QuickCheck
                     , attoparsec
                     , base >=4.7 && <5
-                    , bytestring
                     , cmark
                     , hspec
-                    , mtl
                     , network-uri
                     , parsec
                     , rio
-                    , say
                     , scrapbox
                     , split
                     , text
