@@ -8,6 +8,7 @@ cabal-version: 1.12
 
 name:           scrapbox
 version:        0.1.0.0
+synopsis:       Renderer and parser for Scrapbox
 description:    Please see the README on GitHub at <https://github.com/HirotoShioi/scrapbox#readme>
 homepage:       https://github.com/HirotoShioi/scrapbox#readme
 bug-reports:    https://github.com/HirotoShioi/scrapbox/issues
