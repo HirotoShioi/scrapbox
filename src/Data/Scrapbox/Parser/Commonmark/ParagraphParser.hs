@@ -51,6 +51,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
             <|> try (string "_")
             <|> try (string "*")
             <|> try (string "~~")
+            -- This is needed to avoid inifinite loop
             <|> try (string "~")
             <|> try (many1 (noneOf syntaxSymbols))
             )
