@@ -32,6 +32,7 @@ import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
                                            concatInline, concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
+import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks)
 
 --------------------------------------------------------------------------------
 -- Exposed interface
@@ -111,7 +112,7 @@ toBlocks (Node _ nodeType contents) = case nodeType of
     C.HEADING headingNum       -> [toHeading headingNum contents]
     C.EMPH                     -> [paragraph [italic (concatMap toSegments contents)]]
     C.STRONG                   -> [paragraph [bold (concatMap toSegments contents)]]
-    C.TEXT textContent         -> [paragraph [noStyle [text textContent]]]
+    C.TEXT textContent         -> [paragraph (toInlineBlocks textContent)]
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
