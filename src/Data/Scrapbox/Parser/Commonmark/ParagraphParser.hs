@@ -7,12 +7,12 @@ module Data.Scrapbox.Parser.Commonmark.ParagraphParser
 
 import           RIO hiding (many, try, (<|>))
 
-import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (Parser, anyChar, eof, many,
                                                 many1, manyTill, noneOf, parse,
                                                 string, try, (<?>), (<|>))
 
+import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), Segment (..),
                                       Style (..))
 
