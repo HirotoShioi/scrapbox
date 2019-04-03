@@ -51,6 +51,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
             <|> try (string "_")
             <|> try (string "*")
             <|> try (string "~~")
+            <|> try (string "~")
             <|> try (many1 (noneOf syntaxSymbols))
             )
         case someChar of
@@ -62,10 +63,14 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
             Just "*"  -> checkWith "*" emphParser content
             Just "_"  -> checkWith "_" emphParser content
             -- Check if ahead content can be parsed as strikethrough
-            Just "~~"  -> checkWith "~~" strikeThroughParser content
+            Just "~~" -> checkWith "~~" strikeThroughParser content
             -- For everything else, consume until syntax
+            Just "~"  -> do
+                char <- anyChar
+                rest <- many $ noneOf syntaxSymbols
+                go $ content <> [char] <> rest
             Just _ -> do
-                rest <- many1 $ noneOf syntaxSymbols
+                rest <- many $ noneOf syntaxSymbols
                 go $ content <> rest
 
     -- Run parser on ahead content to see if it can be parsed, if not, consume the text
