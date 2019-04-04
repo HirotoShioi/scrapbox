@@ -16,27 +16,42 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
 
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), Segment (..),
-                                      Style (..))
+                                      Style (..), StyleData(..), emptyStyle)
 
-strongParser :: Parser InlineBlock
-strongParser = do
+strongParser :: StyleData -> String -> Parser InlineBlock
+strongParser styleData symbol = do
     str <- try (string "**") <|> string "__"
-    text <- manyTill anyChar (try $ string str)
-    return $ ITEM Bold [TEXT (fromString text)]
+    let newSymbol = str <> symbol
+    let withBold = styleData { sBold = True } 
+    try (emphParser withBold newSymbol) 
+        <|> try (strikeThroughParser withBold newSymbol) 
+        <|> specialParser newSymbol withBold
 
-emphParser :: Parser InlineBlock
-emphParser = do
+emphParser :: StyleData -> String -> Parser InlineBlock
+emphParser styleData symbol = do
     str  <- try (string "*") <|> string "_"
-    text <- many1 $ noneOf str
-    _    <- string str
-    return $ ITEM Italic [TEXT (fromString text)]
+    let newSymbol = str <> symbol
+    let withEmph = styleData { sItalic = True }
+    try (strongParser withEmph newSymbol) 
+        <|> try (strikeThroughParser withEmph newSymbol) 
+        <|> specialParser newSymbol withEmph
 
-strikeThroughParser :: Parser InlineBlock
-strikeThroughParser = do
-    _    <- string "~~"
-    text <- manyTill anyChar (try $ string "~~")
-    return $ ITEM StrikeThrough [TEXT (fromString text)]
+specialParser :: String -> StyleData -> Parser InlineBlock
+specialParser str styleData' = do
+    text <- manyTill anyChar (try $ string str)
+    when (null text) $ fail "Nothing to consume"
+    return $ ITEM (CustomStyle styleData') [TEXT (fromString text)]
 
+strikeThroughParser :: StyleData -> String -> Parser InlineBlock
+strikeThroughParser styleData symbol = do
+    str <- string "~~"
+    let newSymbol = str <> symbol
+    let withStrike = styleData { sStrikeThrough = True}
+    try (strongParser withStrike newSymbol) 
+        <|> try (emphParser withStrike newSymbol) 
+        <|> specialParser newSymbol withStrike
+
+-- | Parser for non-styled text
 -- | Parser for non-styled text
 noStyleParser :: Parser InlineBlock
 noStyleParser = ITEM NoStyle <$> extractNonStyledText
@@ -60,13 +75,13 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
         case someChar of
             Nothing   -> return [TEXT (fromString content)]
             -- Check if ahead content can be parsed as strong
-            Just "**" -> checkWith "*" strongParser content
-            Just "__" -> checkWith "_" strongParser content
+            Just "**" -> checkWith "*" (strongParser emptyStyle mempty) content
+            Just "__" -> checkWith "_" (strongParser emptyStyle mempty) content
             -- Check if ahead content can be parsed as emph
-            Just "*"  -> checkWith "*" emphParser content
-            Just "_"  -> checkWith "_" emphParser content
+            Just "*"  -> checkWith "*" (emphParser emptyStyle mempty) content
+            Just "_"  -> checkWith "_" (emphParser emptyStyle mempty) content
             -- Check if ahead content can be parsed as strikethrough
-            Just "~~" -> checkWith "~~" strikeThroughParser content
+            Just "~~" -> checkWith "~~" (strikeThroughParser emptyStyle mempty) content
             -- For everything else, consume until syntax
             Just "~"  -> do
                 char <- anyChar
@@ -100,9 +115,9 @@ runParagraphParser = parse parser "Paragraph parser"
   where
     parser :: Parser [InlineBlock]
     parser = manyTill (
-            try strikeThroughParser
-        <|> try strongParser
-        <|> try emphParser
+            try (strikeThroughParser emptyStyle mempty)
+        <|> try (strongParser emptyStyle mempty)
+        <|> try (emphParser emptyStyle mempty)
         <|> try noStyleParser
         <?> "Cannot parse given paragraph"
         ) (try eof)
