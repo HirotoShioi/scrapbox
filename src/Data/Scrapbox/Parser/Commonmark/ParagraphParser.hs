@@ -1,3 +1,6 @@
+{-| This module exports a parser which parses the content of PARAGRAPH in CMark
+-}
+
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -20,6 +23,7 @@ import           Data.Scrapbox.Types (InlineBlock (..), Segment (..),
                                       Style (..), StyleData (..), emptyStyle,
                                       toStyle)
 
+-- | Strong parser
 strongParser :: StyleData -> String -> Parser InlineBlock
 strongParser styleData symbol = do
     str <- try (string "**") <|> string "__"
@@ -27,8 +31,9 @@ strongParser styleData symbol = do
     let withBold = styleData { sBold = True } -- Check!
     try (emphParser withBold newSymbol)
         <|> try (strikeThroughParser withBold newSymbol)
-        <|> specialParser newSymbol withBold
+        <|> textParser newSymbol withBold
 
+-- | Emph sparser
 emphParser :: StyleData -> String -> Parser InlineBlock
 emphParser styleData symbol = do
     str  <- try (string "*") <|> string "_"
@@ -36,14 +41,9 @@ emphParser styleData symbol = do
     let withEmph = styleData { sItalic = True }
     try (strongParser withEmph newSymbol)
         <|> try (strikeThroughParser withEmph newSymbol)
-        <|> specialParser newSymbol withEmph
+        <|> textParser newSymbol withEmph
 
-specialParser :: String -> StyleData -> Parser InlineBlock
-specialParser str styleData' = do
-    text <- manyTill anyChar (try $ string str)
-    when (null text) $ unexpected "Text is empty, nothing to consume"
-    return $ ITEM (CustomStyle styleData') [TEXT (fromString text)]
-
+-- | Strikethrough parser
 strikeThroughParser :: StyleData -> String -> Parser InlineBlock
 strikeThroughParser styleData symbol = do
     str <- string "~~"
@@ -51,7 +51,14 @@ strikeThroughParser styleData symbol = do
     let withStrike = styleData { sStrikeThrough = True}
     try (strongParser withStrike newSymbol)
         <|> try (emphParser withStrike newSymbol)
-        <|> specialParser newSymbol withStrike
+        <|> textParser newSymbol withStrike
+
+-- | Parser
+textParser :: String -> StyleData -> Parser InlineBlock
+textParser str styleData = do
+    text <- manyTill anyChar (try $ string str)
+    when (null text) $ unexpected "Text is empty, nothing to consume"
+    return $ ITEM (CustomStyle styleData) [TEXT (fromString text)]
 
 -- | Parser for non-styled text
 -- | Parser for non-styled text
@@ -132,6 +139,7 @@ runParagraphParser text =  map convertStyles <$> parse parser "Paragraph parser"
         CustomStyle style -> toStyle style
         others            -> others
 
+-- | Convert given 'Text' into @[InlineBlock]@
 toInlineBlocks :: Text -> [InlineBlock]
 toInlineBlocks text =
     either
