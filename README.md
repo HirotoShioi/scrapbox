@@ -12,6 +12,8 @@
 The library is well-tested including round-trip test which tests whether given arbitrary
 AST can be rendered, then parsed as original AST.
 
-## Known issue
+## Known issues
+
 - When parsing commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
 - When parsing scrapbox, some of the inline styles cannot be parsed correctly
+- When parsing scrapbox, it cannot parse correctly when user-defined styles are being used.
