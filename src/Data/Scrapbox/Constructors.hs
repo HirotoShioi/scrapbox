@@ -14,7 +14,7 @@ module Data.Scrapbox.Constructors
     , table
     , thumbnail
     -- * InlineBlock
-    , inline
+    , item
     , noStyle
     , bold
     , italic
@@ -55,7 +55,9 @@ blockQuote = BLOCK_QUOTE . ScrapText
 
 -- | Constructors for creating 'CODE_BLOCK' block
 codeBlock :: Text -> [Text] -> Block
-codeBlock codeName codeSnippet = CODE_BLOCK (CodeName codeName) (CodeSnippet codeSnippet)
+codeBlock codeName codeSnippet = CODE_BLOCK
+    (CodeName codeName)
+    (CodeSnippet codeSnippet)
 
 -- | Constructors for creating 'PARAGRAPH' block
 paragraph :: [InlineBlock] -> Block
@@ -90,8 +92,8 @@ lineBreak = LINEBREAK
 --------------------------------------------------------------------------------
 
 -- | Create inline wigh given 'Style' and 'Segment'
-inline :: Style -> [Segment] -> InlineBlock
-inline = ITEM
+item :: Style -> [Segment] -> InlineBlock
+item = ITEM
 
 -- | Creates 'InlineBlock' with no style
 noStyle :: [Segment] -> InlineBlock
