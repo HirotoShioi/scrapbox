@@ -10,7 +10,6 @@ module TestCommonMark.Commonmark
 import           RIO hiding (assert)
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (PrintableString (..))
 import           Test.QuickCheck.Monadic (assert, monadicIO)
 
 import           TestCommonMark.Blocks (blockSpec)
@@ -18,7 +17,7 @@ import           TestCommonMark.Segments (segmentSpec)
 import           TestCommonMark.Styles (styleSpec)
 
 import           Data.Scrapbox.Internal (runParagraphParser)
-import           Utils (NonEmptyPrintableString (..), whenRight)
+import           Utils (NonEmptyPrintableString (..), whenRight, shouldParseSpec)
 
 commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
@@ -30,9 +29,7 @@ commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ d
 -- | Test case on @runParagraphParser@
 paragraphParserSpec :: Spec
 paragraphParserSpec = describe "runParagraphParser" $ modifyMaxSuccess (const 5000) $ do
-    prop "should not cause infinite loop" $
-        \(someText :: PrintableString) ->
-            isRight $ runParagraphParser $ getPrintableString someText
+    shouldParseSpec runParagraphParser
 
     prop "should return non-empty list of blocks if the given string is non-empty" $
         \(someText :: NonEmptyPrintableString) -> monadicIO $ do
