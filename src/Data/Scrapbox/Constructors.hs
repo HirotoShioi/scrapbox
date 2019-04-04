@@ -91,7 +91,7 @@ lineBreak = LINEBREAK
 -- InlineBlock
 --------------------------------------------------------------------------------
 
--- | Create inline wigh given 'Style' and 'Segment'
+-- | Create inline with given 'Style' and 'Segment'
 item :: Style -> [Segment] -> InlineBlock
 item = ITEM
 

@@ -94,6 +94,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
     syntaxSymbols :: String
     syntaxSymbols = "_*~"
 
+-- | Parse given 'String' into @[InlineBlock]@
 runParagraphParser :: String -> Either ParseError [InlineBlock]
 runParagraphParser = parse parser "Paragraph parser"
   where

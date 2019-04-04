@@ -1,4 +1,5 @@
-{-| Render commonmark
+{-| This module exports 'renderToCommonmarkNoOption' which renders 'Scrapbox' 
+AST into commonmark
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -173,9 +174,11 @@ renderTable (TableName name) (TableContent contents) =
         rest       <- tailMaybe contents
         let headColumnNums = map T.length headColumn
         return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
-
+    
+    -- Render column section
     renderColumn :: [Text] -> Text
     renderColumn items = "| " <> foldr (\item acc -> item <> " | " <> acc) mempty items
 
+    -- Render middle section
     middle :: [Int] -> Text
     middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"
