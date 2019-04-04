@@ -27,11 +27,10 @@ import           Data.Scrapbox.Internal (concatSegment, isBold, isCodeNotation,
                                          isItalic, isMathExpr, isNoStyle,
                                          isStrikeThrough, renderSegments,
                                          runScrapTextParser)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           ScrapboxSyntax (..), checkContent,
-                                           checkParsed, propParseAsExpected,
-                                           shouldParseSpec)
-import           Utils (genPrintableText, whenRight)
+import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
+                                           checkParsed, propParseAsExpected)
+import           Utils (NonEmptyPrintableString (..), genPrintableText,
+                        shouldParseSpec, whenRight)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec

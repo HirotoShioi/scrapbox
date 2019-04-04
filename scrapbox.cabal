@@ -29,9 +29,10 @@ library
                        Data.Scrapbox.Parser.Scrapbox
                        Data.Scrapbox.Parser.Scrapbox.Item
                        Data.Scrapbox.Parser.Scrapbox.ScrapText
-                       Data.Scrapbox.Parser.Scrapbox.Utils
+                       Data.Scrapbox.Parser.Utils
                        Data.Scrapbox.Parser.Commonmark
                        Data.Scrapbox.Parser.Commonmark.TableParser
+                       Data.Scrapbox.Parser.Commonmark.ParagraphParser
                        Data.Scrapbox.Render.Scrapbox
                        Data.Scrapbox.Render.Commonmark
                        Data.Scrapbox.Utils

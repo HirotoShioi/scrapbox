@@ -19,12 +19,11 @@ import           Test.QuickCheck.Monadic (assert, monadicIO)
 import           Data.Scrapbox (Segment (..), Url (..))
 import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
                                          runItemParser)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           ScrapboxSyntax (..), checkContent,
-                                           checkParsed, propParseAsExpected,
-                                           shouldParseSpec)
-import           Utils (genMaybe, genPrintableText, genPrintableUrl, genText,
-                        whenRight)
+import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
+                                           checkParsed, propParseAsExpected)
+import           Utils (NonEmptyPrintableString (..), genMaybe,
+                        genPrintableText, genPrintableUrl, genText,
+                        shouldParseSpec, whenRight)
 
 -- | Spec for inline text parser
 inlineParserSpec :: Spec

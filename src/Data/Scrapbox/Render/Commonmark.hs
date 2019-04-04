@@ -175,7 +175,7 @@ renderTable (TableName name) (TableContent contents) =
         return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
 
     renderColumn :: [Text] -> Text
-    renderColumn items = "|" <> foldr (\item acc -> item <> "|" <> acc) mempty items
+    renderColumn items = "| " <> foldr (\item acc -> item <> " | " <> acc) mempty items
 
     middle :: [Int] -> Text
-    middle = foldl' (\acc num -> acc <> T.replicate num "-" <> "|") "|"
+    middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"

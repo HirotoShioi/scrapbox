@@ -22,7 +22,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 (<|>))
 
 import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
-import           Data.Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
+import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), ScrapText (..),
                                       Segment (..), Style (..), StyleData (..),
                                       emptyStyle)
@@ -205,7 +205,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
             (   try (string "[[")
             <|> try (string "[")
             <|> try (string "`")
-            <|> try (many1 (noneOf "[`"))
+            <|> try (many1 (noneOf syntaxSymbols))
             )
         case someChar of
             Nothing   -> runItemParserM content
@@ -217,7 +217,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
             Just "`"  -> checkWith "`" codeNotationParser content
             -- For everything else, consume until open bracket
             Just _ -> do
-                rest <- many1 $ noneOf "[`"
+                rest <- many1 $ noneOf syntaxSymbols
                 go $ content <> rest
 
     -- Run parser on ahead content to see if it can be parsed, if not, consume the text
@@ -231,8 +231,11 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
     continue :: String -> String -> Parser [Segment]
     continue symbol curr = do
         someSymbol <- string symbol
-        rest       <- many (noneOf "[`")
+        rest       <- many (noneOf syntaxSymbols)
         go $ curr <> someSymbol <> rest
+
+    syntaxSymbols :: String
+    syntaxSymbols = "[`"
 
 -- | Parser for 'CODENOTATION'
 codeNotationParser :: Parser InlineBlock

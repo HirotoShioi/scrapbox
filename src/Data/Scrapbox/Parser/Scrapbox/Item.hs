@@ -19,7 +19,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, try, unexpected,
                                                 (<?>), (<|>))
 
-import           Data.Scrapbox.Parser.Scrapbox.Utils (lookAheadMaybe)
+import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------

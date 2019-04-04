@@ -10,6 +10,7 @@ module Data.Scrapbox.Internal
     , runScrapTextParser
     , runItemParser
     , runScrapboxParser
+    , runParagraphParser
     -- * Helper functions
     , concatInline
     , concatSegment
@@ -36,6 +37,7 @@ module Data.Scrapbox.Internal
     , isNoStyle
     ) where
 
+import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (runParagraphParser)
 import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
