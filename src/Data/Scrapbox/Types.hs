@@ -398,11 +398,12 @@ concatSegment (a : rest) = a : concatSegment rest
 
 -- Convert 'StyleData' to 'Style'
 toStyle :: StyleData -> Style
-toStyle (StyleData _ False False False) = NoStyle
-toStyle (StyleData _ True False False)  = Bold
-toStyle (StyleData _ False True False)  = Italic
-toStyle (StyleData _ False False True)  = StrikeThrough
-toStyle others                          = CustomStyle others
+toStyle  = \case
+    (StyleData _ False False False) -> NoStyle
+    (StyleData _ True False False)  -> Bold
+    (StyleData _ False True False)  -> Italic
+    (StyleData _ False False True)  -> StrikeThrough
+    others                          -> CustomStyle others
 
 --------------------------------------------------------------------------------
 -- Predicates
