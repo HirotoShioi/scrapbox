@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Scrapbox.Parser.Commonmark.ParagraphParser
@@ -12,19 +13,20 @@ import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 eof, many, many1, manyTill,
                                                 noneOf, parse, string, try,
-                                                (<?>), (<|>))
+                                                unexpected, (<?>), (<|>))
 
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), Segment (..),
-                                      Style (..), StyleData(..), emptyStyle)
+                                      Style (..), StyleData (..), emptyStyle,
+                                      toStyle)
 
 strongParser :: StyleData -> String -> Parser InlineBlock
 strongParser styleData symbol = do
     str <- try (string "**") <|> string "__"
     let newSymbol = str <> symbol
-    let withBold = styleData { sBold = True } 
-    try (emphParser withBold newSymbol) 
-        <|> try (strikeThroughParser withBold newSymbol) 
+    let withBold = styleData { sBold = True } -- Check!
+    try (emphParser withBold newSymbol)
+        <|> try (strikeThroughParser withBold newSymbol)
         <|> specialParser newSymbol withBold
 
 emphParser :: StyleData -> String -> Parser InlineBlock
@@ -32,14 +34,14 @@ emphParser styleData symbol = do
     str  <- try (string "*") <|> string "_"
     let newSymbol = str <> symbol
     let withEmph = styleData { sItalic = True }
-    try (strongParser withEmph newSymbol) 
-        <|> try (strikeThroughParser withEmph newSymbol) 
+    try (strongParser withEmph newSymbol)
+        <|> try (strikeThroughParser withEmph newSymbol)
         <|> specialParser newSymbol withEmph
 
 specialParser :: String -> StyleData -> Parser InlineBlock
 specialParser str styleData' = do
     text <- manyTill anyChar (try $ string str)
-    when (null text) $ fail "Nothing to consume"
+    when (null text) $ unexpected "Text is empty, nothing to consume"
     return $ ITEM (CustomStyle styleData') [TEXT (fromString text)]
 
 strikeThroughParser :: StyleData -> String -> Parser InlineBlock
@@ -47,8 +49,8 @@ strikeThroughParser styleData symbol = do
     str <- string "~~"
     let newSymbol = str <> symbol
     let withStrike = styleData { sStrikeThrough = True}
-    try (strongParser withStrike newSymbol) 
-        <|> try (emphParser withStrike newSymbol) 
+    try (strongParser withStrike newSymbol)
+        <|> try (emphParser withStrike newSymbol)
         <|> specialParser newSymbol withStrike
 
 -- | Parser for non-styled text
@@ -56,7 +58,6 @@ strikeThroughParser styleData symbol = do
 noStyleParser :: Parser InlineBlock
 noStyleParser = ITEM NoStyle <$> extractNonStyledText
   where
-
     extractNonStyledText :: Parser [Segment]
     extractNonStyledText = go mempty
 
@@ -111,7 +112,7 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
 
 -- | Parse given 'String' into @[InlineBlock]@
 runParagraphParser :: String -> Either ParseError [InlineBlock]
-runParagraphParser = parse parser "Paragraph parser"
+runParagraphParser text =  map convertStyles <$> parse parser "Paragraph parser" text
   where
     parser :: Parser [InlineBlock]
     parser = manyTill (
@@ -121,6 +122,15 @@ runParagraphParser = parse parser "Paragraph parser"
         <|> try noStyleParser
         <?> "Cannot parse given paragraph"
         ) (try eof)
+
+    convertStyles :: InlineBlock -> InlineBlock
+    convertStyles = \case
+        ITEM style segments -> ITEM (convert style) segments
+        others              -> others
+    convert :: Style -> Style
+    convert = \case
+        CustomStyle style -> toStyle style
+        others            -> others
 
 toInlineBlocks :: Text -> [InlineBlock]
 toInlineBlocks text =

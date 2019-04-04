@@ -1,4 +1,4 @@
-{-| This module exports 'renderToCommonmarkNoOption' which renders 'Scrapbox' 
+{-| This module exports 'renderToCommonmarkNoOption' which renders 'Scrapbox'
 AST into commonmark
 -}
 
@@ -174,7 +174,7 @@ renderTable (TableName name) (TableContent contents) =
         rest       <- tailMaybe contents
         let headColumnNums = map T.length headColumn
         return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
-    
+
     -- Render column section
     renderColumn :: [Text] -> Text
     renderColumn items = "| " <> foldr (\item acc -> item <> " | " <> acc) mempty items
