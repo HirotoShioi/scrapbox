@@ -4,7 +4,8 @@ extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra
 
 -}
 
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Utils
     ( whenRight
@@ -14,12 +15,19 @@ module Utils
     , genText
     , genPrintableUrl
     , genMaybe
+    , NonEmptyPrintableString(..)
+    , shouldParseSpec
     ) where
 
 import           RIO
 
 import qualified RIO.Text as T
-import           Test.QuickCheck (Gen, elements, listOf1)
+import           Test.Hspec (Spec)
+import           Test.Hspec.QuickCheck (prop)
+import           Test.QuickCheck (Arbitrary (..), Gen, arbitraryPrintableChar,
+                                  elements, listOf1)
+import           Test.QuickCheck (PrintableString (..))
+import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper function
@@ -61,3 +69,18 @@ genMaybe :: Gen a -> Gen (Maybe a)
 genMaybe gen = do
     gened <- gen
     elements [Just gened, Nothing]
+
+-- | Non-empty version of 'PrintableString'
+newtype NonEmptyPrintableString =  NonEmptyPrintableString
+    { getNonEmptyPrintableString :: String
+    } deriving Show
+
+instance Arbitrary NonEmptyPrintableString where
+    arbitrary = NonEmptyPrintableString <$> listOf1 arbitraryPrintableChar
+
+-- | General testing spec for parser
+shouldParseSpec :: (String -> Either ParseError a) -> Spec
+shouldParseSpec parser =
+        prop "should be able to parse any text without failing or cause infinite loop" $
+            \(someText :: PrintableString) ->
+                isRight $ parser $ getPrintableString someText

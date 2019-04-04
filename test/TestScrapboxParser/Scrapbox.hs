@@ -21,9 +21,9 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), renderToScrapbox)
 import           Data.Scrapbox.Internal (runScrapboxParser)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           propParseAsExpected, shouldParseSpec)
-import           Utils (whenRight)
+import           TestScrapboxParser.Utils (propParseAsExpected)
+import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
+                        whenRight)
 --------------------------------------------------------------------------------
 -- Scrapbox parser
 --------------------------------------------------------------------------------

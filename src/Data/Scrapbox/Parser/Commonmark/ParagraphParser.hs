@@ -2,15 +2,17 @@
 
 module Data.Scrapbox.Parser.Commonmark.ParagraphParser
     ( toInlineBlocks
+    , runParagraphParser
     ) where
 
 
 import           RIO hiding (many, try, (<|>))
 
 import qualified RIO.Text as T
-import           Text.ParserCombinators.Parsec (Parser, anyChar, eof, many,
-                                                many1, manyTill, noneOf, parse,
-                                                string, try, (<?>), (<|>))
+import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
+                                                eof, many, many1, manyTill,
+                                                noneOf, parse, string, try,
+                                                (<?>), (<|>))
 
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), Segment (..),
@@ -91,12 +93,8 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
     syntaxSymbols :: String
     syntaxSymbols = "_*~"
 
-toInlineBlocks :: Text -> [InlineBlock]
-toInlineBlocks text =
-    either
-        (const [ITEM NoStyle [TEXT text]])
-        id
-        (parse parser "Paragraph parser" (T.unpack text))
+runParagraphParser :: String -> Either ParseError [InlineBlock]
+runParagraphParser = parse parser "Paragraph parser"
   where
     parser :: Parser [InlineBlock]
     parser = manyTill (
@@ -106,3 +104,10 @@ toInlineBlocks text =
         <|> try noStyleParser
         <?> "Cannot parse given paragraph"
         ) (try eof)
+
+toInlineBlocks :: Text -> [InlineBlock]
+toInlineBlocks text =
+    either
+        (const [ITEM NoStyle [TEXT text]])
+        id
+        (runParagraphParser (T.unpack text))
