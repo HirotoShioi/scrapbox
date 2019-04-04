@@ -43,7 +43,8 @@ columnParser = do
         either
             fail
             (\(currList', rest') -> do
-                -- If symbolCount is less than required amount then the process is done
+                -- If symbolCount is less than required amount then the process
+                -- is done
                 let symbolCount = T.length $ T.filter (== '|') rest'
                 if T.null rest' || symbolCount < 2
                     then return $ Column currList'

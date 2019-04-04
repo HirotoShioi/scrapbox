@@ -76,7 +76,8 @@ noStyleParser = ITEM NoStyle <$> extractNonStyledText
                 rest <- many $ noneOf syntaxSymbols
                 go $ content <> rest
 
-    -- Run parser on ahead content to see if it can be parsed, if not, consume the text
+    -- Run parser on ahead content to see if it can be parsed, if not, consume
+    -- the text
     checkWith :: String -> Parser a -> String -> Parser [Segment]
     checkWith symbolStr parser content = do
         canBeParsed <- isJust <$> lookAheadMaybe parser

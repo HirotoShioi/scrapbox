@@ -129,7 +129,7 @@ segmentParser =
 
 -- | Parser for inline text
 itemParser :: Parser [Segment]
-itemParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
+itemParser = manyTill segmentParser eof
 
 -- | Run inline text parser on given 'String'
 --

@@ -40,7 +40,8 @@ scrapTextParserSpec =
 
         prop "should return non-empty list of contexts if the given string is non-empty" $
             \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runScrapTextParser $ getNonEmptyPrintableString someText
+                let eParseredText = runScrapTextParser
+                        $ getNonEmptyPrintableString someText
 
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \(ScrapText inlines) ->

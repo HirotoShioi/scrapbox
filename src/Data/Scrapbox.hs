@@ -77,7 +77,8 @@ data ScrapboxOption
   -- ^ Remove relative link such as @../foo/bar/baz.md@ when parsing link
   deriving (Eq)
 
--- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier to see
+-- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier
+-- to see
 optSectionHeading :: ScrapboxOption
 optSectionHeading = SectionHeading
 
@@ -92,7 +93,7 @@ applyOption :: [ScrapboxOption] -> Scrapbox -> Scrapbox
 applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
   where
     apply :: ScrapboxOption -> Scrapbox -> Scrapbox
-    apply SectionHeading (Scrapbox blocks)         = Scrapbox $ applyLinebreak blocks
+    apply SectionHeading (Scrapbox blocks)     = Scrapbox $ applyLinebreak blocks
     apply FilterRelativeLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
 
     -- Apply 'LINEBREAK' between 'HEADING' section
@@ -110,10 +111,14 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
 
     applyFilterLink :: Block -> Block
     applyFilterLink = \case
-        PARAGRAPH (ScrapText inlines)   -> PARAGRAPH $ ScrapText $ map filterItem inlines
-        BULLET_POINT start blocks       -> BULLET_POINT start $ map applyFilterLink blocks
-        BLOCK_QUOTE (ScrapText inlines) -> BLOCK_QUOTE $ ScrapText $ map filterItem inlines
-        HEADING level segments          -> HEADING level $ map filterRelativeLink segments
+        PARAGRAPH (ScrapText inlines)   ->
+            PARAGRAPH $ ScrapText $ map filterItem inlines
+        BULLET_POINT start blocks       ->
+            BULLET_POINT start $ map applyFilterLink blocks
+        BLOCK_QUOTE (ScrapText inlines) ->
+            BLOCK_QUOTE $ ScrapText $ map filterItem inlines
+        HEADING level segments          ->
+            HEADING level $ map filterRelativeLink segments
         other                           -> other
 
     filterItem :: InlineBlock -> InlineBlock
@@ -145,19 +150,23 @@ scrapboxToNode options scrapboxPage =
 
 -- | Convert given commonmark text into 'Scrapbox' format
 commonmarkToScrapbox :: [ScrapboxOption] -> Text -> Text
-commonmarkToScrapbox opts cmark = renderToScrapboxNoOption $ commonmarkToNode opts cmark
+commonmarkToScrapbox opts cmark = renderToScrapboxNoOption
+    $ commonmarkToNode opts cmark
 
 -- | Convert given commonmark into 'Scrapbox' AST
 commonmarkToNode :: [ScrapboxOption] -> Text -> Scrapbox
-commonmarkToNode opts cmark = applyOption opts $ parseCommonmark (applyCorrection cmark)
+commonmarkToNode opts cmark = applyOption opts
+    $ parseCommonmark (applyCorrection cmark)
 
 -- | Render given 'Scrapbox' AST into commonmark with given @[ScrapboxOption]@
 renderToCommonmark :: [ScrapboxOption] -> Scrapbox -> Text
-renderToCommonmark opts scrapbox = renderToCommonmarkNoOption $ applyOption opts scrapbox
+renderToCommonmark opts scrapbox = renderToCommonmarkNoOption
+    $ applyOption opts scrapbox
 
 -- | Render given 'Scrapbox' AST into Scrapbox page with given @[ScrapboxOption]@
 renderToScrapbox :: [ScrapboxOption] -> Scrapbox -> Text
-renderToScrapbox opts scrapbox = renderToScrapboxNoOption $ applyOption opts scrapbox
+renderToScrapbox opts scrapbox = renderToScrapboxNoOption
+    $ applyOption opts scrapbox
 
 -- | Apply correction to ensure that the @CMark@ parses the syntaxes correctly
 --
@@ -169,7 +178,8 @@ applyCorrection = T.unlines . map apply . T.lines
   where
     apply :: Text -> Text
     apply line
-      | "#" `T.isPrefixOf` line && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
+      |    "#" `T.isPrefixOf` line
+        && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
         let (symbol, rest) = T.break (/= '#') line
         in symbol <> " " <> rest
       | otherwise = line

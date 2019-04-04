@@ -17,7 +17,8 @@ import           TestCommonMark.Segments (segmentSpec)
 import           TestCommonMark.Styles (styleSpec)
 
 import           Data.Scrapbox.Internal (runParagraphParser)
-import           Utils (NonEmptyPrintableString (..), whenRight, shouldParseSpec)
+import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
+                        whenRight)
 
 commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
@@ -34,7 +35,6 @@ paragraphParserSpec = describe "runParagraphParser" $ modifyMaxSuccess (const 50
     prop "should return non-empty list of blocks if the given string is non-empty" $
         \(someText :: NonEmptyPrintableString) -> monadicIO $ do
             let eParseredText = runParagraphParser $ getNonEmptyPrintableString someText
-
             assert $ isRight eParseredText
             whenRight eParseredText $ \inlines ->
                 assert $ not $ null inlines

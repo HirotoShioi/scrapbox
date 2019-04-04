@@ -61,7 +61,9 @@ instance Arbitrary (StyledText a) where
     arbitrary = StyledText <$> genPrintableText
 
 -- | Generalized test case for checking whether the content of the text has same content
-checkStyledTextContent :: (CommonMark (StyledText style)) => StyledText style -> Property
+checkStyledTextContent :: (CommonMark (StyledText style))
+                       => StyledText style
+                       -> Property
 checkStyledTextContent styledText =
     checkScrapbox styledText
         (\txt -> txt == getStyledText styledText)
@@ -103,7 +105,8 @@ noStyleTextSpec =
                  (== NoStyle)
                  getHeadInlineBlock
         prop "should preserve its content" $
-            \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
+            \(noStyleText :: StyledText 'NoStyles) ->
+                checkStyledTextContent noStyleText
 
 --------------------------------------------------------------------------------
 -- Bold text
@@ -135,4 +138,5 @@ italicTextSpec = describe "Italic text" $ do
                 (== Italic)
                 getHeadInlineBlock
     prop "should preserve its content" $
-        \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText
+        \(italicText :: StyledText 'ItalicStyle) ->
+            checkStyledTextContent italicText
