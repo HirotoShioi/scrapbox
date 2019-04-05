@@ -92,17 +92,17 @@ getHeadInlineBlock blocks = do
 --------------------------------------------------------------------------------
 
 checkParse :: (CommonMark (StyledText a)) => Style -> StyledText a -> Property
-checkParse style styledText = 
+checkParse style styledText =
     checkScrapbox
         styledText
         (== style)
         getHeadInlineBlock
-    
+
 -- | Test spec for parsing non-styled text
 noStyleTextSpec :: Spec
 noStyleTextSpec =
     describe "Non-styled text" $ do
-        prop "should parse non-styled text as NoStyle" $ 
+        prop "should parse non-styled text as NoStyle" $
          \(noStyleText :: StyledText 'NoStyles) -> checkParse NoStyle noStyleText
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) ->
@@ -129,7 +129,7 @@ italicTextSpec = describe "Italic text" $ do
 strikeThroughTextSpec :: Spec
 strikeThroughTextSpec = describe "Strikethrough text" $ do
     prop "should parse italic text as StrikeThrough" $
-        \(strikeThroughText :: StyledText 'StrikeThroughStyle) -> 
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
             checkParse StrikeThrough strikeThroughText
     prop "should preserve its content" $
         \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->

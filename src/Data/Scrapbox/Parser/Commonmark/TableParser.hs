@@ -13,9 +13,8 @@ import           RIO
 
 import           Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as P
-import           Data.Text (Text)
-import qualified Data.Text as T
-import           Prelude (String)
+import           RIO.Text (Text)
+import qualified RIO.Text as T
 
 import           Data.Scrapbox.Constructors (table)
 import           Data.Scrapbox.Types (Block)
