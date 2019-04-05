@@ -31,6 +31,7 @@ module Data.Scrapbox.Types
     , verbose
     , unverbose
     , emptyStyle
+    , toStyle
     -- * Predicates
     , isBlockQuote
     , isBulletPoint
@@ -81,7 +82,9 @@ instance Arbitrary Scrapbox where
 
             -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
             (BULLET_POINT start blocks : xs) ->
-                BULLET_POINT start (removeAmbiguity blocks) : LINEBREAK : removeAmbiguity xs
+                  BULLET_POINT start (removeAmbiguity blocks)
+                : LINEBREAK
+                : removeAmbiguity xs
             (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
             (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
 
@@ -193,7 +196,9 @@ instance Arbitrary Block where
           bulletPointFreq = frequency
             [ (1, BLOCK_QUOTE <$> arbitrary)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
+            , (2, HEADING <$> arbitrary <*>
+                (concatSegment . addSpace <$> listOf1 arbitrary)
+              )
             , (7, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
@@ -388,6 +393,19 @@ concatSegment (TEXT txt1 : TEXT txt2 : rest) =
 concatSegment (a : rest) = a : concatSegment rest
 
 --------------------------------------------------------------------------------
+-- Conversion
+--------------------------------------------------------------------------------
+
+-- Convert 'StyleData' to 'Style'
+toStyle :: StyleData -> Style
+toStyle  = \case
+    (StyleData _ False False False) -> NoStyle
+    (StyleData _ True False False)  -> Bold
+    (StyleData _ False True False)  -> Italic
+    (StyleData _ False False True)  -> StrikeThrough
+    others                          -> CustomStyle others
+
+--------------------------------------------------------------------------------
 -- Predicates
 --------------------------------------------------------------------------------
 
@@ -486,6 +504,8 @@ formatInline (x:xs)                   = x : formatInline xs
 -- Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                               = []
-addSpace (HASHTAG txt : TEXT text : rest) = HASHTAG txt : TEXT (" " <> text) : addSpace rest
-addSpace (HASHTAG txt : rest)             = HASHTAG txt : TEXT " " : addSpace rest
+addSpace (HASHTAG txt : TEXT text : rest) =
+    HASHTAG txt : TEXT (" " <> text) : addSpace rest
+addSpace (HASHTAG txt : rest)             =
+    HASHTAG txt : TEXT " " : addSpace rest
 addSpace (x:xs)                           = x : addSpace xs

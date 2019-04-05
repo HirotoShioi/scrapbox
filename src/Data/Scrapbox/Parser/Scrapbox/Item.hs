@@ -7,17 +7,17 @@ module Data.Scrapbox.Parser.Scrapbox.Item
     , itemParser
     ) where
 
-import           RIO hiding (many, try, (<|>))
+import           RIO hiding (many, try)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe)
 
 import           Data.String (fromString)
-import qualified Data.Text as T
 import           Network.URI (isURI)
+import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
                                                 sepBy1, space, try, unexpected,
-                                                (<?>), (<|>))
+                                                (<?>))
 
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (Segment (..), Url (..))
@@ -129,7 +129,7 @@ segmentParser =
 
 -- | Parser for inline text
 itemParser :: Parser [Segment]
-itemParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
+itemParser = manyTill segmentParser eof
 
 -- | Run inline text parser on given 'String'
 --

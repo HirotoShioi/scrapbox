@@ -255,7 +255,9 @@ unorderedListSpec = describe "Unordered list" $ do
     prop "should preserve its content" $
         \(unorderedListBlock :: UnorderedListBlock) ->
             checkScrapbox unorderedListBlock
-                (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
+                (\renderedTexts ->
+                    renderedTexts == getUnorderedListBlock unorderedListBlock
+                )
                 (\content -> do
                     blockContent          <- headMaybe content
                     (BULLET_POINT _ lists) <- getBulletPoint blockContent
@@ -281,7 +283,10 @@ instance Arbitrary OrderedListBlock where
 
 instance CommonMark OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
-        zipWith (\num someText -> tshow num <> ". " <> someText) ([1..] :: [Int]) list
+        zipWith
+            (\num someText -> tshow num <> ". " <> someText)
+            ([1..] :: [Int])
+            list
 
 -- | Test spec for parsing Ordered list
 orderedListSpec :: Spec
@@ -293,7 +298,9 @@ orderedListSpec = describe "Ordered list" $ do
     prop "should preserve its content" $
         \(orderedListBlock :: OrderedListBlock) ->
             checkScrapbox orderedListBlock
-                (\renderedTexts -> renderedTexts == getOrderedListBlock orderedListBlock)
+                (\renderedTexts ->
+                    renderedTexts == getOrderedListBlock orderedListBlock
+                )
                 (\content -> do
                     blockContent        <- headMaybe content
                     (BULLET_POINT _ lists) <- getBulletPoint blockContent

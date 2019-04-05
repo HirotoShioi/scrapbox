@@ -7,7 +7,7 @@ module Data.Scrapbox.Parser.Scrapbox
     ( runScrapboxParser
     ) where
 
-import           RIO hiding (many, try, (<|>))
+import           RIO hiding (many, try)
 
 import           Network.URI (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
@@ -15,7 +15,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 many, many1, manyTill, noneOf,
                                                 notFollowedBy, oneOf, parse,
                                                 sepBy1, space, string, try,
-                                                unexpected, (<|>))
+                                                unexpected)
 
 import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,

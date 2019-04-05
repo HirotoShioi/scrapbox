@@ -33,9 +33,10 @@ import           Test.QuickCheck (Gen, elements, listOf1)
 whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (pure ()) f mg
 
--- | The 'whenRight' function takes an 'Either' value and a function which returns a monad.
--- The monad is only executed when the given argument takes the form @'Right' _@, otherwise
--- it does nothing.
+-- | The 'whenRight' function takes an 'Either' value and a function which returns
+-- a monad.
+-- The monad is only executed when the given argument takes the form @'Right' _@,
+-- otherwise it does nothing.
 whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
 whenRight (Right x) f = f x
 whenRight _         _ = pure ()

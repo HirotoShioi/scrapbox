@@ -111,6 +111,7 @@ renderWithStyle style inline = case style of
     CustomStyle customStyle -> renderCustomStyle customStyle inline
     UserStyle userStyle -> "[" <> userStyle <> " " <> renderSegments inline <> "]"
 
+-- | Render @[Segment]@ with given 'StyleData'
 renderCustomStyle :: StyleData -> [Segment] -> Text
 renderCustomStyle (StyleData headerNum isBold isItalic isStrikeThrough) content =
     let italicSymbol         = if isItalic then "/" else mempty

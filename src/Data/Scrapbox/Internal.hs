@@ -7,9 +7,12 @@ module Data.Scrapbox.Internal
     , renderText
     , renderInline
     -- * Parsers
+    -- These parsers can be used to parse given 'String' into some data type
+    -- ** Scrapbox
     , runScrapTextParser
     , runItemParser
     , runScrapboxParser
+    -- ** Commonmark
     , runParagraphParser
     -- * Helper functions
     , concatInline
@@ -22,14 +25,14 @@ module Data.Scrapbox.Internal
     , isBlockQuote
     , isBulletPoint
     , isCodeBlock
-    , isCodeNotation
-    , isMathExpr
     , isHeader
     , isLink
     , isParagraph
     , isThumbnail
     , isTable
     , isText
+    , isMathExpr
+    , isCodeNotation
     , isHashTag
     , isBold
     , isItalic

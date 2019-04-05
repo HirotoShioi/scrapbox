@@ -20,12 +20,12 @@ data DiffPair = DiffPair
     -- ^ Parsed data
     } deriving Show
 
--- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares two
--- block data.
+-- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares
+-- two block data.
 findDiffs :: Scrapbox -> Either String [DiffPair]
 findDiffs sb@(Scrapbox blocks) =
     either
-        (\_ -> Left "Failed to parse")
+        (const $ Left "Failed to parse")
         (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
         (runScrapboxParser . T.unpack $ renderToScrapbox [] sb)
   where
