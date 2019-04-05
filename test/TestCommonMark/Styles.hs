@@ -28,14 +28,6 @@ import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
 
 import           Utils (genPrintableText)
 
--- | Test suites for parsing styled text
-styleSpec :: Spec
-styleSpec = describe "Styles" $ do
-    noStyleTextSpec
-    boldTextSpec
-    italicTextSpec
-    strikeThroughTextSpec
-
 -- | Use Phantom type so we can generalize the test
 newtype StyledText (a :: TestStyle) = StyledText
     { getStyledText :: Text
@@ -86,7 +78,7 @@ checkStyledTextContent styledText =
 
 getHeadInlineBlock :: [Block] -> Maybe Style
 getHeadInlineBlock blocks = do
-    blockContent                 <- headMaybe blocks
+    blockContent                    <- headMaybe blocks
     (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
     inline                          <- headMaybe inlines
     getStyle inline
@@ -99,49 +91,36 @@ getHeadInlineBlock blocks = do
 -- No style
 --------------------------------------------------------------------------------
 
+checkParse :: (CommonMark (StyledText a)) => Style -> StyledText a -> Property
+checkParse style styledText = 
+    checkScrapbox
+        styledText
+        (== style)
+        getHeadInlineBlock
+    
 -- | Test spec for parsing non-styled text
 noStyleTextSpec :: Spec
 noStyleTextSpec =
     describe "Non-styled text" $ do
-        prop "should parse non-styled text as NoStyle" $
-           \(noStyleText :: StyledText 'NoStyles) ->
-               checkScrapbox
-                 noStyleText
-                 (== NoStyle)
-                 getHeadInlineBlock
+        prop "should parse non-styled text as NoStyle" $ 
+         \(noStyleText :: StyledText 'NoStyles) -> checkParse NoStyle noStyleText
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) ->
                 checkStyledTextContent noStyleText
-
---------------------------------------------------------------------------------
--- Bold text
---------------------------------------------------------------------------------
 
 -- | Test spec for parsing Bold-styled text
 boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
-        \(boldText :: StyledText 'BoldStyle) ->
-            checkScrapbox
-                boldText
-                (== Bold)
-                getHeadInlineBlock
+        \(boldText :: StyledText 'BoldStyle) -> checkParse Bold boldText
     prop "should preserve its content" $
         \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
-
---------------------------------------------------------------------------------
--- Italic text
---------------------------------------------------------------------------------
 
 -- | Test spec for parsing italic-styled text
 italicTextSpec :: Spec
 italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $
-        \(italicText :: StyledText 'ItalicStyle) ->
-            checkScrapbox
-                italicText
-                (== Italic)
-                getHeadInlineBlock
+        \(italicText :: StyledText 'ItalicStyle) -> checkParse Italic italicText
     prop "should preserve its content" $
         \(italicText :: StyledText 'ItalicStyle) ->
             checkStyledTextContent italicText
@@ -150,11 +129,16 @@ italicTextSpec = describe "Italic text" $ do
 strikeThroughTextSpec :: Spec
 strikeThroughTextSpec = describe "Strikethrough text" $ do
     prop "should parse italic text as StrikeThrough" $
-        \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
-            checkScrapbox
-                strikeThroughText
-                (== StrikeThrough)
-                getHeadInlineBlock
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) -> 
+            checkParse StrikeThrough strikeThroughText
     prop "should preserve its content" $
         \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
             checkStyledTextContent strikeThroughText
+
+-- | Test suites for parsing styled text
+styleSpec :: Spec
+styleSpec = describe "Styles" $ do
+    noStyleTextSpec
+    boldTextSpec
+    italicTextSpec
+    strikeThroughTextSpec
