@@ -34,6 +34,7 @@ styleSpec = describe "Styles" $ do
     noStyleTextSpec
     boldTextSpec
     italicTextSpec
+    strikeThroughTextSpec
 
 -- | Use Phantom type so we can generalize the test
 newtype StyledText (a :: TestStyle) = StyledText
@@ -47,12 +48,16 @@ data TestStyle =
       BoldStyle
     | ItalicStyle
     | NoStyles
+    | StrikeThroughStyle
 
 instance CommonMark (StyledText 'BoldStyle) where
     render (StyledText txt) = "**" <> txt <> "**"
 
 instance CommonMark (StyledText 'ItalicStyle) where
     render (StyledText txt) = "*" <> txt <> "*"
+
+instance CommonMark (StyledText 'StrikeThroughStyle) where
+    render (StyledText txt) = "~~" <> txt <> "~~"
 
 instance CommonMark (StyledText 'NoStyles) where
     render (StyledText txt) = txt
@@ -140,3 +145,16 @@ italicTextSpec = describe "Italic text" $ do
     prop "should preserve its content" $
         \(italicText :: StyledText 'ItalicStyle) ->
             checkStyledTextContent italicText
+
+-- | Test spec for parsing strike through text
+strikeThroughTextSpec :: Spec
+strikeThroughTextSpec = describe "Strikethrough text" $ do
+    prop "should parse italic text as StrikeThrough" $
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
+            checkScrapbox
+                strikeThroughText
+                (== StrikeThrough)
+                getHeadInlineBlock
+    prop "should preserve its content" $
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
+            checkStyledTextContent strikeThroughText
