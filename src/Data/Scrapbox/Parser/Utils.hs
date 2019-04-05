@@ -12,4 +12,4 @@ import           Text.ParserCombinators.Parsec (Parser, lookAhead, optionMaybe,
 
 -- | Try to parse ahead content with given 'Parser a' and return its result with 'Maybe a'
 lookAheadMaybe :: Parser a -> Parser (Maybe a)
-lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
+lookAheadMaybe = lookAhead . optionMaybe . try

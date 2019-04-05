@@ -25,7 +25,7 @@ data DiffPair = DiffPair
 findDiffs :: Scrapbox -> Either String [DiffPair]
 findDiffs sb@(Scrapbox blocks) =
     either
-        (\_ -> Left "Failed to parse")
+        (const $ Left "Failed to parse")
         (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
         (runScrapboxParser . T.unpack $ renderToScrapbox [] sb)
   where

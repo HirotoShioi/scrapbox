@@ -10,57 +10,58 @@ module Data.Scrapbox.Parser.Commonmark.ParagraphParser
     ) where
 
 
-import           RIO hiding (many, try, (<|>))
+import           RIO hiding (many, try)
 
 import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 eof, many, many1, manyTill,
                                                 noneOf, parse, string, try,
-                                                unexpected, (<?>), (<|>))
+                                                unexpected, (<?>))
 
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), Segment (..),
                                       Style (..), StyleData (..), emptyStyle,
                                       toStyle)
 
+type Symbol = String
+
 -- | Strong parser
-strongParser :: StyleData -> String -> Parser InlineBlock
+strongParser :: StyleData -> Symbol -> Parser InlineBlock
 strongParser styleData symbol = do
     str <- try (string "**") <|> string "__"
     let newSymbol = str <> symbol
     let withBold = styleData { sBold = True } -- Check!
     try (emphParser withBold newSymbol)
         <|> try (strikeThroughParser withBold newSymbol)
-        <|> textParser newSymbol withBold
+        <|> textParser withBold newSymbol
 
 -- | Emph sparser
-emphParser :: StyleData -> String -> Parser InlineBlock
+emphParser :: StyleData -> Symbol -> Parser InlineBlock
 emphParser styleData symbol = do
     str  <- try (string "*") <|> string "_"
     let newSymbol = str <> symbol
     let withEmph = styleData { sItalic = True }
     try (strongParser withEmph newSymbol)
         <|> try (strikeThroughParser withEmph newSymbol)
-        <|> textParser newSymbol withEmph
+        <|> textParser withEmph newSymbol
 
 -- | Strikethrough parser
-strikeThroughParser :: StyleData -> String -> Parser InlineBlock
+strikeThroughParser :: StyleData -> Symbol -> Parser InlineBlock
 strikeThroughParser styleData symbol = do
     str <- string "~~"
     let newSymbol = str <> symbol
     let withStrike = styleData { sStrikeThrough = True}
     try (strongParser withStrike newSymbol)
         <|> try (emphParser withStrike newSymbol)
-        <|> textParser newSymbol withStrike
+        <|> textParser withStrike newSymbol
 
--- | Parser
-textParser :: String -> StyleData -> Parser InlineBlock
-textParser str styleData = do
-    text <- manyTill anyChar (try $ string str)
+-- | Parser which takes a symbol and 'StyleData'
+textParser :: StyleData -> Symbol -> Parser InlineBlock
+textParser styleData symbol = do
+    text <- manyTill anyChar (try $ string symbol)
     when (null text) $ unexpected "Text is empty, nothing to consume"
     return $ ITEM (CustomStyle styleData) [TEXT (fromString text)]
 
--- | Parser for non-styled text
 -- | Parser for non-styled text
 noStyleParser :: Parser InlineBlock
 noStyleParser = ITEM NoStyle <$> extractNonStyledText
@@ -122,13 +123,13 @@ runParagraphParser :: String -> Either ParseError [InlineBlock]
 runParagraphParser text =  map convertStyles <$> parse parser "Paragraph parser" text
   where
     parser :: Parser [InlineBlock]
-    parser = manyTill (
-            try (strikeThroughParser emptyStyle mempty)
+    parser = manyTill
+          ( try (strikeThroughParser emptyStyle mempty)
         <|> try (strongParser emptyStyle mempty)
         <|> try (emphParser emptyStyle mempty)
         <|> try noStyleParser
         <?> "Cannot parse given paragraph"
-        ) (try eof)
+          ) (try eof)
 
     convertStyles :: InlineBlock -> InlineBlock
     convertStyles = \case
@@ -141,8 +142,7 @@ runParagraphParser text =  map convertStyles <$> parse parser "Paragraph parser"
 
 -- | Convert given 'Text' into @[InlineBlock]@
 toInlineBlocks :: Text -> [InlineBlock]
-toInlineBlocks text =
-    either
-        (const [ITEM NoStyle [TEXT text]])
-        id
-        (runParagraphParser (T.unpack text))
+toInlineBlocks text = either
+    (const [ITEM NoStyle [TEXT text]])
+    id
+    (runParagraphParser (T.unpack text))
