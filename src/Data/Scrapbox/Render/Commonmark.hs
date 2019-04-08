@@ -17,7 +17,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       TableContent (..), TableName (..),
                                       Url (..))
 import           Network.URI (parseURI, uriQuery)
-import           RIO.List (foldl', headMaybe, tailMaybe)
+import           RIO.List (foldl', headMaybe, nub, tailMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
@@ -123,7 +123,7 @@ renderInlineBlock = \case
     MATH_EXPRESSION text -> "`" <> text <> "`"
     ITEM styles segments  ->
         let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
-        in renderWithStyle styles renderedSegments
+        in renderWithStyle (nub styles) renderedSegments
   where
     -- Render given text with 'StyleData'
     renderWithStyle :: [Style] -> Text -> Text

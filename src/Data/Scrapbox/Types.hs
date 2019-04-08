@@ -289,17 +289,18 @@ data Style
     -- ^ Italic style
     | StrikeThrough
     -- ^ StrikeThrough style
-    | UserStyle Text
+    | UserStyle !Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Style where
-    arbitrary =
-        frequency
-            [ (1, return $ UserStyle "!?%")
-            , (1, return Bold) -- Fix later
-            , (1, return Italic)
-            , (1, return StrikeThrough)
-            -- Add sized
+    arbitrary = do
+        someLvl <- arbitrary
+        elements
+            [ UserStyle "!?%"
+            , Bold
+            , Italic
+            , StrikeThrough
+            , Sized someLvl
             ]
 
 --------------------------------------------------------------------------------

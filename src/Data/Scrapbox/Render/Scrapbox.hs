@@ -16,6 +16,7 @@ module Data.Scrapbox.Render.Scrapbox
     ) where
 
 import           RIO
+import           RIO.List (nub)
 import qualified RIO.Text as T
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
@@ -103,7 +104,7 @@ renderWithStyle styles inline = case styles of
     []     -> renderSegments inline
     [Bold] -> "[[" <> renderSegments inline <> "]]"
     others ->
-        let syntax = mkStyleSyntax others
+        let syntax = mkStyleSyntax (nub others)
             renderedSegments = renderSegments inline
         in "[" <> syntax <> " " <> renderedSegments <> "]"
 
