@@ -18,11 +18,12 @@ module Data.Scrapbox.Render.Scrapbox
 import           RIO
 import qualified RIO.Text as T
 
-import           Data.Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
-                                 InlineBlock (..), Level (..), ScrapText (..),
-                                 Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), TableContent (..), TableName (..),
-                                 Url (..))
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      TableContent (..), TableName (..),
+                                      Url (..))
 
 --------------------------------------------------------------------------------
 -- Exposed interface

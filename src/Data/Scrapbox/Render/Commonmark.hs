@@ -130,11 +130,11 @@ renderInlineBlock = \case
     renderWithStyle styles text = foldr apply text styles
 
     apply :: Style -> Text -> Text
-    apply Bold                 = applyBold
-    apply Italic               = applyItalic
-    apply StrikeThrough        = applyStrikeThrough
-    apply (Sized (Level lvl))  = applySize lvl
-    apply (UserStyle _)        = applyBold
+    apply Bold                = applyBold
+    apply Italic              = applyItalic
+    apply StrikeThrough       = applyStrikeThrough
+    apply (Sized (Level lvl)) = applySize lvl
+    apply (UserStyle _)       = applyBold
 
     -- Add font size
     applySize :: Int -> Text -> Text

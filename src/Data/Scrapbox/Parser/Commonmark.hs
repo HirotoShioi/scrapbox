@@ -25,12 +25,11 @@ import qualified RIO.Text as T
 
 import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
-                                             paragraph, scrapbox, text,
-                                             thumbnail, span)
+                                             paragraph, scrapbox, span, text,
+                                             thumbnail)
 import           Data.Scrapbox.Types as S (Block (..), InlineBlock, Scrapbox,
-                                           Segment,
-                                           concatInline, concatScrapText,
-                                           Style(..))
+                                           Segment, Style (..), concatInline,
+                                           concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)

@@ -49,9 +49,9 @@ module Data.Scrapbox.Types
 
 import           RIO
 
-import           Data.List       (groupBy, nub, sort)
-import           Data.Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
-                                  genText)
+import           Data.List (groupBy, nub, sort)
+import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
+                                      genPrintableUrl, genText)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
                                   frequency, genericShrink, getSize, listOf1,
                                   scale, vectorOf)

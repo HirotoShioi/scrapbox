@@ -24,9 +24,8 @@ import           Test.QuickCheck.Monadic (assert, monadicIO)
 import           Data.Scrapbox (InlineBlock (..), ScrapText (..), Segment (..),
                                 Style (..), Url (..))
 import           Data.Scrapbox.Internal (concatSegment, isBold, isCodeNotation,
-                                         isItalic, isMathExpr,
-                                         isStrikeThrough, renderSegments,
-                                         runScrapTextParser)
+                                         isItalic, isMathExpr, isStrikeThrough,
+                                         renderSegments, runScrapTextParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
 import           Utils (NonEmptyPrintableString (..), genPrintableText,
@@ -226,8 +225,8 @@ styledItemSpec = describe "Styled inlines" $ do
     describe "StrikeThrough" $ do
         prop "should parse as StrikeThrough" $
             \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
-                testParse 
-                    strikeThroughInline 
+                testParse
+                    strikeThroughInline
                     (\styles -> length styles == 1 && all isStrikeThrough styles)
 
         prop "should preserve its content" $

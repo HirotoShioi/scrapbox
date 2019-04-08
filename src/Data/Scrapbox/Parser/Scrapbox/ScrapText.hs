@@ -13,18 +13,17 @@ module Data.Scrapbox.Parser.Scrapbox.ScrapText
     , extractParagraph
     ) where
 
-import           RIO                           hiding (many, try)
-import           RIO.List                      (sort)
+import           RIO hiding (many, try)
+import           RIO.List (sort)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
                                                 space, string, try, unexpected)
 
-import           Data.Scrapbox.Parser.Scrapbox.Item          (runItemParserM)
-import           Data.Scrapbox.Parser.Utils         (lookAheadMaybe)
-import           Data.Scrapbox.Types                (InlineBlock (..), Level (..),
-                                                ScrapText (..), Segment (..),
-                                                Style (..))
+import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
+import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
+import           Data.Scrapbox.Types (InlineBlock (..), Level (..),
+                                      ScrapText (..), Segment (..), Style (..))
 
 -- | Run 'ScrapText' parser on given 'String'
 --

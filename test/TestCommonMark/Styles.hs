@@ -136,10 +136,10 @@ italicTextSpec = describe "Italic text" $ do
 strikeThroughTextSpec :: Spec
 strikeThroughTextSpec = describe "Strikethrough text" $ do
     prop "should parse italic text as StrikeThrough" $
-        \(strikeThroughText :: StyledText 'StrikeThroughStyle) -> 
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
             checkParse StrikeThrough strikeThroughText
     prop "should preserve its content" $
-        \(strikeThroughText :: StyledText 'StrikeThroughStyle) -> 
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) ->
             checkStyledTextContent strikeThroughText
 
 -- | Test suites for parsing styled text

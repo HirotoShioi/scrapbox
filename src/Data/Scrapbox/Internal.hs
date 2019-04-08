@@ -45,9 +45,9 @@ import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
                                                 renderSegments, renderText)
 import           Data.Scrapbox.Types (concatInline, concatScrapText,
-                                      concatSegment, isBlockQuote,
-                                      isBold, isBulletPoint, isCodeBlock,
+                                      concatSegment, isBlockQuote, isBold,
+                                      isBulletPoint, isCodeBlock,
                                       isCodeNotation, isHashTag, isHeader,
-                                      isItalic, isLink, isMathExpr,
-                                      isParagraph, isStrikeThrough, isTable,
-                                      isText, isThumbnail, unverbose, verbose)
+                                      isItalic, isLink, isMathExpr, isParagraph,
+                                      isStrikeThrough, isTable, isText,
+                                      isThumbnail, unverbose, verbose)
