@@ -8,23 +8,22 @@ module TestScrapboxParser.Inline
     ( inlineParserSpec
     ) where
 
-import           RIO                      hiding (assert)
+import           RIO hiding (assert)
 
-import           RIO.List                 (headMaybe)
-import           Test.Hspec               (Spec, describe, it)
-import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck          (Arbitrary (..))
-import           Test.QuickCheck.Monadic  (assert, monadicIO)
+import           RIO.List (headMaybe)
+import           Test.Hspec (Spec, describe, it)
+import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
+import           Test.QuickCheck (Arbitrary (..))
+import           Test.QuickCheck.Monadic (assert, monadicIO)
 
-import           Scrapbox                 (Segment (..), Url (..))
-import           Scrapbox.Internal        (isHashTag, isLink, isText,
-                                           runItemParser)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           ScrapboxSyntax (..), checkContent,
-                                           checkParsed, propParseAsExpected,
-                                           shouldParseSpec)
-import           Utils                    (genMaybe, genPrintableText,
-                                           genPrintableUrl, genText, whenRight)
+import           Data.Scrapbox (Segment (..), Url (..))
+import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
+                                         runItemParser)
+import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
+                                           checkParsed, propParseAsExpected)
+import           Utils (NonEmptyPrintableString (..), genMaybe,
+                        genPrintableText, genPrintableUrl, genText,
+                        shouldParseSpec, whenRight)
 
 -- | Spec for inline text parser
 inlineParserSpec :: Spec

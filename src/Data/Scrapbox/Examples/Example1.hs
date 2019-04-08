@@ -5,20 +5,21 @@ Example page: https://scrapbox.io/scrapbox-parser/Get_started
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Examples.Example1
+module Data.Scrapbox.Examples.Example1
   ( getStartedScrapbox
   , getsInterestingSB
   , onceStartedSB
   , getStartedSB
   ) where
 
-import           RIO                   hiding (link, span)
+import           RIO hiding (link, span)
 
-import           Scrapbox.Constructors (blockQuote, bold, bulletPoint,
-                                        codeNotation, heading, italic,
-                                        lineBreak, link, p, scrapbox, span,
-                                        strikeThrough, text, thumbnail)
-import           Scrapbox.Types        (Block, Scrapbox)
+import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
+                                             codeNotation, heading, italic,
+                                             lineBreak, link, p,
+                                             scrapbox, strikeThrough, text,
+                                             thumbnail, span)
+import           Data.Scrapbox.Types (Block, Scrapbox)
 
 --------------------------------------------------------------------------------
 -- SECTION: Get started

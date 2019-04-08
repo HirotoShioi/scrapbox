@@ -2,16 +2,16 @@
 'findDiff' will perform an roundtrip on given 'Scrapbox' and returns diff between
 the original data and the parsed data.
 -}
-module Scrapbox.DiffFinder
+module Data.Scrapbox.DiffFinder
     ( findDiffs
     ) where
 
 import           RIO
-import qualified RIO.Text                 as T
+import qualified RIO.Text as T
 
-import           Scrapbox.Parser.Scrapbox (parseScrapbox)
-import           Scrapbox.Render          (renderPretty)
-import           Scrapbox.Types           (Block (..), Scrapbox (..))
+import           Data.Scrapbox (renderToScrapbox)
+import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
+import           Data.Scrapbox.Types (Block (..), Scrapbox (..))
 
 data DiffPair = DiffPair
     { original :: !Block
@@ -20,14 +20,14 @@ data DiffPair = DiffPair
     -- ^ Parsed data
     } deriving Show
 
--- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares two
--- block data.
+-- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares
+-- two block data.
 findDiffs :: Scrapbox -> Either String [DiffPair]
-findDiffs sb@(Scrapbox blocks) = do
-    let eParsed = parseScrapbox . T.unpack $ renderPretty sb
-    case eParsed of
-        Left _                        -> Left "Failed"
-        Right (Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks
+findDiffs sb@(Scrapbox blocks) =
+    either
+        (const $ Left "Failed to parse")
+        (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
+        (runScrapboxParser . T.unpack $ renderToScrapbox [] sb)
   where
     diffs :: [Block] -> [Block] -> [DiffPair]
     diffs = go mempty

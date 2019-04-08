@@ -1,15 +1,15 @@
 {-| Utility function used within parser modules
 -}
 
-module Scrapbox.Parser.Utils
+module Data.Scrapbox.Parser.Utils
     ( lookAheadMaybe
     ) where
 
-import           RIO                           hiding (try)
+import           RIO hiding (try)
 
 import           Text.ParserCombinators.Parsec (Parser, lookAhead, optionMaybe,
                                                 try)
 
 -- | Try to parse ahead content with given 'Parser a' and return its result with 'Maybe a'
 lookAheadMaybe :: Parser a -> Parser (Maybe a)
-lookAheadMaybe parser = lookAhead . optionMaybe $ try parser
+lookAheadMaybe = lookAhead . optionMaybe . try

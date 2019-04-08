@@ -8,7 +8,7 @@
 -- This is to avoid warnings regarding defining typeclass instance of 'Text'
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Scrapbox.Types
+module Data.Scrapbox.Types
     ( -- * Datatypes
       Scrapbox (..)
     , Start(..)
@@ -50,13 +50,13 @@ module Scrapbox.Types
 import           RIO
 
 import           Data.List       (groupBy, nub, sort)
-import           Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
+import           Data.Scrapbox.Utils  (genMaybe, genPrintableText, genPrintableUrl,
                                   genText)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
                                   frequency, genericShrink, getSize, listOf1,
                                   scale, vectorOf)
 
--- | Scrapbox page consist of list of 'Block'
+-- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
@@ -78,7 +78,9 @@ instance Arbitrary Scrapbox where
 
             -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
             (BULLET_POINT start blocks : xs) ->
-                BULLET_POINT start (removeAmbiguity blocks) : LINEBREAK : removeAmbiguity xs
+                  BULLET_POINT start (removeAmbiguity blocks)
+                : LINEBREAK
+                : removeAmbiguity xs
             (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
             (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
 
@@ -156,14 +158,14 @@ newtype Url = Url Text
 instance Arbitrary Url where
     arbitrary = Url <$> genPrintableUrl
 
--- | Scrapbox page is consisted by list of Blocks
+-- | 'Block' can be the following
 data Block
     = LINEBREAK
     -- ^ Linebreak
     | BLOCK_QUOTE !ScrapText
     -- ^ BlockQuote
     | BULLET_POINT !Start ![Block]
-    -- ^ Bulletpoint styled line
+    -- ^ Bulletpoint
     | CODE_BLOCK !CodeName !CodeSnippet
     -- ^ Code blocks
     | HEADING !Level ![Segment]
@@ -193,7 +195,9 @@ instance Arbitrary Block where
           bulletPointFreq = frequency
             [ (1, BLOCK_QUOTE <$> arbitrary)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
+            , (2, HEADING <$> arbitrary <*>
+                (concatSegment . addSpace <$> listOf1 arbitrary)
+              )
             , (7, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
@@ -208,7 +212,6 @@ instance Arbitrary Block where
 newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
--- FIND ME
 instance Arbitrary ScrapText where
     arbitrary = do
         newSize <- choose (0, sizeNum)
@@ -465,7 +468,9 @@ formatInline (x:xs)                   = x : formatInline xs
 
 -- Add space after hashtag
 addSpace :: [Segment] -> [Segment]
-addSpace []                 = []
-addSpace (HASHTAG txt: TEXT text : rest) = HASHTAG txt : TEXT (" " <> text) : addSpace rest
-addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
-addSpace (x:xs)             = x : addSpace xs
+addSpace []                               = []
+addSpace (HASHTAG txt : TEXT text : rest) =
+    HASHTAG txt : TEXT (" " <> text) : addSpace rest
+addSpace (HASHTAG txt : rest)             =
+    HASHTAG txt : TEXT " " : addSpace rest
+addSpace (x:xs)                           = x : addSpace xs

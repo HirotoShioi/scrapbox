@@ -3,7 +3,7 @@
 
 {-# LANGUAGE LambdaCase #-}
 
-module Scrapbox.Parser.ScrapText
+module Data.Scrapbox.Parser.Scrapbox.ScrapText
     ( runScrapTextParser
     , runScrapTextParserM
     , scrapTextParser
@@ -13,20 +13,18 @@ module Scrapbox.Parser.ScrapText
     , extractParagraph
     ) where
 
-import           RIO                           hiding (many, try, (<|>))
+import           RIO                           hiding (many, try)
 import           RIO.List                      (sort)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
-                                                space, string, try, unexpected,
-                                                (<|>))
+                                                space, string, try, unexpected)
 
-import           Scrapbox.Parser.Item          (runItemParserM)
-import           Scrapbox.Parser.Utils         (lookAheadMaybe)
-import           Scrapbox.Types                (InlineBlock (..), Level (..),
+import           Data.Scrapbox.Parser.Scrapbox.Item          (runItemParserM)
+import           Data.Scrapbox.Parser.Utils         (lookAheadMaybe)
+import           Data.Scrapbox.Types                (InlineBlock (..), Level (..),
                                                 ScrapText (..), Segment (..),
                                                 Style (..))
-import           Scrapbox.Utils                (eitherM)
 
 -- | Run 'ScrapText' parser on given 'String'
 --
@@ -54,10 +52,10 @@ runScrapTextParser = parse scrapTextParser "Scrap text parser"
 -- | Monadic version of 'runScrapTextParser'
 runScrapTextParserM :: String -> Parser ScrapText
 runScrapTextParserM content =
-    eitherM
+    either
         (\_ -> unexpected "Failed to parse scrap text")
         return
-        (return $ runScrapTextParser content)
+        (runScrapTextParser content)
 
 -- | Parser for 'ScrapText'
 scrapTextParser :: Parser ScrapText
@@ -206,7 +204,7 @@ noStyleParser = ITEM [] <$> extractNonStyledText
             (   try (string "[[")
             <|> try (string "[")
             <|> try (string "`")
-            <|> try (many1 (noneOf "[`"))
+            <|> try (many1 (noneOf syntaxSymbols))
             )
         case someChar of
             Nothing   -> runItemParserM content
@@ -218,22 +216,25 @@ noStyleParser = ITEM [] <$> extractNonStyledText
             Just "`"  -> checkWith "`" codeNotationParser content
             -- For everything else, consume until open bracket
             Just _ -> do
-                rest <- many1 $ noneOf "[`"
+                rest <- many1 $ noneOf syntaxSymbols
                 go $ content <> rest
 
     -- Run parser on ahead content to see if it can be parsed, if not, consume the text
     checkWith :: String -> Parser a -> String -> Parser [Segment]
-    checkWith symbolStr parser content' = do
+    checkWith symbolStr parser content = do
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
-            then runItemParserM content'
-            else continue symbolStr content'
+            then runItemParserM content
+            else continue symbolStr content
 
     continue :: String -> String -> Parser [Segment]
     continue symbol curr = do
         someSymbol <- string symbol
-        rest       <- many (noneOf "[`")
+        rest       <- many (noneOf syntaxSymbols)
         go $ curr <> someSymbol <> rest
+
+    syntaxSymbols :: String
+    syntaxSymbols = "[`"
 
 -- | Parser for 'CODENOTATION'
 codeNotationParser :: Parser InlineBlock

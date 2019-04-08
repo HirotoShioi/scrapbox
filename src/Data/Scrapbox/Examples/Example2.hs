@@ -5,18 +5,18 @@ Example page: https://scrapbox.io/toSrapbox/Syntax
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Examples.Example2
+module Data.Scrapbox.Examples.Example2
     ( example2'
     ) where
 
-import           RIO                   hiding (link, span)
+import           RIO hiding (link, span)
 
-import           Scrapbox.Constructors (blockQuote, bold, bulletPoint,
-                                        codeBlock, codeNotation, heading,
-                                        italic, lineBreak, link, p,
-                                        scrapbox, strikeThrough, table, text,
-                                        thumbnail, span)
-import           Scrapbox.Types        (Block (..), Scrapbox)
+import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
+                                             codeBlock, codeNotation, heading,
+                                             italic, lineBreak, link, p,
+                                             scrapbox, strikeThrough, table,
+                                             text, thumbnail, span)
+import           Data.Scrapbox.Types (Block (..), Scrapbox)
 
 
 syntax :: [Block]

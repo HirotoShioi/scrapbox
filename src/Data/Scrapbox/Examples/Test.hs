@@ -1,6 +1,6 @@
 {-| These are used to test the functionality of the library
 -}
-module Scrapbox.Examples.Test where
+module Data.Scrapbox.Examples.Test where
 
 import           RIO
 

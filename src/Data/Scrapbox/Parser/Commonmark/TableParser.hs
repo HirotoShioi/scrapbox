@@ -3,7 +3,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.CommonMark.TableParser
+module Data.Scrapbox.Parser.Commonmark.TableParser
     ( parseTable
     , CommonMarkTable
     , Column
@@ -11,14 +11,13 @@ module Scrapbox.CommonMark.TableParser
 
 import           RIO
 
-import           Data.Attoparsec.Text  (Parser)
-import qualified Data.Attoparsec.Text  as P
-import           Data.Text             (Text)
-import qualified Data.Text             as T
-import           Prelude               (String)
+import           Data.Attoparsec.Text (Parser)
+import qualified Data.Attoparsec.Text as P
+import           RIO.Text (Text)
+import qualified RIO.Text as T
 
-import           Scrapbox.Constructors (table)
-import           Scrapbox.Types        (Block)
+import           Data.Scrapbox.Constructors (table)
+import           Data.Scrapbox.Types (Block)
 
 -- | Representation of CommonMark table
 newtype CommonMarkTable = CommonMarkTable [Column]
@@ -43,7 +42,8 @@ columnParser = do
         either
             fail
             (\(currList', rest') -> do
-                -- If symbolCount is less than required amount then the process is done
+                -- If symbolCount is less than required amount then the process
+                -- is done
                 let symbolCount = T.length $ T.filter (== '|') rest'
                 if T.null rest' || symbolCount < 2
                     then return $ Column currList'
@@ -54,7 +54,7 @@ columnParser = do
     getElem :: [Text] -> Parser ([Text], Text)
     getElem currList = do
         _       <- P.char '|'
-        element <- T.strip <$> P.takeWhile (/= '|')
+        element <- T.strip <$> P.takeWhile (/= '|') -- fmmmmm
         rest    <- P.takeText
         return (currList ++ [element], rest)
 

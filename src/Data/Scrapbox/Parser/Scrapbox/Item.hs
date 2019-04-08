@@ -1,28 +1,26 @@
 {-| Item parser module
 -}
 
-module Scrapbox.Parser.Item
+module Data.Scrapbox.Parser.Scrapbox.Item
     ( runItemParser
     , runItemParserM
     , itemParser
     ) where
 
-import           RIO                           hiding (many, try, (<|>))
-import           RIO.List                      (headMaybe, initMaybe, lastMaybe,
-                                                tailMaybe)
+import           RIO hiding (many, try)
+import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe)
 
-import           Data.String                   (fromString)
-import qualified Data.Text                     as T
-import           Network.URI                   (isURI)
+import           Data.String (fromString)
+import           Network.URI (isURI)
+import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
                                                 sepBy1, space, try, unexpected,
-                                                (<?>), (<|>))
+                                                (<?>))
 
-import           Scrapbox.Parser.Utils                  (lookAheadMaybe)
-import           Scrapbox.Types                         (Segment (..), Url (..))
-import           Scrapbox.Utils                         (eitherM, fromMaybeM)
+import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
+import           Data.Scrapbox.Types (Segment (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart contstructors
@@ -83,7 +81,7 @@ linkParser = do
       foldr (\someText acc -> someText <> " " <> acc) mempty wholecontent
 
     getElement :: Maybe a -> Parser a
-    getElement mf = fromMaybeM (unexpected "failed to parse link content") (return mf)
+    getElement = maybe (unexpected "failed to parse link content") return
 
 -- | Parser for 'TEXT'
 simpleTextParser :: Parser Segment
@@ -131,7 +129,7 @@ segmentParser =
 
 -- | Parser for inline text
 itemParser :: Parser [Segment]
-itemParser = manyTill segmentParser eof-- May want to switch over to many1 to make it fail
+itemParser = manyTill segmentParser eof
 
 -- | Run inline text parser on given 'String'
 --
@@ -152,7 +150,7 @@ runItemParser = parse itemParser "Inline text parser"
 -- | Monadic version of 'runInlineParser'
 runItemParserM :: String -> Parser [Segment]
 runItemParserM content =
-    eitherM
+    either
         (\_ -> unexpected "Failed to parse inline text")
         return
-        (return $ runItemParser content)
+        (runItemParser content)

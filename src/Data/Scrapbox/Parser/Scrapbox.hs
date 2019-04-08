@@ -1,30 +1,30 @@
-{-| Module for 'Block' parser
+{-| Module exposes 'Scrapbox' parser
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scrapbox.Parser.Scrapbox
-    ( parseScrapbox
+module Data.Scrapbox.Parser.Scrapbox
+    ( runScrapboxParser
     ) where
 
-import           RIO                           hiding (many, try, (<|>))
+import           RIO hiding (many, try)
 
-import           Network.URI                   (isURI)
+import           Network.URI (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, lookAhead,
                                                 many, many1, manyTill, noneOf,
                                                 notFollowedBy, oneOf, parse,
                                                 sepBy1, space, string, try,
-                                                unexpected, (<|>))
+                                                unexpected)
 
-import           Scrapbox.Parser.Item          (runItemParserM)
-import           Scrapbox.Parser.ScrapText     (extractParagraph,
-                                                runScrapTextParserM)
-import           Scrapbox.Types                (Block (..), CodeName (..),
-                                                CodeSnippet (..), Level (..),
-                                                Scrapbox (..), Start (..),
-                                                TableContent (..),
-                                                TableName (..), Url (..))
+import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
+import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
+                                                          runScrapTextParserM)
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), Level (..),
+                                      Scrapbox (..), Start (..),
+                                      TableContent (..), TableName (..),
+                                      Url (..))
 
 --------------------------------------------------------------------------------
 -- Block parser
@@ -138,8 +138,8 @@ scrapboxParser :: Parser Scrapbox
 scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
-parseScrapbox :: String -> Either ParseError Scrapbox
-parseScrapbox = parse scrapboxParser "Scrapbox parser"
+runScrapboxParser :: String -> Either ParseError Scrapbox
+runScrapboxParser = parse scrapboxParser "Scrapbox parser"
 
 --------------------------------------------------------------------------------
 -- Helper function

@@ -2,8 +2,18 @@
 
 [![Build Status](https://travis-ci.org/HirotoShioi/scrapbox.svg?branch=master)](https://travis-ci.org/HirotoShioi/scrapbox)
 
-Library
+`scrapbox` is a parser library for [scrapbox](https://scrapbox.io/product).
 
-## Known issue
-- On commonmark, it cannot parse strike through text
-- On commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
+`scrapbox` can be used in several ways:
+- Parse given scrapbox page and express them as AST
+- Parse commonmark and either express them as AST or convert it into scrapbox page
+- (Experimental) Convert given scrapbox page into commonmark
+
+The library is well-tested including round-trip test which tests whether given arbitrary
+AST can be rendered, then parsed as original AST.
+
+## Known issues
+
+- When parsing commonmark, it cannot parse `CUSTOM_INLINE`, `CUSTOM_BLOCK`, `THEMATIC_BLOCK` properly
+- When parsing scrapbox, some of the inline styles cannot be parsed correctly
+- When parsing scrapbox, it cannot parse correctly when user-defined styles are being used.

@@ -1,0 +1,98 @@
+cabal-version: 1.12
+
+name:           scrapbox
+version:        0.1.0.0
+synopsis:       Renderer and parser for Scrapbox
+description:    Please see the README on GitHub at <https://github.com/HirotoShioi/scrapbox#readme>
+homepage:       https://github.com/HirotoShioi/scrapbox#readme
+bug-reports:    https://github.com/HirotoShioi/scrapbox/issues
+author:         Hiroto Shioi
+maintainer:     shioihigg@gmail.com
+copyright:      MIT
+license:        BSD3
+license-file:   LICENSE
+category:       Text
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/HirotoShioi/scrapbox
+
+library
+  exposed-modules:     Data.Scrapbox
+                       Data.Scrapbox.Internal
+  other-modules:       Data.Scrapbox.Constructors
+                       Data.Scrapbox.DiffFinder
+                       Data.Scrapbox.Parser.Scrapbox
+                       Data.Scrapbox.Parser.Scrapbox.Item
+                       Data.Scrapbox.Parser.Scrapbox.ScrapText
+                       Data.Scrapbox.Parser.Utils
+                       Data.Scrapbox.Parser.Commonmark
+                       Data.Scrapbox.Parser.Commonmark.TableParser
+                       Data.Scrapbox.Parser.Commonmark.ParagraphParser
+                       Data.Scrapbox.Render.Scrapbox
+                       Data.Scrapbox.Render.Commonmark
+                       Data.Scrapbox.Utils
+                       Data.Scrapbox.Types
+                       Data.Scrapbox.Examples.Test
+                       Data.Scrapbox.Examples.Example1
+                       Data.Scrapbox.Examples.Example2
+  hs-source-dirs:      src
+  default-extensions:  NoImplicitPrelude
+  ghc-options:         -Wall
+                       -Wcompat
+                       -Wincomplete-record-updates
+                       -Wincomplete-uni-patterns
+                       -Wredundant-constraints
+                       -Wnoncanonical-monad-instances
+  build-depends:       QuickCheck
+                     , attoparsec
+                     , base >=4.7 && <5
+                     , cmark
+                     , network-uri
+                     , parsec
+                     , rio
+                     , split
+                     , text
+  default-language:    Haskell2010
+
+test-suite scrapbox-test
+  type:                exitcode-stdio-1.0
+  main-is:             Spec.hs
+  other-modules:       TestCommonMark.Blocks
+                       TestCommonMark.Commonmark
+                       TestCommonMark.Segments
+                       TestCommonMark.Styles
+                       TestCommonMark.Utils
+                       TestScrapboxParser.Inline
+                       TestScrapboxParser.ParserTest
+                       TestScrapboxParser.Scrapbox
+                       TestScrapboxParser.ScrapText
+                       TestScrapboxParser.Utils
+                       Utils
+                       Paths_scrapbox
+  hs-source-dirs:      test
+  default-extensions:  NoImplicitPrelude
+  ghc-options:        -Wall 
+                      -Wcompat
+                      -Wincomplete-record-updates
+                      -Wincomplete-uni-patterns
+                      -Wredundant-constraints
+                      -Wnoncanonical-monad-instances
+                      -threaded -rtsopts -with-rtsopts=-N
+                      +RTS -N -RTS
+  build-depends:      QuickCheck
+                    , attoparsec
+                    , base >=4.7 && <5
+                    , cmark
+                    , hspec
+                    , network-uri
+                    , parsec
+                    , rio
+                    , scrapbox
+                    , split
+                    , text
+  default-language:   Haskell2010

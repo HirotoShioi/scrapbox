@@ -5,13 +5,13 @@ module Main where
 
 import           RIO
 
-import           Test.Hspec                    (describe, hspec)
+import           Test.Hspec (describe, hspec, parallel)
 
-import           TestCommonMark.CommonMark     (commonmarkSpec)
+import           TestCommonMark.Commonmark (commonmarkSpec)
 import           TestScrapboxParser.ParserTest (parserSpec)
 
 main :: IO ()
-main = hspec $ do
+main = hspec $ parallel $ do
     describe "Commonmark parser"
         commonmarkSpec
 

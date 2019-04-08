@@ -15,26 +15,18 @@ module TestCommonMark.Styles
 
 import           RIO
 
-import           RIO.List              (headMaybe)
-import           Test.Hspec            (Spec, describe)
+import           RIO.List (headMaybe)
+import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck       (Arbitrary (..), Property)
+import           Test.QuickCheck (Arbitrary (..), Property)
 
-import           Scrapbox              (Block (..), InlineBlock (..),
-                                        ScrapText (..), Segment (..),
-                                        Style (..))
-import           Scrapbox.Internal     (isText)
-import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        getHeadSegment, getParagraph)
+import           Data.Scrapbox (Block (..), InlineBlock (..), ScrapText (..),
+                                Segment (..), Style (..))
+import           Data.Scrapbox.Internal (isText)
+import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
+                                       getHeadSegment, getParagraph)
 
-import           Utils                 (genPrintableText)
-
--- | Test suites for parsing styled text
-styleSpec :: Spec
-styleSpec = describe "Styles" $ do
-    noStyleTextSpec
-    boldTextSpec
-    italicTextSpec
+import           Utils (genPrintableText)
 
 -- | Use Phantom type so we can generalize the test
 newtype StyledText (a :: TestStyle) = StyledText
@@ -48,12 +40,16 @@ data TestStyle =
       BoldStyle
     | ItalicStyle
     | NoStyles
+    | StrikeThroughStyle
 
 instance CommonMark (StyledText 'BoldStyle) where
     render (StyledText txt) = "**" <> txt <> "**"
 
 instance CommonMark (StyledText 'ItalicStyle) where
     render (StyledText txt) = "*" <> txt <> "*"
+
+instance CommonMark (StyledText 'StrikeThroughStyle) where
+    render (StyledText txt) = "~~" <> txt <> "~~"
 
 instance CommonMark (StyledText 'NoStyles) where
     render (StyledText txt) = txt
@@ -62,7 +58,9 @@ instance Arbitrary (StyledText a) where
     arbitrary = StyledText <$> genPrintableText
 
 -- | Generalized test case for checking whether the content of the text has same content
-checkStyledTextContent :: (CommonMark (StyledText style)) => StyledText style -> Property
+checkStyledTextContent :: (CommonMark (StyledText style))
+                       => StyledText style
+                       -> Property
 checkStyledTextContent styledText =
     checkScrapbox styledText
         (\txt -> txt == getStyledText styledText)
@@ -93,6 +91,13 @@ getHeadInlineBlock blocks = do
 -- No style
 --------------------------------------------------------------------------------
 
+checkParse :: (CommonMark (StyledText a)) => Style -> StyledText a -> Property
+checkParse style styledText =
+    checkScrapbox
+        styledText
+        (\styles -> style `elem` styles)
+        getHeadInlineBlock
+
 -- | Test spec for parsing non-styled text
 noStyleTextSpec :: Spec
 noStyleTextSpec =
@@ -104,11 +109,8 @@ noStyleTextSpec =
                  null
                  getHeadInlineBlock
         prop "should preserve its content" $
-            \(noStyleText :: StyledText 'NoStyles) -> checkStyledTextContent noStyleText
-
---------------------------------------------------------------------------------
--- Bold text
---------------------------------------------------------------------------------
+            \(noStyleText :: StyledText 'NoStyles) ->
+                checkStyledTextContent noStyleText
 
 -- | Test spec for parsing Bold-styled text
 boldTextSpec :: Spec
@@ -122,18 +124,28 @@ boldTextSpec = describe "Bold text" $ do
     prop "should preserve its content" $
         \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
 
---------------------------------------------------------------------------------
--- Italic text
---------------------------------------------------------------------------------
-
 -- | Test spec for parsing italic-styled text
 italicTextSpec :: Spec
 italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $
-        \(italicText :: StyledText 'ItalicStyle) ->
-            checkScrapbox
-                italicText
-                (== [Italic])
-                getHeadInlineBlock
+        \(italicText :: StyledText 'ItalicStyle) -> checkParse Italic italicText
     prop "should preserve its content" $
         \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText
+
+-- | Test spec for parsing italic-styled text
+strikeThroughTextSpec :: Spec
+strikeThroughTextSpec = describe "Strikethrough text" $ do
+    prop "should parse italic text as StrikeThrough" $
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) -> 
+            checkParse StrikeThrough strikeThroughText
+    prop "should preserve its content" $
+        \(strikeThroughText :: StyledText 'StrikeThroughStyle) -> 
+            checkStyledTextContent strikeThroughText
+
+-- | Test suites for parsing styled text
+styleSpec :: Spec
+styleSpec = describe "Styles" $ do
+    noStyleTextSpec
+    boldTextSpec
+    italicTextSpec
+    strikeThroughTextSpec

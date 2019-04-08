@@ -1,7 +1,7 @@
 {-| Constructor that can be used to build scrapbox AST
 -}
 
-module Scrapbox.Constructors
+module Data.Scrapbox.Constructors
     ( scrapbox
     -- * Blocks
     , blockQuote
@@ -26,13 +26,14 @@ module Scrapbox.Constructors
     , text
     ) where
 
-import           RIO            hiding (link, span)
+import           RIO hiding (link, span)
 
-import           Scrapbox.Types (Block (..), CodeName (..), CodeSnippet (..),
-                                 InlineBlock (..), Level (..), ScrapText (..),
-                                 Scrapbox (..), Segment (..), Start (..),
-                                 Style (..), TableContent (..),
-                                 TableName (..), Url (..))
+import           Data.Scrapbox.Types (Block (..), CodeName (..),
+                                      CodeSnippet (..), InlineBlock (..),
+                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Segment (..), Start (..), Style (..),
+                                      TableContent (..), TableName (..),
+                                      Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart constructors
@@ -52,7 +53,9 @@ blockQuote = BLOCK_QUOTE . ScrapText
 
 -- | Constructors for creating 'CODE_BLOCK' block
 codeBlock :: Text -> [Text] -> Block
-codeBlock codeName codeSnippet = CODE_BLOCK (CodeName codeName) (CodeSnippet codeSnippet)
+codeBlock codeName codeSnippet = CODE_BLOCK
+    (CodeName codeName)
+    (CodeSnippet codeSnippet)
 
 -- | Constructors for creating 'PARAGRAPH' block
 paragraph :: [InlineBlock] -> Block

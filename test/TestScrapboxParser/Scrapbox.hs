@@ -1,4 +1,4 @@
-{-| Test suites for 'parseScrapbox'
+{-| Test suites for 'runScrapboxParser'
 -}
 
 {-# LANGUAGE OverloadedStrings   #-}
@@ -8,37 +8,48 @@ module TestScrapboxParser.Scrapbox
     ( scrapboxParserSpec
     ) where
 
-import           RIO                      hiding (assert)
+import           RIO hiding (assert)
 
-import qualified RIO.Text                 as T
-import           Test.Hspec               (Spec, describe, it)
-import           Test.Hspec.QuickCheck    (modifyMaxSuccess, prop)
-import           Test.QuickCheck.Monadic  (assert, monadicIO)
+import qualified RIO.Text as T
+import           Test.Hspec (Spec, describe, it)
+import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
+import           Test.QuickCheck.Monadic (assert, monadicIO)
 
-import           Scrapbox                 (Block (..), CodeName (..),
-                                           CodeSnippet (..), InlineBlock (..),
-                                           Level (..), ScrapText (..),
-                                           Scrapbox (..), Segment (..),
-                                           Start (..), Style (..),
-                                           TableContent (..), TableName (..),
-                                           Url (..), parseScrapbox,
-                                           renderPretty)
-import           TestScrapboxParser.Utils (NonEmptyPrintableString (..),
-                                           propParseAsExpected, shouldParseSpec)
-import           Utils                    (whenRight)
+import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
+                                InlineBlock (..), Level (..), ScrapText (..),
+                                Scrapbox (..), Segment (..), Start (..),
+                                Style (..), TableContent (..), TableName (..),
+                                Url (..), renderToScrapbox)
+import           Data.Scrapbox.Internal (runScrapboxParser)
+import           TestScrapboxParser.Utils (propParseAsExpected)
+import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
+                        whenRight)
 --------------------------------------------------------------------------------
 -- Scrapbox parser
 --------------------------------------------------------------------------------
 
+-- | Performs roundtrips test
+roundTripSpec :: Spec
+roundTripSpec = describe "Scrapbox" $
+    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
+        \(scrapbox :: Scrapbox) -> monadicIO $ do
+            let rendered = renderToScrapbox [] scrapbox
+            let eParsed  = runScrapboxParser $ T.unpack rendered
+
+            assert $ isRight eParsed
+
+            whenRight eParsed $ \parsed ->
+                assert $ parsed == scrapbox
+
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
-    describe "Scrapbox parser" $ modifyMaxSuccess (const 10000) $ do
+    describe "Scrapbox parser" $ modifyMaxSuccess (const 5000) $ do
         roundTripSpec
-        shouldParseSpec parseScrapbox
+        shouldParseSpec runScrapboxParser
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
             \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = parseScrapbox $ getNonEmptyPrintableString someText
+                let eParseredText = runScrapboxParser $ getNonEmptyPrintableString someText
 
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \(Scrapbox blocks) ->
@@ -47,19 +58,19 @@ scrapboxParserSpec =
         describe "Parsing \"syntax\" page with scrapbox parser" $
           modifyMaxSuccess (const 1) $ do
             it "should parse section1 as expected" $
-                propParseAsExpected example1 expected1 parseScrapbox
+                propParseAsExpected example1 expected1 runScrapboxParser
 
             it "should parse section2 as expected" $
-                propParseAsExpected example2 expected2 parseScrapbox
+                propParseAsExpected example2 expected2 runScrapboxParser
 
             it "should parse section3 as expected" $
-                propParseAsExpected example3 expected3 parseScrapbox
+                propParseAsExpected example3 expected3 runScrapboxParser
 
             it "should parse section4 as expected" $
-                propParseAsExpected example4 expected4 parseScrapbox
+                propParseAsExpected example4 expected4 runScrapboxParser
 
             it "should parse section5 as expected" $
-                propParseAsExpected example5 expected5 parseScrapbox
+                propParseAsExpected example5 expected5 runScrapboxParser
   where
     example1 :: String
     example1 = unlines [
@@ -439,17 +450,4 @@ scrapboxParserSpec =
         , LINEBREAK
         , LINEBREAK
         ]
-
--- | Performs roundtrips test
-roundTripSpec :: Spec
-roundTripSpec = describe "Scrapbox" $
-    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
-        \(scrapbox :: Scrapbox) -> monadicIO $ do
-            let rendered = renderPretty scrapbox
-            let eParsed  = parseScrapbox $ T.unpack rendered
-
-            assert $ isRight eParsed
-
-            whenRight eParsed $ \parsed ->
-                assert $ parsed == scrapbox
 

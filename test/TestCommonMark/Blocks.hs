@@ -12,22 +12,21 @@ module TestCommonMark.Blocks
 import           RIO
 
 import           RIO.List
-import qualified RIO.Text              as T
-import           Test.Hspec            (Spec, describe)
+import qualified RIO.Text as T
+import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck       (Arbitrary (..), choose, elements,
-                                        listOf1, vectorOf)
+import           Test.QuickCheck (Arbitrary (..), choose, elements, listOf1,
+                                  vectorOf)
 
-import           Scrapbox              (Block (..), CodeSnippet (..),
-                                        Level (..), TableContent (..), Url (..))
-import           Scrapbox.Internal     (isBlockQuote, isBulletPoint,
-                                        isCodeBlock, isHeader, isParagraph,
-                                        isTable, isThumbnail, renderBlock,
-                                        renderSegments, renderText)
-import           TestCommonMark.Utils  (CommonMark (..), checkScrapbox,
-                                        getParagraph)
-import           Utils                 (genPrintableText, genPrintableUrl,
-                                        genText)
+import           Data.Scrapbox (Block (..), CodeSnippet (..), Level (..),
+                                TableContent (..), Url (..))
+import           Data.Scrapbox.Internal (isBlockQuote, isBulletPoint,
+                                         isCodeBlock, isHeader, isParagraph,
+                                         isTable, isThumbnail, renderBlock,
+                                         renderSegments, renderText)
+import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
+                                       getParagraph)
+import           Utils (genPrintableText, genPrintableUrl, genText)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec
@@ -256,7 +255,9 @@ unorderedListSpec = describe "Unordered list" $ do
     prop "should preserve its content" $
         \(unorderedListBlock :: UnorderedListBlock) ->
             checkScrapbox unorderedListBlock
-                (\renderedTexts -> renderedTexts == getUnorderedListBlock unorderedListBlock)
+                (\renderedTexts ->
+                    renderedTexts == getUnorderedListBlock unorderedListBlock
+                )
                 (\content -> do
                     blockContent          <- headMaybe content
                     (BULLET_POINT _ lists) <- getBulletPoint blockContent
@@ -282,7 +283,10 @@ instance Arbitrary OrderedListBlock where
 
 instance CommonMark OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
-        zipWith (\num someText -> tshow num <> ". " <> someText) ([1..] :: [Int]) list
+        zipWith
+            (\num someText -> tshow num <> ". " <> someText)
+            ([1..] :: [Int])
+            list
 
 -- | Test spec for parsing Ordered list
 orderedListSpec :: Spec
@@ -294,7 +298,9 @@ orderedListSpec = describe "Ordered list" $ do
     prop "should preserve its content" $
         \(orderedListBlock :: OrderedListBlock) ->
             checkScrapbox orderedListBlock
-                (\renderedTexts -> renderedTexts == getOrderedListBlock orderedListBlock)
+                (\renderedTexts ->
+                    renderedTexts == getOrderedListBlock orderedListBlock
+                )
                 (\content -> do
                     blockContent        <- headMaybe content
                     (BULLET_POINT _ lists) <- getBulletPoint blockContent
