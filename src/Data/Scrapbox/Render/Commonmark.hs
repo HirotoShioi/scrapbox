@@ -121,7 +121,7 @@ renderInlineBlock :: InlineBlock -> Text
 renderInlineBlock = \case
     CODE_NOTATION text   -> "`" <> text <> "`"
     MATH_EXPRESSION text -> "`" <> text <> "`"
-    ITEM styles segments  ->
+    ITEM styles segments ->
         let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
         in renderWithStyle (nub styles) renderedSegments
   where
@@ -130,11 +130,11 @@ renderInlineBlock = \case
     renderWithStyle styles text = foldr apply text styles
 
     apply :: Style -> Text -> Text
-    apply Bold                = applyBold
-    apply Italic              = applyItalic
-    apply StrikeThrough       = applyStrikeThrough
-    apply (Sized (Level lvl)) = applySize lvl
-    apply (UserStyle _)       = applyBold
+    apply Bold text                = "**" <> text <> "**"
+    apply Italic text              = "_" <> text <> "_"
+    apply StrikeThrough text       = "~~" <> text <> "~~"
+    apply (Sized (Level lvl)) text = applySize lvl text
+    apply (UserStyle _) text       = "**" <> text <> "**"
 
     -- Add font size
     applySize :: Int -> Text -> Text
@@ -145,15 +145,6 @@ renderInlineBlock = \case
         , text
         , "</span>"
         ]
-    -- Add bold style
-    applyBold :: Text -> Text
-    applyBold txt          = "**" <> txt <> "**"
-    -- Add strikethrough style
-    applyStrikeThrough :: Text -> Text
-    applyStrikeThrough txt = "~~" <> txt <> "~~"
-    -- Add italic style
-    applyItalic :: Text -> Text
-    applyItalic txt        = "_" <> txt <> "_"
 
 -- | Render 'CODE_BLOCK'
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]

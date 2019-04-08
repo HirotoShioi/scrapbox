@@ -25,8 +25,7 @@ import qualified RIO.Text as T
 import           Test.Hspec (Spec)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, arbitraryPrintableChar,
-                                  elements, listOf1)
-import           Test.QuickCheck (PrintableString (..))
+                                  elements, listOf1, PrintableString (..))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
