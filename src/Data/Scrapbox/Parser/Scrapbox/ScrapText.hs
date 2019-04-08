@@ -133,16 +133,16 @@ styledTextParser = do
 
     -- Create custom style
     mkCustomStyle :: String -> [Style] -> [Style]
-    mkCustomStyle str styleData
+    mkCustomStyle str styles
         | any (`elem` "-") str =
-            mkCustomStyle (filter (/= '-') str) (StrikeThrough : styleData)
+            mkCustomStyle (filter (/= '-') str) (StrikeThrough : styles)
         | any (`elem` "/") str =
-            mkCustomStyle (filter (/= '/') str) (Italic : styleData)
+            mkCustomStyle (filter (/= '/') str) (Italic : styles)
         | any (`elem` "*") str =
             let level = length $ filter (== '*') str
-            in mkCustomStyle (filter (/= '*') str) (Sized (Level level): styleData)
-        | null str             = sort styleData
-        | otherwise            = sort styleData
+            in mkCustomStyle (filter (/= '*') str) (Sized (Level level): styles)
+        | null str             = sort styles
+        | otherwise            = sort styles
 
 -- | Extract paragraph that are surronded by brackets
 extractParagraph :: Parser String

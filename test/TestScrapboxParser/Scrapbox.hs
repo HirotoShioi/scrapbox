@@ -33,7 +33,7 @@ roundTripSpec :: Spec
 roundTripSpec = describe "Scrapbox" $
     prop "should be able to perform roundtrip if there's no ambiguous syntax" $
         \(scrapbox :: Scrapbox) -> monadicIO $ do
-            let rendered = renderToScrapbox [] scrapbox
+            let rendered = renderToScrapbox mempty scrapbox
             let eParsed  = runScrapboxParser $ T.unpack rendered
 
             assert $ isRight eParsed

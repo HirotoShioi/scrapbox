@@ -1,7 +1,6 @@
 {-| This module exports a parser which parses the content of PARAGRAPH in CMark
 -}
 
-{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Scrapbox.Parser.Commonmark.ParagraphParser
@@ -63,7 +62,7 @@ textParser styles symbol = do
 
 -- | Parser for non-styled text
 noStyleParser :: Parser InlineBlock
-noStyleParser = ITEM [] <$> extractNonStyledText
+noStyleParser = ITEM mempty <$> extractNonStyledText
   where
     extractNonStyledText :: Parser [Segment]
     extractNonStyledText = go mempty
@@ -133,6 +132,6 @@ runParagraphParser =  parse parser "Paragraph parser"
 -- | Convert given 'Text' into @[InlineBlock]@
 toInlineBlocks :: Text -> [InlineBlock]
 toInlineBlocks text = either
-    (const [ITEM [] [TEXT text]])
+    (const [ITEM mempty [TEXT text]])
     id
     (runParagraphParser (T.unpack text))
