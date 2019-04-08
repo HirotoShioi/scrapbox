@@ -116,9 +116,9 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.DOCUMENT                 -> convertToBlocks contents
     C.HEADING headingNum       -> [toHeading headingNum contents]
     C.EMPH                     ->
-        [paragraph $ concatMap (toInlineBlock italicStyle) contents]
+        [paragraph $ concatMap (toInlineBlock (Italic : styles)) contents]
     C.STRONG                   ->
-        [paragraph $ concatMap (toInlineBlock boldStyle) contents]
+        [paragraph $ concatMap (toInlineBlock (Bold : styles)) contents]
     C.TEXT textContent         -> [paragraph $ toInlineBlocks textContent]
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
@@ -139,9 +139,6 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.CUSTOM_INLINE _ _        -> parseParagraph contents
     C.CUSTOM_BLOCK _ _         -> parseParagraph contents
     C.THEMATIC_BREAK           -> [paragraph [span [] [text "\n"]]]
-  where
-    boldStyle = Bold : styles
-    italicStyle = Italic : styles
 
 -- | Convert 'Node' into list of 'InlineBlock'
 -- Need state monad to inherit style from parent node
@@ -150,20 +147,13 @@ toInlineBlock styles nodes = concatInline $ convertToInlineBlock nodes
   where
     convertToInlineBlock :: Node -> [InlineBlock]
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
-        EMPH               -> concatMap (toInlineBlock withItalicStyle) contents
-        STRONG             -> concatMap (toInlineBlock withBoldStyle) contents
+        EMPH               -> concatMap (toInlineBlock (Italic : styles)) contents
+        STRONG             -> concatMap (toInlineBlock (Bold : styles)) contents
         C.TEXT textContent -> withStyle [text textContent]
         CODE codeContent   -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
         IMAGE url title    -> [span [] [toLink contents url title]]
         _                  -> concatMap (toInlineBlock styles)  contents
-
-    withItalicStyle :: [Style]
-    withItalicStyle = Italic : styles
-
-    withBoldStyle :: [Style]
-    withBoldStyle = Bold : styles
-
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
 
