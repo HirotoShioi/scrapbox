@@ -4,8 +4,8 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Inline
-    ( inlineParserSpec
+module TestScrapboxParser.Span
+    ( spanParserSpec
     ) where
 
 import           RIO hiding (assert)
@@ -26,8 +26,8 @@ import           Utils (NonEmptyPrintableString (..), genMaybe,
                         shouldParseSpec, whenRight)
 
 -- | Spec for inline text parser
-inlineParserSpec :: Spec
-inlineParserSpec =
+spanParserSpec :: Spec
+spanParserSpec =
     describe "Span parser" $ modifyMaxSuccess (const 10000) $ do
         shouldParseSpec runSpanParser
 

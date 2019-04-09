@@ -7,13 +7,13 @@ module TestScrapboxParser.ParserTest
 
 import           Test.Hspec (Spec)
 
-import           TestScrapboxParser.Inline (inlineParserSpec)
+import           TestScrapboxParser.Span (spanParserSpec)
 import           TestScrapboxParser.Scrapbox (scrapboxParserSpec)
 import           TestScrapboxParser.ScrapText (scrapTextParserSpec)
 
 -- | Test specs for scrapbox parser
 parserSpec :: Spec
 parserSpec = do
-    inlineParserSpec
+    spanParserSpec
     scrapTextParserSpec
     scrapboxParserSpec

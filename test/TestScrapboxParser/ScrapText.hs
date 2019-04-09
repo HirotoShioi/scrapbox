@@ -151,10 +151,10 @@ codeNotationSpec = describe "Code notation" $ do
 -- strikethrough
 
 data SpanStyle
-    = PlainSpan
-    | BoldSpan
-    | ItalicSpan
-    | StrikeThroughSpan
+    = PlainStyle
+    | BoldStyle
+    | ItalicStyle
+    | StrikeThroughStyle
 
 newtype StyledSpan (a :: SpanStyle) = StyledSpan
     { getStyledSpan :: [Segment]
@@ -176,19 +176,19 @@ instance Arbitrary (StyledSpan a) where
           sizeNum :: Int
           sizeNum = 10
 
-instance ScrapboxSyntax (StyledSpan 'PlainSpan) where
+instance ScrapboxSyntax (StyledSpan 'PlainStyle) where
     render (StyledSpan segments)     = renderSegments segments
     getContent (StyledSpan segments) = renderSegments segments
 
-instance ScrapboxSyntax (StyledSpan 'BoldSpan) where
+instance ScrapboxSyntax (StyledSpan 'BoldStyle) where
     render (StyledSpan segments)     = "[* " <> renderSegments segments <> "]"
     getContent (StyledSpan segments) = renderSegments segments
 
-instance ScrapboxSyntax (StyledSpan 'ItalicSpan) where
+instance ScrapboxSyntax (StyledSpan 'ItalicStyle) where
     render (StyledSpan segments)     = "[/ " <> renderSegments segments <> "]"
     getContent (StyledSpan segments) = renderSegments segments
 
-instance ScrapboxSyntax (StyledSpan 'StrikeThroughSpan) where
+instance ScrapboxSyntax (StyledSpan 'StrikeThroughStyle) where
     render (StyledSpan segments)     = "[- " <> renderSegments segments <> "]"
     getContent (StyledSpan segments) = renderSegments segments
 
@@ -196,41 +196,41 @@ styledSpanSpec :: Spec
 styledSpanSpec = describe "Styled inlines" $ do
     describe "Non-Styled" $ do
         prop "should parse as Non-styled" $
-            \(plainInline :: StyledSpan 'PlainSpan) ->
+            \(plainInline :: StyledSpan 'PlainStyle) ->
                 testParse plainInline null
         prop "should preserve its content" $
-            \(plainInline :: StyledSpan 'PlainSpan) ->
+            \(plainInline :: StyledSpan 'PlainStyle) ->
                 testContent plainInline
 
     describe "Bold" $ do
         prop "should parse as Bold" $
-            \(boldInline :: StyledSpan 'BoldSpan) ->
+            \(boldInline :: StyledSpan 'BoldStyle) ->
                 testParse
                     boldInline
                     (\styles -> length styles == 1 && all isBold styles)
         prop "should preserve its content" $
-            \(boldInline :: StyledSpan 'BoldSpan) ->
+            \(boldInline :: StyledSpan 'BoldStyle) ->
                 testContent boldInline
 
     describe "Italic" $ do
         prop "should parse as Bold" $
-            \(italicInline :: StyledSpan 'ItalicSpan) ->
+            \(italicInline :: StyledSpan 'ItalicStyle) ->
                 testParse
                     italicInline
                     (\styles -> length styles == 1 && all isItalic styles)
         prop "should preserve its content" $
-            \(italicInline :: StyledSpan 'ItalicSpan) ->
+            \(italicInline :: StyledSpan 'ItalicStyle) ->
                 testContent italicInline
 
     describe "StrikeThrough" $ do
         prop "should parse as StrikeThrough" $
-            \(strikeThroughInline :: StyledSpan 'StrikeThroughSpan) ->
+            \(strikeThroughInline :: StyledSpan 'StrikeThroughStyle) ->
                 testParse
                     strikeThroughInline
                     (\styles -> length styles == 1 && all isStrikeThrough styles)
 
         prop "should preserve its content" $
-            \(strikeThroughInline :: StyledSpan 'StrikeThroughSpan) ->
+            \(strikeThroughInline :: StyledSpan 'StrikeThroughStyle) ->
                 testContent strikeThroughInline
   where
     getSpan :: InlineBlock -> Maybe InlineBlock
