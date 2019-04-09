@@ -5,6 +5,7 @@
 
 module Data.Scrapbox.Parser.Commonmark.ParagraphParser
     ( toInlineBlocks
+    -- * Exposed for testing
     , runParagraphParser
     ) where
 
