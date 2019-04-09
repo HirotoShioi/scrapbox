@@ -1,4 +1,4 @@
-{-| Test suites for 'runItemParser'
+{-| Test suites for 'runSpanParser'
 -}
 
 {-# LANGUAGE OverloadedStrings   #-}
@@ -18,7 +18,7 @@ import           Test.QuickCheck.Monadic (assert, monadicIO)
 
 import           Data.Scrapbox (Segment (..), Url (..))
 import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
-                                         runItemParser)
+                                         runSpanParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
 import           Utils (NonEmptyPrintableString (..), genMaybe,
@@ -28,22 +28,22 @@ import           Utils (NonEmptyPrintableString (..), genMaybe,
 -- | Spec for inline text parser
 inlineParserSpec :: Spec
 inlineParserSpec =
-    describe "Item parser" $ modifyMaxSuccess (const 10000) $ do
-        shouldParseSpec runItemParser
+    describe "Span parser" $ modifyMaxSuccess (const 10000) $ do
+        shouldParseSpec runSpanParser
 
         prop "should return non-empty list of segments if given string is non-empty" $
             \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runItemParser $ getNonEmptyPrintableString someText
+                let eParseredText = runSpanParser $ getNonEmptyPrintableString someText
 
                 assert $ isRight eParseredText
                 whenRight eParseredText $ \parsedContent ->
                     assert $ not $ null parsedContent
 
         it "should parse given text as expected" $
-            propParseAsExpected exampleText expected runItemParser
+            propParseAsExpected exampleText expected runSpanParser
 
-        -- Item specs
-        describe "Items" $ modifyMaxSuccess (const 200) $ do
+        -- Span specs
+        describe "Spans" $ modifyMaxSuccess (const 200) $ do
             textSpec
             linkSpec
             hashTagSpec
@@ -65,26 +65,26 @@ inlineParserSpec =
 -- Text
 --------------------------------------------------------------------------------
 
-newtype TextItem = TextItem Text
+newtype TextSpan = TextSpan Text
     deriving Show
 
-instance Arbitrary TextItem where
-    arbitrary = TextItem <$> genPrintableText
+instance Arbitrary TextSpan where
+    arbitrary = TextSpan <$> genPrintableText
 
-instance ScrapboxSyntax TextItem where
-    render (TextItem txt)     = txt
-    getContent (TextItem txt) = txt
+instance ScrapboxSyntax TextSpan where
+    render (TextSpan txt)     = txt
+    getContent (TextSpan txt) = txt
 
 
 --- Text
 textSpec :: Spec
 textSpec = describe "TEXT" $ do
     prop "should parse text as TEXT" $
-        \(someText :: TextItem) ->
-            checkParsed someText runItemParser headMaybe isText
+        \(someText :: TextSpan) ->
+            checkParsed someText runSpanParser headMaybe isText
     prop "should preserve its content" $
-        \(someText ::TextItem) ->
-            checkContent someText runItemParser
+        \(someText ::TextSpan) ->
+            checkContent someText runSpanParser
                 (\segments -> do
                   guard $ length segments == 1
                   segment <- headMaybe segments
@@ -99,24 +99,24 @@ textSpec = describe "TEXT" $ do
 -- Link
 --------------------------------------------------------------------------------
 
-data LinkItem = LinkItem !(Maybe Text) !Text
+data LinkSpan = LinkSpan !(Maybe Text) !Text
     deriving Show
 
-instance Arbitrary LinkItem where
-    arbitrary = LinkItem <$> genMaybe genPrintableText <*> genPrintableUrl
+instance Arbitrary LinkSpan where
+    arbitrary = LinkSpan <$> genMaybe genPrintableText <*> genPrintableUrl
 
-instance ScrapboxSyntax LinkItem where
-    render (LinkItem (Just name) url) = "[" <> name <> " " <> url <> "]"
-    render (LinkItem Nothing url)     = "[" <> url <> "]"
-    getContent (LinkItem mName url)   = fromMaybe mempty mName <> url
+instance ScrapboxSyntax LinkSpan where
+    render (LinkSpan (Just name) url) = "[" <> name <> " " <> url <> "]"
+    render (LinkSpan Nothing url)     = "[" <> url <> "]"
+    getContent (LinkSpan mName url)   = fromMaybe mempty mName <> url
 
 linkSpec :: Spec
 linkSpec = describe "LINK" $ do
     prop "should parse link as LINK" $
-        \(linkItem :: LinkItem) ->
-            checkParsed linkItem runItemParser headMaybe isLink
+        \(linkSpan :: LinkSpan) ->
+            checkParsed linkSpan runSpanParser headMaybe isLink
     prop "should preserve its content" $
-        \(linkItem :: LinkItem) -> checkContent linkItem runItemParser
+        \(linkSpan :: LinkSpan) -> checkContent linkSpan runSpanParser
             (\segments -> do
                 guard $ length segments == 1
                 segment <- headMaybe segments
@@ -132,25 +132,25 @@ linkSpec = describe "LINK" $ do
 -- HashTag
 --------------------------------------------------------------------------------
 
-newtype HashTagItem = HashTagItem Text
+newtype HashTagSpan = HashTagSpan Text
     deriving Show
 
-instance Arbitrary HashTagItem where
-    arbitrary = HashTagItem <$> genText
+instance Arbitrary HashTagSpan where
+    arbitrary = HashTagSpan <$> genText
 
-instance ScrapboxSyntax HashTagItem where
-    render (HashTagItem text)     = "#" <> text
-    getContent (HashTagItem text) = text
+instance ScrapboxSyntax HashTagSpan where
+    render (HashTagSpan text)     = "#" <> text
+    getContent (HashTagSpan text) = text
 
 hashTagSpec :: Spec
 hashTagSpec = describe "HASHTAG" $ do
     prop "should parse hashtag as HASHTAG" $
-        \(hashTag :: HashTagItem) ->
-            checkParsed hashTag runItemParser headMaybe isHashTag
+        \(hashTag :: HashTagSpan) ->
+            checkParsed hashTag runSpanParser headMaybe isHashTag
 
     prop "should preserve its content" $
-        \(hashTag :: HashTagItem) ->
-            checkContent hashTag runItemParser
+        \(hashTag :: HashTagSpan) ->
+            checkContent hashTag runSpanParser
                 (\segments -> do
                     guard $ length segments == 1
                     segment       <- headMaybe segments

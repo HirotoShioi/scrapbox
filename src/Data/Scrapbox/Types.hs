@@ -47,7 +47,7 @@ module Data.Scrapbox.Types
     , isStrikeThrough
     ) where
 
-import           RIO
+import           RIO hiding (span)
 
 import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
@@ -85,10 +85,10 @@ instance Arbitrary Scrapbox where
             (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
 
             -- Replace Link with THUMBNAIL
-            (PARAGRAPH (ScrapText [ITEM [] [LINK Nothing url]]): xs) ->
+            (PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]): xs) ->
                 THUMBNAIL url : removeAmbiguity xs
 
-            (PARAGRAPH (ScrapText [ITEM [Sized level] content]): xs) ->
+            (PARAGRAPH (ScrapText [SPAN [Sized level] content]): xs) ->
                 HEADING level content : removeAmbiguity xs
 
             -- Apply formatInlines to blocks
@@ -224,8 +224,8 @@ instance Arbitrary ScrapText where
 
 -- | InlineBlock
 data InlineBlock
-    = ITEM ![Style] ![Segment]
-    -- ^ ITEM are blocks which can have styles
+    = SPAN ![Style] ![Segment]
+    -- ^ SPAN are blocks which can have styles
     | CODE_NOTATION !Text
     -- ^ Code notation
     | MATH_EXPRESSION !Text
@@ -233,10 +233,10 @@ data InlineBlock
 
 instance Arbitrary InlineBlock where
     arbitrary = do
-        let randItem     = ITEM <$> genStyle <*> listOf1 arbitrary
+        let randSpan     = SPAN <$> genStyle <*> listOf1 arbitrary
         let randCode     = CODE_NOTATION <$> genPrintableText
         let randMathExpr = MATH_EXPRESSION <$> genPrintableText
-        frequency [ (7, randItem)
+        frequency [ (7, randSpan)
                   , (1, randCode)
                   , (1, randMathExpr)
                   ]
@@ -323,8 +323,8 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
         ScrapText $ concatMap mkVerboseInlineBlock inlines
 
     mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
-    mkVerboseInlineBlock (ITEM style segments) =
-        foldr (\segment acc -> [ITEM style [segment]] <> acc) mempty segments
+    mkVerboseInlineBlock (SPAN style segments) =
+        foldr (\segment acc -> [SPAN style [segment]] <> acc) mempty segments
     mkVerboseInlineBlock others                = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure
@@ -344,24 +344,24 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
         ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
 
     isSameStyle :: InlineBlock -> InlineBlock -> Bool
-    isSameStyle (ITEM style1 _) (ITEM style2 _) = style1 == style2
+    isSameStyle (SPAN style1 _) (SPAN style2 _) = style1 == style2
     isSameStyle _ _                             = False
 
--- | Concatinate 'ITEM' with same style
+-- | Concatinate 'SPAN' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []                       = []
-concatInline [ITEM style inline]      = [ITEM style (concatSegment inline)]
+concatInline [SPAN style inline]      = [SPAN style (concatSegment inline)]
 concatInline [inline]                 = [inline]
-concatInline (item1@(ITEM style1 inline1): item2@(ITEM style2 inline2) :rest)
-    | style1 == style2 = concatInline (ITEM style1 (concatSegment $ inline1 <> inline2) : rest)
-    | otherwise        = concatItem item1 : concatItem item2 : rest
-concatInline (item@(ITEM _ _) : rest) = concatItem item : concatInline rest
+concatInline (span1@(SPAN style1 inline1): span2@(SPAN style2 inline2) :rest)
+    | style1 == style2 = concatInline (SPAN style1 (concatSegment $ inline1 <> inline2) : rest)
+    | otherwise        = concatSpan span1 : concatSpan span2 : rest
+concatInline (span@(SPAN _ _) : rest) = concatSpan span : concatInline rest
 concatInline (a : rest)               = a : concatInline rest
 
--- | Concatenate the content of 'ITEM'
-concatItem :: InlineBlock -> InlineBlock
-concatItem (ITEM style inline) = ITEM style (concatSegment inline)
-concatItem others              = others
+-- | Concatenate the content of 'SPAN'
+concatSpan :: InlineBlock -> InlineBlock
+concatSpan (SPAN style inline) = SPAN style (concatSegment inline)
+concatSpan others              = others
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
@@ -462,9 +462,9 @@ isStrikeThrough _             = False
 -- | Format 'InlineBlock'
 formatInline :: [InlineBlock] -> [InlineBlock]
 formatInline [] = []
-formatInline [ITEM style segments]    = [ITEM style $ addSpace segments]
+formatInline [SPAN style segments]    = [SPAN style $ addSpace segments]
 formatInline [inline]                 = [inline]
-formatInline (ITEM style segments:xs) = ITEM style (addSpace segments) : formatInline xs
+formatInline (SPAN style segments:xs) = SPAN style (addSpace segments) : formatInline xs
 formatInline (x:xs)                   = x : formatInline xs
 
 -- Add space after hashtag

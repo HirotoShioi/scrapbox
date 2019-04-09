@@ -17,7 +17,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, string, try,
                                                 unexpected)
 
-import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
+import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
                                                           runScrapTextParserM)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
@@ -69,7 +69,7 @@ headingParser = do
     str       <- extractParagraph
     _         <- char ']'
     _         <- endOfLine
-    segments  <- runItemParserM str
+    segments  <- runSpanParserM str
     return $ HEADING (Level symbolLen) segments
 
 -- | Parser for 'BULLET_POINT'

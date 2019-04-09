@@ -121,7 +121,7 @@ renderInlineBlock :: InlineBlock -> Text
 renderInlineBlock = \case
     CODE_NOTATION text   -> "`" <> text <> "`"
     MATH_EXPRESSION text -> "`" <> text <> "`"
-    ITEM styles segments ->
+    SPAN styles segments ->
         let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
         in renderWithStyle (nub styles) renderedSegments
   where

@@ -12,7 +12,7 @@ module TestScrapboxParser.ScrapText
     ( scrapTextParserSpec
     ) where
 
-import           RIO hiding (assert)
+import           RIO hiding (assert, span)
 
 import           RIO.List (headMaybe)
 import           Test.Hspec (Spec, describe, it)
@@ -52,7 +52,7 @@ scrapTextParserSpec =
         describe "Inline blocks" $ modifyMaxSuccess (const 100) $ do
             mathExprSpec
             codeNotationSpec
-            styledItemSpec
+            styledSpanSpec
 
   where
     exampleText :: String
@@ -60,15 +60,15 @@ scrapTextParserSpec =
 
     expectedParsedText :: ScrapText
     expectedParsedText = ScrapText
-        [ ITEM [ Bold ] [ TEXT "bold text" ]
-        , ITEM [] [ TEXT " " ]
-        , ITEM [ StrikeThrough ] [ TEXT "strikethrough text" ]
-        , ITEM [] [ TEXT " " ]
-        , ITEM [ Italic ] [ TEXT "italic text" ]
-        , ITEM [] [ TEXT " simple text " ]
+        [ SPAN [ Bold ] [ TEXT "bold text" ]
+        , SPAN [] [ TEXT " " ]
+        , SPAN [ StrikeThrough ] [ TEXT "strikethrough text" ]
+        , SPAN [] [ TEXT " " ]
+        , SPAN [ Italic ] [ TEXT "italic text" ]
+        , SPAN [] [ TEXT " simple text " ]
         , CODE_NOTATION "code_notation"
-        , ITEM [] [ TEXT " " ]
-        , ITEM [ Bold ]
+        , SPAN [] [ TEXT " " ]
+        , SPAN [ Bold ]
             [ TEXT "test "
             , LINK Nothing ( Url "link" )
             , TEXT " test [partial"
@@ -144,27 +144,27 @@ codeNotationSpec = describe "Code notation" $ do
     getCodes c@(CODE_NOTATION _) = Just c
     getCodes _                   = Nothing
 
--- item
+-- SPAN
 -- bold
 -- heading
 -- italic
 -- strikethrough
 
-data ItemStyle
-    = PlainItem
-    | BoldItem
-    | ItalicItem
-    | StrikeThroughItem
+data SpanStyle
+    = PlainSpan
+    | BoldSpan
+    | ItalicSpan
+    | StrikeThroughSpan
 
-newtype StyledItem (a :: ItemStyle) = StyledItem
-    { getStyledItem :: [Segment]
+newtype StyledSpan (a :: SpanStyle) = StyledSpan
+    { getStyledSpan :: [Segment]
     } deriving Show
 
-instance Arbitrary (StyledItem a) where
+instance Arbitrary (StyledSpan a) where
     arbitrary = do
         newSize <- choose (0, sizeNum)
         scale (\size -> if size < sizeNum then size else newSize) $
-            StyledItem . concatSegment . addSpace <$> listOf1 arbitrary
+            StyledSpan . concatSegment . addSpace <$> listOf1 arbitrary
         where
           -- Add space after hashtag
           addSpace :: [Segment] -> [Segment]
@@ -176,85 +176,85 @@ instance Arbitrary (StyledItem a) where
           sizeNum :: Int
           sizeNum = 10
 
-instance ScrapboxSyntax (StyledItem 'PlainItem) where
-    render (StyledItem segments)     = renderSegments segments
-    getContent (StyledItem segments) = renderSegments segments
+instance ScrapboxSyntax (StyledSpan 'PlainSpan) where
+    render (StyledSpan segments)     = renderSegments segments
+    getContent (StyledSpan segments) = renderSegments segments
 
-instance ScrapboxSyntax (StyledItem 'BoldItem) where
-    render (StyledItem segments)     = "[* " <> renderSegments segments <> "]"
-    getContent (StyledItem segments) = renderSegments segments
+instance ScrapboxSyntax (StyledSpan 'BoldSpan) where
+    render (StyledSpan segments)     = "[* " <> renderSegments segments <> "]"
+    getContent (StyledSpan segments) = renderSegments segments
 
-instance ScrapboxSyntax (StyledItem 'ItalicItem) where
-    render (StyledItem segments)     = "[/ " <> renderSegments segments <> "]"
-    getContent (StyledItem segments) = renderSegments segments
+instance ScrapboxSyntax (StyledSpan 'ItalicSpan) where
+    render (StyledSpan segments)     = "[/ " <> renderSegments segments <> "]"
+    getContent (StyledSpan segments) = renderSegments segments
 
-instance ScrapboxSyntax (StyledItem 'StrikeThroughItem) where
-    render (StyledItem segments)     = "[- " <> renderSegments segments <> "]"
-    getContent (StyledItem segments) = renderSegments segments
+instance ScrapboxSyntax (StyledSpan 'StrikeThroughSpan) where
+    render (StyledSpan segments)     = "[- " <> renderSegments segments <> "]"
+    getContent (StyledSpan segments) = renderSegments segments
 
-styledItemSpec :: Spec
-styledItemSpec = describe "Styled inlines" $ do
+styledSpanSpec :: Spec
+styledSpanSpec = describe "Styled inlines" $ do
     describe "Non-Styled" $ do
         prop "should parse as Non-styled" $
-            \(plainInline :: StyledItem 'PlainItem) ->
+            \(plainInline :: StyledSpan 'PlainSpan) ->
                 testParse plainInline null
         prop "should preserve its content" $
-            \(plainInline :: StyledItem 'PlainItem) ->
+            \(plainInline :: StyledSpan 'PlainSpan) ->
                 testContent plainInline
 
     describe "Bold" $ do
         prop "should parse as Bold" $
-            \(boldInline :: StyledItem 'BoldItem) ->
+            \(boldInline :: StyledSpan 'BoldSpan) ->
                 testParse
                     boldInline
                     (\styles -> length styles == 1 && all isBold styles)
         prop "should preserve its content" $
-            \(boldInline :: StyledItem 'BoldItem) ->
+            \(boldInline :: StyledSpan 'BoldSpan) ->
                 testContent boldInline
 
     describe "Italic" $ do
         prop "should parse as Bold" $
-            \(italicInline :: StyledItem 'ItalicItem) ->
+            \(italicInline :: StyledSpan 'ItalicSpan) ->
                 testParse
                     italicInline
                     (\styles -> length styles == 1 && all isItalic styles)
         prop "should preserve its content" $
-            \(italicInline :: StyledItem 'ItalicItem) ->
+            \(italicInline :: StyledSpan 'ItalicSpan) ->
                 testContent italicInline
 
     describe "StrikeThrough" $ do
         prop "should parse as StrikeThrough" $
-            \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
+            \(strikeThroughInline :: StyledSpan 'StrikeThroughSpan) ->
                 testParse
                     strikeThroughInline
                     (\styles -> length styles == 1 && all isStrikeThrough styles)
 
         prop "should preserve its content" $
-            \(strikeThroughInline :: StyledItem 'StrikeThroughItem) ->
+            \(strikeThroughInline :: StyledSpan 'StrikeThroughSpan) ->
                 testContent strikeThroughInline
   where
-    getItem :: InlineBlock -> Maybe InlineBlock
-    getItem item@(ITEM _ _) = Just item
-    getItem _               = Nothing
+    getSpan :: InlineBlock -> Maybe InlineBlock
+    getSpan span@(SPAN _ _) = Just span
+    getSpan _               = Nothing
 
-    testParse :: (ScrapboxSyntax (StyledItem a))
-              => StyledItem a
+    testParse :: (ScrapboxSyntax (StyledSpan a))
+              => StyledSpan a
               -> ([Style] -> Bool)
               -> Property
     testParse inlineBlock = checkParsed inlineBlock runScrapTextParser
         (\(ScrapText inlines) -> do
             guard $ length inlines == 1
             inline <- headMaybe inlines
-            (ITEM style _) <- getItem inline
+            (SPAN style _) <- getSpan inline
             return style
         )
 
-    testContent :: (ScrapboxSyntax (StyledItem a)) => StyledItem a -> Property
+    testContent :: (ScrapboxSyntax (StyledSpan a)) => StyledSpan a -> Property
     testContent inlineBlock = checkParsed inlineBlock runScrapTextParser
         (\(ScrapText inlines) -> do
             guard $ length inlines == 1
             inline <- headMaybe inlines
-            (ITEM _ segments) <- getItem inline
+            (SPAN _ segments) <- getSpan inline
             return segments
         )
-        (== getStyledItem inlineBlock)
+        (== getStyledSpan inlineBlock)

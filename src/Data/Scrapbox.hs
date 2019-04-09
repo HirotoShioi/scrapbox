@@ -111,18 +111,18 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
     applyFilterLink :: Block -> Block
     applyFilterLink = \case
         PARAGRAPH (ScrapText inlines)   ->
-            PARAGRAPH $ ScrapText $ map filterItem inlines
+            PARAGRAPH $ ScrapText $ map filterSpan inlines
         BULLET_POINT start blocks       ->
             BULLET_POINT start $ map applyFilterLink blocks
         BLOCK_QUOTE (ScrapText inlines) ->
-            BLOCK_QUOTE $ ScrapText $ map filterItem inlines
+            BLOCK_QUOTE $ ScrapText $ map filterSpan inlines
         HEADING level segments          ->
             HEADING level $ map filterRelativeLink segments
         other                           -> other
 
-    filterItem :: InlineBlock -> InlineBlock
-    filterItem = \case
-      ITEM style segments -> ITEM style $ map filterRelativeLink segments
+    filterSpan :: InlineBlock -> InlineBlock
+    filterSpan = \case
+      SPAN style segments -> SPAN style $ map filterRelativeLink segments
       other               -> other
 
     filterRelativeLink :: Segment -> Segment

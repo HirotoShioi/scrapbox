@@ -57,7 +57,7 @@ renderText (ScrapText inlines) =
 
 -- | Render given 'InlineBlock' into 'Text'
 renderInline :: InlineBlock -> Text
-renderInline (ITEM style content)    = renderWithStyle style content
+renderInline (SPAN style content)    = renderWithStyle style content
 renderInline (CODE_NOTATION content) = "`" <> content <> "`"
 renderInline (MATH_EXPRESSION expr)  = "[$ " <> expr <> "]"
 
