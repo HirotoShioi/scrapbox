@@ -7,9 +7,9 @@ module TestScrapboxParser.ParserTest
 
 import           Test.Hspec (Spec)
 
-import           TestScrapboxParser.Span (spanParserSpec)
 import           TestScrapboxParser.Scrapbox (scrapboxParserSpec)
 import           TestScrapboxParser.ScrapText (scrapTextParserSpec)
+import           TestScrapboxParser.Span (spanParserSpec)
 
 -- | Test specs for scrapbox parser
 parserSpec :: Spec

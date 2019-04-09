@@ -17,9 +17,9 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 sepBy1, space, string, try,
                                                 unexpected)
 
-import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
                                                           runScrapTextParserM)
+import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), Level (..),
                                       Scrapbox (..), Start (..),
