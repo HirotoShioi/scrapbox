@@ -14,28 +14,26 @@ module Data.Scrapbox.Constructors
     , table
     , thumbnail
     -- * InlineBlock
-    , item
-    , noStyle
+    , span
     , bold
     , italic
     , strikeThrough
     , mathExpr
     , codeNotation
-    , customStyleBlock
     -- * Segment
     , hashtag
     , link
     , text
     ) where
 
-import           RIO hiding (link)
+import           RIO hiding (link, span)
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
                                       Segment (..), Start (..), Style (..),
-                                      StyleData (..), TableContent (..),
-                                      TableName (..), Url (..))
+                                      TableContent (..), TableName (..),
+                                      Url (..))
 
 --------------------------------------------------------------------------------
 -- Smart constructors
@@ -92,28 +90,24 @@ lineBreak = LINEBREAK
 --------------------------------------------------------------------------------
 
 -- | Create inline with given 'Style' and 'Segment'
-item :: Style -> [Segment] -> InlineBlock
-item = ITEM
+inline :: [Style] -> [Segment] -> InlineBlock
+inline = ITEM
 
--- | Creates 'InlineBlock' with no style
-noStyle :: [Segment] -> InlineBlock
-noStyle = ITEM NoStyle
+-- | Create 'ITEM' inline block
+span :: [Style] -> [Segment] -> InlineBlock
+span = inline
 
 -- | Create 'InlineBlock' with bold style
-bold :: [Segment] -> InlineBlock
-bold = ITEM Bold
+bold :: Style
+bold = Bold
 
 -- | Creates 'InlineBlock' with italic style
-italic :: [Segment] -> InlineBlock
-italic = ITEM Italic
+italic :: Style
+italic = Italic
 
 -- | Creates 'InlineBlock' with strikethrough style
-strikeThrough :: [Segment] -> InlineBlock
-strikeThrough = ITEM StrikeThrough
-
--- | Creates 'InlineBlock' wigh given 'StyleData' and 'Segment'
-customStyleBlock :: StyleData -> [Segment] -> InlineBlock
-customStyleBlock sData = ITEM (CustomStyle sData)
+strikeThrough :: Style
+strikeThrough = StrikeThrough
 
 -- | Creates 'CODE_NOTATION' inline block with given 'Text'
 codeNotation :: Text -> InlineBlock

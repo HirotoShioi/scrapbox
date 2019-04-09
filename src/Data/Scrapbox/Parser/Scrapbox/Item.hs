@@ -10,7 +10,6 @@ module Data.Scrapbox.Parser.Scrapbox.Item
 import           RIO hiding (many, try)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe)
 
-import           Data.String (fromString)
 import           Network.URI (isURI)
 import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,

@@ -20,7 +20,6 @@ module Data.Scrapbox.Internal
     , concatScrapText
     , verbose
     , unverbose
-    , emptyStyle
     -- * Predicates
     , isBlockQuote
     , isBulletPoint
@@ -37,7 +36,6 @@ module Data.Scrapbox.Internal
     , isBold
     , isItalic
     , isStrikeThrough
-    , isNoStyle
     ) where
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (runParagraphParser)
@@ -47,9 +45,9 @@ import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
                                                 renderSegments, renderText)
 import           Data.Scrapbox.Types (concatInline, concatScrapText,
-                                      concatSegment, emptyStyle, isBlockQuote,
-                                      isBold, isBulletPoint, isCodeBlock,
+                                      concatSegment, isBlockQuote, isBold,
+                                      isBulletPoint, isCodeBlock,
                                       isCodeNotation, isHashTag, isHeader,
-                                      isItalic, isLink, isMathExpr, isNoStyle,
-                                      isParagraph, isStrikeThrough, isTable,
-                                      isText, isThumbnail, unverbose, verbose)
+                                      isItalic, isLink, isMathExpr, isParagraph,
+                                      isStrikeThrough, isTable, isText,
+                                      isThumbnail, unverbose, verbose)

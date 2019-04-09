@@ -44,7 +44,6 @@ module Data.Scrapbox
     , InlineBlock(..)
     , Segment(..)
     , Style(..)
-    , StyleData(..)
     , ParseError
     ) where
 
@@ -60,8 +59,8 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
                                       Segment (..), Start (..), Style (..),
-                                      StyleData (..), TableContent (..),
-                                      TableName (..), Url (..), unverbose)
+                                      TableContent (..), TableName (..),
+                                      Url (..), unverbose)
 import           Network.URI (isURI)
 import           Text.ParserCombinators.Parsec (ParseError)
 

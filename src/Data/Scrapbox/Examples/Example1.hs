@@ -12,13 +12,12 @@ module Data.Scrapbox.Examples.Example1
   , getStartedSB
   ) where
 
-import           RIO hiding (link)
+import           RIO hiding (link, span)
 
 import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                              codeNotation, heading, italic,
-                                             lineBreak, link, noStyle, p,
-                                             scrapbox, strikeThrough, text,
-                                             thumbnail)
+                                             lineBreak, link, p, scrapbox, span,
+                                             strikeThrough, text, thumbnail)
 import           Data.Scrapbox.Types (Block, Scrapbox)
 
 --------------------------------------------------------------------------------
@@ -27,7 +26,7 @@ import           Data.Scrapbox.Types (Block, Scrapbox)
 
 -- "Get started",
 getStarted :: Block
-getStarted = p [noStyle [text "Get started"]]
+getStarted = p [span [] [text "Get started"]]
 
 -- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",
 startedThumbnail :: Block
@@ -35,7 +34,7 @@ startedThumbnail = thumbnail "https://gyazo.com/5f93e65a3b979ae5333aca4f32600611
 
 -- "Welcome to your new Scrapbox project!",
 welcome :: Block
-welcome = p [noStyle [text "Welcome to your new Scrapbox project!"]]
+welcome = p [span [] [text "Welcome to your new Scrapbox project!"]]
 
 -- "[** 📝Everything is editable]"
 everythingIs :: Block
@@ -45,31 +44,31 @@ everythingIs = heading 2 [text "📝 Everything is editable"]
 clickOn :: Block
 clickOn = bulletPoint 1
     [ p
-        [noStyle [text "Click on any line and start typing to edit. "]]
+        [span [] [text "Click on any line and start typing to edit. "]]
     ]
 
 -- "\t\tPress tab at the beginning of a line to indent and add a bullet point."
 pressTab :: Block
 pressTab = bulletPoint 2
     [ p
-        [noStyle [text "Press tab at the beginning of a line to indent and add a bullet point."]]
+        [span [] [text "Press tab at the beginning of a line to indent and add a bullet point."]]
     ]
 
 -- " Highlight text to make it a [new link], [* bold], [- and] [/ more]."
 highlightText :: Block
 highlightText = bulletPoint 1
     [ p
-        [ noStyle
+        [ span []
             [ text " Highlight text to make it a "
             , link Nothing "New link"
             , text ", "
             ]
-        , bold [text "bold"]
-        , noStyle [text ", "]
-        , strikeThrough [text "and"]
-        , noStyle [text " "]
-        , italic [text "more"]
-        , noStyle [text "."]
+        , span [bold] [text "bold"]
+        , span [] [text ", "]
+        , span [strikeThrough] [text "and"]
+        , span [] [text " "]
+        , span [italic] [text "more"]
+        , span [] [text "."]
         ]
     ]
 
@@ -77,11 +76,11 @@ highlightText = bulletPoint 1
 addLinks :: Block
 addLinks = bulletPoint 2
     [ p
-        [ noStyle [ text "Add links while typing with a "]
+        [ span [] [ text "Add links while typing with a "]
         , codeNotation "#"
-        , noStyle [text " before or brackets around "]
+        , span [] [text " before or brackets around "]
         , codeNotation "["
-        , noStyle [text "words you want to link "]
+        , span [] [text "words you want to link "]
         , codeNotation "]"
         ]
     ]
@@ -99,7 +98,7 @@ clickNewLink :: Block
 clickNewLink =
     bulletPoint 1
         [ p
-            [ noStyle
+            [ span []
                 [ text "Click a "
                 , link Nothing "New Link"
                 , text " to create a new page with that title and open it."
@@ -109,14 +108,14 @@ clickNewLink =
 
 -- Click related thumbnails in the footer of any page to explore ideas you have linked.
 clickRelated :: Block
-clickRelated = p [noStyle [text "Click related thumbnails in the footer of any page to explore ideas \
+clickRelated = p [span [] [text "Click related thumbnails in the footer of any page to explore ideas \
     \you have linked." ]]
 
 -- " \tPages that are directly linked or two steps away from the current page will be displayed.",
 pagesThat :: Block
 pagesThat = bulletPoint 2
     [ p
-        [ noStyle
+        [ span []
             [text "Pages that are directly linked or two steps away from the current page \
             \will be displayed."
             ]
@@ -127,17 +126,17 @@ pagesThat = bulletPoint 2
 seeImages :: Block
 seeImages = bulletPoint 1
     [ p
-        [ noStyle [ text "See images, videos, and external links added inside "]
+        [ span [] [ text "See images, videos, and external links added inside "]
         , codeNotation "["
-        , noStyle [text " brackets"]
+        , span [] [text " brackets"]
         , codeNotation  "]"
-        , noStyle [text " on the page"]
+        , span [] [text " on the page"]
         ]
     ]
 
 -- "> Our goal is to help you build a map of your ideas that gains clarity and context with every scrap you add. ",
 ourGoalIs :: Block
-ourGoalIs = blockQuote [noStyle [ourGoalItext]]
+ourGoalIs = blockQuote [span [] [ourGoalItext]]
   where
     ourGoalItext = text " Our goal is to help you build a map of your ideas that gains\
     \ clarity and context with every scrap you add. "
@@ -154,15 +153,15 @@ whatCan = heading 1 [text "What can you put in a Scrapbox project?"]
 useScrapbox :: Block
 useScrapbox = bulletPoint 1
     [ p
-        [ noStyle [text "Use Scrapbox to outline ideas, discuss "]
+        [ span [] [text "Use Scrapbox to outline ideas, discuss "]
         , codeNotation "code blocks"
-        , noStyle [text ", give feedback, and brainstorm. "]
+        , span [] [text ", give feedback, and brainstorm. "]
         ]
     ]
 
 -- "[* For example]",
 forExample :: Block
-forExample = bulletPoint 1 [p [noStyle [text "For example"]]]
+forExample = bulletPoint 1 [p [span [] [text "For example"]]]
 
 -- "\tLets say you are working on developing a new website. You might want to discuss ideas with
 -- your team before and while you execute the plan.  First create a page `Site plan` to start a
@@ -171,13 +170,13 @@ forExample = bulletPoint 1 [p [noStyle [text "For example"]]]
 letsSay :: Block
 letsSay = bulletPoint 1 [ p [letsSayText, sitePlan, toStart, socialMedia, period]]
   where
-    letsSayText = noStyle [text "Lets say you are working on developing a new website. \
+    letsSayText = span [] [text "Lets say you are working on developing a new website. \
     \You might want to discuss ideas with your team before and while you execute the plan.  First create a page "]
     sitePlan    = codeNotation "Site plan"
-    toStart     = noStyle [text " to start a conversation about the site requirements and link \
+    toStart     = span [] [text " to start a conversation about the site requirements and link \
     \some useful resources. On that page you might add a link for a new page called "]
     socialMedia = codeNotation "Social media buttons"
-    period      = noStyle [text "."]
+    period      = span [] [text "."]
 
 -- "\tYou can immediately click on that link to `Social media buttons` and start editing.
 -- There you may add links to `Twitter`, `Facebook`, etc.  Next you can click on `Twitter` and you'll
@@ -199,29 +198,29 @@ youCanImmediately = bulletPoint 1
         ]
     ]
   where
-    youcan      = noStyle [text "You can immediately click on that link to `Social media buttons` and \
+    youcan      = span [] [text "You can immediately click on that link to `Social media buttons` and \
     \ start editing. There you may add links to "]
     socialMedia = codeNotation "Social media buttons"
     twitter     = codeNotation "Twitter"
     faceBook    = codeNotation "Facebook"
-    andStart    = noStyle [text " and start editing.  There you may add links to "]
-    column      = noStyle [text ", "]
-    nextYoucan  = noStyle [text ", etc.  Next you can click on "]
-    relatedLink = noStyle [text " and you'll see a related link that will take you back to "]
+    andStart    = span [] [text " and start editing.  There you may add links to "]
+    column      = span [] [text ", "]
+    nextYoucan  = span [] [text ", etc.  Next you can click on "]
+    relatedLink = span [] [text " and you'll see a related link that will take you back to "]
     sitePlan    = codeNotation "Site Plan"
-    period      = noStyle [text ". "]
+    period      = span [] [text ". "]
 
 -- Once you can easily and directly type your ideas while also building context ideas become more
 -- clear the more you use it. No more folders full of dead text means no more teams isolated from their own ideas.
 onceYoucan :: Block
-onceYoucan = p [noStyle [text "Once you can easily and directly type your ideas while also building \
+onceYoucan = p [span [] [text "Once you can easily and directly type your ideas while also building \
 \ context ideas become more clear the more you use it. No more folders full of dead text means no \
 \more teams isolated from their own ideas."]]
 
 -- >  [/ What ideas in your head could your team benefit from you putting down right now? Go create
 --  your first three or so pages and add a few links. From 3 to 3,000 pages your ideas will only grow in context.]
 whatIdeas :: Block
-whatIdeas = blockQuote [italic [text "What ideas in your head could your team \
+whatIdeas = blockQuote [span [italic] [text "What ideas in your head could your team \
     \ benefit from you putting down right now? Go create your first three or so pages and add a few \
     \links. From 3 to 3,000 pages your ideas will only grow in context."]]
 
@@ -234,7 +233,7 @@ onceYouGot = heading 2 [text "📌 Once you've got the basics, here are ways to 
 -- " See a list of all the [https://scrapbox.io/help/Things%20you%20can%20do Things you can do] ",
 seeAList :: Block
 seeAList = p
-    [ noStyle
+    [ span []
         [ text " See a list of all the "
         , link (Just "Things you can do") "https://scrapbox.io/help/Things%20you%20can%20do"
         , text " "
@@ -245,7 +244,7 @@ seeAList = p
 includesMore :: Block
 includesMore = bulletPoint 1
     [ p
-        [ noStyle
+        [ span []
             [ text "Includes more syntax, inviting team members, and creating profiles"]
         ]
     ]
@@ -254,7 +253,7 @@ includesMore = bulletPoint 1
 seeSome :: Block
 seeSome = bulletPoint 1
     [ p
-        [ noStyle
+        [ span []
             [ text "See some "
             , link (Just "Example projects") "https://scrapbox.io/help/exampless"
             , text " "
@@ -266,7 +265,7 @@ seeSome = bulletPoint 1
 includesSaas :: Block
 includesSaas = bulletPoint 2
     [ p
-        [ noStyle
+        [ span []
             [text "Includes a SaaS startup, design agency, and more"]
         ]
     ]
@@ -276,7 +275,7 @@ includesSaas = bulletPoint 2
 howTos :: Block
 howTos = bulletPoint 1
     [ p
-        [noStyle
+        [span []
             [ text "See "
             , link (Just "How-tos and support") "https://scrapbox.io/help/"
             , text " "
@@ -288,7 +287,7 @@ howTos = bulletPoint 1
 forDetails :: Block
 forDetails = bulletPoint 2
     [ p
-        [noStyle [text "For detailed instructions and answers to FAQs"]]
+        [span [] [text "For detailed instructions and answers to FAQs"]]
     ]
 
 -- "[* We would love to hear any questions or feedback you may have]",
@@ -298,7 +297,7 @@ weWouldLove = heading 1 [text "We would love to hear any questions or feedback y
 -- "Please let us know if you have any suggestions, questions, or points of friction.You can contact us directly by email: contact@scrapbox.io, [twitter https://twitter.com/scrapboxapp], and [https://facebook.com/scrapboxapp facebook]",
 pleaseLet :: Block
 pleaseLet = p
-    [noStyle
+    [span []
         [ pleaseLetText
         , link (Just "twitter") "https://twitter.com/scrapboxapp"
         , text ", and "
@@ -311,7 +310,7 @@ pleaseLet = p
 
 -- "[/ Thank you for using Scrapbox!]",
 thankYouFor :: Block
-thankYouFor = p [italic [text "Thank you for using Scrapbox!"]]
+thankYouFor = p [span [italic] [text "Thank you for using Scrapbox!"]]
 
 -- "[https://gyazo.com/5aeffb3e8a6561ae78430664d8257f58]",
 thankYouThumbnail :: Block
@@ -320,7 +319,7 @@ thankYouThumbnail = thumbnail "https://gyazo.com/5aeffb3e8a6561ae78430664d8257f5
 -- ">Note: When you're done reading you might change the title of this page to 'Welcome to
 -- project-name' and add some personalized instructions for your team.",
 noteWhen :: Block
-noteWhen = blockQuote [noStyle [noteWhenText]]
+noteWhen = blockQuote [span [] [noteWhenText]]
   where
     noteWhenText =  text "Note: When you're done reading you might change the title of \
     \ this page to 'Welcome to project-name' and add some personalized instructions for your team."

@@ -22,7 +22,6 @@ module Data.Scrapbox.Types
     , InlineBlock(..)
     , ScrapText(..)
     , Style(..)
-    , StyleData(..)
     , TableContent(..)
     -- * Helper functions
     , concatInline
@@ -30,8 +29,6 @@ module Data.Scrapbox.Types
     , concatScrapText
     , verbose
     , unverbose
-    , emptyStyle
-    , toStyle
     -- * Predicates
     , isBlockQuote
     , isBulletPoint
@@ -48,17 +45,16 @@ module Data.Scrapbox.Types
     , isBold
     , isItalic
     , isStrikeThrough
-    , isNoStyle
     ) where
 
 import           RIO
 
-import           Data.List (groupBy)
+import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
                                       genPrintableUrl, genText)
-import           Test.QuickCheck (Arbitrary (..), choose, frequency,
-                                  genericShrink, getSize, listOf1, scale,
-                                  vectorOf)
+import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
+                                  frequency, genericShrink, getSize, listOf1,
+                                  scale, vectorOf)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -89,8 +85,11 @@ instance Arbitrary Scrapbox where
             (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
 
             -- Replace Link with THUMBNAIL
-            (PARAGRAPH (ScrapText [ITEM NoStyle [LINK Nothing url]]): xs) ->
+            (PARAGRAPH (ScrapText [ITEM [] [LINK Nothing url]]): xs) ->
                 THUMBNAIL url : removeAmbiguity xs
+
+            (PARAGRAPH (ScrapText [ITEM [Sized level] content]): xs) ->
+                HEADING level content : removeAmbiguity xs
 
             -- Apply formatInlines to blocks
             (PARAGRAPH (ScrapText inlines): xs) ->
@@ -98,7 +97,7 @@ instance Arbitrary Scrapbox where
             (BLOCK_QUOTE (ScrapText inlines): xs) ->
                 BLOCK_QUOTE (ScrapText $ formatInline inlines) : removeAmbiguity xs
             (x:xs) -> x : removeAmbiguity xs
-    shrink = genericShrink
+    -- shrink = genericShrink
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -225,7 +224,7 @@ instance Arbitrary ScrapText where
 
 -- | InlineBlock
 data InlineBlock
-    = ITEM !Style ![Segment]
+    = ITEM ![Style] ![Segment]
     -- ^ ITEM are blocks which can have styles
     | CODE_NOTATION !Text
     -- ^ Code notation
@@ -234,13 +233,24 @@ data InlineBlock
 
 instance Arbitrary InlineBlock where
     arbitrary = do
-        let randItem     = ITEM <$> arbitrary <*> listOf1 arbitrary
+        let randItem     = ITEM <$> genStyle <*> listOf1 arbitrary
         let randCode     = CODE_NOTATION <$> genPrintableText
         let randMathExpr = MATH_EXPRESSION <$> genPrintableText
         frequency [ (7, randItem)
                   , (1, randCode)
                   , (1, randMathExpr)
                   ]
+        where
+           genStyle :: Gen [Style]
+           genStyle = do
+            sizedStyle <- Sized <$> (Level <$> choose (2, 5))
+            let randStyle = listOf1 $ elements [Italic, StrikeThrough, sizedStyle]
+            frequency
+                [ (1, return [Bold])
+                , (1, return [UserStyle "!?%"])
+                , (1, sort . nub <$> randStyle)
+                , (7, return [])
+                ]
     shrink = genericShrink
 
 instance Arbitrary Text where
@@ -271,57 +281,31 @@ instance Arbitrary Segment where
 
 -- | Style that can be applied to the 'Segment'
 data Style
-    = CustomStyle StyleData
+    = Sized Level
     -- ^ You can use this to combine all three as of the styles as well as Header
     | Bold
     -- ^ Bold style
     | Italic
     -- ^ Italic style
-    | NoStyle
-    -- ^ No styles
     | StrikeThrough
     -- ^ StrikeThrough style
-    | UserStyle Text
+    | UserStyle !Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Style where
     arbitrary = do
-        let randCustomStyle = CustomStyle <$> arbitrary
-        frequency
-            [ (1, randCustomStyle)
-            , (1, return $ UserStyle "!?%")
-            , (1, return Bold)
-            , (1, return Italic)
-            , (1, return StrikeThrough)
-            , (8, return NoStyle)
+        someLvl <- arbitrary
+        elements
+            [ UserStyle "!?%"
+            , Bold
+            , Italic
+            , StrikeThrough
+            , Sized someLvl
             ]
-
--- | StyleData
-data StyleData = StyleData
-    { sHeaderSize    :: !Int
-    -- ^ Size of an header,
-    , sBold          :: !Bool
-    -- ^ Bold style
-    , sItalic        :: !Bool
-    -- ^ Italic style
-    , sStrikeThrough :: !Bool
-    -- ^ Strike through
-    } deriving (Eq, Show, Generic, Read, Ord)
-
-instance Arbitrary StyleData where
-    arbitrary = StyleData
-        <$> choose (2,4)
-        <*> return False
-        <*> return True
-        <*> return True
 
 --------------------------------------------------------------------------------
 -- Verbose/Unverbose
 --------------------------------------------------------------------------------
-
--- | Empty style data
-emptyStyle :: StyleData
-emptyStyle = StyleData 0 False False False
 
 -- | Convert given 'Scrapbox' into verbose structure
 verbose :: Scrapbox -> Scrapbox
@@ -391,19 +375,6 @@ concatSegment [] = []
 concatSegment (TEXT txt1 : TEXT txt2 : rest) =
     concatSegment $ (TEXT $ txt1 <> txt2) : rest
 concatSegment (a : rest) = a : concatSegment rest
-
---------------------------------------------------------------------------------
--- Conversion
---------------------------------------------------------------------------------
-
--- Convert 'StyleData' to 'Style'
-toStyle :: StyleData -> Style
-toStyle  = \case
-    (StyleData _ False False False) -> NoStyle
-    (StyleData _ True False False)  -> Bold
-    (StyleData _ False True False)  -> Italic
-    (StyleData _ False False True)  -> StrikeThrough
-    others                          -> CustomStyle others
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -483,11 +454,6 @@ isItalic _      = False
 isStrikeThrough :: Style -> Bool
 isStrikeThrough StrikeThrough = True
 isStrikeThrough _             = False
-
--- | Checks whether given 'Style' is 'NoStyle'
-isNoStyle :: Style -> Bool
-isNoStyle NoStyle = True
-isNoStyle _       = False
 
 --------------------------------------------------------------------------------
 -- These functions are used to define typeclass instance of Arbitrary

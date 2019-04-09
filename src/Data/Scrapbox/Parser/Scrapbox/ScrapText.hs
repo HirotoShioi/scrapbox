@@ -14,7 +14,7 @@ module Data.Scrapbox.Parser.Scrapbox.ScrapText
     ) where
 
 import           RIO hiding (many, try)
-
+import           RIO.List (sort)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
@@ -22,9 +22,8 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
 
 import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
-import           Data.Scrapbox.Types (InlineBlock (..), ScrapText (..),
-                                      Segment (..), Style (..), StyleData (..),
-                                      emptyStyle)
+import           Data.Scrapbox.Types (InlineBlock (..), Level (..),
+                                      ScrapText (..), Segment (..), Style (..))
 
 -- | Run 'ScrapText' parser on given 'String'
 --
@@ -77,7 +76,7 @@ boldParser = do
     paragraph <- extractStr
     segments  <- runItemParserM paragraph
     _         <- string "]]"
-    return $ ITEM Bold segments
+    return $ ITEM [Bold] segments
   where
     extractStr :: Parser String
     extractStr = go mempty
@@ -122,27 +121,27 @@ styledTextParser = do
     return $ ITEM style segments
   where
     -- Create style
-    mkStyle :: String -> Style
+    mkStyle :: String -> [Style]
     mkStyle = \case
-        "*"  -> Bold
-        "-"  -> StrikeThrough
-        "/"  -> Italic
+        "*"  -> [Bold]
+        "-"  -> [StrikeThrough]
+        "/"  -> [Italic]
         rest -> if any (`notElem` "*-/") rest -- Need Header style
-            then UserStyle (fromString rest)
-            else mkCustomStyle rest emptyStyle
+            then [UserStyle (fromString rest)]
+            else mkCustomStyle rest mempty
 
     -- Create custom style
-    mkCustomStyle :: String -> StyleData -> Style
-    mkCustomStyle str styleData
+    mkCustomStyle :: String -> [Style] -> [Style]
+    mkCustomStyle str styles
         | any (`elem` "-") str =
-            mkCustomStyle (filter (/= '-') str) styleData { sStrikeThrough = True}
+            mkCustomStyle (filter (/= '-') str) (StrikeThrough : styles)
         | any (`elem` "/") str =
-            mkCustomStyle (filter (/= '/') str) styleData { sItalic = True}
+            mkCustomStyle (filter (/= '/') str) (Italic : styles)
         | any (`elem` "*") str =
-            let headerSize = length $ filter (== '*') str
-            in mkCustomStyle (filter (/= '*') str) $ styleData { sHeaderSize = headerSize}
-        | null str             = CustomStyle styleData
-        | otherwise            = CustomStyle styleData
+            let level = length $ filter (== '*') str
+            in mkCustomStyle (filter (/= '*') str) (Sized (Level level): styles)
+        | null str             = sort styles
+        | otherwise            = sort styles
 
 -- | Extract paragraph that are surronded by brackets
 extractParagraph :: Parser String
@@ -192,7 +191,7 @@ extractParagraph = go mempty
 
 -- | Parser for non-styled text
 noStyleParser :: Parser InlineBlock
-noStyleParser = ITEM NoStyle <$> extractNonStyledText
+noStyleParser = ITEM [] <$> extractNonStyledText
   where
 
     extractNonStyledText :: Parser [Segment]

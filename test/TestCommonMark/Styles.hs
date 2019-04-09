@@ -76,16 +76,16 @@ checkStyledTextContent styledText =
         then Just segment
         else Nothing
 
-getHeadInlineBlock :: [Block] -> Maybe Style
+getHeadInlineBlock :: [Block] -> Maybe [Style]
 getHeadInlineBlock blocks = do
     blockContent                    <- headMaybe blocks
     (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
     inline                          <- headMaybe inlines
     getStyle inline
   where
-    getStyle :: InlineBlock -> Maybe Style
-    getStyle (ITEM style _) = Just style
-    getStyle _              = Nothing
+    getStyle :: InlineBlock -> Maybe [Style]
+    getStyle (ITEM styles _) = Just styles
+    getStyle _               = Nothing
 
 --------------------------------------------------------------------------------
 -- No style
@@ -95,7 +95,7 @@ checkParse :: (CommonMark (StyledText a)) => Style -> StyledText a -> Property
 checkParse style styledText =
     checkScrapbox
         styledText
-        (== style)
+        (\styles -> style `elem` styles)
         getHeadInlineBlock
 
 -- | Test spec for parsing non-styled text
@@ -103,7 +103,11 @@ noStyleTextSpec :: Spec
 noStyleTextSpec =
     describe "Non-styled text" $ do
         prop "should parse non-styled text as NoStyle" $
-         \(noStyleText :: StyledText 'NoStyles) -> checkParse NoStyle noStyleText
+           \(noStyleText :: StyledText 'NoStyles) ->
+               checkScrapbox
+                 noStyleText
+                 null
+                 getHeadInlineBlock
         prop "should preserve its content" $
             \(noStyleText :: StyledText 'NoStyles) ->
                 checkStyledTextContent noStyleText
@@ -112,7 +116,11 @@ noStyleTextSpec =
 boldTextSpec :: Spec
 boldTextSpec = describe "Bold text" $ do
     prop "should parse bold text as Bold" $
-        \(boldText :: StyledText 'BoldStyle) -> checkParse Bold boldText
+        \(boldText :: StyledText 'BoldStyle) ->
+            checkScrapbox
+                boldText
+                (== [Bold])
+                getHeadInlineBlock
     prop "should preserve its content" $
         \(boldText :: StyledText 'BoldStyle) -> checkStyledTextContent boldText
 
@@ -122,10 +130,9 @@ italicTextSpec = describe "Italic text" $ do
     prop "should parse italic text as Italic" $
         \(italicText :: StyledText 'ItalicStyle) -> checkParse Italic italicText
     prop "should preserve its content" $
-        \(italicText :: StyledText 'ItalicStyle) ->
-            checkStyledTextContent italicText
+        \(italicText :: StyledText 'ItalicStyle) -> checkStyledTextContent italicText
 
--- | Test spec for parsing strike through text
+-- | Test spec for parsing italic-styled text
 strikeThroughTextSpec :: Spec
 strikeThroughTextSpec = describe "Strikethrough text" $ do
     prop "should parse italic text as StrikeThrough" $

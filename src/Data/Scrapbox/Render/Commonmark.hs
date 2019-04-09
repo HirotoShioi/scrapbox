@@ -14,10 +14,10 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
                                       Segment (..), Start (..), Style (..),
-                                      StyleData (..), TableContent (..),
-                                      TableName (..), Url (..))
+                                      TableContent (..), TableName (..),
+                                      Url (..))
 import           Network.URI (parseURI, uriQuery)
-import           RIO.List (foldl', headMaybe, tailMaybe)
+import           RIO.List (foldl', headMaybe, nub, tailMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
@@ -121,23 +121,21 @@ renderInlineBlock :: InlineBlock -> Text
 renderInlineBlock = \case
     CODE_NOTATION text   -> "`" <> text <> "`"
     MATH_EXPRESSION text -> "`" <> text <> "`"
-    ITEM style segments  ->
+    ITEM styles segments ->
         let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
-        in case style of
-            Bold                    -> "**" <> renderedSegments <> "**"
-            Italic                  -> "_" <> renderedSegments <> "_"
-            StrikeThrough           -> "~~" <> renderedSegments <> "~~"
-            NoStyle                 -> renderedSegments
-            CustomStyle customStyle -> renderWithStyle customStyle renderedSegments
-            UserStyle   _           -> "**" <> renderedSegments <> "**"
+        in renderWithStyle (nub styles) renderedSegments
   where
     -- Render given text with 'StyleData'
-    renderWithStyle :: StyleData -> Text -> Text
-    renderWithStyle (StyleData fontSize isBold isItalic isStrikeThrough) text =
-        foldr (\(applicable, apply) acc -> if applicable then apply acc else acc) text $
-            zip
-                [fontSize > 0, isBold, isStrikeThrough, isItalic]
-                [applySize fontSize, applyBold, applyStrikeThrough, applyItalic]
+    renderWithStyle :: [Style] -> Text -> Text
+    renderWithStyle styles text = foldr apply text styles
+
+    apply :: Style -> Text -> Text
+    apply Bold text                = "**" <> text <> "**"
+    apply Italic text              = "_" <> text <> "_"
+    apply StrikeThrough text       = "~~" <> text <> "~~"
+    apply (Sized (Level lvl)) text = applySize lvl text
+    apply (UserStyle _) text       = "**" <> text <> "**"
+
     -- Add font size
     applySize :: Int -> Text -> Text
     applySize fontSize text = mconcat
@@ -147,15 +145,6 @@ renderInlineBlock = \case
         , text
         , "</span>"
         ]
-    -- Add bold style
-    applyBold :: Text -> Text
-    applyBold txt          = "**" <> txt <> "**"
-    -- Add strikethrough style
-    applyStrikeThrough :: Text -> Text
-    applyStrikeThrough txt = "~~" <> txt <> "~~"
-    -- Add italic style
-    applyItalic :: Text -> Text
-    applyItalic txt        = "_" <> txt <> "_"
 
 -- | Render 'CODE_BLOCK'
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]

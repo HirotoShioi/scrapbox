@@ -15,7 +15,7 @@ module Data.Scrapbox.Parser.Commonmark
       parseCommonmark
     ) where
 
-import           RIO hiding (link)
+import           RIO hiding (link, span)
 
 import           CMark (Node (..), NodeType (..), PosInfo (..), Title,
                         optHardBreaks, optSafe)
@@ -24,13 +24,12 @@ import           Data.List.Split (splitWhen)
 import qualified RIO.Text as T
 
 import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
-                                             codeNotation, heading, item, link,
-                                             noStyle, paragraph, scrapbox, text,
+                                             codeNotation, heading, link,
+                                             paragraph, scrapbox, span, text,
                                              thumbnail)
 import           Data.Scrapbox.Types as S (Block (..), InlineBlock, Scrapbox,
-                                           Segment, StyleData (..),
-                                           concatInline, concatScrapText,
-                                           emptyStyle, toStyle)
+                                           Segment, Style (..), concatInline,
+                                           concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
@@ -93,7 +92,7 @@ convertToBlocks ( node1@(Node (Just (PosInfo _ _ end _)) _ _)
 convertToBlocks (x:xs) = toBlocks x <> convertToBlocks xs
 
 toBlocks :: Node -> [Block]
-toBlocks = toBlocks' emptyStyle
+toBlocks = toBlocks' mempty
 
 -- | Convert 'Node' into list of 'Block'
 --
@@ -111,62 +110,52 @@ toBlocks = toBlocks' emptyStyle
 --
 -- Others like STRONG and TEXT have PARAGRAPH as an parent node so it is very important
 -- that the toInlineBlock is implemented correctly.
-toBlocks' :: StyleData -> Node -> [Block]
-toBlocks' styleData (Node _ nodeType contents) = case nodeType of
+toBlocks' :: [Style] -> Node -> [Block]
+toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.PARAGRAPH                -> parseParagraph contents
     C.DOCUMENT                 -> convertToBlocks contents
     C.HEADING headingNum       -> [toHeading headingNum contents]
     C.EMPH                     ->
-        [paragraph $ concatMap (toInlineBlock italicStyle) contents]
+        [paragraph $ concatMap (toInlineBlock (Italic : styles)) contents]
     C.STRONG                   ->
-        [paragraph $ concatMap (toInlineBlock boldStyle) contents]
+        [paragraph $ concatMap (toInlineBlock (Bold : styles)) contents]
     C.TEXT textContent         -> [paragraph $ toInlineBlocks textContent]
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
     C.ITEM                     -> convertToBlocks contents
-    C.SOFTBREAK                -> [paragraph [noStyle [text ""]]]
+    C.SOFTBREAK                -> [paragraph [span [] [text ""]]]
      -- Workaround need to pay attention
-    C.LINEBREAK                -> [paragraph [noStyle [text "\n"]]]
+    C.LINEBREAK                -> [paragraph [span [] [text "\n"]]]
     C.LINK url title           ->
-        [paragraph [item (toStyle styleData) [toLink contents url title]]]
+        [paragraph [span styles [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
     C.IMAGE url _              -> [thumbnail url]
     C.HTML_INLINE htmlContent  -> [codeBlock "html" (T.lines htmlContent)]
     C.BLOCK_QUOTE              ->
-        [blockQuote $ concatMap (toInlineBlock styleData) contents]
+        [blockQuote $ concatMap (toInlineBlock styles) contents]
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
     C.CUSTOM_INLINE _ _        -> parseParagraph contents
     C.CUSTOM_BLOCK _ _         -> parseParagraph contents
-    C.THEMATIC_BREAK           -> [paragraph [noStyle [text "\n"]]]
-  where
-    boldStyle = styleData { sBold = True }
-    italicStyle = styleData { sItalic = True }
+    C.THEMATIC_BREAK           -> [paragraph [span [] [text "\n"]]]
 
 -- | Convert 'Node' into list of 'InlineBlock'
 -- Need state monad to inherit style from parent node
-toInlineBlock :: StyleData -> Node -> [InlineBlock]
-toInlineBlock styleData nodes = concatInline $ convertToInlineBlock nodes
+toInlineBlock :: [Style] -> Node -> [InlineBlock]
+toInlineBlock styles nodes = concatInline $ convertToInlineBlock nodes
   where
     convertToInlineBlock :: Node -> [InlineBlock]
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
-        EMPH               -> concatMap (toInlineBlock withItalicStyle) contents
-        STRONG             -> concatMap (toInlineBlock withBoldStyle) contents
+        EMPH               -> concatMap (toInlineBlock (Italic : styles)) contents
+        STRONG             -> concatMap (toInlineBlock (Bold : styles)) contents
         C.TEXT textContent -> withStyle [text textContent]
         CODE codeContent   -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
-        IMAGE url title    -> [noStyle [toLink contents url title]]
-        _                  -> concatMap (toInlineBlock styleData)  contents
-
-    withItalicStyle :: StyleData
-    withItalicStyle = styleData { sItalic = True }
-
-    withBoldStyle :: StyleData
-    withBoldStyle = styleData { sBold = True }
-
+        IMAGE url title    -> [span [] [toLink contents url title]]
+        _                  -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
-    withStyle segments = [item (toStyle styleData) segments]
+    withStyle segments = [span styles segments]
 
 -- | Convert to 'CODE_BLOCK'
 toCodeBlock :: Text -> [Text] -> Block
