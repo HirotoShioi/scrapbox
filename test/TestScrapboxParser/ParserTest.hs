@@ -14,6 +14,6 @@ import           TestScrapboxParser.Span (spanParserSpec)
 -- | Test specs for scrapbox parser
 parserSpec :: Spec
 parserSpec = do
+    scrapboxParserSpec
     spanParserSpec
     scrapTextParserSpec
-    scrapboxParserSpec

@@ -12,8 +12,7 @@ import           TestScrapboxParser.ParserTest (parserSpec)
 
 main :: IO ()
 main = hspec $ parallel $ do
-    describe "Commonmark parser"
-        commonmarkSpec
-
     describe "Scrapbox parser"
         parserSpec
+    describe "Commonmark parser"
+        commonmarkSpec
