@@ -53,7 +53,8 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
                                       genPrintableUrl, genText, shortListOf)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink, listOf1, resize, sized)
+                                  frequency, genericShrink, listOf1, resize,
+                                  sized)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
