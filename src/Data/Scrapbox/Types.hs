@@ -53,8 +53,7 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
                                       genPrintableUrl, genText, shortListOf)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink, listOf1, resize,
-                                  sized)
+                                  frequency, genericShrink)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -69,11 +68,6 @@ instance Arbitrary Scrapbox where
     arbitrary = do
         (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
-      where
-        setSize :: Int -> Int
-        setSize size
-          | size <= 20 = size
-          | otherwise  = 20
     shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity . shrink) blocks
 
 removeAmbiguity :: [Block] -> [Block]

@@ -50,7 +50,7 @@ genPrintableText = T.unwords <$> shortListOf genText
 
 -- | Generate random text
 genText :: Gen Text
-genText = fmap fromString <$> listOf1
+genText = fmap fromString <$> shortListOf
     $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 -- | Generate random url
 genPrintableUrl :: Gen Text
