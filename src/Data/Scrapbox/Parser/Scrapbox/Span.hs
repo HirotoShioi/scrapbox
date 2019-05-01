@@ -1,10 +1,10 @@
-{-| Item parser module
+{-| Span parser module
 -}
 
-module Data.Scrapbox.Parser.Scrapbox.Item
-    ( runItemParser
-    , runItemParserM
-    , itemParser
+module Data.Scrapbox.Parser.Scrapbox.Span
+    ( runSpanParser
+    , runSpanParserM
+    , spanParser
     ) where
 
 import           RIO hiding (many, try)
@@ -127,8 +127,8 @@ segmentParser =
     <?> "failed to parse segment"
 
 -- | Parser for inline text
-itemParser :: Parser [Segment]
-itemParser = manyTill segmentParser eof
+spanParser :: Parser [Segment]
+spanParser = manyTill segmentParser eof
 
 -- | Run inline text parser on given 'String'
 --
@@ -143,13 +143,13 @@ itemParser = manyTill segmentParser eof
 --     , HashTag "someHashtag"
 --     ]
 -- @
-runItemParser :: String -> Either ParseError [Segment]
-runItemParser = parse itemParser "Inline text parser"
+runSpanParser :: String -> Either ParseError [Segment]
+runSpanParser = parse spanParser "Inline text parser"
 
 -- | Monadic version of 'runInlineParser'
-runItemParserM :: String -> Parser [Segment]
-runItemParserM content =
+runSpanParserM :: String -> Parser [Segment]
+runSpanParserM content =
     either
         (\_ -> unexpected "Failed to parse inline text")
         return
-        (runItemParser content)
+        (runSpanParser content)

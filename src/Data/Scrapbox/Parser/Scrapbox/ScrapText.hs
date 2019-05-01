@@ -20,7 +20,7 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 manyTill, noneOf, oneOf, parse,
                                                 space, string, try, unexpected)
 
-import           Data.Scrapbox.Parser.Scrapbox.Item (runItemParserM)
+import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (InlineBlock (..), Level (..),
                                       ScrapText (..), Segment (..), Style (..))
@@ -74,9 +74,9 @@ boldParser :: Parser InlineBlock
 boldParser = do
     _         <- string "[["
     paragraph <- extractStr
-    segments  <- runItemParserM paragraph
+    segments  <- runSpanParserM paragraph
     _         <- string "]]"
-    return $ ITEM [Bold] segments
+    return $ SPAN [Bold] segments
   where
     extractStr :: Parser String
     extractStr = go mempty
@@ -116,9 +116,9 @@ styledTextParser = do
     symbols   <- manyTill (oneOf "*/-!^~$%&?") space
     paragraph <- extractParagraph
     let style = mkStyle symbols
-    segments  <- runItemParserM paragraph
+    segments  <- runSpanParserM paragraph
     _         <- char ']'
-    return $ ITEM style segments
+    return $ SPAN style segments
   where
     -- Create style
     mkStyle :: String -> [Style]
@@ -191,7 +191,7 @@ extractParagraph = go mempty
 
 -- | Parser for non-styled text
 noStyleParser :: Parser InlineBlock
-noStyleParser = ITEM [] <$> extractNonStyledText
+noStyleParser = SPAN [] <$> extractNonStyledText
   where
 
     extractNonStyledText :: Parser [Segment]
@@ -206,7 +206,7 @@ noStyleParser = ITEM [] <$> extractNonStyledText
             <|> try (many1 (noneOf syntaxSymbols))
             )
         case someChar of
-            Nothing   -> runItemParserM content
+            Nothing   -> runSpanParserM content
             -- Check if ahead content can be parsed as bold text
             Just "[[" -> checkWith "[[" boldParser content
             -- Check if ahead content can be parsed as custom styled text
@@ -223,7 +223,7 @@ noStyleParser = ITEM [] <$> extractNonStyledText
     checkWith symbolStr parser content = do
         canBeParsed <- isJust <$> lookAheadMaybe parser
         if canBeParsed
-            then runItemParserM content
+            then runSpanParserM content
             else continue symbolStr content
 
     continue :: String -> String -> Parser [Segment]

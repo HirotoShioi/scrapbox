@@ -5,8 +5,6 @@
 
 module Data.Scrapbox.Parser.Commonmark.TableParser
     ( parseTable
-    , CommonMarkTable
-    , Column
     ) where
 
 import           RIO

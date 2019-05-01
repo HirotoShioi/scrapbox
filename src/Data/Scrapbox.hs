@@ -111,18 +111,18 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
     applyFilterLink :: Block -> Block
     applyFilterLink = \case
         PARAGRAPH (ScrapText inlines)   ->
-            PARAGRAPH $ ScrapText $ map filterItem inlines
+            PARAGRAPH $ ScrapText $ map f inlines
         BULLET_POINT start blocks       ->
             BULLET_POINT start $ map applyFilterLink blocks
         BLOCK_QUOTE (ScrapText inlines) ->
-            BLOCK_QUOTE $ ScrapText $ map filterItem inlines
+            BLOCK_QUOTE $ ScrapText $ map f inlines
         HEADING level segments          ->
             HEADING level $ map filterRelativeLink segments
         other                           -> other
 
-    filterItem :: InlineBlock -> InlineBlock
-    filterItem = \case
-      ITEM style segments -> ITEM style $ map filterRelativeLink segments
+    f :: InlineBlock -> InlineBlock
+    f = \case
+      SPAN style segments -> SPAN style $ map filterRelativeLink segments
       other               -> other
 
     filterRelativeLink :: Segment -> Segment
@@ -177,7 +177,7 @@ applyCorrection = T.unlines . map apply . T.lines
   where
     apply :: Text -> Text
     apply line
-      |    "#" `T.isPrefixOf` line
+      | "#" `T.isPrefixOf` line
         && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
         let (symbol, rest) = T.break (/= '#') line
         in symbol <> " " <> rest

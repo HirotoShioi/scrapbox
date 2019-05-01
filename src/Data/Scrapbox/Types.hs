@@ -47,14 +47,13 @@ module Data.Scrapbox.Types
     , isStrikeThrough
     ) where
 
-import           RIO
+import           RIO hiding (span)
 
 import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
-                                      genPrintableUrl, genText)
+                                      genPrintableUrl, genText, shortListOf)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink, getSize, listOf1,
-                                  scale, vectorOf)
+                                  frequency, genericShrink)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -67,37 +66,32 @@ newtype Scrapbox = Scrapbox [Block]
 
 instance Arbitrary Scrapbox where
     arbitrary = do
-        newSize <- choose (1,10)
-        scale (\size -> if size < 10 then size else newSize) $ do
-            (Scrapbox blocks) <- unverbose . Scrapbox <$> listOf1 arbitrary
-            return $ Scrapbox $ removeAmbiguity blocks
-        where
-          removeAmbiguity :: [Block] -> [Block]
-          removeAmbiguity = \case
-            [] -> []
+        (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
+        return $ Scrapbox $ removeAmbiguity blocks
+    shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity . shrink) blocks
 
-            -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
-            (BULLET_POINT start blocks : xs) ->
-                  BULLET_POINT start (removeAmbiguity blocks)
-                : LINEBREAK
-                : removeAmbiguity xs
-            (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
-            (t@(TABLE _ _): xs) -> t : LINEBREAK : removeAmbiguity xs
+removeAmbiguity :: [Block] -> [Block]
+removeAmbiguity = \case
+    [] -> []
 
-            -- Replace Link with THUMBNAIL
-            (PARAGRAPH (ScrapText [ITEM [] [LINK Nothing url]]): xs) ->
-                THUMBNAIL url : removeAmbiguity xs
+    -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
+    (BULLET_POINT start blocks : xs) ->
+          BULLET_POINT start (removeAmbiguity blocks)
+        : LINEBREAK
+        : removeAmbiguity xs
+    (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
+    (t@(TABLE _ _): xs)     -> t : LINEBREAK : removeAmbiguity xs
 
-            (PARAGRAPH (ScrapText [ITEM [Sized level] content]): xs) ->
-                HEADING level content : removeAmbiguity xs
+    -- Replace Link with THUMBNAIL
+    (PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]): xs) ->
+        THUMBNAIL url : removeAmbiguity xs
+    (PARAGRAPH (ScrapText []) : xs)           -> LINEBREAK : removeAmbiguity xs
+    (PARAGRAPH (ScrapText [SPAN [] []]) : xs) -> LINEBREAK : removeAmbiguity xs
 
-            -- Apply formatInlines to blocks
-            (PARAGRAPH (ScrapText inlines): xs) ->
-                PARAGRAPH (ScrapText $ formatInline inlines) : removeAmbiguity xs
-            (BLOCK_QUOTE (ScrapText inlines): xs) ->
-                BLOCK_QUOTE (ScrapText $ formatInline inlines) : removeAmbiguity xs
-            (x:xs) -> x : removeAmbiguity xs
-    -- shrink = genericShrink
+    (PARAGRAPH (ScrapText [SPAN [Sized level] content]): xs) ->
+        HEADING level content : removeAmbiguity xs
+
+    (x:xs) -> x : removeAmbiguity xs
 
 --------------------------------------------------------------------------------
 -- Elements that are used in Block
@@ -122,7 +116,7 @@ newtype CodeSnippet = CodeSnippet [Text]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary CodeSnippet where
-    arbitrary = CodeSnippet <$> listOf1 genPrintableText
+    arbitrary = CodeSnippet <$> shortListOf genPrintableText
     shrink    = genericShrink
 
 -- | Heading level
@@ -144,11 +138,7 @@ newtype TableContent = TableContent [[Text]]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableContent where
-    arbitrary = do
-        newSize <- choose (1,5)
-        scale (\size -> if size < 5 && size > 0 then size else newSize) $ do
-            num <- getSize
-            TableContent <$> listOf1 (vectorOf num genText)
+    arbitrary = TableContent <$> shortListOf (shortListOf genText)
     shrink = genericShrink
 
 -- | Url for Link/Thumbnail
@@ -179,14 +169,13 @@ data Block
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Block where
-    arbitrary = do
-        newSize <- choose (1,10)
-        scale (\size -> if size < 10 then size else newSize) $ frequency
+    arbitrary =
+        frequency
             [ (2, return LINEBREAK)
             , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> listOf1 bulletPointFreq)
+            , (1, BULLET_POINT <$> arbitrary <*> shortListOf bulletPointFreq)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> listOf1 arbitrary))
+            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
             , (7, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
@@ -196,7 +185,7 @@ instance Arbitrary Block where
             [ (1, BLOCK_QUOTE <$> arbitrary)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
             , (2, HEADING <$> arbitrary <*>
-                (concatSegment . addSpace <$> listOf1 arbitrary)
+                (concatSegment . addSpace <$> shortListOf arbitrary)
               )
             , (7, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
@@ -213,19 +202,13 @@ newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary ScrapText where
-    arbitrary = do
-        newSize <- choose (0, sizeNum)
-        scale (\size -> if size < sizeNum then size else newSize) $
-            ScrapText . formatInline . concatInline <$> listOf1 arbitrary
-      where
-        sizeNum :: Int
-        sizeNum = 10
+    arbitrary = ScrapText . formatInline . concatInline <$> shortListOf arbitrary
     shrink = genericShrink
 
 -- | InlineBlock
 data InlineBlock
-    = ITEM ![Style] ![Segment]
-    -- ^ ITEM are blocks which can have styles
+    = SPAN ![Style] ![Segment]
+    -- ^ SPAN are blocks which can have styles
     | CODE_NOTATION !Text
     -- ^ Code notation
     | MATH_EXPRESSION !Text
@@ -233,10 +216,10 @@ data InlineBlock
 
 instance Arbitrary InlineBlock where
     arbitrary = do
-        let randItem     = ITEM <$> genStyle <*> listOf1 arbitrary
+        let randSpan     = SPAN <$> genStyle <*> shortListOf arbitrary
         let randCode     = CODE_NOTATION <$> genPrintableText
         let randMathExpr = MATH_EXPRESSION <$> genPrintableText
-        frequency [ (7, randItem)
+        frequency [ (7, randSpan)
                   , (1, randCode)
                   , (1, randMathExpr)
                   ]
@@ -244,7 +227,7 @@ instance Arbitrary InlineBlock where
            genStyle :: Gen [Style]
            genStyle = do
             sizedStyle <- Sized <$> (Level <$> choose (2, 5))
-            let randStyle = listOf1 $ elements [Italic, StrikeThrough, sizedStyle]
+            let randStyle = nub <$> shortListOf (elements [Italic, StrikeThrough, sizedStyle])
             frequency
                 [ (1, return [Bold])
                 , (1, return [UserStyle "!?%"])
@@ -323,8 +306,8 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
         ScrapText $ concatMap mkVerboseInlineBlock inlines
 
     mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
-    mkVerboseInlineBlock (ITEM style segments) =
-        foldr (\segment acc -> [ITEM style [segment]] <> acc) mempty segments
+    mkVerboseInlineBlock (SPAN style segments) =
+        foldr (\segment acc -> [SPAN style [segment]] <> acc) mempty segments
     mkVerboseInlineBlock others                = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure
@@ -344,24 +327,24 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
         ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
 
     isSameStyle :: InlineBlock -> InlineBlock -> Bool
-    isSameStyle (ITEM style1 _) (ITEM style2 _) = style1 == style2
+    isSameStyle (SPAN style1 _) (SPAN style2 _) = style1 == style2
     isSameStyle _ _                             = False
 
--- | Concatinate 'ITEM' with same style
+-- | Concatinate 'SPAN' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]
 concatInline []                       = []
-concatInline [ITEM style inline]      = [ITEM style (concatSegment inline)]
+concatInline [SPAN style inline]      = [SPAN style (concatSegment inline)]
 concatInline [inline]                 = [inline]
-concatInline (item1@(ITEM style1 inline1): item2@(ITEM style2 inline2) :rest)
-    | style1 == style2 = concatInline (ITEM style1 (concatSegment $ inline1 <> inline2) : rest)
-    | otherwise        = concatItem item1 : concatItem item2 : rest
-concatInline (item@(ITEM _ _) : rest) = concatItem item : concatInline rest
+concatInline (span1@(SPAN style1 inline1): span2@(SPAN style2 inline2) :rest)
+    | style1 == style2 = concatInline (SPAN style1 (concatSegment $ inline1 <> inline2) : rest)
+    | otherwise        = concatSpan span1 : concatSpan span2 : rest
+concatInline (span@(SPAN _ _) : rest) = concatSpan span : concatInline rest
 concatInline (a : rest)               = a : concatInline rest
 
--- | Concatenate the content of 'ITEM'
-concatItem :: InlineBlock -> InlineBlock
-concatItem (ITEM style inline) = ITEM style (concatSegment inline)
-concatItem others              = others
+-- | Concatenate the content of 'SPAN'
+concatSpan :: InlineBlock -> InlineBlock
+concatSpan (SPAN style inline) = SPAN style (concatSegment inline)
+concatSpan others              = others
 
 -- | Concatenate 'ScrapText'
 -- This could be Semigroup, but definitely not Monoid (there's no mempty)
@@ -462,9 +445,9 @@ isStrikeThrough _             = False
 -- | Format 'InlineBlock'
 formatInline :: [InlineBlock] -> [InlineBlock]
 formatInline [] = []
-formatInline [ITEM style segments]    = [ITEM style $ addSpace segments]
+formatInline [SPAN style segments]    = [SPAN style $ addSpace segments]
 formatInline [inline]                 = [inline]
-formatInline (ITEM style segments:xs) = ITEM style (addSpace segments) : formatInline xs
+formatInline (SPAN style segments:xs) = SPAN style (addSpace segments) : formatInline xs
 formatInline (x:xs)                   = x : formatInline xs
 
 -- Add space after hashtag

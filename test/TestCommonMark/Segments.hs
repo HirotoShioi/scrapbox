@@ -161,6 +161,6 @@ testSegment someSegment =
         (\content -> do
             blockContent                    <- headMaybe content
             (PARAGRAPH (ScrapText inlines)) <- getParagraph blockContent
-            (ITEM _ segments)               <- headMaybe inlines
+            (SPAN _ segments)               <- headMaybe inlines
             return (content, inlines, segments)
         )

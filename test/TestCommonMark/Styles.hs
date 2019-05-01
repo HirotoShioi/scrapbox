@@ -84,7 +84,7 @@ getHeadInlineBlock blocks = do
     getStyle inline
   where
     getStyle :: InlineBlock -> Maybe [Style]
-    getStyle (ITEM styles _) = Just styles
+    getStyle (SPAN styles _) = Just styles
     getStyle _               = Nothing
 
 --------------------------------------------------------------------------------

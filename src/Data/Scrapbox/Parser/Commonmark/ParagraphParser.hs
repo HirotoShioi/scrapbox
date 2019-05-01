@@ -5,6 +5,7 @@
 
 module Data.Scrapbox.Parser.Commonmark.ParagraphParser
     ( toInlineBlocks
+    -- * Exposed for testing
     , runParagraphParser
     ) where
 
@@ -58,11 +59,11 @@ textParser :: [Style] -> Symbol -> Parser InlineBlock
 textParser styles symbol = do
     text <- manyTill anyChar (try $ string symbol)
     when (null text) $ unexpected "Text is empty, nothing to consume"
-    return $ ITEM styles [TEXT (fromString text)]
+    return $ SPAN styles [TEXT (fromString text)]
 
 -- | Parser for non-styled text
 noStyleParser :: Parser InlineBlock
-noStyleParser = ITEM mempty <$> extractNonStyledText
+noStyleParser = SPAN mempty <$> extractNonStyledText
   where
     extractNonStyledText :: Parser [Segment]
     extractNonStyledText = go mempty
@@ -132,6 +133,6 @@ runParagraphParser =  parse parser "Paragraph parser"
 -- | Convert given 'Text' into @[InlineBlock]@
 toInlineBlocks :: Text -> [InlineBlock]
 toInlineBlocks text = either
-    (const [ITEM mempty [TEXT text]])
+    (const [SPAN mempty [TEXT text]])
     id
     (runParagraphParser (T.unpack text))

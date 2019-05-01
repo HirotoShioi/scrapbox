@@ -91,9 +91,9 @@ lineBreak = LINEBREAK
 
 -- | Create inline with given 'Style' and 'Segment'
 inline :: [Style] -> [Segment] -> InlineBlock
-inline = ITEM
+inline = SPAN
 
--- | Create 'ITEM' inline block
+-- | Create 'SPAN' inline block
 span :: [Style] -> [Segment] -> InlineBlock
 span = inline
 

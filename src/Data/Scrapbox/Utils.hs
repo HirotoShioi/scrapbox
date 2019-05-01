@@ -15,12 +15,13 @@ module Data.Scrapbox.Utils
     , genText
     , genPrintableUrl
     , genMaybe
+    , shortListOf
     ) where
 
 import           RIO
 
 import qualified RIO.Text as T
-import           Test.QuickCheck (Gen, elements, listOf1)
+import           Test.QuickCheck (Gen, elements, listOf1, resize, sized)
 
 --------------------------------------------------------------------------------
 -- Helper function
@@ -45,11 +46,11 @@ whenRight _         _ = pure ()
 -- this is needed as some characters like
 -- '`' and `>` will be parsed as blockquote, code notation, etc.
 genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genText
+genPrintableText = T.unwords <$> shortListOf genText
 
 -- | Generate random text
 genText :: Gen Text
-genText = fmap fromString <$> listOf1
+genText = fmap fromString <$> shortListOf
     $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 -- | Generate random url
 genPrintableUrl :: Gen Text
@@ -63,3 +64,9 @@ genMaybe :: Gen a -> Gen (Maybe a)
 genMaybe gen = do
     gened <- gen
     elements [Just gened, Nothing]
+
+shortListOf :: Gen a -> Gen [a]
+shortListOf g = sized $ \s ->
+    resize
+        (round . sqrt . fromIntegral $ s)
+        (listOf1 (resize s g))

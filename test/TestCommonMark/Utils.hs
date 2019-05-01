@@ -50,7 +50,7 @@ getHeadSegment :: [Block] -> Maybe Segment
 getHeadSegment blocks = do
     blockContent                  <- headMaybe blocks
     PARAGRAPH (ScrapText inlines) <- getParagraph blockContent
-    ITEM _ segments               <- headMaybe inlines
+    SPAN _ segments               <- headMaybe inlines
     headMaybe segments
 
 -- | Extract heed segment of a given list of blocks
