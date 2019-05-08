@@ -8,15 +8,14 @@ extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Utils
-    ( whenRight
-    , whenJust
-    -- * Testing utilities
-    , genPrintableText
+    ( -- * Testing utilities
+      genPrintableText
     , genText
     , genPrintableUrl
     , genMaybe
     , NonEmptyPrintableString(..)
     , shouldParseSpec
+    , propNonNull
     ) where
 
 import           RIO
@@ -25,26 +24,13 @@ import qualified RIO.Text as T
 import           Test.Hspec (Spec)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
-                                  arbitraryPrintableChar, elements, listOf1)
+                                  Property, arbitraryPrintableChar, elements,
+                                  listOf1, property, (.&&.))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
-
--- | Perform some operation on 'Just', given the field inside the 'Just'.
---
--- > whenJust Nothing  print == return ()
--- > whenJust (Just 1) print == print 1
-whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
-whenJust mg f = maybe (pure ()) f mg
-
--- | The 'whenRight' function takes an 'Either' value and a function which returns a monad.
--- The monad is only executed when the given argument takes the form @'Right' _@, otherwise
--- it does nothing.
-whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
-whenRight (Right x) f = f x
-whenRight _         _ = pure ()
 
 -- | Generate arbitrary Text
 -- this is needed as some characters like
@@ -56,6 +42,7 @@ genPrintableText = T.unwords <$> listOf1 genText
 genText :: Gen Text
 genText = fmap fromString <$> listOf1
     $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
@@ -83,3 +70,20 @@ shouldParseSpec parser =
         prop "should be able to parse any text without failing or cause infinite loop" $
             \(someText :: PrintableString) ->
                 isRight $ parser $ getPrintableString someText
+
+-- | General test case on whether given parser returns non null list after parsing
+-- Non null string
+propNonNull :: (String -> Either ParseError a)
+                    -- ^ Parser
+                    -> (a -> [b])
+                    -- ^ Getter
+                    -> Property
+propNonNull parser getter = property $ \(someText :: NonEmptyPrintableString) ->
+    let eParseredText = parser
+            $ getNonEmptyPrintableString someText
+
+    in isRight eParseredText
+    .&&. either
+        (const False)
+        (not . null . getter)
+        eParseredText

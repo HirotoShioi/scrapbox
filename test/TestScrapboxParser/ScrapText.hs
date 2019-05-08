@@ -12,14 +12,13 @@ module TestScrapboxParser.ScrapText
     ( scrapTextParserSpec
     ) where
 
-import           RIO hiding (assert, span)
+import           RIO hiding (span)
 
 import           RIO.List (headMaybe)
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), Property, choose, listOf1,
                                   scale)
-import           Test.QuickCheck.Monadic (assert, monadicIO)
 
 import           Data.Scrapbox (InlineBlock (..), ScrapText (..), Segment (..),
                                 Style (..), Url (..))
@@ -28,8 +27,7 @@ import           Data.Scrapbox.Internal (concatSegment, isBold, isCodeNotation,
                                          renderSegments, runScrapTextParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
-import           Utils (NonEmptyPrintableString (..), genPrintableText,
-                        shouldParseSpec, whenRight)
+import           Utils (genPrintableText, propNonNull, shouldParseSpec)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec
@@ -38,13 +36,7 @@ scrapTextParserSpec =
         shouldParseSpec runScrapTextParser
 
         prop "should return non-empty list of contexts if the given string is non-empty" $
-            \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runScrapTextParser
-                        $ getNonEmptyPrintableString someText
-
-                assert $ isRight eParseredText
-                whenRight eParseredText $ \(ScrapText inlines) ->
-                    assert $ not $ null inlines
+            propNonNull runScrapTextParser (\(ScrapText inlines) -> inlines)
 
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser

@@ -8,12 +8,12 @@ module TestScrapboxParser.Scrapbox
     ( scrapboxParserSpec
     ) where
 
-import           RIO hiding (assert)
+import           RIO
 
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck.Monadic (assert, monadicIO)
+import           Test.QuickCheck (property, (.&&.), (===))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -22,8 +22,8 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Url (..), renderToScrapbox)
 import           Data.Scrapbox.Internal (runScrapboxParser)
 import           TestScrapboxParser.Utils (propParseAsExpected)
-import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
-                        whenRight)
+import           Utils (propNonNull, shouldParseSpec)
+
 --------------------------------------------------------------------------------
 -- Scrapbox parser
 --------------------------------------------------------------------------------
@@ -32,14 +32,15 @@ import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
 roundTripSpec :: Spec
 roundTripSpec = describe "Scrapbox" $
     prop "should be able to perform roundtrip if there's no ambiguous syntax" $
-        \(scrapbox :: Scrapbox) -> monadicIO $ do
+        \(scrapbox :: Scrapbox) ->
             let rendered = renderToScrapbox mempty scrapbox
-            let eParsed  = runScrapboxParser $ T.unpack rendered
+                eParsed  = runScrapboxParser $ T.unpack rendered
 
-            assert $ isRight eParsed
-
-            whenRight eParsed $ \parsed ->
-                assert $ parsed == scrapbox
+            in isRight eParsed
+            .&&. either
+                (const $ property False)
+                (=== scrapbox)
+                eParsed
 
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
@@ -48,12 +49,7 @@ scrapboxParserSpec =
         shouldParseSpec runScrapboxParser
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
-            \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runScrapboxParser $ getNonEmptyPrintableString someText
-
-                assert $ isRight eParseredText
-                whenRight eParseredText $ \(Scrapbox blocks) ->
-                    assert $ not $ null blocks
+            propNonNull runScrapboxParser (\(Scrapbox blocks) -> blocks)
 
         describe "Parsing \"syntax\" page with scrapbox parser" $
           modifyMaxSuccess (const 1) $ do

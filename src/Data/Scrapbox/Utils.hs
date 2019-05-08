@@ -8,10 +8,8 @@ either: http://hackage.haskell.org/package/either-5.0.1
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Scrapbox.Utils
-    ( whenRight
-    , whenJust
-    -- * Testing utilities
-    , genPrintableText
+    ( -- * Testing utilities
+      genPrintableText
     , genText
     , genPrintableUrl
     , genMaybe
@@ -26,21 +24,6 @@ import           Test.QuickCheck (Gen, elements, listOf1, resize, sized)
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
-
--- | Perform some operation on 'Just', given the field inside the 'Just'.
---
--- > whenJust Nothing  print == return ()
--- > whenJust (Just 1) print == print 1
-whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
-whenJust mg f = maybe (pure ()) f mg
-
--- | The 'whenRight' function takes an 'Either' value and a function which returns
--- a monad.
--- The monad is only executed when the given argument takes the form @'Right' _@,
--- otherwise it does nothing.
-whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
-whenRight (Right x) f = f x
-whenRight _         _ = pure ()
 
 -- | Generate arbitrary Text
 -- this is needed as some characters like
@@ -68,5 +51,5 @@ genMaybe gen = do
 shortListOf :: Gen a -> Gen [a]
 shortListOf g = sized $ \s ->
     resize
-        (round . sqrt . fromIntegral $ s)
+        ((round :: Double -> Int) . sqrt . fromIntegral $ s)
         (listOf1 (resize s g))

@@ -2,3 +2,5 @@
 *~
 .ghci
 test-docs/
+dist-newstyle/
+cabal.project

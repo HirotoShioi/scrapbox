@@ -1,7 +1,6 @@
 {-| Utility functions used within TestScrapboxParser
 -}
 
-{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module TestScrapboxParser.Utils
@@ -11,11 +10,10 @@ module TestScrapboxParser.Utils
     , checkParsed
     ) where
 
-import           RIO hiding (assert)
+import           RIO
 
 import qualified RIO.Text as T
-import           Test.QuickCheck (Property, Testable (..))
-import           Test.QuickCheck.Monadic (assert, monadicIO)
+import           Test.QuickCheck (Property, Testable (..), (===))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -23,14 +21,14 @@ import           Text.Parsec (ParseError)
 --------------------------------------------------------------------------------
 
 -- | General unit testing to see the parser can parse given data as expected
-propParseAsExpected :: (Eq parsed)
+propParseAsExpected :: (Eq parsed, Show parsed)
                     => toParse
                     -> parsed
                     -> (toParse -> Either ParseError parsed)
                     -> Property
-propParseAsExpected example expected parser = monadicIO $ either
-    (\parseError    -> fail $ "Failed to parse with error: " <> show parseError)
-    (\parsedContent -> assert $ parsedContent == expected)
+propParseAsExpected example expected parser = property $ either
+    (const $ property False)
+    (=== expected)
     (parser example)
 
 -- | Type class used to render/get content of given syntax
