@@ -13,7 +13,7 @@ module TestScrapboxParser.Utils
 import           RIO
 
 import qualified RIO.Text as T
-import           Test.QuickCheck (Property, Testable (..), (===))
+import           Test.QuickCheck (Property, Testable (..))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -21,14 +21,14 @@ import           Text.Parsec (ParseError)
 --------------------------------------------------------------------------------
 
 -- | General unit testing to see the parser can parse given data as expected
-propParseAsExpected :: (Eq parsed, Show parsed)
+propParseAsExpected :: (Eq parsed)
                     => toParse
                     -> parsed
                     -> (toParse -> Either ParseError parsed)
                     -> Property
 propParseAsExpected example expected parser = property $ either
-    (const $ property False)
-    (=== expected)
+    (const False)
+    (== expected)
     (parser example)
 
 -- | Type class used to render/get content of given syntax

@@ -13,7 +13,7 @@ import           RIO
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (property, (.&&.), (===))
+import           Test.QuickCheck ((.&&.))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -38,8 +38,8 @@ roundTripSpec = describe "Scrapbox" $
 
             in isRight eParsed
             .&&. either
-                (const $ property False)
-                (=== scrapbox)
+                (const False)
+                (== scrapbox)
                 eParsed
 
 scrapboxParserSpec :: Spec
