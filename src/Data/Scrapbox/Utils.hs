@@ -48,11 +48,10 @@ genPrintableUrl = do
     end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
     randomSite <- genUrlText
     return $ "http://www." <> randomSite <> end
-  where
-        -- | Generate random text
-    genUrlText :: Gen Text
-    genUrlText = fmap fromString <$> listOf1
-        $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+
+genUrlText :: Gen Text
+genUrlText = fmap fromString <$> listOf1
+    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 -- | Wrap 'Gen a' with 'Maybe'
 genMaybe :: Gen a -> Gen (Maybe a)
