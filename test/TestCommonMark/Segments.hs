@@ -21,7 +21,7 @@ import           Data.Scrapbox.Internal (isCodeNotation, isLink, isText)
 import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
                                        getHeadInlineBlock, getHeadSegment,
                                        getParagraph)
-import           Utils (genPrintableText, genPrintableUrl, genText)
+import           Utils (genPrintableUrl, genText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
@@ -86,7 +86,7 @@ instance CommonMark CodeNotationSegment where
     render (CodeNotationSegment txt) = "`" <> txt <> "`"
 
 instance Arbitrary CodeNotationSegment where
-    arbitrary = CodeNotationSegment <$> genPrintableText
+    arbitrary = CodeNotationSegment <$> genText
 
 -- | Test spec for parsing 'CODE_NOTATION'
 codeNotationSpec :: Spec
@@ -123,7 +123,7 @@ instance CommonMark TextSegment where
     render (TextSegment txt) = txt
 
 instance Arbitrary TextSegment where
-    arbitrary = TextSegment <$> genPrintableText
+    arbitrary = TextSegment <$> genText
 
 -- | Test spec for parsing 'TEXT'
 plainTextSpec :: Spec

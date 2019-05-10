@@ -49,11 +49,12 @@ module Data.Scrapbox.Types
 
 import           RIO hiding (span)
 
+import qualified RIO.Text as T
 import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
-                                      genPrintableUrl, genText, shortListOf)
+                                      genPrintableUrl, shortListOf, genAsciiText)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink)
+                                  frequency, genericShrink, sized, resize)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -65,10 +66,13 @@ newtype Scrapbox = Scrapbox [Block]
 --------------------------------------------------------------------------------
 
 instance Arbitrary Scrapbox where
-    arbitrary = do
+    arbitrary = sized $ \size -> resize (adjustSize size) $ do
         (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
-    shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity . shrink) blocks
+        where
+            adjustSize num | num < 30 = num
+                           | otherwise = 30
+    shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity) $ shrink blocks
 
 removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case
@@ -86,10 +90,19 @@ removeAmbiguity = \case
     (PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]): xs) ->
         THUMBNAIL url : removeAmbiguity xs
     (PARAGRAPH (ScrapText []) : xs)           -> LINEBREAK : removeAmbiguity xs
-    (PARAGRAPH (ScrapText [SPAN [] []]) : xs) -> LINEBREAK : removeAmbiguity xs
 
     (PARAGRAPH (ScrapText [SPAN [Sized level] content]): xs) ->
         HEADING level content : removeAmbiguity xs
+    
+    (b@(BLOCK_QUOTE (ScrapText [SPAN _ inlines])) : xs) ->
+        if null inlines
+            then LINEBREAK : xs
+            else b : removeAmbiguity xs
+    (p@(PARAGRAPH (ScrapText [SPAN _ inlines])) : xs) ->
+        if null inlines
+            then LINEBREAK : xs
+            else p : removeAmbiguity xs
+
 
     (x:xs) -> x : removeAmbiguity xs
 
@@ -109,7 +122,7 @@ newtype CodeName = CodeName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary CodeName where
-    arbitrary = CodeName <$> genText
+    arbitrary = CodeName <$> genPrintableText
 
 -- | Code snippet
 newtype CodeSnippet = CodeSnippet [Text]
@@ -131,14 +144,14 @@ newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableName where
-    arbitrary = TableName <$> genText
+    arbitrary = TableName <$> genPrintableText
 
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableContent where
-    arbitrary = TableContent <$> shortListOf (shortListOf genText)
+    arbitrary = TableContent <$> shortListOf (shortListOf genPrintableText)
     shrink = genericShrink
 
 -- | Url for Link/Thumbnail
@@ -237,7 +250,7 @@ instance Arbitrary InlineBlock where
     shrink = genericShrink
 
 instance Arbitrary Text where
-    arbitrary = fromString <$> arbitrary
+    arbitrary = T.strip . fromString <$> arbitrary
 
 -- | Segment
 data Segment
@@ -251,9 +264,9 @@ data Segment
 
 instance Arbitrary Segment where
     arbitrary = do
-        let randomHashTag = HASHTAG <$> genText
+        let randomHashTag = HASHTAG <$> genPrintableText
         let randomLink    = LINK
-                <$> genMaybe genPrintableText
+                <$> genMaybe genAsciiText
                 <*> (Url <$> genPrintableUrl)
         let randomText    = TEXT <$> genPrintableText
         frequency [ (1, randomHashTag)

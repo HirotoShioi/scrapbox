@@ -25,7 +25,6 @@ library
   exposed-modules:     Data.Scrapbox
                        Data.Scrapbox.Internal
   other-modules:       Data.Scrapbox.Constructors
-                       Data.Scrapbox.DiffFinder
                        Data.Scrapbox.Parser.Scrapbox
                        Data.Scrapbox.Parser.Scrapbox.Span
                        Data.Scrapbox.Parser.Scrapbox.ScrapText

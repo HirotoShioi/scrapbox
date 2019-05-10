@@ -20,7 +20,7 @@ import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
                                          runSpanParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
-import           Utils (genMaybe, genPrintableText, genPrintableUrl, genText,
+import           Utils (genMaybe, genText, genPrintableUrl, genText,
                         propNonNull, shouldParseSpec)
 
 -- | Spec for inline text parser
@@ -62,7 +62,7 @@ newtype TextSpan = TextSpan Text
     deriving Show
 
 instance Arbitrary TextSpan where
-    arbitrary = TextSpan <$> genPrintableText
+    arbitrary = TextSpan <$> genText
 
 instance ScrapboxSyntax TextSpan where
     render (TextSpan txt)     = txt
@@ -96,7 +96,7 @@ data LinkSpan = LinkSpan !(Maybe Text) !Text
     deriving Show
 
 instance Arbitrary LinkSpan where
-    arbitrary = LinkSpan <$> genMaybe genPrintableText <*> genPrintableUrl
+    arbitrary = LinkSpan <$> genMaybe genText <*> genPrintableUrl
 
 instance ScrapboxSyntax LinkSpan where
     render (LinkSpan (Just name) url) = "[" <> name <> " " <> url <> "]"

@@ -45,6 +45,8 @@ hashTagParser = do
     content <- many1 (noneOf " [")
     return $ hashtag content
 
+-- Bug
+-- [http://www.Qz.tv H2mUZ,8Nf.IbKKP)-Kq ]
 -- | Parser for 'LINK'
 linkParser :: Parser Segment
 linkParser = do

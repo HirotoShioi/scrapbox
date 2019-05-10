@@ -27,7 +27,7 @@ import           Data.Scrapbox.Internal (concatSegment, isBold, isCodeNotation,
                                          renderSegments, runScrapTextParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
-import           Utils (genPrintableText, propNonNull, shouldParseSpec)
+import           Utils (genText, propNonNull, shouldParseSpec)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec
@@ -72,7 +72,7 @@ newtype MathExpr = MathExpr Text
     deriving Show
 
 instance Arbitrary MathExpr where
-    arbitrary = MathExpr <$> genPrintableText
+    arbitrary = MathExpr <$> genText
 
 instance ScrapboxSyntax MathExpr where
     render (MathExpr txt)     = "[$ " <> txt <> "]"
@@ -108,7 +108,7 @@ newtype CodeNotation = CodeNotation Text
     deriving Show
 
 instance Arbitrary CodeNotation where
-    arbitrary = CodeNotation <$> genPrintableText
+    arbitrary = CodeNotation <$> genText
 
 instance ScrapboxSyntax CodeNotation where
     render (CodeNotation text)     = "`" <> text <> "`"

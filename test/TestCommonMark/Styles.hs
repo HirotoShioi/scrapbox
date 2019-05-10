@@ -26,7 +26,7 @@ import           Data.Scrapbox.Internal (isText)
 import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
                                        getHeadSegment, getParagraph)
 
-import           Utils (genPrintableText)
+import           Utils (genText)
 
 -- | Use Phantom type so we can generalize the test
 newtype StyledText (a :: TestStyle) = StyledText
@@ -55,7 +55,7 @@ instance CommonMark (StyledText 'NoStyles) where
     render (StyledText txt) = txt
 
 instance Arbitrary (StyledText a) where
-    arbitrary = StyledText <$> genPrintableText
+    arbitrary = StyledText <$> genText
 
 -- | Generalized test case for checking whether the content of the text has same content
 checkStyledTextContent :: (CommonMark (StyledText style))

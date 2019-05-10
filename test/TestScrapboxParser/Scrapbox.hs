@@ -4,16 +4,14 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Scrapbox
-    ( scrapboxParserSpec
-    ) where
+module TestScrapboxParser.Scrapbox where
 
 import           RIO
 
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck ((.&&.))
+import           Test.QuickCheck (whenFail, (.&&.), Property, property)
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -21,8 +19,9 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), renderToScrapbox)
 import           Data.Scrapbox.Internal (runScrapboxParser)
+import           Prelude (putStrLn)
 import           TestScrapboxParser.Utils (propParseAsExpected)
-import           Utils (propNonNull, shouldParseSpec)
+import           Utils (findDiffs, propNonNull, shouldParseSpec, DiffPair(..))
 
 --------------------------------------------------------------------------------
 -- Scrapbox parser
@@ -31,8 +30,12 @@ import           Utils (propNonNull, shouldParseSpec)
 -- | Performs roundtrips test
 roundTripSpec :: Spec
 roundTripSpec = describe "Scrapbox" $
-    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
-        \(scrapbox :: Scrapbox) ->
+    prop "should be able to perform roundtrip if there's no ambiguous syntax"
+        roundTest
+
+roundTest :: Property
+roundTest = property $
+        \(scrapbox :: Scrapbox) -> whenFail (printDiffs scrapbox) $
             let rendered = renderToScrapbox mempty scrapbox
                 eParsed  = runScrapboxParser $ T.unpack rendered
 
@@ -41,6 +44,20 @@ roundTripSpec = describe "Scrapbox" $
                 (const False)
                 (== scrapbox)
                 eParsed
+  where
+    printDiffs sb = do
+        let diffs = findDiffs sb
+        case diffs of
+            Left str       -> putStrLn str
+            Right diffPairs -> do
+                putStrLn "Original:"
+                putStrLn $ show sb
+                forM_ diffPairs (\(DiffPair before after) -> do
+                    putStrLn "Before:"
+                    putStrLn $ show before
+                    putStrLn "After:"
+                    putStrLn $ show after
+                    )
 
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
