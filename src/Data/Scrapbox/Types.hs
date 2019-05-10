@@ -49,12 +49,12 @@ module Data.Scrapbox.Types
 
 import           RIO hiding (span)
 
-import qualified RIO.Text as T
 import           Data.List (groupBy, nub, sort)
-import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
-                                      genPrintableUrl, shortListOf, genAsciiText)
+import           Data.Scrapbox.Utils (genAsciiText, genMaybe, genPrintableText,
+                                      genPrintableUrl, shortListOf)
+import qualified RIO.Text as T
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink, sized, resize)
+                                  frequency, genericShrink, resize, sized)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -93,7 +93,7 @@ removeAmbiguity = \case
 
     (PARAGRAPH (ScrapText [SPAN [Sized level] content]): xs) ->
         HEADING level content : removeAmbiguity xs
-    
+
     (b@(BLOCK_QUOTE (ScrapText [SPAN _ inlines])) : xs) ->
         if null inlines
             then LINEBREAK : xs

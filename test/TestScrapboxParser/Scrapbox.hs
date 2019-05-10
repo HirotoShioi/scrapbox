@@ -11,7 +11,7 @@ import           RIO
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (whenFail, (.&&.), Property, property)
+import           Test.QuickCheck (Property, property, whenFail, (.&&.))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -21,7 +21,7 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
 import           Data.Scrapbox.Internal (runScrapboxParser)
 import           Prelude (putStrLn)
 import           TestScrapboxParser.Utils (propParseAsExpected)
-import           Utils (findDiffs, propNonNull, shouldParseSpec, DiffPair(..))
+import           Utils (DiffPair (..), findDiffs, propNonNull, shouldParseSpec)
 
 --------------------------------------------------------------------------------
 -- Scrapbox parser

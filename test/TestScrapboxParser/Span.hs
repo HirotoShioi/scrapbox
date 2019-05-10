@@ -20,8 +20,8 @@ import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
                                          runSpanParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
-import           Utils (genMaybe, genText, genPrintableUrl, genText,
-                        propNonNull, shouldParseSpec)
+import           Utils (genMaybe, genPrintableUrl, genText, propNonNull,
+                        shouldParseSpec)
 
 -- | Spec for inline text parser
 spanParserSpec :: Spec
