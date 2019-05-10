@@ -29,6 +29,8 @@ module Data.Scrapbox
     -- * Rendering Scrapbox AST
     , renderToScrapbox
     , renderToCommonmark
+    -- * Useful functions
+    , size
     -- * Data types
     , Scrapbox(..)
     , Block(..)
@@ -182,3 +184,12 @@ applyCorrection = T.unlines . map apply . T.lines
         let (symbol, rest) = T.break (/= '#') line
         in symbol <> " " <> rest
       | otherwise = line
+
+size :: Scrapbox -> Int
+size (Scrapbox blocks) = blockSize blocks
+  where
+    blockSize :: [Block] -> Int
+    blockSize = foldr (\block acc -> case block of
+      BULLET_POINT _ bs -> blockSize bs + 1 + acc
+      _                 -> 1 + acc
+      ) 0
