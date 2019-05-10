@@ -8,22 +8,20 @@ module TestScrapboxParser.Span
     ( spanParserSpec
     ) where
 
-import           RIO hiding (assert)
+import           RIO
 
 import           RIO.List (headMaybe)
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..))
-import           Test.QuickCheck.Monadic (assert, monadicIO)
 
 import           Data.Scrapbox (Segment (..), Url (..))
 import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
                                          runSpanParser)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
-import           Utils (NonEmptyPrintableString (..), genMaybe,
-                        genPrintableText, genPrintableUrl, genText,
-                        shouldParseSpec, whenRight)
+import           Utils (genMaybe, genPrintableUrl, genText, propNonNull,
+                        shouldParseSpec)
 
 -- | Spec for inline text parser
 spanParserSpec :: Spec
@@ -32,12 +30,7 @@ spanParserSpec =
         shouldParseSpec runSpanParser
 
         prop "should return non-empty list of segments if given string is non-empty" $
-            \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runSpanParser $ getNonEmptyPrintableString someText
-
-                assert $ isRight eParseredText
-                whenRight eParseredText $ \parsedContent ->
-                    assert $ not $ null parsedContent
+            propNonNull runSpanParser id
 
         it "should parse given text as expected" $
             propParseAsExpected exampleText expected runSpanParser
@@ -69,7 +62,7 @@ newtype TextSpan = TextSpan Text
     deriving Show
 
 instance Arbitrary TextSpan where
-    arbitrary = TextSpan <$> genPrintableText
+    arbitrary = TextSpan <$> genText
 
 instance ScrapboxSyntax TextSpan where
     render (TextSpan txt)     = txt
@@ -103,7 +96,7 @@ data LinkSpan = LinkSpan !(Maybe Text) !Text
     deriving Show
 
 instance Arbitrary LinkSpan where
-    arbitrary = LinkSpan <$> genMaybe genPrintableText <*> genPrintableUrl
+    arbitrary = LinkSpan <$> genMaybe genText <*> genPrintableUrl
 
 instance ScrapboxSyntax LinkSpan where
     render (LinkSpan (Just name) url) = "[" <> name <> " " <> url <> "]"

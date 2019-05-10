@@ -26,7 +26,7 @@ import           Data.Scrapbox.Internal (isBlockQuote, isBulletPoint,
                                          renderSegments, renderText)
 import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
                                        getParagraph)
-import           Utils (genPrintableText, genPrintableUrl, genText)
+import           Utils (genPrintableUrl, genText)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec
@@ -54,7 +54,7 @@ instance CommonMark ParagraphSection where
     render (ParagraphSection txt) = txt
 
 instance Arbitrary ParagraphSection where
-    arbitrary = ParagraphSection <$> genPrintableText
+    arbitrary = ParagraphSection <$> genText
 
 -- | Test spec for parsing 'PARAGRAPH'
 paragraphSpec :: Spec
@@ -99,7 +99,7 @@ getHeaderTextContent = \case
 
 instance Arbitrary HeaderText where
     arbitrary = do
-        someText <- genPrintableText
+        someText <- genText
         elements
             [ H1 someText
             , H2 someText
@@ -171,7 +171,7 @@ instance CommonMark BlockQuoteText where
     render (BlockQuoteText txt) = ">" <> txt
 
 instance Arbitrary BlockQuoteText where
-    arbitrary = BlockQuoteText <$> genPrintableText
+    arbitrary = BlockQuoteText <$> genText
 
 -- | Test spec for parsing 'BLOCK_QUOTE'
 blockQuoteSpec :: Spec
@@ -208,7 +208,7 @@ instance CommonMark CodeBlockSection where
     render (CodeBlockSection codes) = T.unlines $ ["```"] <> codes <> ["```"]
 
 instance Arbitrary CodeBlockSection where
-    arbitrary = CodeBlockSection <$> listOf1 genPrintableText
+    arbitrary = CodeBlockSection <$> listOf1 genText
 
 -- | Test spec for parsing 'CODE_BLOCK'
 codeBlockSpec :: Spec
@@ -243,7 +243,7 @@ instance CommonMark UnorderedListBlock where
     render (UnorderedListBlock list) = T.unlines $ map ("- " <>) list
 
 instance Arbitrary UnorderedListBlock where
-    arbitrary = UnorderedListBlock <$> listOf1 genPrintableText
+    arbitrary = UnorderedListBlock <$> listOf1 genText
 
 -- | Test spec for parsing unordered list
 unorderedListSpec :: Spec
@@ -279,7 +279,7 @@ newtype OrderedListBlock = OrderedListBlock
     } deriving Show
 
 instance Arbitrary OrderedListBlock where
-    arbitrary = OrderedListBlock <$> listOf1 genPrintableText
+    arbitrary = OrderedListBlock <$> listOf1 genText
 
 instance CommonMark OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $

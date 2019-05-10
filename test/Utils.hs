@@ -8,54 +8,38 @@ extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Utils
-    ( whenRight
-    , whenJust
-    -- * Testing utilities
-    , genPrintableText
-    , genText
+    ( -- * Testing utilities
+      genText
     , genPrintableUrl
     , genMaybe
     , NonEmptyPrintableString(..)
     , shouldParseSpec
+    , propNonNull
+    , findDiffs
+    , DiffPair(..)
     ) where
 
 import           RIO
 
+import           Data.Scrapbox
+import           Data.Scrapbox.Internal
 import qualified RIO.Text as T
 import           Test.Hspec (Spec)
 import           Test.Hspec.QuickCheck (prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
-                                  arbitraryPrintableChar, elements, listOf1)
+                                  Property, arbitraryPrintableChar, elements,
+                                  listOf1, property, (.&&.))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
 
--- | Perform some operation on 'Just', given the field inside the 'Just'.
---
--- > whenJust Nothing  print == return ()
--- > whenJust (Just 1) print == print 1
-whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
-whenJust mg f = maybe (pure ()) f mg
-
--- | The 'whenRight' function takes an 'Either' value and a function which returns a monad.
--- The monad is only executed when the given argument takes the form @'Right' _@, otherwise
--- it does nothing.
-whenRight :: Applicative m => Either a b -> (b -> m ()) -> m ()
-whenRight (Right x) f = f x
-whenRight _         _ = pure ()
-
--- | Generate arbitrary Text
--- this is needed as some characters like
--- '`' and `>` will be parsed as blockquote, code notation, etc.
-genPrintableText :: Gen Text
-genPrintableText = T.unwords <$> listOf1 genText
-
 -- | Generate random text
 genText :: Gen Text
 genText = fmap fromString <$> listOf1
     $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
@@ -83,3 +67,50 @@ shouldParseSpec parser =
         prop "should be able to parse any text without failing or cause infinite loop" $
             \(someText :: PrintableString) ->
                 isRight $ parser $ getPrintableString someText
+
+-- | General test case on whether given parser returns non null list after parsing
+-- Non null string
+propNonNull :: (String -> Either ParseError a)
+                    -- ^ Parser
+                    -> (a -> [b])
+                    -- ^ Getter
+                    -> Property
+propNonNull parser getter = property $ \(someText :: NonEmptyPrintableString) ->
+    let eParseredText = parser
+            $ getNonEmptyPrintableString someText
+
+    in isRight eParseredText
+    .&&. either
+        (const False)
+        (not . null . getter)
+        eParseredText
+
+
+data DiffPair = DiffPair
+    { original :: !Block
+    -- ^ Original block data
+    , parsed   :: !Block
+    -- ^ Parsed data
+    } deriving Show
+
+-- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares
+-- two block data.
+findDiffs :: Scrapbox -> Either String [DiffPair]
+findDiffs sb@(Scrapbox blocks) =
+    either
+        (const $ Left "Failed to parse")
+        (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
+        (runScrapboxParser . T.unpack $ renderToScrapbox [] sb)
+  where
+    diffs :: [Block] -> [Block] -> [DiffPair]
+    diffs = go mempty
+
+    go :: [DiffPair] -> [Block] -> [Block] -> [DiffPair]
+    go diffPair [] _          = diffPair
+    go diffPair _ []          = diffPair
+    go diffPair (BULLET_POINT _ blocks1: xs) (BULLET_POINT _ blocks2: ys) =
+        let diffs' = go diffPair blocks1 blocks2
+        in go diffs' xs ys
+    go diffPair (x:xs) (y:ys)
+        | x == y    = go diffPair xs ys
+        | otherwise = go (DiffPair x y : diffPair) xs ys

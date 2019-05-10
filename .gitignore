@@ -2,3 +2,9 @@
 *~
 .ghci
 test-docs/
+
+# Cabal stuff
+dist/
+dist-newstyle/
+cabal.project
+.ghc.environment.*

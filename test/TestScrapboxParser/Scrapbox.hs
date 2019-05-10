@@ -4,26 +4,25 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Scrapbox
-    ( scrapboxParserSpec
-    ) where
+module TestScrapboxParser.Scrapbox where
 
-import           RIO hiding (assert)
+import           RIO
 
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck.Monadic (assert, monadicIO)
+import           Test.QuickCheck (Property, collect, property, whenFail, (.&&.))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
                                 Scrapbox (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
-                                Url (..), renderToScrapbox)
+                                Url (..), renderToScrapbox, size)
 import           Data.Scrapbox.Internal (runScrapboxParser)
+import           Prelude (putStrLn)
 import           TestScrapboxParser.Utils (propParseAsExpected)
-import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
-                        whenRight)
+import           Utils (DiffPair (..), findDiffs, propNonNull, shouldParseSpec)
+
 --------------------------------------------------------------------------------
 -- Scrapbox parser
 --------------------------------------------------------------------------------
@@ -31,15 +30,39 @@ import           Utils (NonEmptyPrintableString (..), shouldParseSpec,
 -- | Performs roundtrips test
 roundTripSpec :: Spec
 roundTripSpec = describe "Scrapbox" $
-    prop "should be able to perform roundtrip if there's no ambiguous syntax" $
-        \(scrapbox :: Scrapbox) -> monadicIO $ do
+    prop "should be able to perform roundtrip if there's no ambiguous syntax"
+        roundTest
+
+roundTest :: Property
+roundTest = property $
+        \(scrapbox :: Scrapbox) -> whenFail (printDiffs scrapbox) $ collect (printSize $ size scrapbox) $
             let rendered = renderToScrapbox mempty scrapbox
-            let eParsed  = runScrapboxParser $ T.unpack rendered
+                eParsed  = runScrapboxParser $ T.unpack rendered
 
-            assert $ isRight eParsed
-
-            whenRight eParsed $ \parsed ->
-                assert $ parsed == scrapbox
+            in isRight eParsed
+            .&&. either
+                (const False)
+                (== scrapbox)
+                eParsed
+  where
+    printSize :: Int -> Text
+    printSize bsize
+      | bsize < 5                = "Less than 5"
+      | bsize >= 5 && bsize < 10 = "More than 5, but less than 10"
+      | otherwise                = "More than 10"
+    printDiffs sb = do
+        let diffs = findDiffs sb
+        case diffs of
+            Left str       -> putStrLn str
+            Right diffPairs -> do
+                putStrLn "Original:"
+                putStrLn $ show sb
+                forM_ diffPairs (\(DiffPair before after) -> do
+                    putStrLn "Before:"
+                    putStrLn $ show before
+                    putStrLn "After:"
+                    putStrLn $ show after
+                    )
 
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
@@ -48,12 +71,7 @@ scrapboxParserSpec =
         shouldParseSpec runScrapboxParser
 
         prop "should return non-empty list of blocks if the given string is non-empty" $
-            \(someText :: NonEmptyPrintableString) -> monadicIO $ do
-                let eParseredText = runScrapboxParser $ getNonEmptyPrintableString someText
-
-                assert $ isRight eParseredText
-                whenRight eParseredText $ \(Scrapbox blocks) ->
-                    assert $ not $ null blocks
+            propNonNull runScrapboxParser (\(Scrapbox blocks) -> blocks)
 
         describe "Parsing \"syntax\" page with scrapbox parser" $
           modifyMaxSuccess (const 1) $ do

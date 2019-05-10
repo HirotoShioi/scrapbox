@@ -36,6 +36,8 @@ module Data.Scrapbox.Internal
     , isBold
     , isItalic
     , isStrikeThrough
+    -- * For testing
+    , genPrintableText
     ) where
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (runParagraphParser)
@@ -51,3 +53,4 @@ import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       isItalic, isLink, isMathExpr, isParagraph,
                                       isStrikeThrough, isTable, isText,
                                       isThumbnail, unverbose, verbose)
+import           Data.Scrapbox.Utils
