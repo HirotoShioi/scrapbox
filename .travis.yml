@@ -8,6 +8,8 @@
 #
 language: c
 dist: xenial
+notifications:
+  email: false
 git:
   # whether to recursively clone submodules
   submodules: false
