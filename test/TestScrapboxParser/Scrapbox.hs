@@ -11,7 +11,7 @@ import           RIO
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Property, collect, property, whenFail, (.&&.))
+import           Test.QuickCheck (Property, label, property, whenFail, (.&&.))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -35,7 +35,7 @@ roundTripSpec = describe "Scrapbox" $
 
 roundTest :: Property
 roundTest = property $
-        \(scrapbox :: Scrapbox) -> whenFail (printDiffs scrapbox) $ collect (printSize $ size scrapbox) $
+        \(scrapbox :: Scrapbox) -> whenFail (printDiffs scrapbox) $ label (printSize $ size scrapbox) $
             let rendered = renderToScrapbox mempty scrapbox
                 eParsed  = runScrapboxParser $ T.unpack rendered
 
@@ -45,7 +45,6 @@ roundTest = property $
                 (== scrapbox)
                 eParsed
   where
-    printSize :: Int -> Text
     printSize bsize
       | bsize < 5                = "Less than 5"
       | bsize >= 5 && bsize < 10 = "More than 5, but less than 10"
