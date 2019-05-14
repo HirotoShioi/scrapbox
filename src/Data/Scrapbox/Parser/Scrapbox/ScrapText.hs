@@ -244,7 +244,7 @@ codeNotationParser = do
 -- | Parser for 'MATH_EXPRESSION'
 mathExpressionParser :: Parser InlineBlock
 mathExpressionParser = do
-    content <- between (string "[$" *> space) (char ']') $ many1 (noneOf "]")
+    content <- between (string "[$ ") (char ']') $ many1 (noneOf "]")
     return $ MATH_EXPRESSION $ fromString content
 
 --------------------------------------------------------------------------------
