@@ -50,8 +50,9 @@ module Data.Scrapbox.Types
 import           RIO hiding (span)
 
 import           Data.List (groupBy, nub, sort)
-import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText, genPrintableText,
-                                      genPrintableUrl, shortListOf)
+import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
+                                      genPrintableText, genPrintableUrl,
+                                      shortListOf)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
                                   frequency, genericShrink, resize, sized)
 
