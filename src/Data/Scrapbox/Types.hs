@@ -69,8 +69,8 @@ instance Arbitrary Scrapbox where
         (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
         where
-            adjustSize num | num < 30 = num
-                           | otherwise = 30
+            adjustSize num | num < 50 = num
+                           | otherwise = 50
     shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity) $ shrink blocks
 
 removeAmbiguity :: [Block] -> [Block]
