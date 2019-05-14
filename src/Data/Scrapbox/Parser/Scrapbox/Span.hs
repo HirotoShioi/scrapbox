@@ -5,18 +5,19 @@ module Data.Scrapbox.Parser.Scrapbox.Span
     ( runSpanParser
     , runSpanParserM
     , spanParser
+    , linkParser
     ) where
 
 import           RIO hiding (many, try)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe)
-
+import Data.Char (isSpace)
 import           Network.URI (isURI)
 import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
                                                 sepBy1, space, try, unexpected,
-                                                (<?>))
+                                                (<?>), satisfy)
 
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (Segment (..), Url (..))
@@ -46,14 +47,12 @@ hashTagParser = do
     return $ hashtag content
 
 -- Bug
--- [http://www.Qz.tv H2mUZ,8Nf.IbKKP)-Kq ]
+-- Scrapbox [PARAGRAPH (ScrapText [SPAN [] [LINK (Just "\8196h\152869G^4R1g") (Url "http://www.n5H.io")]])]
 -- | Parser for 'LINK'
 linkParser :: Parser Segment
 linkParser = do
-    contents <- between
-        (char '[')
-        (char ']') $
-        sepBy1 (many1 $ noneOf "[] ") space
+    contents <- between (char '[') (char ']') 
+        $ sepBy1 parseNotSpaceOrBrackets space -- Bug
     if length contents <= 1
     then do
         linkContent <- getElement $ headMaybe contents
@@ -67,6 +66,8 @@ linkParser = do
         linkLast <- getElement $ lastMaybe contents
         mkLink linkHead linkLast contents
   where
+    parseNotSpaceOrBrackets :: Parser String
+    parseNotSpaceOrBrackets = many1 $ satisfy (\c -> (not . isSpace) c && c `notElem` "[]")
     mkLink :: String -> String -> [String] -> Parser Segment
     mkLink link' link'' wholecontent
         | isURI link' = do
