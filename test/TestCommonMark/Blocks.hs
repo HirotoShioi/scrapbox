@@ -11,7 +11,7 @@ module TestCommonMark.Blocks
 
 import           RIO
 
-import           RIO.List
+import           RIO.List (headMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
