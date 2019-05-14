@@ -50,9 +50,8 @@ module Data.Scrapbox.Types
 import           RIO hiding (span)
 
 import           Data.List (groupBy, nub, sort)
-import           Data.Scrapbox.Utils (genAsciiText, genMaybe, genPrintableText,
+import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText, genPrintableText,
                                       genPrintableUrl, shortListOf)
-import qualified RIO.Text as T
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
                                   frequency, genericShrink, resize, sized)
 
@@ -216,7 +215,7 @@ newtype ScrapText = ScrapText [InlineBlock]
 
 instance Arbitrary ScrapText where
     arbitrary = ScrapText . formatInline . concatInline <$> shortListOf arbitrary
-    shrink = genericShrink
+    shrink (ScrapText inlines) = map ScrapText $ shrink inlines
 
 -- | InlineBlock
 data InlineBlock
@@ -250,7 +249,7 @@ instance Arbitrary InlineBlock where
     shrink = genericShrink
 
 instance Arbitrary Text where
-    arbitrary = T.strip . fromString <$> arbitrary
+    arbitrary = genPrintableText
 
 -- | Segment
 data Segment
@@ -264,9 +263,9 @@ data Segment
 
 instance Arbitrary Segment where
     arbitrary = do
-        let randomHashTag = HASHTAG <$> genPrintableText
+        let randomHashTag = HASHTAG <$> genNonSpaceText
         let randomLink    = LINK
-                <$> genMaybe genAsciiText
+                <$> genMaybe genNonSpaceText
                 <*> (Url <$> genPrintableUrl)
         let randomText    = TEXT <$> genPrintableText
         frequency [ (1, randomHashTag)
