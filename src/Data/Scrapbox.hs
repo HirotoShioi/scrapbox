@@ -63,7 +63,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
                                       Url (..), unverbose)
-import           Network.URI (isURI)
+import           Data.Scrapbox.Utils (isURL)
 import           Text.ParserCombinators.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
     filterRelativeLink :: Segment -> Segment
     filterRelativeLink = \case
       LINK (Just name) (Url url) ->
-        if isURI (T.unpack url)
+        if isURL (T.unpack url)
           then LINK (Just name) (Url url)
           else LINK Nothing (Url name)
       other -> other

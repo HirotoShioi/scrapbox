@@ -14,11 +14,13 @@ module Data.Scrapbox.Utils
     , genPrintableUrl
     , genMaybe
     , shortListOf
+    , isURL
     ) where
 
 import           RIO
 
-import           Data.Char
+import           Data.Char (isSpace)
+import           RIO.List (headMaybe, isPrefixOf, stripPrefix)
 import qualified RIO.Text as T
 import           Test.QuickCheck (Gen, elements, listOf1, resize, sized)
 import           Test.QuickCheck.Arbitrary (arbitraryPrintableChar)
@@ -77,3 +79,10 @@ shortListOf g = sized $ \s ->
     resize
         ((round :: Double -> Int) . sqrt . fromIntegral $ s)
         (listOf1 (resize s g))
+
+isURL :: String -> Bool
+isURL str =
+       ("http://" `isPrefixOf` str && hasSomeChar "http://")
+    || ("https://" `isPrefixOf` str && hasSomeChar "https://")
+  where
+    hasSomeChar pre = maybe False (not . isSpace) (stripPrefix pre str >>= headMaybe)
