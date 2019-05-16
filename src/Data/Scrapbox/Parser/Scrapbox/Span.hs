@@ -12,12 +12,12 @@ import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (Segment (..), Url (..))
 import           Data.Scrapbox.Utils (isURL)
 import           RIO hiding (many, try)
-import           RIO.List (lastMaybe)
+import           RIO.List (lastMaybe, headMaybe)
 import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
-                                                satisfy, space, try, unexpected,
+                                                satisfy, try, unexpected,
                                                 (<?>))
 --------------------------------------------------------------------------------
 -- Smart contstructors
@@ -120,18 +120,25 @@ runSpanParserM content =
 --------------------------------------------------------------------------------
 linkParser :: Parser Segment
 linkParser =
-        try linkParser1
-    <|> try linkParser2
-    <|> try linkParser3
+       try linkParser1
+   <|> try linkParser2
+   <|> try linkParser3
 
 -- Parses [www.somelink.com this is some link]
 linkParser1 :: Parser Segment
 linkParser1 = do
-    _   <- char '['
-    uri <- manyTill anyChar (try space)
+    _    <- char '['
     rest <- manyTill anyChar (try $ char ']')
-    if isURL uri && hasNoTrailingSpaces rest
-        then return $ LINK (Just $ fromString rest) (Url $ fromString uri)
+    uri  <- maybe
+        (unexpected "No elements")
+        return
+        (headMaybe $ words rest)
+    name <- maybe
+        (unexpected "Uri does not exist on the extracted text")
+        return
+        (T.stripStart <$> T.stripPrefix (fromString uri) (fromString rest))
+    if isURL uri && hasNoTrailingSpaces rest && (not . T.null $ name)
+        then return $ LINK (Just name) (Url $ fromString uri)
         else unexpected "Not a link"
   where
     hasNoTrailingSpaces :: String -> Bool
@@ -142,7 +149,7 @@ linkParser1 = do
 -- Parses [this is some link www.somelink.com]
 linkParser2 :: Parser Segment
 linkParser2 = do
-    _   <- char '['
+    _    <- char '['
     rest <- manyTill anyChar (try $ char ']')
     uri  <- maybe
         (unexpected "No elements")
@@ -164,7 +171,7 @@ linkParser2 = do
 -- Parses [this is some link]
 linkParser3 :: Parser Segment
 linkParser3 = do
-    content <- between (char '[') (char ']') $  many1 $ satisfy (`notElem` "]")
+    content <- between (char '[') (char ']') $  many1 $ noneOf "]"
     if hasLink content && any isSpace content
         then unexpected "Not a link"
         else return $ LINK Nothing (Url $ fromString content)
