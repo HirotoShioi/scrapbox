@@ -65,7 +65,6 @@ test-suite scrapbox-test
   other-modules:       TestCommonMark.Blocks
                        TestCommonMark.Commonmark
                        TestCommonMark.Segments
-                       TestCommonMark.Styles
                        TestCommonMark.Utils
                        TestScrapboxParser.Span
                        TestScrapboxParser.ParserTest

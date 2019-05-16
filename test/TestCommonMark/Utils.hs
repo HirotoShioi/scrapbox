@@ -1,9 +1,8 @@
-{-| Utility functions used to test commonmark parser
+{-| Utility functions used to test Syntax parser
 -}
 
 module TestCommonMark.Utils
-    ( CommonMark(..)
-    , checkScrapbox
+    ( checkScrapbox
     , getHeadSegment
     , getHeadInlineBlock
     , getParagraph
@@ -16,28 +15,25 @@ import           RIO.List (headMaybe)
 import           Data.Scrapbox (Block (..), InlineBlock (..), ScrapText (..),
                                 Scrapbox (..), Segment, commonmarkToNode)
 import           Test.QuickCheck (Property, Testable (..))
+import           Utils (Syntax (..))
 
 --------------------------------------------------------------------------------
 -- Auxiliary functions
 --------------------------------------------------------------------------------
 
--- | Typeclass in which is used to render given datatype into markdown format.
-class CommonMark a where
-    render :: a -> Text
-
--- | General function used to test if given 'CommonMark' can be properly parsed
+-- | General function used to test if given 'Syntax' can be properly parsed
 -- and extract the expected element
-checkScrapbox :: (CommonMark a)
+checkScrapbox :: (Syntax a)
               => a
-              -> (parsedContent -> Bool)
+              -> (parsedContent -> Property)
               -> ([Block] -> Maybe parsedContent)
               -> Property
-checkScrapbox markdown pre extractionFunc = property $ do
+checkScrapbox markdown pro extractionFunc = do
     let (Scrapbox content) = parseMarkdown markdown
-    maybe False pre (extractionFunc content)
+    property $ maybe (property False) pro (extractionFunc content)
   where
     -- | Parse given datatype into 'Scrapbox'
-    parseMarkdown :: CommonMark a => a -> Scrapbox
+    parseMarkdown :: Syntax a => a -> Scrapbox
     parseMarkdown = commonmarkToNode [] . render
 
 -- | Return 'PARAGRAPH' if given 'Block' is 'PARAGRAPH'

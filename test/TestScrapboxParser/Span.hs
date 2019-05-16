@@ -11,16 +11,14 @@ module TestScrapboxParser.Span
 import           RIO
 
 import           RIO.List (headMaybe)
-import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Arbitrary (..), whenFail)
+import           Test.QuickCheck (Arbitrary (..), (===), property)
 
 import           Data.Scrapbox (Segment (..), Url (..))
 import           Data.Scrapbox.Internal (genPrintableText, isHashTag, isLink,
                                          isText, runSpanParser)
-import           Prelude (print)
-import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
+import           TestScrapboxParser.Utils (Syntax (..),
                                            checkParsed, propParseAsExpected)
 import           Utils (genMaybe, genPrintableUrl, genText, propNonNull,
                         shouldParseSpec)
@@ -68,9 +66,8 @@ newtype TextSpan = TextSpan Text
 instance Arbitrary TextSpan where
     arbitrary = TextSpan <$> genText
 
-instance ScrapboxSyntax TextSpan where
+instance Syntax TextSpan where
     render (TextSpan txt)     = txt
-    getContent (TextSpan txt) = txt
 
 
 --- Text
@@ -78,19 +75,15 @@ textSpec :: Spec
 textSpec = describe "TEXT" $ do
     prop "should parse text as TEXT" $
         \(someText :: TextSpan) ->
-            checkParsed someText runSpanParser headMaybe isText
+            checkParsed someText runSpanParser headMaybe (property . isText)
     prop "should preserve its content" $
-        \(someText ::TextSpan) ->
-            checkContent someText runSpanParser
+        \(someText@(TextSpan txt)) ->
+            checkParsed someText runSpanParser
                 (\segments -> do
                   guard $ length segments == 1
-                  segment <- headMaybe segments
-                  getText segment
+                  headMaybe segments
                 )
-  where
-    getText :: Segment -> Maybe Text
-    getText (TEXT text) = Just text
-    getText _           = Nothing
+                (=== TEXT txt)
 
 --------------------------------------------------------------------------------
 -- Link
@@ -102,29 +95,25 @@ data LinkSpan = LinkSpan !(Maybe Text) !Text
 instance Arbitrary LinkSpan where
     arbitrary = LinkSpan <$> genMaybe genPrintableText <*> genPrintableUrl
 
-instance ScrapboxSyntax LinkSpan where
+instance Syntax LinkSpan where
     render (LinkSpan (Just name) url) = "[" <> name <> " " <> url <> "]"
     render (LinkSpan Nothing url)     = "[" <> url <> "]"
-    getContent (LinkSpan mName url)   = fromMaybe mempty mName <> url
 
 linkSpec :: Spec
 linkSpec = describe "LINK" $ do
     prop "should parse link as LINK" $
         \(linkSpan :: LinkSpan) ->
-            checkParsed linkSpan runSpanParser headMaybe isLink
+            checkParsed linkSpan runSpanParser headMaybe (property . isLink)
     prop "should preserve its content" $
-        \(linkSpan :: LinkSpan) -> whenFail (print $ runSpanParser (T.unpack $ render linkSpan)) $
-            checkContent linkSpan runSpanParser
-            (\segments -> do
-                guard $ length segments == 1
-                segment <- headMaybe segments
-                (LINK mName (Url url)) <- getLink segment
-                return $ fromMaybe mempty mName <> url
-            )
-  where
-    getLink :: Segment -> Maybe Segment
-    getLink l@(LINK _ _) = Just l
-    getLink _            = Nothing
+        \(linkSpan@(LinkSpan mName url)) -> 
+            checkParsed
+                linkSpan
+                runSpanParser
+                (\segments -> do
+                    guard $ length segments == 1
+                    headMaybe segments
+                )
+                (=== LINK mName (Url url))
 
 --------------------------------------------------------------------------------
 -- HashTag
@@ -136,26 +125,20 @@ newtype HashTagSpan = HashTagSpan Text
 instance Arbitrary HashTagSpan where
     arbitrary = HashTagSpan <$> genText
 
-instance ScrapboxSyntax HashTagSpan where
+instance Syntax HashTagSpan where
     render (HashTagSpan text)     = "#" <> text
-    getContent (HashTagSpan text) = text
 
 hashTagSpec :: Spec
 hashTagSpec = describe "HASHTAG" $ do
     prop "should parse hashtag as HASHTAG" $
         \(hashTag :: HashTagSpan) ->
-            checkParsed hashTag runSpanParser headMaybe isHashTag
+            checkParsed hashTag runSpanParser headMaybe (property . isHashTag)
 
     prop "should preserve its content" $
-        \(hashTag :: HashTagSpan) ->
-            checkContent hashTag runSpanParser
+        \(hashTag@(HashTagSpan tag)) ->
+            checkParsed hashTag runSpanParser
                 (\segments -> do
                     guard $ length segments == 1
-                    segment       <- headMaybe segments
-                    (HASHTAG txt) <- getHashTag segment
-                    return txt
+                    headMaybe segments
                 )
-  where
-    getHashTag :: Segment -> Maybe Segment
-    getHashTag h@(HASHTAG _) = Just h
-    getHashTag _             = Nothing
+                (=== HASHTAG tag)

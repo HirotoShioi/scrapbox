@@ -4,9 +4,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module TestScrapboxParser.Utils
-    ( ScrapboxSyntax(..)
+    ( Syntax(..)
     , propParseAsExpected
-    , checkContent
     , checkParsed
     ) where
 
@@ -15,6 +14,7 @@ import           RIO
 import qualified RIO.Text as T
 import           Test.QuickCheck (Property, Testable (..))
 import           Text.Parsec (ParseError)
+import           Utils (Syntax (..))
 
 --------------------------------------------------------------------------------
 -- Helper functions
@@ -31,35 +31,20 @@ propParseAsExpected example expected parser = property $ either
     (== expected)
     (parser example)
 
--- | Type class used to render/get content of given syntax
-class ScrapboxSyntax a where
-    render     :: a -> Text
-    getContent :: a -> Text
-
 -- | Check parsed
-checkParsed :: (ScrapboxSyntax syntax)
+checkParsed :: (Syntax syntax)
             => syntax
             -- ^ Syntax that we want to test on
             -> (String -> Either ParseError a)
             -- ^ Parser
             -> (a -> Maybe b)
             -- ^ Getter
-            -> (b -> Bool)
+            -> (b -> Property)
             -- ^ Predicate
             -> Property
-checkParsed syntax parser getter pre = property $ either
-    (const False)
-    (maybe False pre . getter)
+checkParsed syntax parser getter pre = either
+    (const failed)
+    (maybe failed pre . getter)
     (parser $ T.unpack $ render syntax)
-
--- | Test case to check whether the parsed thing still preserves its content
-checkContent :: (ScrapboxSyntax syntax)
-             => syntax
-             -- ^ Syntax that we want to test on
-             -> (String -> Either ParseError a)
-             -- ^ Parser
-             -> (a -> Maybe Text)
-             -- ^ Getter
-             -> Property
-checkContent syntax parser getter =
-    checkParsed syntax parser getter (\txt -> txt == getContent syntax)
+  where
+    failed = property False

@@ -13,6 +13,7 @@ module Data.Scrapbox.Render.Scrapbox
     , renderSegments
     , renderText
     , renderInline
+    , renderWithStyle
     ) where
 
 import           RIO

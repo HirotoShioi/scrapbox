@@ -13,7 +13,6 @@ import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 
 import           TestCommonMark.Blocks (blockSpec)
 import           TestCommonMark.Segments (segmentSpec)
-import           TestCommonMark.Styles (styleSpec)
 
 import           Data.Scrapbox.Internal (runParagraphParser)
 import           Utils (propNonNull, shouldParseSpec)
@@ -22,7 +21,6 @@ commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
     blockSpec
     segmentSpec
-    styleSpec
     paragraphParserSpec
 
 -- | Test case on @runParagraphParser@

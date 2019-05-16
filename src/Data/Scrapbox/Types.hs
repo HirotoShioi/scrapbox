@@ -3,8 +3,10 @@
 -}
 
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 -- This is to avoid warnings regarding defining typeclass instance of 'Text'
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -54,7 +56,8 @@ import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink, resize, sized)
+                                  frequency, genericShrink, listOf, resize,
+                                  sized, oneof)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -299,6 +302,16 @@ instance Arbitrary Style where
             , Sized someLvl
             ]
 
+instance {-# OVERLAPS #-} Arbitrary [Style] where
+    arbitrary = do
+        somelvl <- arbitrary
+        let someStyle = fmap (sort . nub) <$> listOf $ elements [Italic, StrikeThrough]
+        oneof
+            [ someStyle
+            , return [Bold]
+            , return [UserStyle "!?%"]
+            , (\l -> sort $ l <> [Sized somelvl]) <$> someStyle
+            ]
 --------------------------------------------------------------------------------
 -- Verbose/Unverbose
 --------------------------------------------------------------------------------

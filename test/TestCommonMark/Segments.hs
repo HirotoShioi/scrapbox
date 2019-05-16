@@ -13,15 +13,13 @@ import           RIO
 import           RIO.List (headMaybe)
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck (Arbitrary (..), Property)
+import           Test.QuickCheck (Arbitrary (..), Property, (.&&.), (===))
 
 import           Data.Scrapbox (Block (..), InlineBlock (..), ScrapText (..),
                                 Segment (..), Url (..))
-import           Data.Scrapbox.Internal (isCodeNotation, isLink, isText)
-import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
-                                       getHeadInlineBlock, getHeadSegment,
-                                       getParagraph)
-import           Utils (genPrintableUrl, genText)
+import           TestCommonMark.Utils (checkScrapbox, getHeadInlineBlock,
+                                       getHeadSegment, getParagraph)
+import           Utils (Syntax (..), genPrintableUrl, genText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
@@ -40,7 +38,7 @@ data LinkSegment = LinkSegment
     , linkUrl  :: !Text
     } deriving Show
 
-instance CommonMark LinkSegment where
+instance Syntax LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
 
 instance Arbitrary LinkSegment where
@@ -49,29 +47,13 @@ instance Arbitrary LinkSegment where
 -- | Test spec for parsing 'LINK'
 linkSpec :: Spec
 linkSpec = describe "Links" $ do
-    prop "should parse link as LINK" $
-        \(linkSegment :: LinkSegment) ->
-            checkScrapbox linkSegment isLink getHeadSegment
-
     prop "should preserve its content" $
-        \(linkSegment :: LinkSegment) ->
+        \linkSegment@(LinkSegment name url) ->
             checkScrapbox linkSegment
-                (\(mName, Url url) ->
-                       url == linkUrl linkSegment
-                    && maybe False (\name -> name == linkName linkSegment) mName
-
-                )
-                (\content -> do
-                    segment          <- getHeadSegment content
-                    (LINK mName url) <- getLink segment
-                    return (mName, url)
-                )
+                (=== LINK (Just name) (Url url))
+                getHeadSegment
     prop "should not have any other segments except for code section" $
         \(linkSegment :: LinkSegment) -> testSegment linkSegment
-  where
-    getLink :: Segment -> Maybe Segment
-    getLink linkSegment@(LINK _ _) = Just linkSegment
-    getLink _                      = Nothing
 
 --------------------------------------------------------------------------------
 -- CodeNotation
@@ -82,7 +64,7 @@ newtype CodeNotationSegment = CodeNotationSegment
     { getCodeNotationSegment :: Text
     } deriving Show
 
-instance CommonMark CodeNotationSegment where
+instance Syntax CodeNotationSegment where
     render (CodeNotationSegment txt) = "`" <> txt <> "`"
 
 instance Arbitrary CodeNotationSegment where
@@ -91,24 +73,12 @@ instance Arbitrary CodeNotationSegment where
 -- | Test spec for parsing 'CODE_NOTATION'
 codeNotationSpec :: Spec
 codeNotationSpec =
-    describe "Code notation" $ do
-        prop "should be able to parser code section as CODE_NOTATION" $
-            \(codeNotation :: CodeNotationSegment) ->
-                checkScrapbox codeNotation isCodeNotation getHeadInlineBlock
-
+    describe "Code notation" $
         prop "should preserve its content" $
-            \(codeNotation :: CodeNotationSegment) ->
+            \codeNotation@(CodeNotationSegment notation) ->
                 checkScrapbox codeNotation
-                    (\codeText -> codeText == getCodeNotationSegment codeNotation)
-                    (\content -> do
-                        inline                   <- getHeadInlineBlock content
-                        (CODE_NOTATION codeText) <- getCodeNotationText inline
-                        return codeText
-                    )
-  where
-    getCodeNotationText :: InlineBlock -> Maybe InlineBlock
-    getCodeNotationText codeNotation@(CODE_NOTATION _) = Just codeNotation
-    getCodeNotationText _                              = Nothing
+                    (=== CODE_NOTATION notation)
+                    getHeadInlineBlock
 
 --------------------------------------------------------------------------------
 -- Text segment
@@ -119,7 +89,7 @@ newtype TextSegment = TextSegment
     { getTextSegment :: Text
     } deriving Show
 
-instance CommonMark TextSegment where
+instance Syntax TextSegment where
     render (TextSegment txt) = txt
 
 instance Arbitrary TextSegment where
@@ -128,35 +98,23 @@ instance Arbitrary TextSegment where
 -- | Test spec for parsing 'TEXT'
 plainTextSpec :: Spec
 plainTextSpec = describe "Plain text" $ do
-    prop "should parse plain text as TEXT" $
-        \(textSegment :: TextSegment) ->
-            checkScrapbox textSegment isText getHeadSegment
-
     prop "should preserve its content" $
-        \(textSegment :: TextSegment) ->
+        \textSegment@(TextSegment txt) ->
             checkScrapbox textSegment
-            (\txt -> txt == getTextSegment textSegment)
-            (\content -> do
-                segment    <- getHeadSegment content
-                (TEXT txt) <- getText segment
-                return txt
-            )
+            (=== TEXT txt)
+            getHeadSegment
 
     prop "should not have any other segments except for plain text" $
         \(textSegment :: TextSegment) -> testSegment textSegment
-  where
-    getText :: Segment -> Maybe Segment
-    getText textSegment@(TEXT _) = Just textSegment
-    getText _                    = Nothing
 
 -- | General test case to check whether the segment was parsed properly
-testSegment :: (CommonMark section) => section -> Property
+testSegment :: (Syntax section) => section -> Property
 testSegment someSegment =
     checkScrapbox someSegment
         (\(content', inlines, segments) ->
-               length content' == 1
-            && length inlines  == 1
-            && length segments == 1
+                 length content' == 1
+            .&&. length inlines  == 1
+            .&&. length segments == 1
         )
         (\content -> do
             blockContent                    <- headMaybe content

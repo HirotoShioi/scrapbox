@@ -15,31 +15,30 @@ import           RIO.List (headMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck (Arbitrary (..), choose, elements, listOf1,
-                                  vectorOf)
+import           Test.QuickCheck (Arbitrary (..), choose, listOf1, vectorOf,
+                                  (===), elements)
 
-import           Data.Scrapbox (Block (..), CodeSnippet (..), Level (..),
-                                TableContent (..), Url (..))
-import           Data.Scrapbox.Internal (isBlockQuote, isBulletPoint,
-                                         isCodeBlock, isHeader, isParagraph,
-                                         isTable, isThumbnail, renderBlock,
-                                         renderSegments, renderText)
-import           TestCommonMark.Utils (CommonMark (..), checkScrapbox,
-                                       getParagraph)
-import           Utils (genPrintableUrl, genText)
+import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
+                                CodeSnippet (..), InlineBlock (..), Level (..),
+                                ScrapText (..), Segment (..), Start (..),
+                                TableContent (..), TableName (..), Url (..), Style(..))
+import           TestCommonMark.Utils (checkScrapbox)
+import           Utils (genPrintableUrl, genText, Syntax(..))
 
 -- | Test suites for 'Block'
 blockSpec :: Spec
-blockSpec = describe "Block" $ do
-    -- Blocks
-    paragraphSpec
-    headerTextSpec
-    blockQuoteSpec
-    codeBlockSpec
-    unorderedListSpec
-    orderedListSpec
-    imageSpec
-    tableSpec
+blockSpec = describe "Block" $
+    describe "should preserve its content" $ do
+        -- Blocks
+        paragraphSpec
+        headerTextSpec
+        blockQuoteSpec
+        codeBlockSpec
+        unorderedListSpec
+        orderedListSpec
+        imageSpec
+        tableSpec
+        styleSpec
 
 --------------------------------------------------------------------------------
 -- Paragraph
@@ -50,7 +49,7 @@ newtype ParagraphSection = ParagraphSection
     { getParagraphSection :: Text
     } deriving Show
 
-instance CommonMark ParagraphSection where
+instance Syntax ParagraphSection where
     render (ParagraphSection txt) = txt
 
 instance Arbitrary ParagraphSection where
@@ -58,105 +57,43 @@ instance Arbitrary ParagraphSection where
 
 -- | Test spec for parsing 'PARAGRAPH'
 paragraphSpec :: Spec
-paragraphSpec = describe "Paragraph" $ do
-    prop "should be able to parse paragraph as PARAGRAPH" $
-        \(paragraph :: ParagraphSection) ->
-            checkScrapbox paragraph isParagraph headMaybe
-
-    prop "should preserve its content" $
-        \(paragraph :: ParagraphSection) ->
-            checkScrapbox paragraph
-                (\paragraphText -> paragraphText == getParagraphSection paragraph)
-                (\content -> do
-                    blockContent 　　　<- headMaybe content
-                    (PARAGRAPH stext) <- getParagraph blockContent
-                    return $ renderText stext
-                )
+paragraphSpec = prop "Paragraph" $
+    \paragraph@(ParagraphSection txt) ->
+        checkScrapbox paragraph
+            (=== PARAGRAPH (ScrapText [SPAN [] [TEXT txt]]))
+            headMaybe
 
 --------------------------------------------------------------------------------
 -- Header
 --------------------------------------------------------------------------------
 
 -- | Header text
-data HeaderText
-    = H1 Text
-    | H2 Text
-    | H3 Text
-    | H4 Text
-    | H5 Text
-    | H6 Text
+data HeaderText = HeaderText !Int !Text
     deriving Show
-
--- | Get the content of the 'HeaderText'
-getHeaderTextContent :: HeaderText -> Text
-getHeaderTextContent = \case
-    H1 txt -> txt
-    H2 txt -> txt
-    H3 txt -> txt
-    H4 txt -> txt
-    H5 txt -> txt
-    H6 txt -> txt
 
 instance Arbitrary HeaderText where
     arbitrary = do
-        someText <- genText
-        elements
-            [ H1 someText
-            , H2 someText
-            , H3 someText
-            , H4 someText
-            , H5 someText
-            , H6 someText
-            ]
+        randomSize <- choose (1, 6)
+        someText   <- genText
+        return $ HeaderText randomSize someText
 
-instance CommonMark HeaderText where
-    render = \case
-        H1 textContent -> "# " <> textContent
-        H2 textContent -> "## " <> textContent
-        H3 textContent -> "### " <> textContent
-        H4 textContent -> "#### " <> textContent
-        H5 textContent -> "##### " <> textContent
-        H6 textContent -> "###### " <> textContent
+instance Syntax HeaderText where
+    render (HeaderText size txt) =  T.replicate size "#" <> " " <> txt
 
 -- | Test spec for parsing 'HEADING' text
 headerTextSpec :: Spec
-headerTextSpec = describe "Header text" $ do
-    prop "should be able to parse header text as HEADING" $
-        \(headerText :: HeaderText) ->
-            checkScrapbox headerText isHeader headMaybe
-
-    prop "should preserve header size" $
-        \(headerText :: HeaderText) ->
-            checkScrapbox headerText
-                (`isSameLevel` headerText)
-                (\content -> do
-                    blockContent          <- headMaybe content
-                    (HEADING level _) <- getHeader blockContent
-                    return level
-                )
-    prop "should preserve its content" $
-        \(headerText :: HeaderText) ->
-            checkScrapbox headerText
-                (\headerContent -> headerContent == getHeaderTextContent headerText)
-                (\content -> do
-                    blockContent             <- headMaybe content
-                    (HEADING _ headerContent) <- getHeader blockContent
-                    return $ renderSegments headerContent
-                )
+headerTextSpec = prop "should preserve its content" $
+    \headerText@(HeaderText size txt) ->
+        checkScrapbox headerText
+            (=== HEADING (toLevel size) [TEXT txt])
+            headMaybe
   where
-    getHeader :: Block -> Maybe Block
-    getHeader header@(HEADING _ _) = Just header
-    getHeader _                    = Nothing
-
-    -- Check if given headerSize is same size
-    isSameLevel :: Level -> HeaderText -> Bool
-    isSameLevel (Level 4) (H1 _) = True
-    isSameLevel (Level 3) (H2 _) = True
-    isSameLevel (Level 2) (H3 _) = True
-    isSameLevel (Level 1) (H4 _) = True
-    isSameLevel (Level 1) (H5 _) = True
-    isSameLevel (Level 1) (H6 _) = True
-    isSameLevel _ _              = False
+    toLevel :: Int -> Level
+    toLevel 1 = Level 4
+    toLevel 2 = Level 3
+    toLevel 3 = Level 2
+    toLevel 4 = Level 1
+    toLevel _ = Level 1
 
 --------------------------------------------------------------------------------
 -- BlockQuote
@@ -167,7 +104,7 @@ newtype BlockQuoteText = BlockQuoteText
     { getBlockQuoteText :: Text
     } deriving Show
 
-instance CommonMark BlockQuoteText where
+instance Syntax BlockQuoteText where
     render (BlockQuoteText txt) = ">" <> txt
 
 instance Arbitrary BlockQuoteText where
@@ -175,25 +112,10 @@ instance Arbitrary BlockQuoteText where
 
 -- | Test spec for parsing 'BLOCK_QUOTE'
 blockQuoteSpec :: Spec
-blockQuoteSpec = describe "BlockQuote text" $ do
-    prop "should be able parse block quote text as BLOCK_QUOTE" $
-        \(blockQuote :: BlockQuoteText) ->
-            checkScrapbox blockQuote isBlockQuote headMaybe
-
-    prop "should preserve its content" $
-        \(blockQuote :: BlockQuoteText) ->
-            checkScrapbox blockQuote
-                (\quoteText -> quoteText == getBlockQuoteText blockQuote)
-                (\content -> do
-                    blockContent       <- headMaybe content
-                    (BLOCK_QUOTE stext) <- getBlockQuote blockContent
-                    return $ renderText stext
-                )
-  where
-    -- Should this function be here?
-    getBlockQuote :: Block -> Maybe Block
-    getBlockQuote blockQuote@(BLOCK_QUOTE _) = Just blockQuote
-    getBlockQuote _                          = Nothing
+blockQuoteSpec = prop "BlockQuote text" $ \blockQuote@(BlockQuoteText text) ->
+    checkScrapbox blockQuote
+        (=== BLOCK_QUOTE (ScrapText [SPAN [] [TEXT text]]))
+        headMaybe
 
 --------------------------------------------------------------------------------
 -- CodeBlock
@@ -204,7 +126,7 @@ newtype CodeBlockSection = CodeBlockSection
     { getCodeBlockContent :: [Text]
     } deriving Show
 
-instance CommonMark CodeBlockSection where
+instance Syntax CodeBlockSection where
     render (CodeBlockSection codes) = T.unlines $ ["```"] <> codes <> ["```"]
 
 instance Arbitrary CodeBlockSection where
@@ -212,23 +134,11 @@ instance Arbitrary CodeBlockSection where
 
 -- | Test spec for parsing 'CODE_BLOCK'
 codeBlockSpec :: Spec
-codeBlockSpec = describe "Code block" $ do
-    prop "should parse code block content as CODE_BLOCK" $
-        \(codeBlock :: CodeBlockSection) ->
-            checkScrapbox codeBlock isCodeBlock headMaybe
-    prop "should preserve its content" $
-        \(codeBlock :: CodeBlockSection) ->
-            checkScrapbox codeBlock
-                (\codeContent -> codeContent == getCodeBlockContent codeBlock)
-                (\content -> do
-                    blockContent <- headMaybe content
-                    (CODE_BLOCK _ (CodeSnippet snippet)) <- getCodeBlock blockContent
-                    return snippet
-                )
-  where
-    getCodeBlock :: Block -> Maybe Block
-    getCodeBlock codeBlock@(CODE_BLOCK _ _) = Just codeBlock
-    getCodeBlock _                          = Nothing
+codeBlockSpec = prop "Code block" $
+    \codeBlock@(CodeBlockSection codeBlocks) ->
+        checkScrapbox codeBlock
+            (=== CODE_BLOCK (CodeName "code") (CodeSnippet codeBlocks))
+            headMaybe
 
 --------------------------------------------------------------------------------
 -- Unordered list
@@ -239,7 +149,7 @@ newtype UnorderedListBlock = UnorderedListBlock
     { getUnorderedListBlock :: [Text]
     } deriving Show
 
-instance CommonMark UnorderedListBlock where
+instance Syntax UnorderedListBlock where
     render (UnorderedListBlock list) = T.unlines $ map ("- " <>) list
 
 instance Arbitrary UnorderedListBlock where
@@ -247,27 +157,18 @@ instance Arbitrary UnorderedListBlock where
 
 -- | Test spec for parsing unordered list
 unorderedListSpec :: Spec
-unorderedListSpec = describe "Unordered list" $ do
-    prop "should parse unordered list as BULLET_POINT" $
-        \(unorderedListBlock :: UnorderedListBlock) ->
-            checkScrapbox unorderedListBlock isBulletPoint headMaybe
+unorderedListSpec = prop "Unordered list" $
+    \unorderedListBlock@(UnorderedListBlock content) ->
+        checkScrapbox unorderedListBlock
+            (=== BULLET_POINT (Start 1) (mkParagraphs content))
+            headMaybe
 
-    prop "should preserve its content" $
-        \(unorderedListBlock :: UnorderedListBlock) ->
-            checkScrapbox unorderedListBlock
-                (\renderedTexts ->
-                    renderedTexts == getUnorderedListBlock unorderedListBlock
-                )
-                (\content -> do
-                    blockContent          <- headMaybe content
-                    (BULLET_POINT _ lists) <- getBulletPoint blockContent
-                    return $ concatMap renderBlock lists
-                )
-
--- | Check whether given 'Block' is 'BULLET_POINT'
-getBulletPoint :: Block -> Maybe Block
-getBulletPoint bulletList@(BULLET_POINT _ _) = Just bulletList
-getBulletPoint _                             = Nothing
+mkParagraphs :: [Text] -> [Block]
+mkParagraphs = map toParagraph
+  where
+    toParagraph c =
+        let scrapText =  ScrapText [SPAN [] [TEXT c]]
+        in PARAGRAPH scrapText
 
 --------------------------------------------------------------------------------
 -- Ordered list
@@ -281,7 +182,7 @@ newtype OrderedListBlock = OrderedListBlock
 instance Arbitrary OrderedListBlock where
     arbitrary = OrderedListBlock <$> listOf1 genText
 
-instance CommonMark OrderedListBlock where
+instance Syntax OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
         zipWith
             (\num someText -> tshow num <> ". " <> someText)
@@ -290,22 +191,11 @@ instance CommonMark OrderedListBlock where
 
 -- | Test spec for parsing Ordered list
 orderedListSpec :: Spec
-orderedListSpec = describe "Ordered list" $ do
-    prop "should parse ordered list as BULLET_POINT" $
-        \(orderedListBlock :: OrderedListBlock) ->
-            checkScrapbox orderedListBlock isBulletPoint headMaybe
-
-    prop "should preserve its content" $
-        \(orderedListBlock :: OrderedListBlock) ->
-            checkScrapbox orderedListBlock
-                (\renderedTexts ->
-                    renderedTexts == getOrderedListBlock orderedListBlock
-                )
-                (\content -> do
-                    blockContent        <- headMaybe content
-                    (BULLET_POINT _ lists) <- getBulletPoint blockContent
-                    return $ concatMap renderBlock lists
-                )
+orderedListSpec = prop "Ordered list" $
+    \orderedListBlock@(OrderedListBlock content) ->
+        checkScrapbox orderedListBlock
+            (=== BULLET_POINT (Start 1) (mkParagraphs content))
+            headMaybe
 
 --------------------------------------------------------------------------------
 -- Images
@@ -314,12 +204,10 @@ orderedListSpec = describe "Ordered list" $ do
 -- | Image section
 data ImageSection = ImageSection
     { imageTitle :: !Text
-    , imageLink  :: !ImageLink
+    , imageLink  :: !Text
     } deriving Show
 
-type ImageLink = Text
-
-instance CommonMark ImageSection where
+instance Syntax ImageSection where
     render (ImageSection title someLink) = "![" <> title <> "](" <> someLink <> ")"
 
 instance Arbitrary ImageSection where
@@ -327,24 +215,11 @@ instance Arbitrary ImageSection where
 
 -- | Test spec for parsing image
 imageSpec :: Spec
-imageSpec =
-    describe "Image" $ do
-        prop "should parse image as THUMBNAIL" $
-            \(imageSection :: ImageSection) ->
-                checkScrapbox imageSection isThumbnail headMaybe
-        prop "should preserve its link" $
-            \(imageSection :: ImageSection) ->
-                checkScrapbox imageSection
-                    (\(Url url) -> url == imageLink imageSection)
-                    (\content -> do
-                        blockContent    <- headMaybe content
-                        (THUMBNAIL url) <- getThumbnail blockContent
-                        return url
-                    )
-  where
-    getThumbnail :: Block -> Maybe Block
-    getThumbnail thumbnail@(THUMBNAIL _) = Just thumbnail
-    getThumbnail _                       = Nothing
+imageSpec = prop "Image" $
+    \imageSection@(ImageSection _t url) ->
+        checkScrapbox imageSection
+            (=== THUMBNAIL (Url url))
+            headMaybe
 
 --------------------------------------------------------------------------------
 -- Table
@@ -358,7 +233,7 @@ data TableSection = TableSection
     -- ^ Content of the table
     } deriving Show
 
-instance CommonMark TableSection where
+instance Syntax TableSection where
     render (TableSection header contents) = do
         let renderedHeader   = renderColumn header
         let between          = renderBetween' (length header)
@@ -383,21 +258,56 @@ instance Arbitrary TableSection where
 
 -- | Test spec for parsing table
 tableSpec :: Spec
-tableSpec = describe "Table" $ do
-    prop "should parse tabel as TABLE" $
-        \(table :: TableSection) -> checkScrapbox table isTable headMaybe
-    prop "should preserve its content" $
-        \(table :: TableSection) ->
-            checkScrapbox table
-                (\(TableContent contents) ->
-                  contents == [tableHeader table] <> tableContent table
-                )
-                (\content -> do
-                    blockContent     <- headMaybe content
-                    (TABLE _ tables) <- getTable blockContent
-                    return tables
-                )
-  where
-    getTable :: Block -> Maybe Block
-    getTable table@(TABLE _ _) = Just table
-    getTable _                 = Nothing
+tableSpec = prop "Table" $
+    \(table :: TableSection) ->
+        checkScrapbox table
+            (=== TABLE
+                (TableName "table")
+                (TableContent $ [tableHeader table] <> tableContent table)
+            )
+            headMaybe
+
+--------------------------------------------------------------------------------
+-- Styled text
+--------------------------------------------------------------------------------
+-- | Use Phantom type so we can generalize the test
+data StyledText = StyledText !TestStyle !Text
+    deriving Show
+
+-- | Style type
+--
+-- Data constructors will be promoted using DataKinds
+data TestStyle =
+      BoldStyle
+    | ItalicStyle
+    | NoStyles
+    | StrikeThroughStyle
+    deriving (Show)
+
+instance Syntax StyledText where
+    render (StyledText style text) = case style of
+        BoldStyle          -> "**" <> text <> "**"
+        ItalicStyle        -> "*" <> text <> "*"
+        StrikeThroughStyle -> "~~" <> text <> "~~"
+        NoStyles           -> text
+
+instance Arbitrary StyledText where
+    arbitrary = do
+        randomStyle <- elements [BoldStyle, ItalicStyle, NoStyles, StrikeThroughStyle]
+        randomText  <- genText
+        return $ StyledText randomStyle randomText
+
+-- | Test suites for parsing styled text
+styleSpec :: Spec
+styleSpec = prop "Styles" $
+    \styledText@(StyledText style text) ->
+        checkScrapbox styledText
+            (=== PARAGRAPH (ScrapText [SPAN (toStyle style) [TEXT text]]))
+            headMaybe
+    where
+        toStyle :: TestStyle -> [Style]
+        toStyle = \case
+            BoldStyle          -> [Bold]
+            ItalicStyle        -> [Italic]
+            StrikeThroughStyle -> [StrikeThrough]
+            NoStyles           -> []
