@@ -127,10 +127,8 @@ codeNotationSpec = describe "Code notation" $ do
 -- italic
 -- strikethrough
 
-data StyledSpan = StyledSpan
-    { spanStyle   :: ![Style]
-    , spanContent :: ![Segment]
-    } deriving Show
+data StyledSpan = StyledSpan ![Style] ![Segment]
+    deriving Show
 
 instance Arbitrary StyledSpan where
     arbitrary = do

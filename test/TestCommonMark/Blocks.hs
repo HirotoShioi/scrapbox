@@ -44,9 +44,8 @@ blockSpec = describe "Block" $ modifyMaxSuccess (const 1000) $
 --------------------------------------------------------------------------------
 
 -- | Paragraph section
-newtype ParagraphSection = ParagraphSection
-    { getParagraphSection :: Text
-    } deriving Show
+newtype ParagraphSection = ParagraphSection Text
+    deriving Show
 
 instance Syntax ParagraphSection where
     render (ParagraphSection txt) = txt
@@ -99,9 +98,8 @@ headerTextSpec = prop "should preserve its content" $
 --------------------------------------------------------------------------------
 
 -- | Blockquote
-newtype BlockQuoteText = BlockQuoteText
-    { getBlockQuoteText :: Text
-    } deriving Show
+newtype BlockQuoteText = BlockQuoteText Text
+    deriving Show
 
 instance Syntax BlockQuoteText where
     render (BlockQuoteText txt) = ">" <> txt
@@ -121,9 +119,8 @@ blockQuoteSpec = prop "BlockQuote text" $ \blockQuote@(BlockQuoteText text) ->
 --------------------------------------------------------------------------------
 
 -- | Codeblock section
-newtype CodeBlockSection = CodeBlockSection
-    { getCodeBlockContent :: [Text]
-    } deriving Show
+newtype CodeBlockSection = CodeBlockSection [Text]
+    deriving Show
 
 instance Syntax CodeBlockSection where
     render (CodeBlockSection codes) = T.unlines $ ["```"] <> codes <> ["```"]
@@ -144,9 +141,8 @@ codeBlockSpec = prop "Code block" $
 --------------------------------------------------------------------------------
 
 -- | Unordered list
-newtype UnorderedListBlock = UnorderedListBlock
-    { getUnorderedListBlock :: [Text]
-    } deriving Show
+newtype UnorderedListBlock = UnorderedListBlock [Text]
+    deriving Show
 
 instance Syntax UnorderedListBlock where
     render (UnorderedListBlock list) = T.unlines $ map ("- " <>) list
@@ -174,9 +170,8 @@ mkParagraphs = map toParagraph
 --------------------------------------------------------------------------------
 
 -- | OrderedList
-newtype OrderedListBlock = OrderedListBlock
-    { getOrderedListBlock :: [Text]
-    } deriving Show
+newtype OrderedListBlock = OrderedListBlock [Text]
+    deriving Show
 
 instance Arbitrary OrderedListBlock where
     arbitrary = OrderedListBlock <$> listOf1 genNoSymbolText
@@ -201,10 +196,8 @@ orderedListSpec = prop "Ordered list" $
 --------------------------------------------------------------------------------
 
 -- | Image section
-data ImageSection = ImageSection
-    { imageTitle :: !Text
-    , imageLink  :: !Text
-    } deriving Show
+data ImageSection = ImageSection !Text !Text
+    deriving Show
 
 instance Syntax ImageSection where
     render (ImageSection title someLink) = "![" <> title <> "](" <> someLink <> ")"
@@ -225,12 +218,8 @@ imageSpec = prop "Image" $
 --------------------------------------------------------------------------------
 
 -- | Table section
-data TableSection = TableSection
-    { tableHeader  :: ![Text]
-    -- ^ Table header
-    , tableContent :: ![[Text]]
-    -- ^ Content of the table
-    } deriving Show
+data TableSection = TableSection ![Text] ![[Text]]
+    deriving Show
 
 instance Syntax TableSection where
     render (TableSection header contents) = do
@@ -258,11 +247,11 @@ instance Arbitrary TableSection where
 -- | Test spec for parsing table
 tableSpec :: Spec
 tableSpec = prop "Table" $
-    \(table :: TableSection) ->
+    \table@(TableSection header content) ->
         checkScrapbox table
             (=== TABLE
                 (TableName "table")
-                (TableContent $ [tableHeader table] <> tableContent table)
+                (TableContent $ [header] <> content)
             )
             headMaybe
 

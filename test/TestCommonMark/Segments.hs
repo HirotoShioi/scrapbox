@@ -33,10 +33,8 @@ segmentSpec = describe "Segments" $ modifyMaxSuccess (const 10000) $ do
 --------------------------------------------------------------------------------
 
 -- | Link segment
-data LinkSegment = LinkSegment
-    { linkName :: !Text
-    , linkUrl  :: !Text
-    } deriving Show
+data LinkSegment = LinkSegment !Text !Text
+    deriving Show
 
 instance Syntax LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
@@ -60,9 +58,8 @@ linkSpec = describe "Links" $ do
 --------------------------------------------------------------------------------
 
 -- | 'CODE_NOTATION' segment
-newtype CodeNotationSegment = CodeNotationSegment
-    { getCodeNotationSegment :: Text
-    } deriving Show
+newtype CodeNotationSegment = CodeNotationSegment Text
+    deriving Show
 
 instance Syntax CodeNotationSegment where
     render (CodeNotationSegment txt) = "`" <> txt <> "`"
@@ -85,9 +82,8 @@ codeNotationSpec =
 --------------------------------------------------------------------------------
 
 -- | Text segment
-newtype TextSegment = TextSegment
-    { getTextSegment :: Text
-    } deriving Show
+newtype TextSegment = TextSegment Text
+    deriving Show
 
 instance Syntax TextSegment where
     render (TextSegment txt) = txt
