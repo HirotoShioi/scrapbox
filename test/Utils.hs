@@ -24,11 +24,10 @@ import           RIO
 import           Data.Scrapbox
 import           Data.Scrapbox.Internal
 import qualified RIO.Text as T
-import           Test.Hspec (Spec)
-import           Test.Hspec.QuickCheck (prop)
+import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
                                   Property, arbitraryPrintableChar, elements,
-                                  listOf1, property, (.&&.))
+                                  listOf1, property, within, (.&&.))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -64,8 +63,8 @@ instance Arbitrary NonEmptyPrintableString where
 -- | General testing spec for parser
 shouldParseSpec :: (String -> Either ParseError a) -> Spec
 shouldParseSpec parser =
-        prop "should be able to parse any text without failing or cause infinite loop" $
-            \(someText :: PrintableString) ->
+        it "should be able to parse any text without failing or cause infinite loop" $
+            within 5000000 $ property $ \(someText :: PrintableString) ->
                 isRight $ parser $ getPrintableString someText
 
 -- | General test case on whether given parser returns non null list after parsing

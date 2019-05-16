@@ -10,7 +10,7 @@ either: http://hackage.haskell.org/package/either-5.0.1
 module Data.Scrapbox.Utils
     ( -- * Testing utilities
       genPrintableText
-    , genAsciiText
+    , genNonSpaceText
     , genPrintableUrl
     , genMaybe
     , shortListOf
@@ -18,6 +18,8 @@ module Data.Scrapbox.Utils
 
 import           RIO
 
+import           Data.Char
+import qualified RIO.Text as T
 import           Test.QuickCheck (Gen, elements, listOf1, resize, sized)
 import           Test.QuickCheck.Arbitrary (arbitraryPrintableChar)
 import           Test.QuickCheck.Gen (suchThat)
@@ -30,17 +32,28 @@ import           Test.QuickCheck.Gen (suchThat)
 -- this is needed as some characters like
 -- '`' and `>` will be parsed as blockquote, code notation, etc.
 genPrintableText :: Gen Text
-genPrintableText = do
-    randomString <- listOf1 $ arbitraryPrintableChar `suchThat` (`notElem` syntaxSymobls)
-    return $ fromString randomString
+genPrintableText = fromString <$>
+        listOf1 (arbitraryPrintableChar
+            `suchThat`
+            (`notElem` syntaxSymobls)
+        )
+        `suchThat`
+        hasNoTrailingSpaces
 
--- Workaround to pass the tests. Will fix in the future
-genAsciiText :: Gen Text
-genAsciiText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
+genNonSpaceText :: Gen Text
+genNonSpaceText = fromString <$>
+    listOf1 (arbitraryPrintableChar
+        `suchThat`
+        (\c -> c `notElem` syntaxSymobls && (not . isSpace) c)
+    )
+
+hasNoTrailingSpaces :: String -> Bool
+hasNoTrailingSpaces str =
+    let txt = T.pack str
+    in T.strip txt == txt
 
 syntaxSymobls :: String
-syntaxSymobls = ['*', '[', ']', '/', '\n', '\t', '\\', '$', '#', ' ', '"', '\'', '`', '>']
+syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>']
 
 -- | Generate random url
 genPrintableUrl :: Gen Text

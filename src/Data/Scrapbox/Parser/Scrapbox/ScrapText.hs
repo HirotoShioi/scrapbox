@@ -18,7 +18,8 @@ import           RIO.List (sort)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
-                                                space, string, try, unexpected)
+                                                satisfy, string, try,
+                                                unexpected)
 
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
@@ -113,7 +114,7 @@ styledTextParser :: Parser InlineBlock
 styledTextParser = do
     _         <- char '['
      -- Need to check if there's missing symobols
-    symbols   <- manyTill (oneOf "*/-!^~$%&?") space
+    symbols   <- manyTill (oneOf "*/-!^~$%&?#") (satisfy (== ' '))
     paragraph <- extractParagraph
     let style = mkStyle symbols
     segments  <- runSpanParserM paragraph
