@@ -21,12 +21,11 @@ import           Test.QuickCheck (Arbitrary (..), property, (===))
 import           Data.Scrapbox (InlineBlock (..), ScrapText (..), Segment (..),
                                 Style (..), Url (..))
 import           Data.Scrapbox.Internal (concatSegment, isCodeNotation,
-                                         isMathExpr,
-                                         renderWithStyle, runScrapTextParser,
-                                         shortListOf)
+                                         isMathExpr, renderWithStyle,
+                                         runScrapTextParser, shortListOf)
 import           TestScrapboxParser.Utils (Syntax (..), checkParsed,
                                            propParseAsExpected)
-import           Utils (genText, propNonNull, shouldParseSpec)
+import           Utils (genNoSymbolText, propNonNull, shouldParseSpec)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec
@@ -71,7 +70,7 @@ newtype MathExpr = MathExpr Text
     deriving Show
 
 instance Arbitrary MathExpr where
-    arbitrary = MathExpr <$> genText
+    arbitrary = MathExpr <$> genNoSymbolText
 
 instance Syntax MathExpr where
     render (MathExpr txt)     = "[$ " <> txt <> "]"
@@ -100,7 +99,7 @@ newtype CodeNotation = CodeNotation Text
     deriving Show
 
 instance Arbitrary CodeNotation where
-    arbitrary = CodeNotation <$> genText
+    arbitrary = CodeNotation <$> genNoSymbolText
 
 instance Syntax CodeNotation where
     render (CodeNotation text)     = "`" <> text <> "`"

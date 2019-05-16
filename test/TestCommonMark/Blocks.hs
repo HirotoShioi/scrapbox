@@ -5,29 +5,28 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Blocks
-    ( blockSpec
-    ) where
+module TestCommonMark.Blocks where
 
 import           RIO
 
 import           RIO.List (headMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
-import           Test.Hspec.QuickCheck (prop)
-import           Test.QuickCheck (Arbitrary (..), choose, listOf1, vectorOf,
-                                  (===), elements)
+import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
+import           Test.QuickCheck (Arbitrary (..), choose, elements, listOf1,
+                                  vectorOf, (===))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 CodeSnippet (..), InlineBlock (..), Level (..),
                                 ScrapText (..), Segment (..), Start (..),
-                                TableContent (..), TableName (..), Url (..), Style(..))
+                                Style (..), TableContent (..), TableName (..),
+                                Url (..))
 import           TestCommonMark.Utils (checkScrapbox)
-import           Utils (genPrintableUrl, genText, Syntax(..))
+import           Utils (Syntax (..), genNoSymbolText, genPrintableUrl)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec
-blockSpec = describe "Block" $
+blockSpec = describe "Block" $ modifyMaxSuccess (const 1000) $
     describe "should preserve its content" $ do
         -- Blocks
         paragraphSpec
@@ -53,7 +52,7 @@ instance Syntax ParagraphSection where
     render (ParagraphSection txt) = txt
 
 instance Arbitrary ParagraphSection where
-    arbitrary = ParagraphSection <$> genText
+    arbitrary = ParagraphSection <$> genNoSymbolText
 
 -- | Test spec for parsing 'PARAGRAPH'
 paragraphSpec :: Spec
@@ -74,7 +73,7 @@ data HeaderText = HeaderText !Int !Text
 instance Arbitrary HeaderText where
     arbitrary = do
         randomSize <- choose (1, 6)
-        someText   <- genText
+        someText   <- genNoSymbolText
         return $ HeaderText randomSize someText
 
 instance Syntax HeaderText where
@@ -108,7 +107,7 @@ instance Syntax BlockQuoteText where
     render (BlockQuoteText txt) = ">" <> txt
 
 instance Arbitrary BlockQuoteText where
-    arbitrary = BlockQuoteText <$> genText
+    arbitrary = BlockQuoteText <$> genNoSymbolText
 
 -- | Test spec for parsing 'BLOCK_QUOTE'
 blockQuoteSpec :: Spec
@@ -130,7 +129,7 @@ instance Syntax CodeBlockSection where
     render (CodeBlockSection codes) = T.unlines $ ["```"] <> codes <> ["```"]
 
 instance Arbitrary CodeBlockSection where
-    arbitrary = CodeBlockSection <$> listOf1 genText
+    arbitrary = CodeBlockSection <$> listOf1 genNoSymbolText
 
 -- | Test spec for parsing 'CODE_BLOCK'
 codeBlockSpec :: Spec
@@ -153,7 +152,7 @@ instance Syntax UnorderedListBlock where
     render (UnorderedListBlock list) = T.unlines $ map ("- " <>) list
 
 instance Arbitrary UnorderedListBlock where
-    arbitrary = UnorderedListBlock <$> listOf1 genText
+    arbitrary = UnorderedListBlock <$> listOf1 genNoSymbolText
 
 -- | Test spec for parsing unordered list
 unorderedListSpec :: Spec
@@ -180,7 +179,7 @@ newtype OrderedListBlock = OrderedListBlock
     } deriving Show
 
 instance Arbitrary OrderedListBlock where
-    arbitrary = OrderedListBlock <$> listOf1 genText
+    arbitrary = OrderedListBlock <$> listOf1 genNoSymbolText
 
 instance Syntax OrderedListBlock where
     render (OrderedListBlock list) = T.unlines $
@@ -211,7 +210,7 @@ instance Syntax ImageSection where
     render (ImageSection title someLink) = "![" <> title <> "](" <> someLink <> ")"
 
 instance Arbitrary ImageSection where
-    arbitrary = ImageSection <$> genText <*> genPrintableUrl
+    arbitrary = ImageSection <$> genNoSymbolText <*> genPrintableUrl
 
 -- | Test spec for parsing image
 imageSpec :: Spec
@@ -252,8 +251,8 @@ instance Syntax TableSection where
 instance Arbitrary TableSection where
     arbitrary = do
         rowNum   <- choose (2,10)
-        header   <- vectorOf rowNum genText
-        contents <- listOf1 $ vectorOf rowNum genText
+        header   <- vectorOf rowNum genNoSymbolText
+        contents <- listOf1 $ vectorOf rowNum genNoSymbolText
         return $ TableSection header contents
 
 -- | Test spec for parsing table
@@ -294,7 +293,7 @@ instance Syntax StyledText where
 instance Arbitrary StyledText where
     arbitrary = do
         randomStyle <- elements [BoldStyle, ItalicStyle, NoStyles, StrikeThroughStyle]
-        randomText  <- genText
+        randomText  <- genNoSymbolText
         return $ StyledText randomStyle randomText
 
 -- | Test suites for parsing styled text

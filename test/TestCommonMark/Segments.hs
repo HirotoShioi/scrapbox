@@ -12,18 +12,18 @@ import           RIO
 
 import           RIO.List (headMaybe)
 import           Test.Hspec (Spec, describe)
-import           Test.Hspec.QuickCheck (prop)
+import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), Property, (.&&.), (===))
 
 import           Data.Scrapbox (Block (..), InlineBlock (..), ScrapText (..),
                                 Segment (..), Url (..))
 import           TestCommonMark.Utils (checkScrapbox, getHeadInlineBlock,
                                        getHeadSegment, getParagraph)
-import           Utils (Syntax (..), genPrintableUrl, genText)
+import           Utils (Syntax (..), genNoSymbolText, genPrintableUrl)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
-segmentSpec = describe "Segments" $ do
+segmentSpec = describe "Segments" $ modifyMaxSuccess (const 10000) $ do
     linkSpec
     codeNotationSpec
     plainTextSpec
@@ -42,7 +42,7 @@ instance Syntax LinkSegment where
     render (LinkSegment name url) = "[" <> name <> "](" <> url <> ")"
 
 instance Arbitrary LinkSegment where
-    arbitrary = LinkSegment <$> genText <*> genPrintableUrl
+    arbitrary = LinkSegment <$> genNoSymbolText <*> genPrintableUrl
 
 -- | Test spec for parsing 'LINK'
 linkSpec :: Spec
@@ -68,7 +68,7 @@ instance Syntax CodeNotationSegment where
     render (CodeNotationSegment txt) = "`" <> txt <> "`"
 
 instance Arbitrary CodeNotationSegment where
-    arbitrary = CodeNotationSegment <$> genText
+    arbitrary = CodeNotationSegment <$> genNoSymbolText
 
 -- | Test spec for parsing 'CODE_NOTATION'
 codeNotationSpec :: Spec
@@ -93,7 +93,7 @@ instance Syntax TextSegment where
     render (TextSegment txt) = txt
 
 instance Arbitrary TextSegment where
-    arbitrary = TextSegment <$> genText
+    arbitrary = TextSegment <$> genNoSymbolText
 
 -- | Test spec for parsing 'TEXT'
 plainTextSpec :: Spec

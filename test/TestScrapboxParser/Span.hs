@@ -13,17 +13,15 @@ import           RIO
 import           RIO.List (headMaybe)
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Arbitrary (..), (===), property)
+import           Test.QuickCheck (Arbitrary (..), property, (===))
 
 import           Data.Scrapbox (Segment (..), Url (..))
 import           Data.Scrapbox.Internal (genPrintableText, isHashTag, isLink,
                                          isText, runSpanParser)
-import           TestScrapboxParser.Utils (Syntax (..),
-                                           checkParsed, propParseAsExpected)
-import           Utils (genMaybe, genPrintableUrl, genText, propNonNull,
+import           TestScrapboxParser.Utils (Syntax (..), checkParsed,
+                                           propParseAsExpected)
+import           Utils (genMaybe, genNoSymbolText, genPrintableUrl, propNonNull,
                         shouldParseSpec)
-
--- TODO: Replace genText with genPrintableText
 
 -- | Spec for inline text parser
 spanParserSpec :: Spec
@@ -64,7 +62,7 @@ newtype TextSpan = TextSpan Text
     deriving Show
 
 instance Arbitrary TextSpan where
-    arbitrary = TextSpan <$> genText
+    arbitrary = TextSpan <$> genNoSymbolText
 
 instance Syntax TextSpan where
     render (TextSpan txt)     = txt
@@ -105,7 +103,7 @@ linkSpec = describe "LINK" $ do
         \(linkSpan :: LinkSpan) ->
             checkParsed linkSpan runSpanParser headMaybe (property . isLink)
     prop "should preserve its content" $
-        \(linkSpan@(LinkSpan mName url)) -> 
+        \(linkSpan@(LinkSpan mName url)) ->
             checkParsed
                 linkSpan
                 runSpanParser
@@ -123,7 +121,7 @@ newtype HashTagSpan = HashTagSpan Text
     deriving Show
 
 instance Arbitrary HashTagSpan where
-    arbitrary = HashTagSpan <$> genText
+    arbitrary = HashTagSpan <$> genNoSymbolText
 
 instance Syntax HashTagSpan where
     render (HashTagSpan text)     = "#" <> text

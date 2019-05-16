@@ -56,8 +56,8 @@ import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
 import           Test.QuickCheck (Arbitrary (..), Gen, choose, elements,
-                                  frequency, genericShrink, listOf, resize,
-                                  sized, oneof)
+                                  frequency, genericShrink, listOf, oneof,
+                                  resize, sized)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
