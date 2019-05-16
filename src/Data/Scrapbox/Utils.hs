@@ -20,7 +20,6 @@ module Data.Scrapbox.Utils
 import           RIO
 
 import           Data.Char (isSpace)
-import           Network.URI (isAllowedInURI)
 import           RIO.List (headMaybe, isPrefixOf, stripPrefix)
 import qualified RIO.Text as T
 import           Test.QuickCheck (Gen, elements, listOf1, resize, sized)
@@ -61,8 +60,13 @@ syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>']
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
-    randomSite <- fromString <$> listOf1 (arbitraryPrintableChar `suchThat` isAllowedInURI)
-    return $ "http://"　<> randomSite
+    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
+    randomSite <- genUrlText
+    return $ "http://www." <> randomSite <> end
+
+genUrlText :: Gen Text
+genUrlText = fmap fromString <$> listOf1
+    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 -- | Wrap 'Gen a' with 'Maybe'
 genMaybe :: Gen a -> Gen (Maybe a)

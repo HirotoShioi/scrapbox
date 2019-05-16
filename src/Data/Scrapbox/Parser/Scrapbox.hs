@@ -9,12 +9,13 @@ module Data.Scrapbox.Parser.Scrapbox
 
 import           RIO hiding (many, try)
 
+import           Data.Char (isSpace)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
-                                                between, char, eof, lookAhead,
-                                                many, many1, manyTill, noneOf,
+                                                char, eof, lookAhead, many,
+                                                many1, manyTill, noneOf,
                                                 notFollowedBy, oneOf, parse,
-                                                sepBy1, space, string, try,
-                                                unexpected)
+                                                satisfy, sepBy1, space, string,
+                                                try, unexpected)
 
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
                                                           runScrapTextParserM)
@@ -46,7 +47,9 @@ paragraphParser = do
 -- | Parser for 'THUMBNAIL'
 thumbnailParser :: Parser Block
 thumbnailParser = do
-    thumbnailLink <- between (char '[') (char ']') (many1 $ noneOf "]")
+    _             <- char '['
+    thumbnailLink <- many1 $ satisfy (\c -> (not . isSpace) c && c  /= ']')
+    _             <- char ']'
     _             <- endOfLine
     if isURL thumbnailLink
         then return $ THUMBNAIL (Url $ fromString thumbnailLink)
