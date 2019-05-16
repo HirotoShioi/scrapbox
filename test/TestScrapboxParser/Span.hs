@@ -11,17 +11,21 @@ module TestScrapboxParser.Span
 import           RIO
 
 import           RIO.List (headMaybe)
+import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Arbitrary (..))
+import           Test.QuickCheck (Arbitrary (..), whenFail)
 
 import           Data.Scrapbox (Segment (..), Url (..))
-import           Data.Scrapbox.Internal (isHashTag, isLink, isText,
-                                         runSpanParser)
+import           Data.Scrapbox.Internal (genPrintableText, isHashTag, isLink,
+                                         isText, runSpanParser)
+import           Prelude (print)
 import           TestScrapboxParser.Utils (ScrapboxSyntax (..), checkContent,
                                            checkParsed, propParseAsExpected)
 import           Utils (genMaybe, genPrintableUrl, genText, propNonNull,
                         shouldParseSpec)
+
+-- TODO: Replace genText with genPrintableText
 
 -- | Spec for inline text parser
 spanParserSpec :: Spec
@@ -36,7 +40,7 @@ spanParserSpec =
             propParseAsExpected exampleText expected runSpanParser
 
         -- Span specs
-        describe "Spans" $ modifyMaxSuccess (const 200) $ do
+        describe "Spans" $ modifyMaxSuccess (const 10000) $ do
             textSpec
             linkSpec
             hashTagSpec
@@ -96,7 +100,7 @@ data LinkSpan = LinkSpan !(Maybe Text) !Text
     deriving Show
 
 instance Arbitrary LinkSpan where
-    arbitrary = LinkSpan <$> genMaybe genText <*> genPrintableUrl
+    arbitrary = LinkSpan <$> genMaybe genPrintableText <*> genPrintableUrl
 
 instance ScrapboxSyntax LinkSpan where
     render (LinkSpan (Just name) url) = "[" <> name <> " " <> url <> "]"
@@ -109,7 +113,8 @@ linkSpec = describe "LINK" $ do
         \(linkSpan :: LinkSpan) ->
             checkParsed linkSpan runSpanParser headMaybe isLink
     prop "should preserve its content" $
-        \(linkSpan :: LinkSpan) -> checkContent linkSpan runSpanParser
+        \(linkSpan :: LinkSpan) -> whenFail (print $ runSpanParser (T.unpack $ render linkSpan)) $
+            checkContent linkSpan runSpanParser
             (\segments -> do
                 guard $ length segments == 1
                 segment <- headMaybe segments

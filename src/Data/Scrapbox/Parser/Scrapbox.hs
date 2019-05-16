@@ -9,7 +9,6 @@ module Data.Scrapbox.Parser.Scrapbox
 
 import           RIO hiding (many, try)
 
-import           Network.URI (isURI)
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, lookAhead,
                                                 many, many1, manyTill, noneOf,
@@ -25,6 +24,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Scrapbox (..), Start (..),
                                       TableContent (..), TableName (..),
                                       Url (..))
+import           Data.Scrapbox.Utils (isURL)
 
 --------------------------------------------------------------------------------
 -- Block parser
@@ -48,7 +48,7 @@ thumbnailParser :: Parser Block
 thumbnailParser = do
     thumbnailLink <- between (char '[') (char ']') (many1 $ noneOf "]")
     _             <- endOfLine
-    if isURI thumbnailLink
+    if isURL thumbnailLink
         then return $ THUMBNAIL (Url $ fromString thumbnailLink)
         else unexpected "Cannot parse as Thumbnail since the content is not URI"
 

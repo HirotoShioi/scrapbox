@@ -266,7 +266,7 @@ instance Arbitrary Segment where
     arbitrary = do
         let randomHashTag = HASHTAG <$> genNonSpaceText
         let randomLink    = LINK
-                <$> genMaybe genNonSpaceText
+                <$> genMaybe genPrintableText
                 <*> (Url <$> genPrintableUrl)
         let randomText    = TEXT <$> genPrintableText
         frequency [ (1, randomHashTag)
