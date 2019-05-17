@@ -10,6 +10,7 @@ module TestCommonMark.Commonmark
     ) where
 
 import           RIO
+
 import           RIO.List (headMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)

@@ -63,11 +63,7 @@ test-suite scrapbox-test
   type:                exitcode-stdio-1.0
   main-is:             Spec.hs
   other-modules:       TestCommonMark.Commonmark
-                       TestScrapboxParser.Span
                        TestScrapboxParser.ParserTest
-                       TestScrapboxParser.Scrapbox
-                       TestScrapboxParser.ScrapText
-                       TestScrapboxParser.Utils
                        Utils
                        Paths_scrapbox
   hs-source-dirs:      test

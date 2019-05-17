@@ -12,6 +12,7 @@ module Utils
     , NonEmptyPrintableString(..)
     , shouldParseSpec
     , propNonNull
+    , propParseAsExpected
     , findDiffs
     , DiffPair(..)
     ) where
@@ -25,7 +26,7 @@ import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
                                   Property, arbitraryPrintableChar, listOf1,
-                                  property, suchThat, within, (.&&.))
+                                  property, suchThat, within, (.&&.), (===))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -97,3 +98,14 @@ findDiffs sb@(Scrapbox blocks) =
     go diffPair (x:xs) (y:ys)
         | x == y    = go diffPair xs ys
         | otherwise = go (DiffPair x y : diffPair) xs ys
+
+-- | General unit testing to see the parser can parse given data as expected
+propParseAsExpected :: (Eq parsed, Show parsed)
+                    => toParse
+                    -> parsed
+                    -> (toParse -> Either ParseError parsed)
+                    -> Property
+propParseAsExpected example expected parser = property $ either
+    (const $ property False)
+    (=== expected)
+    (parser example)
