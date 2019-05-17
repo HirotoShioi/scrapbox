@@ -451,8 +451,8 @@ roundTest = within 5000000 $ property $
 
             in isRight eParsed
             .&&. either
-                (const False)
-                (== scrapbox)
+                (const $ property False)
+                (=== scrapbox)
                 eParsed
   where
     printSize bsize
