@@ -42,7 +42,7 @@ newtype NonEmptyPrintableString =  NonEmptyPrintableString
 
 instance Arbitrary NonEmptyPrintableString where
     arbitrary = sized $ \s -> do
-        someText <- resize (s * 100) $ listOf1 arbitraryPrintableChar 
+        someText <- resize (s * 50) $ listOf1 arbitraryPrintableChar 
         return $ NonEmptyPrintableString someText
 
 -- | General testing spec for parser
@@ -55,10 +55,10 @@ shouldParseSpec parser =
 -- | General test case on whether given parser returns non null list after parsing
 -- Non null string
 propNonNull :: (String -> Either ParseError a)
-                    -- ^ Parser
-                    -> (a -> [b])
-                    -- ^ Getter
-                    -> Property
+            -- ^ Parser
+            -> (a -> [b])
+            -- ^ Getter
+            -> Property
 propNonNull parser getter = property $ \(someText :: NonEmptyPrintableString) ->
     let eParseredText = parser
             $ getNonEmptyPrintableString someText
