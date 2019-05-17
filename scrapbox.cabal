@@ -62,10 +62,7 @@ library
 test-suite scrapbox-test
   type:                exitcode-stdio-1.0
   main-is:             Spec.hs
-  other-modules:       TestCommonMark.Blocks
-                       TestCommonMark.Commonmark
-                       TestCommonMark.Segments
-                       TestCommonMark.Utils
+  other-modules:       TestCommonMark.Commonmark
                        TestScrapboxParser.Span
                        TestScrapboxParser.ParserTest
                        TestScrapboxParser.Scrapbox

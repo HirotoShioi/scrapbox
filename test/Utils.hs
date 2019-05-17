@@ -14,7 +14,6 @@ module Utils
     , propNonNull
     , findDiffs
     , DiffPair(..)
-    , Syntax(..)
     ) where
 
 import           RIO
@@ -32,10 +31,6 @@ import           Text.Parsec (ParseError)
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
-
--- | Type class used to render/get content of given syntax
-class Syntax a where
-    render     :: a -> Text
 
 -- | Generate random text
 genNoSymbolText :: Gen Text
