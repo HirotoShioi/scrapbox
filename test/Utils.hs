@@ -8,9 +8,7 @@ extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Utils
-    ( genPrintableUrl
-    , genMaybe
-    , genNoSymbolText
+    ( genNoSymbolText
     , NonEmptyPrintableString(..)
     , shouldParseSpec
     , propNonNull
@@ -27,8 +25,8 @@ import           Data.Scrapbox.Internal
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
-                                  Property, arbitraryPrintableChar, elements,
-                                  listOf1, property, suchThat, within, (.&&.))
+                                  Property, arbitraryPrintableChar, listOf1,
+                                  property, suchThat, within, (.&&.))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -42,19 +40,6 @@ class Syntax a where
 -- | Generate random text
 genNoSymbolText :: Gen Text
 genNoSymbolText = fromString <$> listOf1 (arbitraryPrintableChar `suchThat` isLetter)
-
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
-    randomSite <- genNoSymbolText
-    return $ "http://www." <> randomSite <> end
-
--- | Wrap 'Gen a' with 'Maybe'
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe gen = do
-    gened <- gen
-    elements [Just gened, Nothing]
 
 -- | Non-empty version of 'PrintableString'
 newtype NonEmptyPrintableString =  NonEmptyPrintableString

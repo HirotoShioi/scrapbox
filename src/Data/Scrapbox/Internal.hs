@@ -39,6 +39,8 @@ module Data.Scrapbox.Internal
     , isStrikeThrough
     -- * For testing
     , genPrintableText
+    , genPrintableUrl
+    , genMaybe
     , shortListOf
     ) where
 
@@ -56,4 +58,5 @@ import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       isItalic, isLink, isMathExpr, isParagraph,
                                       isStrikeThrough, isTable, isText,
                                       isThumbnail, unverbose, verbose)
-import           Data.Scrapbox.Utils
+import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
+                                      genPrintableUrl, shortListOf)

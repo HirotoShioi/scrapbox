@@ -21,8 +21,9 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 ScrapText (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..))
+import           Data.Scrapbox.Internal (genPrintableUrl)
 import           TestCommonMark.Utils (checkScrapbox)
-import           Utils (Syntax (..), genNoSymbolText, genPrintableUrl)
+import           Utils (Syntax (..), genNoSymbolText)
 
 -- | Test suites for 'Block'
 blockSpec :: Spec

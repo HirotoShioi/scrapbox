@@ -16,12 +16,12 @@ import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), property, (===))
 
 import           Data.Scrapbox (Segment (..), Url (..))
-import           Data.Scrapbox.Internal (genPrintableText, isHashTag, isLink,
+import           Data.Scrapbox.Internal (genMaybe, genPrintableText,
+                                         genPrintableUrl, isHashTag, isLink,
                                          isText, runSpanParser)
 import           TestScrapboxParser.Utils (Syntax (..), checkParsed,
                                            propParseAsExpected)
-import           Utils (genMaybe, genNoSymbolText, genPrintableUrl, propNonNull,
-                        shouldParseSpec)
+import           Utils (genNoSymbolText, propNonNull, shouldParseSpec)
 
 -- | Spec for inline text parser
 spanParserSpec :: Spec

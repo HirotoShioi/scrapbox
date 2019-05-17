@@ -185,6 +185,7 @@ applyCorrection = T.unlines . map apply . T.lines
         in symbol <> " " <> rest
       | otherwise = line
 
+-- | Return the number of blocks within given 'Scrapbox'
 size :: Scrapbox -> Int
 size (Scrapbox blocks) = blockSize blocks
   where

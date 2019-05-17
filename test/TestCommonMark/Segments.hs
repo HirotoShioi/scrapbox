@@ -17,9 +17,10 @@ import           Test.QuickCheck (Arbitrary (..), Property, (.&&.), (===))
 
 import           Data.Scrapbox (Block (..), InlineBlock (..), ScrapText (..),
                                 Segment (..), Url (..))
+import           Data.Scrapbox.Internal (genPrintableUrl)
 import           TestCommonMark.Utils (checkScrapbox, getHeadInlineBlock,
                                        getHeadSegment, getParagraph)
-import           Utils (Syntax (..), genNoSymbolText, genPrintableUrl)
+import           Utils (Syntax (..), genNoSymbolText)
 
 -- | Test suites for 'Segment'
 segmentSpec :: Spec
