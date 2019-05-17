@@ -4,8 +4,9 @@ module Data.Scrapbox.Internal
     ( -- * Render functions
       renderBlock
     , renderSegments
-    , renderText
+    , renderScrapText
     , renderInline
+    , renderWithStyle
     -- * Parsers
     -- These parsers can be used to parse given 'String' into some data type
     -- ** Scrapbox
@@ -38,6 +39,9 @@ module Data.Scrapbox.Internal
     , isStrikeThrough
     -- * For testing
     , genPrintableText
+    , genPrintableUrl
+    , genMaybe
+    , shortListOf
     ) where
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (runParagraphParser)
@@ -45,7 +49,8 @@ import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParser)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
-                                                renderSegments, renderText)
+                                                renderSegments, renderScrapText,
+                                                renderWithStyle)
 import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       concatSegment, isBlockQuote, isBold,
                                       isBulletPoint, isCodeBlock,
@@ -53,4 +58,5 @@ import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       isItalic, isLink, isMathExpr, isParagraph,
                                       isStrikeThrough, isTable, isText,
                                       isThumbnail, unverbose, verbose)
-import           Data.Scrapbox.Utils
+import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
+                                      genPrintableUrl, shortListOf)

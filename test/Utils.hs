@@ -8,49 +8,38 @@ extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Utils
-    ( -- * Testing utilities
-      genText
-    , genPrintableUrl
-    , genMaybe
+    ( genNoSymbolText
     , NonEmptyPrintableString(..)
     , shouldParseSpec
     , propNonNull
     , findDiffs
     , DiffPair(..)
+    , Syntax(..)
     ) where
 
 import           RIO
 
+import           Data.Char
 import           Data.Scrapbox
 import           Data.Scrapbox.Internal
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
-                                  Property, arbitraryPrintableChar, elements,
-                                  listOf1, property, within, (.&&.))
+                                  Property, arbitraryPrintableChar, listOf1,
+                                  property, suchThat, within, (.&&.))
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
 
+-- | Type class used to render/get content of given syntax
+class Syntax a where
+    render     :: a -> Text
+
 -- | Generate random text
-genText :: Gen Text
-genText = fmap fromString <$> listOf1
-    $ elements (['a' .. 'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
-
--- | Generate random url
-genPrintableUrl :: Gen Text
-genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
-    randomSite <- genText
-    return $ "http://www." <> randomSite <> end
-
--- | Wrap 'Gen a' with 'Maybe'
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe gen = do
-    gened <- gen
-    elements [Just gened, Nothing]
+genNoSymbolText :: Gen Text
+genNoSymbolText = fromString <$> listOf1 (arbitraryPrintableChar `suchThat` isLetter)
 
 -- | Non-empty version of 'PrintableString'
 newtype NonEmptyPrintableString =  NonEmptyPrintableString

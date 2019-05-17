@@ -42,6 +42,7 @@ genPrintableText = fromString <$>
         `suchThat`
         hasNoTrailingSpaces
 
+-- | Generate text without whitespaces
 genNonSpaceText :: Gen Text
 genNonSpaceText = fromString <$>
     listOf1 (arbitraryPrintableChar
@@ -74,12 +75,14 @@ genMaybe gen = do
     gened <- gen
     elements [Just gened, Nothing]
 
+-- | Generate shorter list
 shortListOf :: Gen a -> Gen [a]
 shortListOf g = sized $ \s ->
     resize
         ((round :: Double -> Int) . sqrt . fromIntegral $ s)
         (listOf1 (resize s g))
 
+-- | Checks if given text is URL
 isURL :: String -> Bool
 isURL str =
        ("http://" `isPrefixOf` str && hasSomeChar "http://")

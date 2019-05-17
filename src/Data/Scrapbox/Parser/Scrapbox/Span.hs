@@ -12,13 +12,12 @@ import           Data.Scrapbox.Parser.Utils (lookAheadMaybe)
 import           Data.Scrapbox.Types (Segment (..), Url (..))
 import           Data.Scrapbox.Utils (isURL)
 import           RIO hiding (many, try)
-import           RIO.List (lastMaybe, headMaybe)
+import           RIO.List (headMaybe, lastMaybe)
 import qualified RIO.Text as T
 import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 between, char, eof, many, many1,
                                                 manyTill, noneOf, oneOf, parse,
-                                                satisfy, try, unexpected,
-                                                (<?>))
+                                                satisfy, try, unexpected, (<?>))
 --------------------------------------------------------------------------------
 -- Smart contstructors
 -- Do not export these. These should only be used within this module.
