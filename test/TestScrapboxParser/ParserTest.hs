@@ -18,15 +18,14 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
 import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
                                          renderSegments, runScrapTextParser,
                                          runScrapboxParser, runSpanParser)
-import           Prelude (putStrLn)
 import           RIO.List (headMaybe)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Property, label, property, whenFail, within,
                                   (.&&.), (===))
-import           Utils (DiffPair (..), findDiffs, propNonNull,
-                        propParseAsExpected, shouldParseSpec)
+import           Text.Parsec (ParseError)
+import           Utils (printDiffs, propNonNull, shouldParseSpec)
 
 -- | Test specs for scrapbox parser
 parserSpec :: Spec
@@ -42,7 +41,7 @@ parserSpec = do
 -- | Spec for inline text parser
 spanParserSpec :: Spec
 spanParserSpec =
-    describe "Span parser" $ modifyMaxSuccess (const 10000) $ do
+    describe "Span parser" $ modifyMaxSuccess (const 5000) $ do
         shouldParseSpec runSpanParser
 
         prop "should return non-empty list of segments if given string is non-empty" $
@@ -84,7 +83,7 @@ spanParserSpec =
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec
 scrapTextParserSpec =
-    describe "ScrapText parser" $ modifyMaxSuccess (const 10000) $ do
+    describe "ScrapText parser" $ modifyMaxSuccess (const 5000) $ do
         shouldParseSpec runScrapTextParser
 
         prop "should return non-empty list of contexts if the given string is non-empty" $
@@ -93,7 +92,7 @@ scrapTextParserSpec =
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
 
-        describe "Inline blocks" $
+        describe "Inline blocks" $ modifyMaxSuccess (const 10000) $ 
             prop "round-trip test" scrapTextRoundTripTest
 
   where
@@ -164,19 +163,6 @@ roundTest = within 5000000 $ property $
       | bsize < 5                = "Less than 5"
       | bsize >= 5 && bsize < 10 = "More than 5, but less than 10"
       | otherwise                = "More than 10"
-    printDiffs sb = do
-        let diffs = findDiffs sb
-        case diffs of
-            Left str       -> putStrLn str
-            Right diffPairs -> do
-                putStrLn "Original:"
-                putStrLn $ show sb
-                forM_ diffPairs (\(DiffPair before after) -> do
-                    putStrLn "Before:"
-                    putStrLn $ show before
-                    putStrLn "After:"
-                    putStrLn $ show after
-                    )
 
 blockRoundTripTest :: Block -> Property
 blockRoundTripTest block =
@@ -589,3 +575,14 @@ syntaxPageTest =
         , LINEBREAK
         , LINEBREAK
         ]
+
+-- | General unit testing to see the parser can parse given data as expected
+propParseAsExpected :: (Eq parsed, Show parsed)
+                    => String
+                    -> parsed
+                    -> (String -> Either ParseError parsed)
+                    -> Property
+propParseAsExpected example expected parser = property $ either
+    (const $ property False)
+    (=== expected)
+    (parser example)

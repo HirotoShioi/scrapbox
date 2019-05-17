@@ -1,7 +1,4 @@
-{-| Utility funcitons used in this Library. They are from extra and either package.
-
-extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra.html>
-
+{-| Utility funcitons used for testing.
 -}
 
 {-# LANGUAGE OverloadedStrings   #-}
@@ -12,21 +9,22 @@ module Utils
     , NonEmptyPrintableString(..)
     , shouldParseSpec
     , propNonNull
-    , propParseAsExpected
     , findDiffs
+    , printDiffs
     , DiffPair(..)
     ) where
 
 import           RIO
 
-import           Data.Char
-import           Data.Scrapbox
-import           Data.Scrapbox.Internal
+import           Data.Char (isLetter)
+import           Data.Scrapbox (Block (..), Scrapbox (..), renderToScrapbox)
+import           Data.Scrapbox.Internal (runScrapboxParser)
+import           Prelude (putStrLn)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
                                   Property, arbitraryPrintableChar, listOf1,
-                                  property, suchThat, within, (.&&.), (===))
+                                  property, suchThat, within, (.&&.), sized, resize)
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -43,7 +41,9 @@ newtype NonEmptyPrintableString =  NonEmptyPrintableString
     } deriving Show
 
 instance Arbitrary NonEmptyPrintableString where
-    arbitrary = NonEmptyPrintableString <$> listOf1 arbitraryPrintableChar
+    arbitrary = sized $ \s -> do
+        someText <- resize (s * 100) $ listOf1 arbitraryPrintableChar 
+        return $ NonEmptyPrintableString someText
 
 -- | General testing spec for parser
 shouldParseSpec :: (String -> Either ParseError a) -> Spec
@@ -99,13 +99,17 @@ findDiffs sb@(Scrapbox blocks) =
         | x == y    = go diffPair xs ys
         | otherwise = go (DiffPair x y : diffPair) xs ys
 
--- | General unit testing to see the parser can parse given data as expected
-propParseAsExpected :: (Eq parsed, Show parsed)
-                    => toParse
-                    -> parsed
-                    -> (toParse -> Either ParseError parsed)
-                    -> Property
-propParseAsExpected example expected parser = property $ either
-    (const $ property False)
-    (=== expected)
-    (parser example)
+printDiffs :: Scrapbox -> IO ()
+printDiffs sb = do
+    let diffs = findDiffs sb
+    case diffs of
+        Left str       -> putStrLn str
+        Right diffPairs -> do
+            putStrLn "Original:"
+            putStrLn $ show sb
+            forM_ diffPairs (\(DiffPair before after) -> do
+                putStrLn "Before:"
+                putStrLn $ show before
+                putStrLn "After:"
+                putStrLn $ show after
+                )
