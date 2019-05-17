@@ -11,7 +11,7 @@ module Data.Scrapbox.Render.Scrapbox
     ( renderToScrapboxNoOption
     , renderBlock
     , renderSegments
-    , renderText
+    , renderScrapText
     , renderInline
     , renderWithStyle
     ) where
@@ -43,17 +43,17 @@ renderToScrapboxNoOption (Scrapbox blocks) = T.unlines $ concatMap renderBlock b
 renderBlock :: Block -> [Text]
 renderBlock = \case
     LINEBREAK                    -> [""]
-    BLOCK_QUOTE stext            -> [">" <> renderText stext]
+    BLOCK_QUOTE stext            -> [">" <> renderScrapText stext]
     BULLET_POINT start blocks    -> renderBulletPoint start blocks
     CODE_BLOCK codeName code     -> renderCodeBlock codeName code
-    PARAGRAPH stext              -> [renderText stext]
+    PARAGRAPH stext              -> [renderScrapText stext]
     HEADING level contents       -> [renderHeading level contents]
     TABLE tableName tableContent -> renderTable tableName tableContent
     THUMBNAIL (Url url)          -> [blocked url]
 
 -- | Render given 'ScrapText' into 'Text'
-renderText :: ScrapText -> Text
-renderText (ScrapText inlines) =
+renderScrapText :: ScrapText -> Text
+renderScrapText (ScrapText inlines) =
     foldr (\scrap acc-> renderInline scrap <> acc) mempty inlines
 
 -- | Render given 'InlineBlock' into 'Text'

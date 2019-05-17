@@ -8,63 +8,22 @@ module TestScrapboxParser.Scrapbox where
 
 import           RIO
 
+import           RIO.List (headMaybe)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Property, label, property, whenFail, within,
-                                  (.&&.))
+                                  (.&&.), (===))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
                                 Scrapbox (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), renderToScrapbox, size)
-import           Data.Scrapbox.Internal (runScrapboxParser)
+import           Data.Scrapbox.Internal (renderBlock, runScrapboxParser)
 import           Prelude (putStrLn)
 import           TestScrapboxParser.Utils (propParseAsExpected)
 import           Utils (DiffPair (..), findDiffs, propNonNull, shouldParseSpec)
-
---------------------------------------------------------------------------------
--- Scrapbox parser
---------------------------------------------------------------------------------
-
--- | Performs roundtrips test
-roundTripSpec :: Spec
-roundTripSpec = describe "Scrapbox" $
-    prop "should be able to perform roundtrip if there's no ambiguous syntax"
-        roundTest
-
-roundTest :: Property
-roundTest = within 5000000 $ property $
-        \(scrapbox :: Scrapbox) ->
-              whenFail (printDiffs scrapbox)
-            $ label (printSize $ size scrapbox) $
-            let rendered = renderToScrapbox mempty scrapbox
-                eParsed  = runScrapboxParser $ T.unpack rendered
-
-            in isRight eParsed
-            .&&. either
-                (const False)
-                (== scrapbox)
-                eParsed
-  where
-    printSize bsize
-      | bsize < 5                = "Less than 5"
-      | bsize >= 5 && bsize < 10 = "More than 5, but less than 10"
-      | otherwise                = "More than 10"
-    printDiffs sb = do
-        let diffs = findDiffs sb
-        case diffs of
-            Left str       -> putStrLn str
-            Right diffPairs -> do
-                putStrLn "Original:"
-                putStrLn $ show sb
-                forM_ diffPairs (\(DiffPair before after) -> do
-                    putStrLn "Before:"
-                    putStrLn $ show before
-                    putStrLn "After:"
-                    putStrLn $ show after
-                    )
 
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
@@ -72,6 +31,7 @@ scrapboxParserSpec =
         roundTripSpec
         shouldParseSpec runScrapboxParser
 
+        prop "should be able to perform round-trip on block" blockRoundTripTest
         prop "should return non-empty list of blocks if the given string is non-empty" $
             propNonNull runScrapboxParser (\(Scrapbox blocks) -> blocks)
 
@@ -471,3 +431,58 @@ scrapboxParserSpec =
         , LINEBREAK
         ]
 
+--------------------------------------------------------------------------------
+-- Scrapbox parser
+--------------------------------------------------------------------------------
+
+-- | Performs roundtrips test
+roundTripSpec :: Spec
+roundTripSpec = describe "Scrapbox" $
+    prop "should be able to perform roundtrip if there's no ambiguous syntax"
+        roundTest
+
+roundTest :: Property
+roundTest = within 5000000 $ property $
+        \(scrapbox :: Scrapbox) ->
+              whenFail (printDiffs scrapbox)
+            $ label (printSize $ size scrapbox) $
+            let rendered = renderToScrapbox mempty scrapbox
+                eParsed  = runScrapboxParser $ T.unpack rendered
+
+            in isRight eParsed
+            .&&. either
+                (const False)
+                (== scrapbox)
+                eParsed
+  where
+    printSize bsize
+      | bsize < 5                = "Less than 5"
+      | bsize >= 5 && bsize < 10 = "More than 5, but less than 10"
+      | otherwise                = "More than 10"
+    printDiffs sb = do
+        let diffs = findDiffs sb
+        case diffs of
+            Left str       -> putStrLn str
+            Right diffPairs -> do
+                putStrLn "Original:"
+                putStrLn $ show sb
+                forM_ diffPairs (\(DiffPair before after) -> do
+                    putStrLn "Before:"
+                    putStrLn $ show before
+                    putStrLn "After:"
+                    putStrLn $ show after
+                    )
+
+blockRoundTripTest :: Block -> Property
+blockRoundTripTest block =
+    let rendered = T.unlines . renderBlock $ block
+    in either
+        (const $ property  False)
+        checkContent
+        (runScrapboxParser $ T.unpack rendered)
+  where
+    checkContent = 
+        maybe
+            (property False)
+            (=== block) 
+            . (\(Scrapbox blocks) -> headMaybe blocks)

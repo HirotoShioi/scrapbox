@@ -4,24 +4,20 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestScrapboxParser.Span
-    ( spanParserSpec
-    ) where
+module TestScrapboxParser.Span where
 
 import           RIO
 
 import           RIO.List (headMaybe)
+import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Arbitrary (..), property, (===))
+import           Test.QuickCheck (Property, property, (===))
 
 import           Data.Scrapbox (Segment (..), Url (..))
-import           Data.Scrapbox.Internal (genMaybe, genPrintableText,
-                                         genPrintableUrl, isHashTag, isLink,
-                                         isText, runSpanParser)
-import           TestScrapboxParser.Utils (Syntax (..), checkParsed,
-                                           propParseAsExpected)
-import           Utils (genNoSymbolText, propNonNull, shouldParseSpec)
+import           Data.Scrapbox.Internal (renderSegments, runSpanParser)
+import           TestScrapboxParser.Utils (propParseAsExpected)
+import           Utils (propNonNull, shouldParseSpec)
 
 -- | Spec for inline text parser
 spanParserSpec :: Spec
@@ -36,10 +32,8 @@ spanParserSpec =
             propParseAsExpected exampleText expected runSpanParser
 
         -- Span specs
-        describe "Spans" $ modifyMaxSuccess (const 10000) $ do
-            textSpec
-            linkSpec
-            hashTagSpec
+        describe "Spans" $ modifyMaxSuccess (const 10000) $ 
+            prop "round trip tests" segmentRoundTripTest
   where
     exampleText :: String
     exampleText = "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `partial code [partial url #someHashtag"
@@ -55,88 +49,15 @@ spanParserSpec =
         ]
 
 --------------------------------------------------------------------------------
--- Text
+-- Model test
 --------------------------------------------------------------------------------
 
-newtype TextSpan = TextSpan Text
-    deriving Show
-
-instance Arbitrary TextSpan where
-    arbitrary = TextSpan <$> genNoSymbolText
-
-instance Syntax TextSpan where
-    render (TextSpan txt)     = txt
-
-
---- Text
-textSpec :: Spec
-textSpec = describe "TEXT" $ do
-    prop "should parse text as TEXT" $
-        \(someText :: TextSpan) ->
-            checkParsed someText runSpanParser headMaybe (property . isText)
-    prop "should preserve its content" $
-        \(someText@(TextSpan txt)) ->
-            checkParsed someText runSpanParser
-                (\segments -> do
-                  guard $ length segments == 1
-                  headMaybe segments
-                )
-                (=== TEXT txt)
-
---------------------------------------------------------------------------------
--- Link
---------------------------------------------------------------------------------
-
-data LinkSpan = LinkSpan !(Maybe Text) !Text
-    deriving Show
-
-instance Arbitrary LinkSpan where
-    arbitrary = LinkSpan <$> genMaybe genPrintableText <*> genPrintableUrl
-
-instance Syntax LinkSpan where
-    render (LinkSpan (Just name) url) = "[" <> name <> " " <> url <> "]"
-    render (LinkSpan Nothing url)     = "[" <> url <> "]"
-
-linkSpec :: Spec
-linkSpec = describe "LINK" $ do
-    prop "should parse link as LINK" $
-        \(linkSpan :: LinkSpan) ->
-            checkParsed linkSpan runSpanParser headMaybe (property . isLink)
-    prop "should preserve its content" $
-        \(linkSpan@(LinkSpan mName url)) ->
-            checkParsed
-                linkSpan
-                runSpanParser
-                (\segments -> do
-                    guard $ length segments == 1
-                    headMaybe segments
-                )
-                (=== LINK mName (Url url))
-
---------------------------------------------------------------------------------
--- HashTag
---------------------------------------------------------------------------------
-
-newtype HashTagSpan = HashTagSpan Text
-    deriving Show
-
-instance Arbitrary HashTagSpan where
-    arbitrary = HashTagSpan <$> genNoSymbolText
-
-instance Syntax HashTagSpan where
-    render (HashTagSpan text)     = "#" <> text
-
-hashTagSpec :: Spec
-hashTagSpec = describe "HASHTAG" $ do
-    prop "should parse hashtag as HASHTAG" $
-        \(hashTag :: HashTagSpan) ->
-            checkParsed hashTag runSpanParser headMaybe (property . isHashTag)
-
-    prop "should preserve its content" $
-        \(hashTag@(HashTagSpan tag)) ->
-            checkParsed hashTag runSpanParser
-                (\segments -> do
-                    guard $ length segments == 1
-                    headMaybe segments
-                )
-                (=== HASHTAG tag)
+segmentRoundTripTest :: Segment -> Property
+segmentRoundTripTest segment =
+    let rendered = renderSegments [segment]
+    in either
+        (const $ property  False)
+        checkContent
+        (runSpanParser $ T.unpack rendered)
+  where
+    checkContent = maybe (property False) (=== segment) . headMaybe

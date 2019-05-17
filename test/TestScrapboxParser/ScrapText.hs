@@ -9,23 +9,21 @@
 
 module TestScrapboxParser.ScrapText
     ( scrapTextParserSpec
+    , scrapTextRoundTripTest
     ) where
 
 import           RIO
 
-import           RIO.List (headMaybe)
+import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Arbitrary (..), property, (===))
+import           Test.QuickCheck (Property, property, (===))
 
 import           Data.Scrapbox (InlineBlock (..), ScrapText (..), Segment (..),
                                 Style (..), Url (..))
-import           Data.Scrapbox.Internal (concatSegment, isCodeNotation,
-                                         isMathExpr, renderWithStyle,
-                                         runScrapTextParser, shortListOf)
-import           TestScrapboxParser.Utils (Syntax (..), checkParsed,
-                                           propParseAsExpected)
-import           Utils (genNoSymbolText, propNonNull, shouldParseSpec)
+import           Data.Scrapbox.Internal (renderScrapText, runScrapTextParser)
+import           TestScrapboxParser.Utils (propParseAsExpected)
+import           Utils (propNonNull, shouldParseSpec)
 
 -- | Test spec for scrap text parser
 scrapTextParserSpec :: Spec
@@ -39,10 +37,8 @@ scrapTextParserSpec =
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
 
-        describe "Inline blocks" $ do
-            mathExprSpec
-            codeNotationSpec
-            styledSpanSpec
+        describe "Inline blocks" $
+            prop "round-trip test" scrapTextRoundTripTest
 
   where
     exampleText :: String
@@ -65,96 +61,10 @@ scrapTextParserSpec =
             ]
         ]
 
--- | Math expression syntax
-newtype MathExpr = MathExpr Text
-    deriving Show
-
-instance Arbitrary MathExpr where
-    arbitrary = MathExpr <$> genNoSymbolText
-
-instance Syntax MathExpr where
-    render (MathExpr txt)     = "[$ " <> txt <> "]"
-
--- math expressions
-mathExprSpec :: Spec
-mathExprSpec = describe "Math Expressions" $ do
-    prop "Should parse math expression syntax as MATH_EXPRESSION" $
-        \(mathExpr :: MathExpr) ->
-            checkParsed
-                mathExpr
-                runScrapTextParser
-                (\(ScrapText inlines) -> headMaybe inlines)
-                (property . isMathExpr)
-
-    prop "Should preserve its content" $
-        \(mathExpr@(MathExpr expr)) ->
-            checkParsed
-                mathExpr
-                runScrapTextParser
-                (\(ScrapText inlines) -> headMaybe inlines)
-                (=== MATH_EXPRESSION expr)
-
--- code notation
-newtype CodeNotation = CodeNotation Text
-    deriving Show
-
-instance Arbitrary CodeNotation where
-    arbitrary = CodeNotation <$> genNoSymbolText
-
-instance Syntax CodeNotation where
-    render (CodeNotation text)     = "`" <> text <> "`"
-
-codeNotationSpec :: Spec
-codeNotationSpec = describe "Code notation" $ do
-    prop "should parse code notation as it should be" $
-        \(codeNotation :: CodeNotation) ->
-            checkParsed codeNotation runScrapTextParser
-                (\(ScrapText inlines) -> headMaybe inlines)
-                (property . isCodeNotation)
-
-    prop "should preserve its content" $
-        \(codeNotation@(CodeNotation notation)) ->
-            checkParsed codeNotation runScrapTextParser
-                (\(ScrapText inlines) -> do
-                    guard (length inlines == 1)
-                    headMaybe inlines
-                )
-                (=== CODE_NOTATION notation)
-
--- SPAN
--- bold
--- heading
--- italic
--- strikethrough
-
-data StyledSpan = StyledSpan ![Style] ![Segment]
-    deriving Show
-
-instance Arbitrary StyledSpan where
-    arbitrary = do
-         randomStyle    <- arbitrary
-         randomSegments <- concatSegment . addSpace <$> shortListOf arbitrary
-         return $ StyledSpan randomStyle randomSegments
-        where
-          -- Add space after hashtag
-          addSpace :: [Segment] -> [Segment]
-          addSpace []                 = []
-          addSpace [HASHTAG txt]      = [HASHTAG txt]
-          addSpace (HASHTAG txt:rest) = HASHTAG txt : TEXT " " : addSpace rest
-          addSpace (x:xs)             = x : addSpace xs
-
-instance Syntax StyledSpan where
-    render (StyledSpan styles segments) = renderWithStyle styles segments
-
-styledSpanSpec :: Spec
-styledSpanSpec = describe "Styled inlines" $
-    prop "should parse model" $
-        \(styledSpan@(StyledSpan styles segments)) ->
-            checkParsed
-                styledSpan
-                runScrapTextParser
-                (\(ScrapText inlines) -> do
-                    guard $ length inlines == 1
-                    headMaybe inlines
-                )
-                (=== SPAN styles segments)
+scrapTextRoundTripTest :: ScrapText -> Property
+scrapTextRoundTripTest scrapText =
+    let rendered = renderScrapText scrapText
+    in either
+        (const $ property  False)
+        (=== scrapText)
+        (runScrapTextParser $ T.unpack rendered)
