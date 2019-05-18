@@ -49,7 +49,7 @@ import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParser)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
-                                                renderSegments, renderScrapText,
+                                                renderScrapText, renderSegments,
                                                 renderWithStyle)
 import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       concatSegment, isBlockQuote, isBold,

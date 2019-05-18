@@ -1,8 +1,4 @@
-{-| Utility funcitons used in this Library. They are from extra and either package.
-
-extra: http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra.html
-
-either: http://hackage.haskell.org/package/either-5.0.1
+{-| Utility funcitons used in this Library.
 -}
 
 {-# LANGUAGE OverloadedStrings #-}

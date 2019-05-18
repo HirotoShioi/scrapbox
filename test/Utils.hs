@@ -1,7 +1,4 @@
-{-| Utility funcitons used in this Library. They are from extra and either package.
-
-extra: <http://hackage.haskell.org/package/extra-1.6.14/docs/Control-Monad-Extra.html>
-
+{-| Utility funcitons used for testing.
 -}
 
 {-# LANGUAGE OverloadedStrings   #-}
@@ -13,29 +10,26 @@ module Utils
     , shouldParseSpec
     , propNonNull
     , findDiffs
+    , printDiffs
     , DiffPair(..)
-    , Syntax(..)
     ) where
 
 import           RIO
 
-import           Data.Char
-import           Data.Scrapbox
-import           Data.Scrapbox.Internal
+import           Data.Char (isLetter)
+import           Data.Scrapbox (Block (..), Scrapbox (..), renderToScrapbox)
+import           Data.Scrapbox.Internal (runScrapboxParser)
+import           Prelude (putStrLn)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
                                   Property, arbitraryPrintableChar, listOf1,
-                                  property, suchThat, within, (.&&.))
+                                  property, suchThat, within, (.&&.), sized, resize)
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper function
 --------------------------------------------------------------------------------
-
--- | Type class used to render/get content of given syntax
-class Syntax a where
-    render     :: a -> Text
 
 -- | Generate random text
 genNoSymbolText :: Gen Text
@@ -47,7 +41,9 @@ newtype NonEmptyPrintableString =  NonEmptyPrintableString
     } deriving Show
 
 instance Arbitrary NonEmptyPrintableString where
-    arbitrary = NonEmptyPrintableString <$> listOf1 arbitraryPrintableChar
+    arbitrary = sized $ \s -> do
+        someText <- resize (s * 50) $ listOf1 arbitraryPrintableChar 
+        return $ NonEmptyPrintableString someText
 
 -- | General testing spec for parser
 shouldParseSpec :: (String -> Either ParseError a) -> Spec
@@ -59,10 +55,10 @@ shouldParseSpec parser =
 -- | General test case on whether given parser returns non null list after parsing
 -- Non null string
 propNonNull :: (String -> Either ParseError a)
-                    -- ^ Parser
-                    -> (a -> [b])
-                    -- ^ Getter
-                    -> Property
+            -- ^ Parser
+            -> (a -> [b])
+            -- ^ Getter
+            -> Property
 propNonNull parser getter = property $ \(someText :: NonEmptyPrintableString) ->
     let eParseredText = parser
             $ getNonEmptyPrintableString someText
@@ -102,3 +98,18 @@ findDiffs sb@(Scrapbox blocks) =
     go diffPair (x:xs) (y:ys)
         | x == y    = go diffPair xs ys
         | otherwise = go (DiffPair x y : diffPair) xs ys
+
+printDiffs :: Scrapbox -> IO ()
+printDiffs sb = do
+    let diffs = findDiffs sb
+    case diffs of
+        Left str       -> putStrLn str
+        Right diffPairs -> do
+            putStrLn "Original:"
+            putStrLn $ show sb
+            forM_ diffPairs (\(DiffPair before after) -> do
+                putStrLn "Before:"
+                putStrLn $ show before
+                putStrLn "After:"
+                putStrLn $ show after
+                )
