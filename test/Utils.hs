@@ -24,7 +24,7 @@ import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
                                   Property, arbitraryPrintableChar, listOf1,
-                                  property, suchThat, within, (.&&.), sized, resize)
+                                  property, resize, sized, suchThat, within)
 import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ newtype NonEmptyPrintableString =  NonEmptyPrintableString
 
 instance Arbitrary NonEmptyPrintableString where
     arbitrary = sized $ \s -> do
-        someText <- resize (s * 50) $ listOf1 arbitraryPrintableChar 
+        someText <- resize (s * 50) $ listOf1 arbitraryPrintableChar
         return $ NonEmptyPrintableString someText
 
 -- | General testing spec for parser
@@ -60,14 +60,10 @@ propNonNull :: (String -> Either ParseError a)
             -- ^ Getter
             -> Property
 propNonNull parser getter = property $ \(someText :: NonEmptyPrintableString) ->
-    let eParseredText = parser
-            $ getNonEmptyPrintableString someText
-
-    in isRight eParseredText
-    .&&. either
+    either
         (const False)
         (not . null . getter)
-        eParseredText
+        (parser $ getNonEmptyPrintableString someText)
 
 
 data DiffPair = DiffPair
