@@ -63,9 +63,11 @@ import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
+-- | Smart constructor for 'Scrapbox'
 toScrapbox :: [Block] -> Scrapbox
 toScrapbox = Scrapbox . unverbose
 
+-- | Getter for 'Scrapbox'
 fromScrapbox :: Scrapbox -> [Block]
 fromScrapbox (Scrapbox blocks) = blocks
 
@@ -465,7 +467,7 @@ formatInline [inline]                 = [inline]
 formatInline (SPAN style segments:xs) = SPAN style (addSpace segments) : formatInline xs
 formatInline (x:xs)                   = x : formatInline xs
 
--- Add space after hashtag
+-- | Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                               = []
 addSpace (HASHTAG txt : TEXT text : rest) =

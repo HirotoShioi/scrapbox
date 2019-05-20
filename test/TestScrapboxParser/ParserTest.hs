@@ -12,7 +12,8 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
                                 Scrapbox, Segment (..), Start (..), Style (..),
                                 TableContent (..), TableName (..), Url (..),
-                                fromScrapbox, renderToScrapbox, toScrapbox, size)
+                                fromScrapbox, renderToScrapbox, size,
+                                toScrapbox)
 import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
                                          renderSegments, runScrapTextParser,
                                          runScrapboxParser, runSpanParser)
