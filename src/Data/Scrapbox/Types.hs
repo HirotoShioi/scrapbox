@@ -196,11 +196,10 @@ instance Arbitrary Block where
 
 replaceAmbiguousBlock :: Block -> Block
 replaceAmbiguousBlock = \case
-    PARAGRAPH (ScrapText []) -> LINEBREAK
-    PARAGRAPH (ScrapText [SPAN [] []]) -> LINEBREAK
+    PARAGRAPH (ScrapText [])                           -> LINEBREAK
+    PARAGRAPH (ScrapText [SPAN [] []])                 -> LINEBREAK
     PARAGRAPH (ScrapText [SPAN [Sized level] content]) -> HEADING level content
     PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]) -> THUMBNAIL url
-    BULLET_POINT _s [] -> LINEBREAK
     BULLET_POINT s content -> BULLET_POINT s (map replaceAmbiguousBlock content)
     block -> block
 --------------------------------------------------------------------------------
