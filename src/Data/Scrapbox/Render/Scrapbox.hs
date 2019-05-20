@@ -1,7 +1,4 @@
-{-| Render module, these are used to render given 'Scrapbox' into 'Text' using
-'renderToScrapbox' or 'renderRaw'
-
-You can also use 'writeScrapbox' to write given 'Scrapbox' into file.
+{-| Render module, defining the function which renders given 'Scrapbox' into 'Text'
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -62,7 +59,7 @@ renderInline (SPAN style content)    = renderWithStyle style content
 renderInline (CODE_NOTATION content) = "`" <> content <> "`"
 renderInline (MATH_EXPRESSION expr)  = "[$ " <> expr <> "]"
 
--- | Render given 'Content' to 'Text'
+-- | Render given @[Segment]@ to 'Text'
 renderSegments :: [Segment] -> Text
 renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
   where
