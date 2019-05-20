@@ -20,7 +20,7 @@ import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Property, label, property, whenFail, within,
-                                  (.&&.), (===))
+                                  (===))
 import           Text.Parsec (ParseError)
 import           Utils (printDiffs, propNonNull, shouldParseSpec)
 
@@ -161,8 +161,7 @@ scrapboxRoundTripTest = within 5000000 $ property $
             let rendered = renderToScrapbox mempty scrapbox
                 eParsed  = runScrapboxParser $ T.unpack rendered
 
-            in isRight eParsed
-            .&&. either
+            in either
                 (const $ property False) -- Try to assert how it failed..?
                 (=== scrapbox)
                 eParsed
