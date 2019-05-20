@@ -84,15 +84,15 @@ renderTestData = \case
             ([1..] :: [Int])
             list
     UnorderedListBlock list -> T.unlines $ map ("- " <>) list
-    BlockQuoteText text    -> ">" <> text
-    StyledText style text  -> case style of
-        BoldStyle          -> "**" <> text <> "**"
-        ItalicStyle        -> "*" <> text <> "*"
-        StrikeThroughStyle -> "~~" <> text <> "~~"
-        NoStyles           -> text
-    CodeBlockSection codes -> T.unlines $ ["```"] <> codes <> ["```"]
-    Link name url          -> "[" <> name <> "](" <> url <> ")"
-    CodeNotation notation  -> "`" <> notation <> "`"
+    BlockQuoteText text     -> ">" <> text
+    StyledText style text   -> case style of
+        BoldStyle           -> "**" <> text <> "**"
+        ItalicStyle         -> "*" <> text <> "*"
+        StrikeThroughStyle  -> "~~" <> text <> "~~"
+        NoStyles            -> text
+    CodeBlockSection codes  -> T.unlines $ ["```"] <> codes <> ["```"]
+    Link name url           -> "[" <> name <> "](" <> url <> ")"
+    CodeNotation notation   -> "`" <> notation <> "`"
 
 renderTable :: [Text] -> [[Text]] -> Text
 renderTable header contents = do

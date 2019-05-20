@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -17,7 +16,6 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
 import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
                                          renderSegments, runScrapTextParser,
                                          runScrapboxParser, runSpanParser)
-import           RIO.List (headMaybe)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -67,10 +65,9 @@ spanParserSpec =
     segmentRoundTripTest :: Segment -> Property
     segmentRoundTripTest segment =
         let rendered = renderSegments [segment]
-            checkContent = maybe (property False) (=== segment) . headMaybe
         in either
             (const $ property  False)
-            checkContent
+            (=== [segment])
             (runSpanParser $ T.unpack rendered)
 
     exampleText :: String
@@ -180,17 +177,8 @@ blockRoundTripTest block =
     let rendered = T.unlines . renderBlock $ block
     in either
         (const $ property False)
-        checkContent
+        (\(Scrapbox blocks) -> blocks === [block])
         (runScrapboxParser $ T.unpack rendered)
-  where
-    checkContent =
-        maybe
-            (isEmptyBlock block)
-            (=== block)
-            . (\(Scrapbox blocks) -> headMaybe blocks)
-    isEmptyBlock = \case
-        BULLET_POINT s _c -> block === BULLET_POINT s mempty
-        _                 -> property False
 
 syntaxPageTest :: Spec
 syntaxPageTest =
