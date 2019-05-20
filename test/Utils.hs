@@ -17,7 +17,7 @@ module Utils
 import           RIO
 
 import           Data.Char (isLetter)
-import           Data.Scrapbox (Block (..), Scrapbox (..), renderToScrapbox)
+import           Data.Scrapbox (Block (..), Scrapbox, renderToScrapbox, getScrapbox)
 import           Data.Scrapbox.Internal (runScrapboxParser)
 import           Prelude (putStrLn)
 import qualified RIO.Text as T
@@ -76,10 +76,10 @@ data DiffPair = DiffPair
 -- | Perform a roundtrip (render given 'Scrapbox' then parsing it) then compares
 -- two block data.
 findDiffs :: Scrapbox -> Either String [DiffPair]
-findDiffs sb@(Scrapbox blocks) =
+findDiffs sb =
     either
         (const $ Left "Failed to parse")
-        (\(Scrapbox parsedBlocks) -> return $ diffs blocks parsedBlocks)
+        (return . diffs (getScrapbox sb) . getScrapbox)
         (runScrapboxParser . T.unpack $ renderToScrapbox [] sb)
   where
     diffs :: [Block] -> [Block] -> [DiffPair]

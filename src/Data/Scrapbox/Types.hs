@@ -13,7 +13,8 @@
 module Data.Scrapbox.Types
     ( -- * Datatypes
       scrapbox
-    , Scrapbox (..)
+    , getScrapbox
+    , Scrapbox
     , Start(..)
     , Block(..)
     , CodeName(..)
@@ -31,7 +32,6 @@ module Data.Scrapbox.Types
     , concatSegment
     , concatScrapText
     , verbose
-    , unverbose
     -- * Predicates
     , isBlockQuote
     , isBulletPoint
@@ -65,7 +65,10 @@ newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
 scrapbox :: [Block] -> Scrapbox
-scrapbox = unverbose . Scrapbox
+scrapbox = Scrapbox . unverbose
+
+getScrapbox :: Scrapbox -> [Block]
+getScrapbox (Scrapbox blocks) = blocks
 
 --------------------------------------------------------------------------------
 -- Many of the Arbitrary instance are implemented in such a way that it can be
@@ -74,12 +77,12 @@ scrapbox = unverbose . Scrapbox
 
 instance Arbitrary Scrapbox where
     arbitrary = sized $ \size -> resize (adjustSize size) $ do
-        (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
+        (Scrapbox blocks) <- scrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
         where
             adjustSize num | num < 50 = num
                            | otherwise = 50
-    shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity) $ shrink blocks
+    shrink (Scrapbox blocks) = map (scrapbox . removeAmbiguity) $ shrink blocks
 
 removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case
@@ -182,7 +185,7 @@ instance Arbitrary Block where
     arbitrary = replaceAmbiguousBlock <$> frequency
             [ (2, return LINEBREAK)
             , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> shortListOf arbitrary)
+            , (1, BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary))
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
             , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
             , (3, PARAGRAPH <$> arbitrary)
@@ -317,17 +320,19 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
     mkVerboseInlineBlock others                = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure
-unverbose :: Scrapbox -> Scrapbox
-unverbose (Scrapbox blocks) = Scrapbox $ concatMap unVerboseBlock blocks
+unverbose :: [Block] -> [Block]
+unverbose = concatMap unVerboseBlock
   where
     unVerboseBlock :: Block -> [Block]
     unVerboseBlock = \case
         BLOCK_QUOTE stext      -> [BLOCK_QUOTE $ unVerboseScrapText stext]
         BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : rest) -> 
-            mconcat
-                [ unVerboseBlock (BULLET_POINT (Start $ num1 + num2) bs)
-                , unVerboseBlock (BULLET_POINT (Start num1) rest)
-                ]
+            if null rest
+                then unVerboseBlock (BULLET_POINT (Start $ num1 + num2) (unverbose bs))
+                else mconcat
+                    [ unVerboseBlock (BULLET_POINT (Start $ num1 + num2) (unverbose bs))
+                    , unVerboseBlock (BULLET_POINT (Start num1) (unverbose rest))
+                    ]
         BULLET_POINT num bs    -> [BULLET_POINT num $ concatMap unVerboseBlock bs]
         HEADING level segments -> [HEADING level $ concatSegment segments]
         PARAGRAPH stext        -> [PARAGRAPH $ unVerboseScrapText stext]

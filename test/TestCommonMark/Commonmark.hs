@@ -24,9 +24,9 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
-                                Scrapbox (..), Segment (..), Start (..),
+                                Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
-                                Url (..), commonmarkToNode)
+                                Url (..), commonmarkToNode, getScrapbox)
 import           Data.Scrapbox.Internal (genPrintableUrl, runParagraphParser,
                                          shortListOf)
 import           Utils (propNonNull, shouldParseSpec)
@@ -209,5 +209,5 @@ toScrapbox = \case
 
 commonmarkModelTest :: CommonMark -> Property
 commonmarkModelTest commonmark =
-    let (Scrapbox content) = commonmarkToNode [] . renderCommonmark $ commonmark
-    in content === toScrapbox commonmark
+    let sb = commonmarkToNode [] . renderCommonmark $ commonmark
+    in getScrapbox sb === toScrapbox commonmark

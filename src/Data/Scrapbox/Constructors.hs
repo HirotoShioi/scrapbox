@@ -2,9 +2,8 @@
 -}
 
 module Data.Scrapbox.Constructors
-    ( scrapbox
-    -- * Blocks
-    , blockQuote
+    ( -- * Blocks
+      blockQuote
     , bulletPoint
     , codeBlock
     , heading
@@ -30,18 +29,9 @@ import           RIO hiding (link, span)
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
-                                      Level (..), ScrapText (..), Scrapbox (..),
-                                      Segment (..), Start (..), Style (..),
-                                      TableContent (..), TableName (..),
-                                      Url (..))
-
---------------------------------------------------------------------------------
--- Smart constructors
---------------------------------------------------------------------------------
-
--- | Constructors for creating 'Scrapbox' with given list of 'Block'
-scrapbox :: [Block] -> Scrapbox
-scrapbox = Scrapbox
+                                      Level (..), ScrapText (..), Segment (..),
+                                      Start (..), Style (..), TableContent (..),
+                                      TableName (..), Url (..))
 
 --------------------------------------------------------------------------------
 -- Block

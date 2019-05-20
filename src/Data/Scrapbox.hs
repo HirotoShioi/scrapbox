@@ -32,7 +32,9 @@ module Data.Scrapbox
     -- * Useful functions
     , size
     -- * Data types
-    , Scrapbox(..)
+    , scrapbox
+    , getScrapbox
+    , Scrapbox
     , Block(..)
     , Url(..)
     , Level(..)
@@ -59,10 +61,10 @@ import           Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
 import           Data.Scrapbox.Render.Scrapbox (renderToScrapboxNoOption)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
-                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..), unverbose)
+                                      Url (..), scrapbox, getScrapbox)
 import           Data.Scrapbox.Utils (isURL)
 import           Text.ParserCombinators.Parsec (ParseError)
 
@@ -91,11 +93,11 @@ optFilterRelativePathLink = FilterRelativeLink
 
 -- | Apply changes to 'Scrapbox' based on the given @[ScrapboxOption]@
 applyOption :: [ScrapboxOption] -> Scrapbox -> Scrapbox
-applyOption options scrapbox = unverbose $ foldr apply scrapbox (nub options)
+applyOption options sb = scrapbox $ getScrapbox $ foldr apply sb (nub options)
   where
     apply :: ScrapboxOption -> Scrapbox -> Scrapbox
-    apply SectionHeading (Scrapbox blocks)     = Scrapbox $ applyLinebreak blocks
-    apply FilterRelativeLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
+    apply SectionHeading = scrapbox . applyLinebreak . getScrapbox
+    apply FilterRelativeLink = scrapbox . map applyFilterLink . getScrapbox
 
     -- Apply 'LINEBREAK' between 'HEADING' section
     -- >> [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
@@ -161,13 +163,13 @@ commonmarkToNode opts cmark = applyOption opts
 
 -- | Render given 'Scrapbox' AST into commonmark with given @[ScrapboxOption]@
 renderToCommonmark :: [ScrapboxOption] -> Scrapbox -> Text
-renderToCommonmark opts scrapbox = renderToCommonmarkNoOption
-    $ applyOption opts scrapbox
+renderToCommonmark opts scrap = renderToCommonmarkNoOption
+    $ applyOption opts scrap
 
 -- | Render given 'Scrapbox' AST into Scrapbox page with given @[ScrapboxOption]@
 renderToScrapbox :: [ScrapboxOption] -> Scrapbox -> Text
-renderToScrapbox opts scrapbox = renderToScrapboxNoOption
-    $ applyOption opts scrapbox
+renderToScrapbox opts scrap = renderToScrapboxNoOption
+    $ applyOption opts scrap
 
 -- | Apply correction to ensure that the @CMark@ parses the syntaxes correctly
 --
@@ -187,7 +189,7 @@ applyCorrection = T.unlines . map apply . T.lines
 
 -- | Return the number of blocks within given 'Scrapbox'
 size :: Scrapbox -> Int
-size (Scrapbox blocks) = blockSize blocks
+size = blockSize . getScrapbox
   where
     blockSize :: [Block] -> Int
     blockSize = foldr (\block acc -> case block of

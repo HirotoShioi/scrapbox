@@ -14,9 +14,9 @@ import           RIO hiding (link, span)
 import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                              codeBlock, codeNotation, heading,
                                              italic, lineBreak, link, p,
-                                             scrapbox, span, strikeThrough,
+                                             span, strikeThrough,
                                              table, text, thumbnail)
-import           Data.Scrapbox.Types (Block (..), Scrapbox)
+import           Data.Scrapbox.Types (Block (..), Scrapbox, scrapbox)
 
 
 syntax :: [Block]

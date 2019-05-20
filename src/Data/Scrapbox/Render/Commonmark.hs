@@ -12,19 +12,20 @@ import           RIO
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
-                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..))
+                                      Url (..), getScrapbox)
 import           Network.URI (parseURI, uriQuery)
 import           RIO.List (foldl', headMaybe, nub, tailMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmarkNoOption :: Scrapbox -> Text
-renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
+renderToCommonmarkNoOption scrapbox = T.unlines
     $ concatMap renderBlock
-    $ addLineBreaks blocks
+    $ addLineBreaks
+    $ getScrapbox scrapbox
   where
     addLineBreaks :: [Block] -> [Block]
     addLineBreaks []               = []

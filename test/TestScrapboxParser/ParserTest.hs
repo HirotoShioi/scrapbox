@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -10,9 +11,9 @@ import           RIO
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
-                                Scrapbox (..), Segment (..), Start (..),
-                                Style (..), TableContent (..), TableName (..),
-                                Url (..), renderToScrapbox, size)
+                                Scrapbox, Segment (..), Start (..), Style (..),
+                                TableContent (..), TableName (..), Url (..),
+                                getScrapbox, renderToScrapbox, scrapbox, size)
 import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
                                          renderSegments, runScrapTextParser,
                                          runScrapboxParser, runSpanParser)
@@ -143,7 +144,7 @@ scrapboxParserSpec =
 
         prop "should be able to perform round-trip on block" blockRoundTripTest
         prop "should return non-empty list of blocks if the given string is non-empty" $
-            propNonNull runScrapboxParser (\(Scrapbox blocks) -> blocks)
+            propNonNull runScrapboxParser getScrapbox
 
         syntaxPageTest
 
@@ -155,15 +156,15 @@ roundTripSpec = describe "Scrapbox" $
 
 scrapboxRoundTripTest :: Property
 scrapboxRoundTripTest = within 5000000 $ property $
-        \(scrapbox :: Scrapbox) ->
-              whenFail (printDiffs scrapbox)
-            $ label (printSize $ size scrapbox) $
-            let rendered = renderToScrapbox mempty scrapbox
+        \(scrap :: Scrapbox) ->
+              whenFail (printDiffs scrap)
+            $ label (printSize $ size scrap) $
+            let rendered = renderToScrapbox mempty scrap
                 eParsed  = runScrapboxParser $ T.unpack rendered
 
             in either
                 (const $ property False) -- Try to assert how it failed..?
-                (=== scrapbox)
+                (=== scrap)
                 eParsed
   where
     printSize bsize
@@ -176,8 +177,12 @@ blockRoundTripTest block =
     let rendered = T.unlines . renderBlock $ block
     in either
         (const $ property False)
-        (\(Scrapbox blocks) -> blocks === [block])
+        (\sb -> getScrapbox sb === toModel block)
         (runScrapboxParser $ T.unpack rendered)
+  where
+    toModel :: Block -> [Block]
+    toModel b =  getScrapbox . scrapbox $ [b]
+
 
 syntaxPageTest :: Spec
 syntaxPageTest =
@@ -296,7 +301,7 @@ syntaxPageTest =
         ]
 
     expected1 :: Scrapbox
-    expected1 = Scrapbox
+    expected1 = scrapbox
         [ PARAGRAPH ( ScrapText [ SPAN [] [ TEXT "Syntax" ] ] )
         , THUMBNAIL ( Url "https://gyazo.com/0f82099330f378fe4917a1b4a5fe8815" )
         , LINEBREAK
@@ -361,7 +366,7 @@ syntaxPageTest =
         ]
 
     expected2 :: Scrapbox
-    expected2 = Scrapbox
+    expected2 = scrapbox
         [ PARAGRAPH ( ScrapText [ SPAN [ Bold ] [ TEXT "Images" ] ] )
         , BULLET_POINT ( Start 1 )
             [ PARAGRAPH
@@ -413,7 +418,7 @@ syntaxPageTest =
 
 
     expected3 :: Scrapbox
-    expected3 = Scrapbox
+    expected3 = scrapbox
         [ PARAGRAPH ( ScrapText [ SPAN [ Bold ] [ TEXT "Icons" ] ] )
         , BULLET_POINT ( Start 1 )
             [ PARAGRAPH
@@ -475,7 +480,7 @@ syntaxPageTest =
         ]
 
     expected4 :: Scrapbox
-    expected4 = Scrapbox
+    expected4 = scrapbox
         [ PARAGRAPH ( ScrapText [ SPAN [ Bold ] [ TEXT "Bullet points" ] ] )
         , BULLET_POINT ( Start 1 )
             [ PARAGRAPH ( ScrapText [ SPAN [] [ TEXT "Press space or tab on a new line to indent and create a bullet point" ] ] )
@@ -519,7 +524,7 @@ syntaxPageTest =
 
 
     expected5 :: Scrapbox
-    expected5 =  Scrapbox
+    expected5 =  scrapbox
         [ PARAGRAPH ( ScrapText [ SPAN [ Bold ] [ TEXT "Code block notation" ] ] )
         , BULLET_POINT ( Start 1 )
             [ PARAGRAPH

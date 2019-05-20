@@ -19,10 +19,10 @@ import qualified RIO.Text as T
 
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
-                                      Level (..), ScrapText (..), Scrapbox (..),
+                                      Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..))
+                                      Url (..), getScrapbox)
 
 --------------------------------------------------------------------------------
 -- Exposed interface
@@ -30,7 +30,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
 
 -- | Render given 'Scrapbox' AST into Scrapbox page
 renderToScrapboxNoOption :: Scrapbox -> Text
-renderToScrapboxNoOption (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
+renderToScrapboxNoOption = T.unlines . concatMap renderBlock . getScrapbox
 
 --------------------------------------------------------------------------------
 -- Rendering logics

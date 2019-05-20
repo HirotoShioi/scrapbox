@@ -20,7 +20,6 @@ module Data.Scrapbox.Internal
     , concatSegment
     , concatScrapText
     , verbose
-    , unverbose
     -- * Predicates
     , isBlockQuote
     , isBulletPoint
@@ -57,6 +56,6 @@ import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       isCodeNotation, isHashTag, isHeader,
                                       isItalic, isLink, isMathExpr, isParagraph,
                                       isStrikeThrough, isTable, isText,
-                                      isThumbnail, unverbose, verbose)
+                                      isThumbnail, verbose)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
                                       genPrintableUrl, shortListOf)

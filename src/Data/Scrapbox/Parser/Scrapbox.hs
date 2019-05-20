@@ -22,9 +22,9 @@ import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), Level (..),
-                                      Scrapbox (..), Start (..),
+                                      Scrapbox, Start (..),
                                       TableContent (..), TableName (..),
-                                      Url (..))
+                                      Url (..), scrapbox)
 import           Data.Scrapbox.Utils (isURL)
 
 --------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ blockParser indentNum =
 
 -- | Parser for 'Scrapbox'
 scrapboxParser :: Parser Scrapbox
-scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
+scrapboxParser = scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
 runScrapboxParser :: String -> Either ParseError Scrapbox
