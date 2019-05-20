@@ -22,7 +22,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..), getScrapbox)
+                                      Url (..), fromScrapbox)
 
 --------------------------------------------------------------------------------
 -- Exposed interface
@@ -30,7 +30,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
 
 -- | Render given 'Scrapbox' AST into Scrapbox page
 renderToScrapboxNoOption :: Scrapbox -> Text
-renderToScrapboxNoOption = T.unlines . concatMap renderBlock . getScrapbox
+renderToScrapboxNoOption = T.unlines . concatMap renderBlock . fromScrapbox
 
 --------------------------------------------------------------------------------
 -- Rendering logics

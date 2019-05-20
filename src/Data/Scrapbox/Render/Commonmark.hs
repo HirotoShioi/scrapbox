@@ -15,7 +15,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..), getScrapbox)
+                                      Url (..), fromScrapbox)
 import           Network.URI (parseURI, uriQuery)
 import           RIO.List (foldl', headMaybe, nub, tailMaybe)
 import qualified RIO.Text as T
@@ -25,7 +25,7 @@ renderToCommonmarkNoOption :: Scrapbox -> Text
 renderToCommonmarkNoOption scrapbox = T.unlines
     $ concatMap renderBlock
     $ addLineBreaks
-    $ getScrapbox scrapbox
+    $ fromScrapbox scrapbox
   where
     addLineBreaks :: [Block] -> [Block]
     addLineBreaks []               = []

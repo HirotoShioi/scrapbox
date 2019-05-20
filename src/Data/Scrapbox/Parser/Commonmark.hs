@@ -22,7 +22,7 @@ import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              paragraph, span, text, thumbnail)
 import           Data.Scrapbox.Types as S (Block (..), InlineBlock, Scrapbox,
                                            Segment, Style (..), concatInline,
-                                           concatScrapText, scrapbox)
+                                           concatScrapText, toScrapbox)
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
@@ -52,7 +52,7 @@ parseCommonmark cmark =
 --
 -- this prevents the weird rendering to occur
 parse :: Node -> Scrapbox
-parse node =  scrapbox $ format $ convertToBlocks [node]
+parse node =  toScrapbox $ format $ convertToBlocks [node]
   where
     format :: [Block] -> [Block]
     format [] = []

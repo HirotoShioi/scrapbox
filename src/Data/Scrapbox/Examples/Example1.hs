@@ -18,7 +18,7 @@ import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                              codeNotation, heading, italic,
                                              lineBreak, link, p, span,
                                              strikeThrough, text, thumbnail)
-import           Data.Scrapbox.Types (Block, Scrapbox, scrapbox)
+import           Data.Scrapbox.Types (Block, Scrapbox, toScrapbox)
 
 --------------------------------------------------------------------------------
 -- SECTION: Get started
@@ -400,19 +400,19 @@ onceStartedBlock =
 
 -- | 'Scrapbox' of get started section
 getStartedSB :: Scrapbox
-getStartedSB = scrapbox getStartedBlock
+getStartedSB = toScrapbox getStartedBlock
 
 -- | 'Scrapbox' of gets interesting section
 getsInterestingSB :: Scrapbox
-getsInterestingSB = scrapbox getsInterestingBlock
+getsInterestingSB = toScrapbox getsInterestingBlock
 
 -- | 'Scrapbox' of once started section
 onceStartedSB :: Scrapbox
-onceStartedSB = scrapbox onceStartedBlock
+onceStartedSB = toScrapbox onceStartedBlock
 
 -- | Example of how https://scrapbox.io/scrapbox-parser/Get_started should be parsed
 getStartedScrapbox :: Scrapbox
-getStartedScrapbox = scrapbox $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
+getStartedScrapbox = toScrapbox $ getStartedBlock <> getsInterestingBlock <> onceStartedBlock
 
 -- "Get started",
 -- "[https://gyazo.com/5f93e65a3b979ae5333aca4f32600611]",

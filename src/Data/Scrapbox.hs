@@ -32,8 +32,8 @@ module Data.Scrapbox
     -- * Useful functions
     , size
     -- * Data types
-    , scrapbox
-    , getScrapbox
+    , toScrapbox
+    , fromScrapbox
     , Scrapbox
     , Block(..)
     , Url(..)
@@ -64,7 +64,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..), getScrapbox, scrapbox)
+                                      Url (..), fromScrapbox, toScrapbox)
 import           Data.Scrapbox.Utils (isURL)
 import           Text.ParserCombinators.Parsec (ParseError)
 
@@ -93,11 +93,11 @@ optFilterRelativePathLink = FilterRelativeLink
 
 -- | Apply changes to 'Scrapbox' based on the given @[ScrapboxOption]@
 applyOption :: [ScrapboxOption] -> Scrapbox -> Scrapbox
-applyOption options sb = scrapbox $ getScrapbox $ foldr apply sb (nub options)
+applyOption options sb = toScrapbox $ fromScrapbox $ foldr apply sb (nub options)
   where
     apply :: ScrapboxOption -> Scrapbox -> Scrapbox
-    apply SectionHeading     = scrapbox . applyLinebreak . getScrapbox
-    apply FilterRelativeLink = scrapbox . map applyFilterLink . getScrapbox
+    apply SectionHeading     = toScrapbox . applyLinebreak . fromScrapbox
+    apply FilterRelativeLink = toScrapbox . map applyFilterLink . fromScrapbox
 
     -- Apply 'LINEBREAK' between 'HEADING' section
     -- >> [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
@@ -189,7 +189,7 @@ applyCorrection = T.unlines . map apply . T.lines
 
 -- | Return the number of blocks within given 'Scrapbox'
 size :: Scrapbox -> Int
-size = blockSize . getScrapbox
+size = blockSize . fromScrapbox
   where
     blockSize :: [Block] -> Int
     blockSize = foldr (\block acc -> case block of

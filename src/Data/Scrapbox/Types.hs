@@ -12,8 +12,8 @@
 
 module Data.Scrapbox.Types
     ( -- * Datatypes
-      scrapbox
-    , getScrapbox
+      toScrapbox
+    , fromScrapbox
     , Scrapbox
     , Start(..)
     , Block(..)
@@ -63,11 +63,11 @@ import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
 
-scrapbox :: [Block] -> Scrapbox
-scrapbox = Scrapbox . unverbose
+toScrapbox :: [Block] -> Scrapbox
+toScrapbox = Scrapbox . unverbose
 
-getScrapbox :: Scrapbox -> [Block]
-getScrapbox (Scrapbox blocks) = blocks
+fromScrapbox :: Scrapbox -> [Block]
+fromScrapbox (Scrapbox blocks) = blocks
 
 --------------------------------------------------------------------------------
 -- Many of the Arbitrary instance are implemented in such a way that it can be
@@ -76,12 +76,12 @@ getScrapbox (Scrapbox blocks) = blocks
 
 instance Arbitrary Scrapbox where
     arbitrary = sized $ \size -> resize (adjustSize size) $ do
-        (Scrapbox blocks) <- scrapbox <$> shortListOf arbitrary
+        (Scrapbox blocks) <- toScrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
         where
             adjustSize num | num < 50 = num
                            | otherwise = 50
-    shrink (Scrapbox blocks) = map (scrapbox . removeAmbiguity) $ shrink blocks
+    shrink (Scrapbox blocks) = map (toScrapbox . removeAmbiguity) $ shrink blocks
 
 removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case

@@ -26,7 +26,7 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
                                 Segment (..), Start (..), Style (..),
                                 TableContent (..), TableName (..), Url (..),
-                                commonmarkToNode, getScrapbox)
+                                commonmarkToNode, fromScrapbox)
 import           Data.Scrapbox.Internal (genPrintableUrl, runParagraphParser,
                                          shortListOf)
 import           Utils (propNonNull, shouldParseSpec)
@@ -133,8 +133,8 @@ instance Arbitrary CommonMark where
             return $ TableSection header contents
     shrink = genericShrink
 
-toScrapbox :: CommonMark -> [Block]
-toScrapbox = \case
+modelScrapbox :: CommonMark -> [Block]
+modelScrapbox = \case
     ParagraphSection text ->
         if T.null text
             then mempty
@@ -210,4 +210,4 @@ toScrapbox = \case
 commonmarkModelTest :: CommonMark -> Property
 commonmarkModelTest commonmark =
     let sb = commonmarkToNode [] . renderCommonmark $ commonmark
-    in getScrapbox sb === toScrapbox commonmark
+    in fromScrapbox sb === modelScrapbox commonmark

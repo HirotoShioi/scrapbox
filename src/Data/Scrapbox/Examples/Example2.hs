@@ -16,7 +16,7 @@ import           Data.Scrapbox.Constructors (blockQuote, bold, bulletPoint,
                                              italic, lineBreak, link, p, span,
                                              strikeThrough, table, text,
                                              thumbnail)
-import           Data.Scrapbox.Types (Block (..), Scrapbox, scrapbox)
+import           Data.Scrapbox.Types (Block (..), Scrapbox, toScrapbox)
 
 
 syntax :: [Block]
@@ -354,7 +354,7 @@ section bs = bs <> [lineBreak]
 -- | Example Page
 -- https://scrapbox.io/toSrapbox/Syntax
 example2' :: Scrapbox
-example2' = scrapbox $ concatMap section
+example2' = toScrapbox $ concatMap section
     [ syntax
     , mouseBased
     , internalLinks
