@@ -12,7 +12,8 @@
 
 module Data.Scrapbox.Types
     ( -- * Datatypes
-      Scrapbox (..)
+      scrapbox
+    , Scrapbox (..)
     , Start(..)
     , Block(..)
     , CodeName(..)
@@ -55,12 +56,16 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
-import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
-                                  genericShrink, listOf, oneof, resize, sized)
+import           Test.QuickCheck (Arbitrary (..), choose, elements,
+                                  frequency, genericShrink, listOf, oneof,
+                                  resize, sized)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
     deriving (Eq, Show, Generic, Read, Ord)
+
+scrapbox :: [Block] -> Scrapbox
+scrapbox = unverbose . Scrapbox
 
 --------------------------------------------------------------------------------
 -- Many of the Arbitrary instance are implemented in such a way that it can be
@@ -79,6 +84,9 @@ instance Arbitrary Scrapbox where
 removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case
     [] -> []
+    -- Need to take a look
+    (BULLET_POINT _s [] : xs) -> LINEBREAK : removeAmbiguity xs
+
     -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
     (BULLET_POINT start blocks : xs) ->
           BULLET_POINT start (removeAmbiguity blocks)
@@ -174,20 +182,9 @@ instance Arbitrary Block where
     arbitrary = replaceAmbiguousBlock <$> frequency
             [ (2, return LINEBREAK)
             , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> shortListOf bulletPointFreq)
+            , (1, BULLET_POINT <$> arbitrary <*> shortListOf arbitrary)
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
             , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
-            , (3, PARAGRAPH <$> arbitrary)
-            , (1, TABLE <$> arbitrary <*> arbitrary)
-            , (2, THUMBNAIL <$> arbitrary)
-            ]
-        where
-          bulletPointFreq = frequency
-            [ (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*>
-                (concatSegment . addSpace <$> shortListOf arbitrary)
-              )
             , (3, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
@@ -200,6 +197,7 @@ replaceAmbiguousBlock = \case
     PARAGRAPH (ScrapText [SPAN [] []])                 -> LINEBREAK
     PARAGRAPH (ScrapText [SPAN [Sized level] content]) -> HEADING level content
     PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]) -> THUMBNAIL url
+    BULLET_POINT _s []     -> LINEBREAK
     BULLET_POINT s content -> BULLET_POINT s (map replaceAmbiguousBlock content)
     block -> block
 --------------------------------------------------------------------------------
@@ -306,8 +304,8 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
     convertToVerbose = \case
         BLOCK_QUOTE stext      -> BLOCK_QUOTE $ verboseScrapText stext
         BULLET_POINT num block -> BULLET_POINT num $ map convertToVerbose block
-        PARAGRAPH stext        -> PARAGRAPH $ verboseScrapText stext
-        other                  -> other
+        PARAGRAPH stext         -> PARAGRAPH $ verboseScrapText stext
+        other                   -> other
 
     verboseScrapText :: ScrapText -> ScrapText
     verboseScrapText (ScrapText inlines) =
@@ -320,15 +318,20 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
 
 -- | Convert given 'Scrapbox' into unverbose structure
 unverbose :: Scrapbox -> Scrapbox
-unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
+unverbose (Scrapbox blocks) = Scrapbox $ concatMap unVerboseBlock blocks
   where
-    unVerboseBlock :: Block -> Block
+    unVerboseBlock :: Block -> [Block]
     unVerboseBlock = \case
-        BLOCK_QUOTE stext      -> BLOCK_QUOTE $ unVerboseScrapText stext
-        BULLET_POINT num block -> BULLET_POINT num $ map unVerboseBlock block
-        HEADING level segments -> HEADING level $ concatSegment segments
-        PARAGRAPH stext        -> PARAGRAPH $ unVerboseScrapText stext
-        other                  -> other
+        BLOCK_QUOTE stext      -> [BLOCK_QUOTE $ unVerboseScrapText stext]
+        BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : rest) -> 
+            mconcat
+                [ unVerboseBlock (BULLET_POINT (Start $ num1 + num2) bs)
+                , unVerboseBlock (BULLET_POINT (Start num1) rest)
+                ]
+        BULLET_POINT num bs    -> [BULLET_POINT num $ concatMap unVerboseBlock bs]
+        HEADING level segments -> [HEADING level $ concatSegment segments]
+        PARAGRAPH stext        -> [PARAGRAPH $ unVerboseScrapText stext]
+        other                  -> [other]
 
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText inlines) =
