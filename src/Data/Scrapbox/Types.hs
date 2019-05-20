@@ -56,9 +56,8 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
-import           Test.QuickCheck (Arbitrary (..), choose, elements,
-                                  frequency, genericShrink, listOf, oneof,
-                                  resize, sized)
+import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
+                                  genericShrink, listOf, oneof, resize, sized)
 
 -- | Scrapbox page are consisted by list of 'Block's
 newtype Scrapbox = Scrapbox [Block]
@@ -326,7 +325,7 @@ unverbose = concatMap unVerboseBlock
     unVerboseBlock :: Block -> [Block]
     unVerboseBlock = \case
         BLOCK_QUOTE stext      -> [BLOCK_QUOTE $ unVerboseScrapText stext]
-        BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : rest) -> 
+        BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : rest) ->
             if null rest
                 then unVerboseBlock (BULLET_POINT (Start $ num1 + num2) (unverbose bs))
                 else mconcat

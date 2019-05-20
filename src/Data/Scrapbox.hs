@@ -64,7 +64,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       Level (..), ScrapText (..), Scrapbox,
                                       Segment (..), Start (..), Style (..),
                                       TableContent (..), TableName (..),
-                                      Url (..), scrapbox, getScrapbox)
+                                      Url (..), getScrapbox, scrapbox)
 import           Data.Scrapbox.Utils (isURL)
 import           Text.ParserCombinators.Parsec (ParseError)
 
@@ -96,7 +96,7 @@ applyOption :: [ScrapboxOption] -> Scrapbox -> Scrapbox
 applyOption options sb = scrapbox $ getScrapbox $ foldr apply sb (nub options)
   where
     apply :: ScrapboxOption -> Scrapbox -> Scrapbox
-    apply SectionHeading = scrapbox . applyLinebreak . getScrapbox
+    apply SectionHeading     = scrapbox . applyLinebreak . getScrapbox
     apply FilterRelativeLink = scrapbox . map applyFilterLink . getScrapbox
 
     -- Apply 'LINEBREAK' between 'HEADING' section

@@ -21,10 +21,9 @@ import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
                                                           runScrapTextParserM)
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
-                                      CodeSnippet (..), Level (..),
-                                      Scrapbox, Start (..),
-                                      TableContent (..), TableName (..),
-                                      Url (..), scrapbox)
+                                      CodeSnippet (..), Level (..), Scrapbox,
+                                      Start (..), TableContent (..),
+                                      TableName (..), Url (..), scrapbox)
 import           Data.Scrapbox.Utils (isURL)
 
 --------------------------------------------------------------------------------

@@ -24,9 +24,9 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
-                                Segment (..), Start (..),
-                                Style (..), TableContent (..), TableName (..),
-                                Url (..), commonmarkToNode, getScrapbox)
+                                Segment (..), Start (..), Style (..),
+                                TableContent (..), TableName (..), Url (..),
+                                commonmarkToNode, getScrapbox)
 import           Data.Scrapbox.Internal (genPrintableUrl, runParagraphParser,
                                          shortListOf)
 import           Utils (propNonNull, shouldParseSpec)

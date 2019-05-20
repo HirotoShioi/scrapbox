@@ -17,7 +17,8 @@ module Utils
 import           RIO
 
 import           Data.Char (isLetter)
-import           Data.Scrapbox (Block (..), Scrapbox, renderToScrapbox, getScrapbox)
+import           Data.Scrapbox (Block (..), Scrapbox, getScrapbox,
+                                renderToScrapbox)
 import           Data.Scrapbox.Internal (runScrapboxParser)
 import           Prelude (putStrLn)
 import qualified RIO.Text as T

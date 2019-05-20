@@ -19,8 +19,7 @@ import qualified RIO.Text as T
 
 import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
-                                             paragraph, span, text,
-                                             thumbnail)
+                                             paragraph, span, text, thumbnail)
 import           Data.Scrapbox.Types as S (Block (..), InlineBlock, Scrapbox,
                                            Segment, Style (..), concatInline,
                                            concatScrapText, scrapbox)
