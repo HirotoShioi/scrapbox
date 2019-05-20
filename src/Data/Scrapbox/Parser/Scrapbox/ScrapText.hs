@@ -236,7 +236,7 @@ noStyleParser = SPAN [] <$> extractNonStyledText
     syntaxSymbols :: String
     syntaxSymbols = "[`"
 
--- | Parser for 'CODENOTATION'
+-- | Parser for 'CODE_NOTATION'
 codeNotationParser :: Parser InlineBlock
 codeNotationParser = do
     content <- between (char '`') (char '`') $ many1 (noneOf "`")

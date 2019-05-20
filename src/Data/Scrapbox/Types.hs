@@ -412,7 +412,7 @@ isCodeNotation :: InlineBlock -> Bool
 isCodeNotation (CODE_NOTATION _) = True
 isCodeNotation _                 = False
 
--- | Checks whether given 'Inline' is 'MATH_EXPRESSION'
+-- | Checks whether given 'InlineBlock' is 'MATH_EXPRESSION'
 isMathExpr :: InlineBlock -> Bool
 isMathExpr (MATH_EXPRESSION _) = True
 isMathExpr _                   = False

@@ -151,7 +151,7 @@ renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
     ["```" <> name] <> snippet <> ["```"]
 
--- | Render 'TABLE'
+-- | Render @TABLE@
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent contents) =
     let renderedContent = fromMaybe (map T.unwords contents) renderTableM

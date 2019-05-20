@@ -1,10 +1,4 @@
-{-| This module exposes parser functions. You must provide 'ParseOption'
-which is either 'optDefault' or 'optSectionHeading'
-
-To parse given Commonmark into 'Scrapbox' AST, use 'commonmarkToNode'.
-
-To parse given CommnMark and convert into 'Scrapbox' format,
-use 'commonmarkToScrapbox'.
+{-| This module defines an parser for Commnonmark.
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -222,7 +216,7 @@ toLink nodes url title
 -- Paragraph conversion logic
 --------------------------------------------------------------------------------
 
--- | Parse nodes and produce either an 'TABLE' or 'PARAGRAPH'
+-- | Parse nodes and produce either an @TABLE@ or 'PARAGRAPH'
 --
 -- CMark parses Table as an list of Paragraphs
 -- So we need to parse it on our own.

@@ -54,7 +54,7 @@ strikeThroughParser styles symbol = do
         <|> try (emphParser withStrike newSymbol)
         <|> textParser withStrike newSymbol
 
--- | Parser which takes a symbol and 'StyleData'
+-- | Parser which takes a @Symbol@ and @[Style]@
 textParser :: [Style] -> Symbol -> Parser InlineBlock
 textParser styles symbol = do
     text <- manyTill anyChar (try $ string symbol)
