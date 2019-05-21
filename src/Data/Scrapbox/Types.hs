@@ -88,11 +88,10 @@ removeAmbiguity = \case
     (BULLET_POINT _s [] : xs) -> LINEBREAK : removeAmbiguity xs
     (BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : cs) : rest) ->
         let b = if null cs
-            then removeAmbiguity [BULLET_POINT (Start $ num1 + num2) bs]
-            else removeAmbiguity
-                [ BULLET_POINT (Start $ num1 + num2) bs
-                , BULLET_POINT (Start num1) cs
-                ]
+            then [ BULLET_POINT (Start $ num1 + num2) bs ]
+            else [ BULLET_POINT (Start $ num1 + num2) bs
+                 , BULLET_POINT (Start num1) cs
+                 ]
         in removeAmbiguity (b <> rest)
 
     -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
