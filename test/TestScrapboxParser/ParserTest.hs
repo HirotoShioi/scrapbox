@@ -20,10 +20,10 @@ import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Property, label, property, whenFail, within,
+import           Test.QuickCheck (Property, label, property, within,
                                   (===))
 import           Text.Parsec (ParseError)
-import           Utils (printDiffs, propNonNull, shouldParseSpec)
+import           Utils (propNonNull, shouldParseSpec)
 
 -- | Test specs for scrapbox parser
 parserSpec :: Spec
@@ -156,9 +156,7 @@ roundTripSpec = describe "Scrapbox" $
 
 scrapboxRoundTripTest :: Property
 scrapboxRoundTripTest = within 5000000 $ property $
-        \(scrapbox :: Scrapbox) ->
-              whenFail (printDiffs scrapbox)
-            $ label (printSize $ size scrapbox) $
+        \(scrapbox :: Scrapbox) -> label (printSize $ size scrapbox) $
             let rendered = renderToScrapbox mempty scrapbox
                 eParsed  = runScrapboxParser $ T.unpack rendered
 
