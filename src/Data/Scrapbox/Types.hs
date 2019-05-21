@@ -72,13 +72,29 @@ instance Arbitrary Scrapbox where
         (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
         where
-            adjustSize num | num < 50 = num
-                           | otherwise = 50
-    shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity) $ shrink blocks
+            adjustSize num | num < 30 = num
+                           | otherwise = 30
+    shrink (Scrapbox blocks) = map (unverbose . Scrapbox . removeAmbiguity) $ shrink blocks
 
+-- | Replace ambiguous @[Block]@ with something else. Used for testing.
 removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case
     [] -> []
+
+    (TABLE name (TableContent [[]]) : rest)
+        -> TABLE name (TableContent []) : removeAmbiguity rest
+
+    -- Need to take a look
+    (BULLET_POINT _s [] : xs) -> LINEBREAK : removeAmbiguity xs
+    (BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : cs) : rest) ->
+        let b = if null cs
+            then removeAmbiguity [BULLET_POINT (Start $ num1 + num2) bs]
+            else removeAmbiguity
+                [ BULLET_POINT (Start $ num1 + num2) bs
+                , BULLET_POINT (Start num1) cs
+                ]
+        in removeAmbiguity (b <> rest)
+
     -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
     (BULLET_POINT start blocks : xs) ->
           BULLET_POINT start (removeAmbiguity blocks)
@@ -174,20 +190,9 @@ instance Arbitrary Block where
     arbitrary = replaceAmbiguousBlock <$> frequency
             [ (2, return LINEBREAK)
             , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> shortListOf bulletPointFreq)
+            , (1, BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary))
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
             , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
-            , (3, PARAGRAPH <$> arbitrary)
-            , (1, TABLE <$> arbitrary <*> arbitrary)
-            , (2, THUMBNAIL <$> arbitrary)
-            ]
-        where
-          bulletPointFreq = frequency
-            [ (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*>
-                (concatSegment . addSpace <$> shortListOf arbitrary)
-              )
             , (3, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
@@ -200,6 +205,7 @@ replaceAmbiguousBlock = \case
     PARAGRAPH (ScrapText [SPAN [] []])                 -> LINEBREAK
     PARAGRAPH (ScrapText [SPAN [Sized level] content]) -> HEADING level content
     PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]) -> THUMBNAIL url
+    BULLET_POINT _s []     -> LINEBREAK
     BULLET_POINT s content -> BULLET_POINT s (map replaceAmbiguousBlock content)
     block -> block
 --------------------------------------------------------------------------------
@@ -458,7 +464,7 @@ formatInline [inline]                 = [inline]
 formatInline (SPAN style segments:xs) = SPAN style (addSpace segments) : formatInline xs
 formatInline (x:xs)                   = x : formatInline xs
 
--- Add space after hashtag
+-- | Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                               = []
 addSpace (HASHTAG txt : TEXT text : rest) =

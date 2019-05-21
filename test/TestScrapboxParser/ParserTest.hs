@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -176,8 +177,20 @@ blockRoundTripTest block =
     let rendered = T.unlines . renderBlock $ block
     in either
         (const $ property False)
-        (\(Scrapbox blocks) -> blocks === [block])
+        (\(Scrapbox blocks) -> blocks === toModel block)
         (runScrapboxParser $ T.unpack rendered)
+  where
+    toModel :: Block -> [Block]
+    toModel = \case
+        BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : cs) ->
+            let b = if null cs
+                then toModel $ BULLET_POINT (Start $ num1 + num2) (concatMap toModel bs)
+                else mconcat
+                    [ toModel (BULLET_POINT (Start $ num1 + num2) (concatMap toModel bs))
+                    , toModel (BULLET_POINT (Start num1) (concatMap toModel cs))
+                    ]
+            in b
+        others                -> [others]
 
 syntaxPageTest :: Spec
 syntaxPageTest =
