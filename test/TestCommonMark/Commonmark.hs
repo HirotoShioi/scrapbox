@@ -139,12 +139,7 @@ toScrapbox = \case
         if T.null text
             then mempty
             else [PARAGRAPH (ScrapText [SPAN [] [TEXT text]])]
-    HeaderText hlevel text ->
-        let blocks | hlevel <= 0 && T.null text = mempty
-                   | hlevel <= 0 = [PARAGRAPH (ScrapText [SPAN [] [TEXT text]])]
-                   | T.null text = [HEADING (toLevel hlevel) mempty]
-                   | otherwise = [HEADING (toLevel hlevel) [TEXT text]]
-        in blocks
+    HeaderText hlevel text -> modelHeader hlevel text
     TableSection header content ->
         if null header || null content
             then mempty
@@ -158,18 +153,7 @@ toScrapbox = \case
             then mempty
             else [BULLET_POINT (Start 1) (mkParagraphs content)]
     ImageSection _t url -> [THUMBNAIL (Url url)]
-    StyledText style text ->
-        -- Needs to take a look
-        let blocks | style == BoldStyle && T.null text =
-                       [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
-                   | style == ItalicStyle && T.null text =
-                       [ PARAGRAPH (ScrapText [SPAN [] [ TEXT "**" ]])]
-                   | style == StrikeThroughStyle && T.null text =
-                       [CODE_BLOCK ( CodeName "code" ) ( CodeSnippet [] )]
-                   | style == NoStyles && T.null text =
-                       mempty
-                   | otherwise = [PARAGRAPH (ScrapText [SPAN (toStyle style) [TEXT text]])]
-        in blocks
+    StyledText style text -> modelStyledText style text
     BlockQuoteText text ->
         if T.null text
             then [BLOCK_QUOTE (ScrapText [])]
@@ -185,14 +169,6 @@ toScrapbox = \case
             then [PARAGRAPH ( ScrapText [SPAN [] [ TEXT "``" ]])]
             else [PARAGRAPH (ScrapText [CODE_NOTATION notation])]
   where
-    toLevel :: Int -> Level
-    toLevel = \case
-        1 -> Level 4
-        2 -> Level 3
-        3 -> Level 2
-        4 -> Level 1
-        _ -> Level 1
-
     mkParagraphs :: [Text] -> [Block]
     mkParagraphs = map toParagraph
 
@@ -206,6 +182,33 @@ toScrapbox = \case
         ItalicStyle        -> [Italic]
         StrikeThroughStyle -> [StrikeThrough]
         NoStyles           -> []
+
+    modelHeader :: Int -> Text -> [Block]
+    modelHeader hlevel text
+        | hlevel <= 0 && T.null text = mempty
+        | hlevel <= 0 = [PARAGRAPH (ScrapText [SPAN [] [TEXT text]])]
+        | T.null text = [HEADING (toLevel hlevel) mempty]
+        | otherwise = [HEADING (toLevel hlevel) [TEXT text]]
+
+    toLevel :: Int -> Level
+    toLevel = \case
+        1 -> Level 4
+        2 -> Level 3
+        3 -> Level 2
+        4 -> Level 1
+        _ -> Level 1
+
+    modelStyledText :: TestStyle -> Text -> [Block]
+    modelStyledText style text        -- Needs to take a look
+        | style == BoldStyle && T.null text =
+            [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
+        | style == ItalicStyle && T.null text =
+            [ PARAGRAPH (ScrapText [SPAN [] [ TEXT "**" ]])]
+        | style == StrikeThroughStyle && T.null text =
+            [CODE_BLOCK ( CodeName "code" ) ( CodeSnippet [] )]
+        | style == NoStyles && T.null text =
+            mempty
+        | otherwise = [PARAGRAPH (ScrapText [SPAN (toStyle style) [TEXT text]])]
 
 commonmarkModelTest :: CommonMark -> Property
 commonmarkModelTest commonmark =

@@ -47,15 +47,16 @@ module Data.Scrapbox.Types
     , isBold
     , isItalic
     , isStrikeThrough
+    , removeAmbiguity
     ) where
 
 import           RIO hiding (span)
 
-import qualified RIO.Text as T
 import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
+import qualified RIO.Text as T
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
                                   genericShrink, listOf, oneof, resize, sized)
 
@@ -82,8 +83,8 @@ removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case
     [] -> []
 
-    (TABLE name (TableContent [[]]) : rest)
-        -> TABLE name (TableContent []) : removeAmbiguity rest
+    (TABLE name (TableContent [[]]) : rest) ->
+        TABLE name (TableContent []) : removeAmbiguity rest
 
     -- Need to take a look
     (BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : cs) : rest) ->
@@ -152,8 +153,8 @@ newtype TableContent = TableContent [[Text]]
 
 instance Arbitrary TableContent where
     arbitrary = TableContent <$> shortListOf (shortListOf genPrintableText)
-    shrink (TableContent content) = 
-        map TableContent 
+    shrink (TableContent content) =
+        map TableContent
             $ filter (not . any null)
             $ shrink content
 
@@ -196,7 +197,7 @@ instance Arbitrary Block where
             , (2, THUMBNAIL <$> arbitrary)
             ]
     shrink = \case
-        BULLET_POINT s b -> 
+        BULLET_POINT s b ->
             map (replaceAmbiguousBlock . BULLET_POINT s) $ genericShrink b
         others -> map replaceAmbiguousBlock . genericShrink $ others
 

@@ -20,8 +20,7 @@ import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Property, label, property, within,
-                                  (===))
+import           Test.QuickCheck (Property, label, property, within, (===))
 import           Text.Parsec (ParseError)
 import           Utils (propNonNull, shouldParseSpec)
 
