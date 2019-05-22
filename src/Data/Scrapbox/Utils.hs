@@ -57,7 +57,18 @@ syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>']
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
-    end        <- elements [".org", ".edu", ".com", ".co.jp", ".io", ".tv"]
+    end <- elements 
+        [ ".org"
+        , ".edu"
+        , ".com"
+        , ".co.jp"
+        , ".io"
+        , ".tv"
+        , ".jpg"
+        , ".jpeg"
+        , ".gif"
+        , ".png"
+        ]
     randomSite <- genUrlText
     return $ "http://www." <> randomSite <> end
 

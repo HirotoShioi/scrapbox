@@ -47,6 +47,7 @@ module Data.Scrapbox.Types
     , isBold
     , isItalic
     , isStrikeThrough
+    , removeAmbiguity
     ) where
 
 import           RIO hiding (span)
@@ -55,6 +56,7 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
+import qualified RIO.Text as T
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
                                   genericShrink, listOf, oneof, resize, sized)
 
@@ -72,27 +74,37 @@ instance Arbitrary Scrapbox where
         (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
         where
-            adjustSize num | num < 50 = num
-                           | otherwise = 50
-    shrink (Scrapbox blocks) = map (Scrapbox . removeAmbiguity) $ shrink blocks
+            adjustSize num | num < 30 = num
+                           | otherwise = 30
+    shrink (Scrapbox blocks) = map (unverbose . Scrapbox . removeAmbiguity) $ shrink blocks
 
+-- | Replace ambiguous @[Block]@ with something else. Used for testing.
 removeAmbiguity :: [Block] -> [Block]
 removeAmbiguity = \case
     [] -> []
+
+    (TABLE name (TableContent [[]]) : rest) ->
+        TABLE name (TableContent []) : removeAmbiguity rest
+
+    -- Need to take a look
+    (BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : cs) : rest) ->
+        let b = if null cs
+            then [ BULLET_POINT (Start $ num1 + num2) bs ]
+            else [ BULLET_POINT (Start $ num1 + num2) bs
+                 , BULLET_POINT (Start num1) cs
+                 ]
+        in removeAmbiguity (b <> rest)
+
     -- Add LINEBREAK after BULLETPOINT, CODE_BLOCK, and TABLE
-    (BULLET_POINT start blocks : xs) ->
+    [BULLET_POINT s b] -> [BULLET_POINT s (removeAmbiguity b)]
+    (BULLET_POINT start blocks : _x : xs) ->
           BULLET_POINT start (removeAmbiguity blocks)
         : LINEBREAK
         : removeAmbiguity xs
-    (c@(CODE_BLOCK _ _):xs) -> c : LINEBREAK : removeAmbiguity xs
-    (t@(TABLE _ _): xs)     -> t : LINEBREAK : removeAmbiguity xs
+    (c@(CODE_BLOCK _ _) : _x : xs)  -> c : LINEBREAK : removeAmbiguity xs
+    (t@(TABLE _ _): _x : xs)        -> t : LINEBREAK : removeAmbiguity xs
     -- Replace Link with THUMBNAIL
-    (PARAGRAPH (ScrapText []) : xs)           -> LINEBREAK : removeAmbiguity xs
-
-    (b@(BLOCK_QUOTE (ScrapText [SPAN _ inlines])) : xs) ->
-        if null inlines
-            then LINEBREAK : xs
-            else b : removeAmbiguity xs
+    (PARAGRAPH (ScrapText []) : xs) -> LINEBREAK : removeAmbiguity xs
     (x:xs) -> x : removeAmbiguity xs
 
 --------------------------------------------------------------------------------
@@ -119,7 +131,7 @@ newtype CodeSnippet = CodeSnippet [Text]
 
 instance Arbitrary CodeSnippet where
     arbitrary = CodeSnippet <$> shortListOf genPrintableText
-    shrink    = genericShrink
+    shrink = genericShrink
 
 -- | Heading level
 newtype Level = Level Int
@@ -141,7 +153,10 @@ newtype TableContent = TableContent [[Text]]
 
 instance Arbitrary TableContent where
     arbitrary = TableContent <$> shortListOf (shortListOf genPrintableText)
-    shrink = genericShrink
+    shrink (TableContent content) =
+        map TableContent
+            $ filter (not . any null)
+            $ shrink content
 
 -- | Url for Link/Thumbnail
 newtype Url = Url Text
@@ -174,34 +189,26 @@ instance Arbitrary Block where
     arbitrary = replaceAmbiguousBlock <$> frequency
             [ (2, return LINEBREAK)
             , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> shortListOf bulletPointFreq)
+            , (1, BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary))
             , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
             , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
             , (3, PARAGRAPH <$> arbitrary)
             , (1, TABLE <$> arbitrary <*> arbitrary)
             , (2, THUMBNAIL <$> arbitrary)
             ]
-        where
-          bulletPointFreq = frequency
-            [ (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*>
-                (concatSegment . addSpace <$> shortListOf arbitrary)
-              )
-            , (3, PARAGRAPH <$> arbitrary)
-            , (1, TABLE <$> arbitrary <*> arbitrary)
-            , (2, THUMBNAIL <$> arbitrary)
-            ]
-    shrink = map replaceAmbiguousBlock . genericShrink
+    shrink = \case
+        BULLET_POINT s b ->
+            map (replaceAmbiguousBlock . BULLET_POINT s) $ genericShrink b
+        others -> map replaceAmbiguousBlock . genericShrink $ others
 
 replaceAmbiguousBlock :: Block -> Block
 replaceAmbiguousBlock = \case
-    PARAGRAPH (ScrapText []) -> LINEBREAK
-    PARAGRAPH (ScrapText [SPAN [] []]) -> LINEBREAK
+    PARAGRAPH (ScrapText [])                           -> LINEBREAK
+    PARAGRAPH (ScrapText [SPAN [] []])                 -> LINEBREAK
     PARAGRAPH (ScrapText [SPAN [Sized level] content]) -> HEADING level content
     PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]]) -> THUMBNAIL url
-    BULLET_POINT _s [] -> LINEBREAK
-    BULLET_POINT s content -> BULLET_POINT s (map replaceAmbiguousBlock content)
+    BULLET_POINT _s []     -> LINEBREAK
+    BULLET_POINT s content -> BULLET_POINT s (removeAmbiguity content)
     block -> block
 --------------------------------------------------------------------------------
 -- ScrapText
@@ -213,7 +220,7 @@ newtype ScrapText = ScrapText [InlineBlock]
 
 instance Arbitrary ScrapText where
     arbitrary = ScrapText . formatInline . concatInline <$> shortListOf arbitrary
-    shrink (ScrapText inlines) = map (ScrapText . formatInline . concatInline) $ shrink inlines
+    shrink (ScrapText inlines) = map (ScrapText . formatInline . concatInline) $ genericShrink inlines
 
 -- | InlineBlock
 data InlineBlock
@@ -237,6 +244,7 @@ instance Arbitrary InlineBlock where
 
 instance Arbitrary Text where
     arbitrary = genPrintableText
+    shrink =  map T.pack . nub . shrink . T.unpack
 
 -- | Segment
 data Segment
@@ -254,7 +262,7 @@ instance Arbitrary Segment where
         let randomLink    = LINK
                 <$> genMaybe genPrintableText
                 <*> (Url <$> genPrintableUrl)
-        let randomText    = TEXT <$> genPrintableText
+        let randomText = TEXT <$> genPrintableText
         frequency [ (1, randomHashTag)
                   , (2, randomLink)
                   , (7, randomText)
@@ -412,7 +420,7 @@ isCodeNotation :: InlineBlock -> Bool
 isCodeNotation (CODE_NOTATION _) = True
 isCodeNotation _                 = False
 
--- | Checks whether given 'Inline' is 'MATH_EXPRESSION'
+-- | Checks whether given 'InlineBlock' is 'MATH_EXPRESSION'
 isMathExpr :: InlineBlock -> Bool
 isMathExpr (MATH_EXPRESSION _) = True
 isMathExpr _                   = False
@@ -459,7 +467,7 @@ formatInline [inline]                 = [inline]
 formatInline (SPAN style segments:xs) = SPAN style (addSpace segments) : formatInline xs
 formatInline (x:xs)                   = x : formatInline xs
 
--- Add space after hashtag
+-- | Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                               = []
 addSpace (HASHTAG txt : TEXT text : rest) =

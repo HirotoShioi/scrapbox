@@ -1,12 +1,11 @@
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {- Test suites for scrapbox parser
 -}
 
-module TestScrapboxParser.ParserTest
-    ( parserSpec
-    ) where
+module TestScrapboxParser.ParserTest where
 
 import           RIO
 
@@ -18,14 +17,12 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
 import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
                                          renderSegments, runScrapTextParser,
                                          runScrapboxParser, runSpanParser)
-import           RIO.List (headMaybe)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Property, label, property, whenFail, within,
-                                  (.&&.), (===))
+import           Test.QuickCheck (Property, label, property, within, (===))
 import           Text.Parsec (ParseError)
-import           Utils (printDiffs, propNonNull, shouldParseSpec)
+import           Utils (propNonNull, shouldParseSpec)
 
 -- | Test specs for scrapbox parser
 parserSpec :: Spec
@@ -33,6 +30,17 @@ parserSpec = do
     scrapboxParserSpec
     spanParserSpec
     scrapTextParserSpec
+
+-- | General unit testing to see the parser can parse given data as expected
+propParseAsExpected :: (Eq parsed, Show parsed)
+                    => String
+                    -> parsed
+                    -> (String -> Either ParseError parsed)
+                    -> Property
+propParseAsExpected example expected parser = property $ either
+    (const $ property False)
+    (=== expected)
+    (parser example)
 
 --------------------------------------------------------------------------------
 -- Inline syntax
@@ -57,10 +65,9 @@ spanParserSpec =
     segmentRoundTripTest :: Segment -> Property
     segmentRoundTripTest segment =
         let rendered = renderSegments [segment]
-            checkContent = maybe (property False) (=== segment) . headMaybe
         in either
             (const $ property  False)
-            checkContent
+            (=== [segment])
             (runSpanParser $ T.unpack rendered)
 
     exampleText :: String
@@ -92,7 +99,7 @@ scrapTextParserSpec =
         it "should parse given example text as expected" $
              propParseAsExpected exampleText expectedParsedText runScrapTextParser
 
-        describe "Inline blocks" $ modifyMaxSuccess (const 10000) $ 
+        describe "Inline blocks" $ modifyMaxSuccess (const 10000) $
             prop "round-trip test" scrapTextRoundTripTest
 
   where
@@ -100,9 +107,10 @@ scrapTextParserSpec =
     scrapTextRoundTripTest scrapText =
         let rendered = renderScrapText scrapText
         in either
-            (const $ property  False)
+            (const $ property False)
             (=== scrapText)
             (runScrapTextParser $ T.unpack rendered)
+
     exampleText :: String
     exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text `code_notation` [* test [link] test [partial]"
 
@@ -143,19 +151,16 @@ scrapboxParserSpec =
 roundTripSpec :: Spec
 roundTripSpec = describe "Scrapbox" $
     prop "should be able to perform roundtrip if there's no ambiguous syntax"
-        roundTest
+        scrapboxRoundTripTest
 
-roundTest :: Property
-roundTest = within 5000000 $ property $
-        \(scrapbox :: Scrapbox) ->
-              whenFail (printDiffs scrapbox)
-            $ label (printSize $ size scrapbox) $
+scrapboxRoundTripTest :: Property
+scrapboxRoundTripTest = within 5000000 $ property $
+        \(scrapbox :: Scrapbox) -> label (printSize $ size scrapbox) $
             let rendered = renderToScrapbox mempty scrapbox
                 eParsed  = runScrapboxParser $ T.unpack rendered
 
-            in isRight eParsed
-            .&&. either
-                (const $ property False)
+            in either
+                (const $ property False) -- Try to assert how it failed..?
                 (=== scrapbox)
                 eParsed
   where
@@ -168,15 +173,21 @@ blockRoundTripTest :: Block -> Property
 blockRoundTripTest block =
     let rendered = T.unlines . renderBlock $ block
     in either
-        (const $ property  False)
-        checkContent
+        (const $ property False)
+        (\(Scrapbox blocks) -> blocks === toModel block)
         (runScrapboxParser $ T.unpack rendered)
   where
-    checkContent =
-        maybe
-            (property False)
-            (=== block)
-            . (\(Scrapbox blocks) -> headMaybe blocks)
+    toModel :: Block -> [Block]
+    toModel = \case
+        BULLET_POINT (Start num1) (BULLET_POINT (Start num2) bs : cs) ->
+            let b = if null cs
+                then toModel $ BULLET_POINT (Start $ num1 + num2) (concatMap toModel bs)
+                else mconcat
+                    [ toModel (BULLET_POINT (Start $ num1 + num2) (concatMap toModel bs))
+                    , toModel (BULLET_POINT (Start num1) (concatMap toModel cs))
+                    ]
+            in b
+        others                -> [others]
 
 syntaxPageTest :: Spec
 syntaxPageTest =
@@ -576,13 +587,3 @@ syntaxPageTest =
         , LINEBREAK
         ]
 
--- | General unit testing to see the parser can parse given data as expected
-propParseAsExpected :: (Eq parsed, Show parsed)
-                    => String
-                    -> parsed
-                    -> (String -> Either ParseError parsed)
-                    -> Property
-propParseAsExpected example expected parser = property $ either
-    (const $ property False)
-    (=== expected)
-    (parser example)

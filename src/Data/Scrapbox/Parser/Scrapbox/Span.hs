@@ -106,7 +106,7 @@ spanParser = manyTill segmentParser eof
 runSpanParser :: String -> Either ParseError [Segment]
 runSpanParser = parse spanParser "Inline text parser"
 
--- | Monadic version of 'runInlineParser'
+-- | Monadic version of 'runSpanParser'
 runSpanParserM :: String -> Parser [Segment]
 runSpanParserM content =
     either

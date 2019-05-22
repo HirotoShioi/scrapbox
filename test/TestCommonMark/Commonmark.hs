@@ -1,6 +1,7 @@
 {-| Test suites for commonmark parser
 -}
 
+{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -11,12 +12,15 @@ module TestCommonMark.Commonmark
 
 import           RIO
 
-import           RIO.List (headMaybe, zipWith)
+import           Data.Char (isLetter)
+import           RIO.List (zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Arbitrary (..), Property, choose, elements,
-                                  listOf1, oneof, property, vectorOf, (===))
+import           Test.QuickCheck (Arbitrary (..), Gen, Property,
+                                  arbitraryPrintableChar, choose, elements,
+                                  genericShrink, listOf, listOf1, oneof,
+                                  suchThat, vectorOf, (===))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -25,21 +29,28 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Url (..), commonmarkToNode)
 import           Data.Scrapbox.Internal (genPrintableUrl, runParagraphParser,
                                          shortListOf)
-import           Utils (genNoSymbolText, propNonNull, shouldParseSpec)
+import           Utils (propNonNull, shouldParseSpec)
+
+-- | Generate random text
+genNoSymbolText :: Gen Text
+genNoSymbolText = fromString <$> listOf (arbitraryPrintableChar `suchThat` isLetter)
+
+genNoSymbolText1 :: Gen Text
+genNoSymbolText1 = fromString <$> listOf1 (arbitraryPrintableChar `suchThat` isLetter)
 
 commonmarkSpec :: Spec
-commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 200) $ do
-    describe "Block" $ modifyMaxSuccess (const 5000) $
-        prop "should preserve its content" commomMarkRoundTripTest
-
-    describe "runParagraphParser" $ modifyMaxSuccess (const 5000) $
-        shouldParseSpec runParagraphParser
-
+commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ do
+    prop "Model test" commonmarkModelTest
+    shouldParseSpec runParagraphParser
     prop "should return non-empty list of blocks if the given string is non-empty" $
         propNonNull runParagraphParser id
 
-data CommonMark =
-      ParagraphSection !Text
+--------------------------------------------------------------------------------
+-- Commonmark model test
+--------------------------------------------------------------------------------
+
+data CommonMark
+    = ParagraphSection !Text
     | HeaderText !Int !Text
     | TableSection ![Text] ![[Text]]
     | ImageSection !Text !Text
@@ -50,35 +61,38 @@ data CommonMark =
     | CodeBlockSection ![Text]
     | Link !Text !Text
     | CodeNotation !Text
-    deriving Show
+    deriving (Eq, Show, Generic)
 
-data TestStyle =
-      BoldStyle
+data TestStyle
+    = BoldStyle
     | ItalicStyle
     | NoStyles
     | StrikeThroughStyle
-    deriving (Show, Enum)
+    deriving (Eq, Enum, Show)
 
-renderTestData :: CommonMark -> Text
-renderTestData = \case
-    ParagraphSection text -> text
-    HeaderText level text  -> T.replicate level "#" <> " " <> text
+instance Arbitrary TestStyle where
+    arbitrary = elements [BoldStyle .. StrikeThroughStyle]
+
+renderCommonmark :: CommonMark -> Text
+renderCommonmark = \case
+    ParagraphSection text       -> text
+    HeaderText level text       -> T.replicate level "#" <> " " <> text
     TableSection header content -> renderTable header content
     ImageSection title someLink -> "![" <> title <> "](" <> someLink <> ")"
-    OrderedListBlock list -> T.unlines $ zipWith
-            (\num someText -> tshow num <> ". " <> someText)
-            ([1..] :: [Int])
-            list
-    UnorderedListBlock list -> T.unlines $ map ("- " <>) list
-    BlockQuoteText text    -> ">" <> text
-    StyledText style text  -> case style of
+    OrderedListBlock list       -> T.unlines $ zipWith
+        (\num someText -> tshow num <> ". " <> someText)
+        ([1..] :: [Int])
+        list
+    UnorderedListBlock list     -> T.unlines $ map ("- " <>) list
+    BlockQuoteText text         -> ">" <> text
+    StyledText style text       -> case style of
         BoldStyle          -> "**" <> text <> "**"
         ItalicStyle        -> "*" <> text <> "*"
         StrikeThroughStyle -> "~~" <> text <> "~~"
         NoStyles           -> text
-    CodeBlockSection codes -> T.unlines $ ["```"] <> codes <> ["```"]
-    Link name url          -> "[" <> name <> "](" <> url <> ")"
-    CodeNotation notation  -> "`" <> notation <> "`"
+    CodeBlockSection codes      -> T.unlines $ ["```"] <> codes <> ["```"]
+    Link name url               -> "[" <> name <> "](" <> url <> ")"
+    CodeNotation notation       -> "`" <> notation <> "`"
 
 renderTable :: [Text] -> [[Text]] -> Text
 renderTable header contents = do
@@ -100,14 +114,14 @@ instance Arbitrary CommonMark where
     arbitrary =
         oneof
           [ ParagraphSection <$> genNoSymbolText
-          , HeaderText <$> choose (1,6) <*> genNoSymbolText
+          , HeaderText <$> choose (-6, 6) <*> genNoSymbolText
           , BlockQuoteText <$> genNoSymbolText
           , tableGenerator
           , ImageSection <$> genNoSymbolText <*> genPrintableUrl
-          , OrderedListBlock <$> listOf1 genNoSymbolText
-          , UnorderedListBlock <$> listOf1 genNoSymbolText
+          , OrderedListBlock <$> listOf genNoSymbolText1
+          , UnorderedListBlock <$> listOf genNoSymbolText1
           , StyledText <$> elements [BoldStyle .. StrikeThroughStyle] <*> genNoSymbolText
-          , CodeBlockSection <$> listOf1 genNoSymbolText
+          , CodeBlockSection <$> listOf genNoSymbolText
           , Link <$> genNoSymbolText <*> genPrintableUrl
           , CodeNotation <$> genNoSymbolText
           ]
@@ -117,28 +131,44 @@ instance Arbitrary CommonMark where
             header   <- vectorOf rowNum genNoSymbolText
             contents <- shortListOf $ vectorOf rowNum genNoSymbolText
             return $ TableSection header contents
+    shrink = genericShrink
 
-toModel :: CommonMark -> Block
-toModel = \case
-    ParagraphSection text       -> PARAGRAPH (ScrapText [SPAN [] [TEXT text]])
-    HeaderText hlevel text      -> HEADING (toLevel hlevel) [TEXT text]
-    TableSection header content -> TABLE (TableName "table") (TableContent $ [header] <> content)
-    OrderedListBlock content    -> BULLET_POINT (Start 1) (mkParagraphs content)
-    UnorderedListBlock content  -> BULLET_POINT (Start 1) (mkParagraphs content)
-    ImageSection _t url         -> THUMBNAIL (Url url)
-    StyledText style text       -> PARAGRAPH (ScrapText [SPAN (toStyle style) [TEXT text]])
-    BlockQuoteText text         -> BLOCK_QUOTE (ScrapText [SPAN [] [TEXT text]])
-    CodeBlockSection codeBlocks -> CODE_BLOCK (CodeName "code") (CodeSnippet codeBlocks)
-    Link name url               -> PARAGRAPH (ScrapText [SPAN [] [LINK (Just name) (Url url)]])
-    CodeNotation notation       -> PARAGRAPH (ScrapText [CODE_NOTATION notation])
+toScrapbox :: CommonMark -> [Block]
+toScrapbox = \case
+    ParagraphSection text ->
+        if T.null text
+            then mempty
+            else [PARAGRAPH (ScrapText [SPAN [] [TEXT text]])]
+    HeaderText hlevel text -> modelHeader hlevel text
+    TableSection header content ->
+        if null header || null content
+            then mempty
+            else [TABLE (TableName "table") (TableContent $ [header] <> content)]
+    OrderedListBlock content ->
+        if null content
+            then mempty
+            else [BULLET_POINT (Start 1) (mkParagraphs content)]
+    UnorderedListBlock content ->
+        if null content
+            then mempty
+            else [BULLET_POINT (Start 1) (mkParagraphs content)]
+    ImageSection _t url -> [THUMBNAIL (Url url)]
+    StyledText style text -> modelStyledText style text
+    BlockQuoteText text ->
+        if T.null text
+            then [BLOCK_QUOTE (ScrapText [])]
+            else [BLOCK_QUOTE (ScrapText [SPAN [] [TEXT text]])]
+    CodeBlockSection codeBlocks ->
+        [CODE_BLOCK (CodeName "code") (CodeSnippet codeBlocks)]
+    Link name url ->
+        if T.null name
+            then [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing (Url url)]])]
+            else [PARAGRAPH (ScrapText [SPAN [] [LINK (Just name) (Url url)]])]
+    CodeNotation notation ->
+        if T.null notation
+            then [PARAGRAPH ( ScrapText [SPAN [] [ TEXT "``" ]])]
+            else [PARAGRAPH (ScrapText [CODE_NOTATION notation])]
   where
-    toLevel :: Int -> Level
-    toLevel 1 = Level 4
-    toLevel 2 = Level 3
-    toLevel 3 = Level 2
-    toLevel 4 = Level 1
-    toLevel _ = Level 1
-
     mkParagraphs :: [Text] -> [Block]
     mkParagraphs = map toParagraph
 
@@ -153,7 +183,34 @@ toModel = \case
         StrikeThroughStyle -> [StrikeThrough]
         NoStyles           -> []
 
-commomMarkRoundTripTest :: CommonMark -> Property
-commomMarkRoundTripTest commonMark =
-    let (Scrapbox content) = commonmarkToNode [] . renderTestData $ commonMark
-    in maybe (property False) (=== toModel commonMark) (headMaybe content)
+    modelHeader :: Int -> Text -> [Block]
+    modelHeader hlevel text
+        | hlevel <= 0 && T.null text = mempty
+        | hlevel <= 0 = [PARAGRAPH (ScrapText [SPAN [] [TEXT text]])]
+        | T.null text = [HEADING (toLevel hlevel) mempty]
+        | otherwise = [HEADING (toLevel hlevel) [TEXT text]]
+
+    toLevel :: Int -> Level
+    toLevel = \case
+        1 -> Level 4
+        2 -> Level 3
+        3 -> Level 2
+        4 -> Level 1
+        _ -> Level 1
+
+    modelStyledText :: TestStyle -> Text -> [Block]
+    modelStyledText style text        -- Needs to take a look
+        | style == BoldStyle && T.null text =
+            [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
+        | style == ItalicStyle && T.null text =
+            [ PARAGRAPH (ScrapText [SPAN [] [ TEXT "**" ]])]
+        | style == StrikeThroughStyle && T.null text =
+            [CODE_BLOCK ( CodeName "code" ) ( CodeSnippet [] )]
+        | style == NoStyles && T.null text =
+            mempty
+        | otherwise = [PARAGRAPH (ScrapText [SPAN (toStyle style) [TEXT text]])]
+
+commonmarkModelTest :: CommonMark -> Property
+commonmarkModelTest commonmark =
+    let (Scrapbox content) = commonmarkToNode [] . renderCommonmark $ commonmark
+    in content === toScrapbox commonmark
