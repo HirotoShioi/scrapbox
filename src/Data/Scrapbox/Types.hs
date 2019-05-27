@@ -47,6 +47,7 @@ module Data.Scrapbox.Types
     , isBold
     , isItalic
     , isStrikeThrough
+    , isSized
     , removeAmbiguity
     ) where
 
@@ -454,6 +455,10 @@ isItalic _      = False
 isStrikeThrough :: Style -> Bool
 isStrikeThrough StrikeThrough = True
 isStrikeThrough _             = False
+
+isSized :: Style -> Bool
+isSized (Sized _) = True
+isSized _         = False
 
 --------------------------------------------------------------------------------
 -- These functions are used to define typeclass instance of Arbitrary

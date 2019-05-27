@@ -125,7 +125,7 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
         [paragraph [span styles [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
     C.IMAGE url _              -> [thumbnail url]
-    C.HTML_INLINE htmlContent  -> [codeBlock "html" (T.lines htmlContent)]
+    C.HTML_INLINE htmlContent  -> [paragraph $ toInlineBlocks htmlContent]
     C.BLOCK_QUOTE              ->
         [blockQuote $ concatMap (toInlineBlock styles) contents]
     -- I have on idea what these are,
@@ -137,17 +137,18 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
 -- | Convert 'Node' into list of 'InlineBlock'
 -- Need state monad to inherit style from parent node
 toInlineBlock :: [Style] -> Node -> [InlineBlock]
-toInlineBlock styles nodes = concatInline $ convertToInlineBlock nodes
+toInlineBlock styles node = concatInline $ convertToInlineBlock node
   where
     convertToInlineBlock :: Node -> [InlineBlock]
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
-        EMPH               -> concatMap (toInlineBlock (Italic : styles)) contents
-        STRONG             -> concatMap (toInlineBlock (Bold : styles)) contents
+        C.EMPH             -> concatMap (toInlineBlock (Italic : styles)) contents
+        C.STRONG           -> concatMap (toInlineBlock (Bold : styles)) contents
         C.TEXT textContent -> withStyle [text textContent]
-        CODE codeContent   -> [codeNotation codeContent]
+        C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
-        IMAGE url title    -> [span [] [toLink contents url title]]
-        _                  -> concatMap (toInlineBlock styles)  contents
+        C.IMAGE url title  -> withStyle [toLink contents url title]
+        C.HTML_INLINE html -> withStyle [text html]
+        _                    -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
 

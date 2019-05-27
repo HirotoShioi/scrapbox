@@ -66,14 +66,13 @@ renderUrl name (Url url)
         , ".jpeg"
         , ".png"
         ]       = "![" <> name <> "](" <> url <> ")"
-  | T.null name = url
   | otherwise   = "[" <> name <> "]" <> "(" <> url <> ")"
 
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
     -- Add spaces between inlineblocks to ensure each of them are rendered correctly
-    T.unwords $ map renderInlineBlock inlineBlocks
+    foldr ((<>) . renderInlineBlock) mempty inlineBlocks
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]

@@ -37,6 +37,7 @@ module Data.Scrapbox.Internal
     , isBold
     , isItalic
     , isStrikeThrough
+    , isSized
     -- * For testing
     , genPrintableText
     , genPrintableUrl
@@ -56,7 +57,7 @@ import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       isBulletPoint, isCodeBlock,
                                       isCodeNotation, isHashTag, isHeader,
                                       isItalic, isLink, isMathExpr, isParagraph,
-                                      isStrikeThrough, isTable, isText,
+                                      isSized, isStrikeThrough, isTable, isText,
                                       isThumbnail, unverbose, verbose)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
                                       genPrintableUrl, shortListOf)

@@ -6,14 +6,13 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Commonmark
-    ( commonmarkSpec
-    ) where
+module TestCommonMark.Commonmark where
 
 import           RIO
 
 import           Data.Char (isLetter)
-import           RIO.List (zipWith)
+import           RIO.List (initMaybe, lastMaybe, zipWith)
+import qualified CMark as C
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -26,9 +25,10 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
                                 Scrapbox (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
-                                Url (..), commonmarkToNode)
-import           Data.Scrapbox.Internal (genPrintableUrl, runParagraphParser,
-                                         shortListOf)
+                                Url (..), commonmarkToNode, renderToCommonmark)
+import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
+                                         isSized, runParagraphParser,
+                                         shortListOf, unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
 -- | Generate random text
@@ -214,3 +214,179 @@ commonmarkModelTest :: CommonMark -> Property
 commonmarkModelTest commonmark =
     let (Scrapbox content) = commonmarkToNode [] . renderCommonmark $ commonmark
     in content === toScrapbox commonmark
+
+commonmarkRoundTripTest :: Block -> Property
+commonmarkRoundTripTest block =
+    let rendered = renderToCommonmark [] (Scrapbox [block])
+        parsed   = commonmarkToNode [] rendered
+    in parsed === unverbose (Scrapbox (toModel block))
+
+toModel :: Block -> [Block]
+toModel = \case
+    BLOCK_QUOTE (ScrapText [SPAN [UserStyle "!?%"] []]) ->
+        [BLOCK_QUOTE (ScrapText [])]
+    b@(BLOCK_QUOTE (ScrapText [SPAN [] [TEXT text]])) ->
+        if T.null (T.stripStart text)
+            then [BLOCK_QUOTE (ScrapText [])]
+            else [b]
+    BLOCK_QUOTE (ScrapText inlines) ->
+        if null inlines
+            then [BLOCK_QUOTE (ScrapText [])]
+            else [BLOCK_QUOTE $ ScrapText $ toInlineModel inlines]
+    BULLET_POINT s blocks ->
+        [BULLET_POINT s (concatMap toModel blocks)]
+    HEADING level segments ->
+        [HEADING (toLevel level) (toSegmentModel segments)]
+    LINEBREAK -> []
+
+    -- Paragraph
+    p@(PARAGRAPH (ScrapText [SPAN [] [TEXT text]])) -> 
+        if T.null (T.stripStart text)
+            then []
+            else [p]
+    PARAGRAPH (ScrapText [SPAN [StrikeThrough] []]) ->
+        [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
+    p@(PARAGRAPH (ScrapText [SPAN [StrikeThrough] [TEXT text]])) ->
+        if T.null text
+            then [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
+            else [p]
+    PARAGRAPH (ScrapText [SPAN [Bold] []]) -> emtpyText
+    p@(PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])) ->
+        if T.null (T.stripStart text)
+            then emtpyText
+            else [p]
+    PARAGRAPH (ScrapText [SPAN [UserStyle _u] [TEXT ""]]) -> emtpyText
+    PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] [TEXT text]]) ->
+        if T.null (T.stripStart text)
+            then emtpyText
+            else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
+    PARAGRAPH (ScrapText inlines) ->
+        [PARAGRAPH (ScrapText (toInlineModel inlines))]
+
+    -- Table
+    TABLE (TableName name) (TableContent [[""]]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT (name <> "|  ||--|")]])]
+    TABLE n@(TableName name) c@(TableContent content) ->
+        if null content
+            then [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
+            else [TABLE n c]
+    THUMBNAIL (Url url) ->
+        if isImageUrl url
+            then [THUMBNAIL (Url url)]
+            else [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing (Url url)]])]
+    others    -> [others]
+  where
+    emtpyText = [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
+
+
+    toInlineModel = foldr (\inline acc -> case inline of
+        CODE_NOTATION expr ->
+            if T.null expr
+                then [SPAN [] [TEXT "``"]] <> acc
+                else [CODE_NOTATION expr] <> acc
+        MATH_EXPRESSION expr ->
+            if T.null expr
+                then [SPAN [] [TEXT "``"]] <> acc
+                else [CODE_NOTATION expr] <> acc
+        SPAN [UserStyle _s] [] -> [SPAN [] [TEXT "\n"]] <> acc
+        SPAN [UserStyle _s] content -> [SPAN [Bold] content] <> acc
+        SPAN [style] [] -> [SPAN [] [TEXT (renderStyle style)]] <> acc
+        SPAN [] [] -> acc
+        SPAN [Sized level, someStyle] [] ->
+            let renderedText = mconcat
+                    [ "<span style=\"font-size:"
+                    , tshow (toSize level)
+                    , "em\">"
+                    , renderStyle someStyle
+                    , "</span>"
+                    ]
+            in [SPAN [] [TEXT renderedText]] <> acc
+        SPAN styles [] -> renderEmptyStyledSpan styles acc
+        SPAN styles segments ->
+            if concatSegment segments == [TEXT ""]
+                then renderEmptyStyledSpan styles acc
+                else renderStyledSpan styles segments acc
+        ) mempty
+
+    renderStyledSpan styles segments acc =
+        let sizeSum = 
+                foldr (\style acc' -> case style of
+                    Sized (Level num) -> num + acc'
+                    _others           -> acc'
+                    ) 0 
+                    $ filter isSized styles   
+            size = toSize (Level sizeSum)
+            restStyle = filter (not . isSized) styles
+        in if sizeSum > 0
+            then 
+                [ SPAN [] [TEXT ("<span style=\"font-size:" <> tshow size <> "em\">")]
+                , SPAN restStyle segments
+                , SPAN [] [TEXT "</span>"]
+                ] <> acc
+            else [SPAN styles segments] <> acc
+    renderEmptyStyledSpan styles acc =
+        let sizeSum = 
+                foldr (\style acc' -> case style of
+                    Sized (Level num) -> num + acc'
+                    _others           -> acc'
+                    ) 0 
+                    $ filter isSized styles
+
+            restStyle = filter (not . isSized) styles
+        in maybe
+            acc
+            (\(lastEle, rest) -> if sizeSum > 0
+                then 
+                    let renderedText = mconcat
+                            [ "<span style=\"font-size:"
+                            , tshow (toSize (Level sizeSum))
+                            , "em\">"
+                            , renderStyle lastEle
+                            , "</span>"
+                            ]
+                    in [SPAN rest [TEXT renderedText]] <> acc
+                else [SPAN rest [TEXT (renderStyle lastEle)]] <> acc)
+            (do
+                last <- lastMaybe restStyle
+                rest <- initMaybe restStyle
+                return (last, rest)
+            )
+    renderStyle = \case
+        Bold -> "****"
+        Italic -> "__"
+        StrikeThrough -> "~~~~"
+        Sized lvl -> "<span style=\"font-size:" <> tshow (toSize lvl) <> "em\"></span>"
+        UserStyle _s -> "****"
+
+    toLevel (Level lvl)= case lvl of
+            4 -> Level 4
+            3 -> Level 3
+            2 -> Level 2
+            1 -> Level 2
+            _ -> Level 1
+
+    toSegmentModel = foldr (\segment acc -> case segment of
+        TEXT ""      -> acc
+        TEXT " "     -> acc
+        TEXT text    -> [TEXT (T.stripStart text)] <> acc
+        HASHTAG text -> [TEXT ("#" <> text <> "")] <> acc
+        others       -> [others] <> acc ) mempty
+
+    isImageUrl url = any (`T.isSuffixOf` url)
+        [ ".bmp"
+        , ".gif"
+        , ".jpg"
+        , ".jpeg"
+        , ".png"
+        ]
+
+    toSize (Level lvl) = fromIntegral lvl * 0.5 :: Double
+
+-- PARAGRAPH (ScrapText [SPAN [Italic,StrikeThrough] [TEXT "a"]])
+-- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
+checkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox)
+checkRoundTrip block = 
+    let rendered = renderToCommonmark [] (Scrapbox [block])
+        parsed   = commonmarkToNode [] rendered
+        parsed'  = C.commonmarkToNode [] rendered
+    in (block, rendered, parsed', parsed)
