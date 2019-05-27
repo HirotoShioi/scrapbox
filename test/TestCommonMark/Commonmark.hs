@@ -19,7 +19,7 @@ import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   arbitraryPrintableChar, choose, elements,
                                   genericShrink, listOf, listOf1, oneof,
-                                  suchThat, vectorOf, (===))
+                                  suchThat, vectorOf, (===), (==>))
 
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -27,8 +27,10 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
-                                         isSized, isText, runParagraphParser,
-                                         shortListOf, unverbose)
+                                         isBulletPoint, isSized, isTable,
+                                         isText, renderInlineBlock,
+                                         runParagraphParser, shortListOf,
+                                         unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
 -- | Generate random text
@@ -216,13 +218,15 @@ commonmarkModelTest commonmark =
     in content === toScrapbox commonmark
 
 commonmarkRoundTripTest :: Block -> Property
-commonmarkRoundTripTest block =
+commonmarkRoundTripTest block = ((not . isTable) block && (not . isBulletPoint) block) ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
     in parsed === unverbose (Scrapbox (toModel block))
 
 toModel :: Block -> [Block]
 toModel = \case
+    BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> [BLOCK_QUOTE (ScrapText [])]
+    BLOCK_QUOTE (ScrapText [SPAN [UserStyle _u] []]) -> [BLOCK_QUOTE (ScrapText [])]
     BLOCK_QUOTE (ScrapText inlines) ->
         if null inlines
             then [BLOCK_QUOTE (ScrapText [])]
@@ -240,16 +244,48 @@ toModel = \case
         if T.null text
             then [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
             else [p]
-    PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] [TEXT text]]) ->
+    PARAGRAPH (ScrapText (SPAN [StrikeThrough] []:rest)) ->
+        [CODE_BLOCK (CodeName (foldr ((<>) . renderInlineBlock) mempty rest)) (CodeSnippet [])]
+    PARAGRAPH (ScrapText [SPAN [Bold] []]) -> emptyText
+    PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
             else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
-    PARAGRAPH (ScrapText [SPAN [Bold] []]) -> emptyText
-    p@(PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])) ->
+    PARAGRAPH (ScrapText [SPAN [UserStyle _s] []]) -> emptyText
+    PARAGRAPH (ScrapText [SPAN [UserStyle _s] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
-            else [p]
-    PARAGRAPH (ScrapText [SPAN [UserStyle _u] [TEXT ""]]) -> emptyText
+            else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
+    PARAGRAPH (ScrapText (SPAN [UserStyle _s] []:rest)) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("****" <> foldr ((<>) . renderInlineBlock) mempty rest)]])]
+
+    PARAGRAPH (ScrapText [MATH_EXPRESSION "", CODE_NOTATION ""]) ->
+        [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
+    PARAGRAPH (ScrapText [CODE_NOTATION "", MATH_EXPRESSION ""]) ->
+        [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
+    PARAGRAPH (ScrapText [CODE_NOTATION "", CODE_NOTATION ""]) ->
+        [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION "", MATH_EXPRESSION ""]) ->
+        [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
+
+    PARAGRAPH (ScrapText [CODE_NOTATION "", CODE_NOTATION text]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("```"<> text <>"`")]])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION "", MATH_EXPRESSION text]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("```"<> text <>"`")]])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION "", CODE_NOTATION text]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("```"<> text <>"`")]])]
+    PARAGRAPH (ScrapText [CODE_NOTATION "", MATH_EXPRESSION text]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("```"<> text <>"`")]])]
+
+    PARAGRAPH (ScrapText [CODE_NOTATION text, CODE_NOTATION ""]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`"<> text <>"```")]])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION text, MATH_EXPRESSION ""]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`"<> text <>"```")]])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION text, CODE_NOTATION ""]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`"<> text <>"```")]])]
+    PARAGRAPH (ScrapText [CODE_NOTATION text, MATH_EXPRESSION ""]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`"<> text <>"```")]])]
+
     PARAGRAPH (ScrapText inlines) ->
         [PARAGRAPH (ScrapText (toInlineModel inlines))]
 
@@ -280,14 +316,21 @@ toModel = \case
                 else [CODE_NOTATION expr] <> acc
 
         -- SPAN
+        SPAN [Bold] segments ->
+            if isEmptySegments segments
+                then acc
+                else someFunc segments [Bold] <> acc           
         SPAN [] [] -> acc
         SPAN [UserStyle _s] [] -> [SPAN [] [TEXT "\n"]] <> acc
         SPAN [UserStyle _s] segments ->
             if isEmptySegments segments
                 then acc
                 else someFunc segments [Bold] <> acc
-        SPAN [Bold] [] -> acc
         SPAN [style] [] -> [SPAN [] [TEXT (renderStyle style)]] <> acc
+        s@(SPAN [style] [TEXT text]) -> 
+            if T.null (T.stripStart text)
+                then [SPAN [] [TEXT (renderStyle style)]] <> acc
+                else [s] <> acc
         SPAN styles [] -> renderEmptyStyledSpan styles <> acc
         SPAN styles segments -> styledTextModel styles segments <> acc
         ) mempty
@@ -295,8 +338,8 @@ toModel = \case
     toSegmentModel = foldr (\segment acc -> case segment of
         TEXT ""      -> acc
         TEXT " "     -> acc
-        TEXT text    -> [TEXT (T.stripStart text)] <> acc
-        HASHTAG text -> [TEXT ("#" <> text <> "")] <> acc
+        TEXT text    -> [TEXT text] <> acc
+        HASHTAG text -> [TEXT ("#" <> text)] <> acc
         others       -> [others] <> acc ) mempty
 
 isImageUrl :: Text -> Bool
@@ -350,8 +393,8 @@ someFunc segments styles = foldr (\segment acc -> case segment of
 styledTextModel :: [Style] -> [Segment] -> [InlineBlock]
 styledTextModel styles segments
   | concatSegment segments == [TEXT ""] = renderEmptyStyledSpan styles
-  | isEmptySegments segments = []
-  | otherwise                = someFunc segments styles
+  | isEmptySegments segments            = []
+  | otherwise                           = someFunc segments styles
 
 renderStyledSpan :: [Style] -> [Segment] -> [InlineBlock]
 renderStyledSpan styles segments =
@@ -421,15 +464,16 @@ toSize :: Level -> Double
 toSize (Level lvl) = fromIntegral lvl * 0.5 :: Double
 
 -- PARAGRAPH (ScrapText [SPAN [Italic,StrikeThrough] [TEXT "a"]])
--- PARAGRAPH (ScrapText [SPAN [Italic,StrikeThrough] [LINK Nothing (Url "http://www.uVn2Zphhsh.co.jp")]])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- HEADING (Level 5) [TEXT "a",HASHTAG ""]
+-- HEADING (Level 2) [HASHTAG "",TEXT "a"]
 -- TABLE (TableName "(") (TableContent [["a"]])
--- BLOCK_QUOTE (ScrapText [SPAN [Bold] [TEXT " a"]])
+-- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3)] [TEXT ""]])
+-- BLOCK_QUOTE (ScrapText [SPAN [StrikeThrough] [TEXT "a"]])
 checkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
         parsed'  = C.commonmarkToNode [] rendered
         modeled  = toModel block
-    in (block, rendered, parsed', parsed, Scrapbox modeled, parsed == Scrapbox modeled)
+    in (block, rendered, parsed', parsed, unverbose . Scrapbox $ modeled, parsed == unverbose (Scrapbox modeled))

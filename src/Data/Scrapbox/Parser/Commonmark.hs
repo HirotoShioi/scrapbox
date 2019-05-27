@@ -21,7 +21,7 @@ import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
                                              paragraph, scrapbox, span, text,
                                              thumbnail)
-import           Data.Scrapbox.Types as S (Block (..), InlineBlock, Scrapbox,
+import           Data.Scrapbox.Types as S (Block (..), InlineBlock(..), Scrapbox,
                                            Segment, Style (..), concatInline,
                                            concatScrapText)
 
@@ -143,7 +143,7 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
         C.EMPH             -> concatMap (toInlineBlock (Italic : styles)) contents
         C.STRONG           -> concatMap (toInlineBlock (Bold : styles)) contents
-        C.TEXT textContent -> withStyle [text textContent]
+        C.TEXT textContent -> toInlineText textContent
         C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
         C.IMAGE url title  -> withStyle [toLink contents url title]
@@ -151,6 +151,13 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
         _                    -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
+
+    toInlineText :: Text -> [InlineBlock]
+    toInlineText txt =
+        let inlines = toInlineBlocks txt
+        in map (\case
+                 SPAN s segments -> SPAN (styles <> s) segments
+                 others          -> others) inlines
 
 -- | Convert to 'CODE_BLOCK'
 toCodeBlock :: Text -> [Text] -> Block
@@ -173,7 +180,7 @@ toHeading headingNum nodes =
     -- | Convert 'Node' into list of 'Segment'
     toSegments :: Node -> [Segment]
     toSegments (Node _ nodeType contents) = case nodeType of
-        C.TEXT textContent -> [text textContent]
+        C.TEXT textContent -> [text textContent] -- Need to perform text extraction
         C.CODE codeContent -> [link Nothing codeContent]
         C.LINK url title   -> [toLink contents url title]
         IMAGE url title    -> [toLink contents url title]

@@ -7,6 +7,7 @@ AST into commonmark
 
 module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmarkNoOption
+    , renderInlineBlock
     ) where
 import           RIO
 

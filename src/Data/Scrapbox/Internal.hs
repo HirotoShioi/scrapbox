@@ -7,6 +7,8 @@ module Data.Scrapbox.Internal
     , renderScrapText
     , renderInline
     , renderWithStyle
+    -- * Commonmark
+    , renderInlineBlock
     -- * Parsers
     -- These parsers can be used to parse given 'String' into some data type
     -- ** Scrapbox
@@ -49,6 +51,7 @@ import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (runParagraphPa
 import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParser)
+import Data.Scrapbox.Render.Commonmark (renderInlineBlock)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
                                                 renderScrapText, renderSegments,
                                                 renderWithStyle)
