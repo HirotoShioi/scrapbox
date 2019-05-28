@@ -460,14 +460,22 @@ toLevel (Level lvl)= case lvl of
 toSize :: Level -> Double
 toSize (Level lvl) = fromIntegral lvl * 0.5 :: Double
 
--- PARAGRAPH (ScrapText [SPAN [Italic,StrikeThrough] [TEXT "a"]])
+isAllBolds :: [InlineBlock] -> Bool
+isAllBolds = all checkBolds
+    where
+      checkBolds = \case
+         SPAN [Bold] segments ->
+            null segments || (any isText segments && all isEmptyText segments)
+         SPAN [UserStyle _s] segments ->
+            null segments || (any isText segments && all isEmptyText segments)
+         _others -> False
+      isEmptyText = \case
+        TEXT text -> T.null $ T.strip text
+        _others   -> False
+
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
--- HEADING (Level 5) [TEXT "a",HASHTAG ""]
--- HEADING (Level 2) [HASHTAG "",TEXT "a"]
 -- TABLE (TableName "(") (TableContent [["a"]])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3)] [TEXT ""]])
--- BLOCK_QUOTE (ScrapText [SPAN [StrikeThrough] [TEXT "a"]])
--- PARAGRAPH (ScrapText [SPAN [Italic] [TEXT " "]])
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
@@ -481,16 +489,3 @@ checkCommonmarkRoundTrip block =
        , unverbose . Scrapbox $ modeled
        , parsed == unverbose (Scrapbox modeled)
        )
-
-isAllBolds :: [InlineBlock] -> Bool
-isAllBolds = all checkBolds
-    where
-      checkBolds = \case
-         SPAN [Bold] segments ->
-            null segments || (any isText segments && all isEmptyText segments)
-         SPAN [UserStyle _s] segments ->
-            null segments || (any isText segments && all isEmptyText segments)
-         _others -> False
-      isEmptyText = \case
-        TEXT text -> T.null $ T.strip text
-        _others   -> False
