@@ -21,11 +21,12 @@ import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
                                              paragraph, scrapbox, span, text,
                                              thumbnail)
-import           Data.Scrapbox.Types as S (Block (..), InlineBlock(..), Scrapbox,
-                                           Segment, Style (..), concatInline,
-                                           concatScrapText)
+import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
+                                           Scrapbox, Segment, Style (..),
+                                           concatInline, concatScrapText)
 
-import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks, extractTextInline)
+import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (extractTextInline,
+                                                                  toInlineBlocks)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
 --------------------------------------------------------------------------------

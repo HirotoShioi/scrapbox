@@ -57,7 +57,7 @@ syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>']
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
-    end <- elements 
+    end <- elements
         [ ".org"
         , ".edu"
         , ".com"

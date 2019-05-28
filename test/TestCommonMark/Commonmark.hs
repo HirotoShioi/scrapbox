@@ -217,14 +217,18 @@ commonmarkModelTest commonmark =
     let (Scrapbox content) = commonmarkToNode [] . renderCommonmark $ commonmark
     in content === toScrapbox commonmark
 
+--------------------------------------------------------------------------------
+-- Commonmark roundtrip test
+--------------------------------------------------------------------------------
+
 commonmarkRoundTripTest :: Block -> Property
 commonmarkRoundTripTest block = ((not . isTable) block && (not . isBulletPoint) block) ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
-    in parsed === unverbose (Scrapbox (toModel block))
+    in parsed === unverbose (Scrapbox (toRoundTripModel block))
 
-toModel :: Block -> [Block]
-toModel = \case
+toRoundTripModel :: Block -> [Block]
+toRoundTripModel = \case
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
     b@(BLOCK_QUOTE (ScrapText [SPAN [Bold] segments])) ->
         if isEmptySegments segments
@@ -232,10 +236,10 @@ toModel = \case
             else [b]
     BLOCK_QUOTE (ScrapText [SPAN [UserStyle _u] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText (SPAN [] (TEXT text : rest) : rest'))->
-        [ BLOCK_QUOTE 
-            ( ScrapText $ toInlineModel 
-                ( SPAN [] 
-                    ( toSegmentModel (TEXT (T.stripStart text) : rest) ) 
+        [ BLOCK_QUOTE
+            ( ScrapText $ toInlineModel
+                ( SPAN []
+                    ( toSegmentModel (TEXT (T.stripStart text) : rest) )
                 : rest'
                 )
             )
@@ -245,7 +249,7 @@ toModel = \case
             then emptyQuote
             else [BLOCK_QUOTE $ ScrapText $ toInlineModel inlines]
     BULLET_POINT s blocks ->
-        [BULLET_POINT s (concatMap toModel blocks)]
+        [BULLET_POINT s (concatMap toRoundTripModel blocks)]
     HEADING level (TEXT text:rest) ->
         [HEADING (toLevel level) (toSegmentModel (TEXT (T.stripStart text) : rest))]
     HEADING level segments ->
@@ -316,9 +320,9 @@ toModel = \case
     emptyText = [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
 
 toInlineModel :: [InlineBlock] -> [InlineBlock]
-toInlineModel inlines 
+toInlineModel inlines
     | isAllBolds inlines = []
-    | otherwise          = 
+    | otherwise          =
     foldr (\inline acc -> case inline of
         CODE_NOTATION expr ->
             if T.null expr
@@ -333,13 +337,13 @@ toInlineModel inlines
         SPAN [Bold] segments ->
             if isEmptySegments segments
                 then acc
-                else someFunc segments [Bold] <> acc
+                else modelSpan segments [Bold] <> acc
         SPAN [] [] -> acc
         SPAN [UserStyle _s] [] -> [SPAN [] [TEXT "\n"]] <> acc
         SPAN [UserStyle _s] segments ->
             if isEmptySegments segments
                 then acc
-                else someFunc segments [Bold] <> acc
+                else modelSpan segments [Bold] <> acc
         SPAN [style] [] -> [SPAN [] [TEXT (renderStyle style)]] <> acc
         s@(SPAN [_s] _segments) -> [s] <> acc
         SPAN styles [] -> renderEmptyStyledSpan styles <> acc
@@ -373,40 +377,21 @@ isEmptySegments segments =
                                 ) True concatedSegments
     in isAllText && someBool
 
-someFunc :: [Segment] -> [Style] -> [InlineBlock]
-someFunc segments styles = foldr (\segment acc -> case segment of
+modelSpan :: [Segment] -> [Style] -> [InlineBlock]
+modelSpan segments styles = foldr (\segment acc -> case segment of
     TEXT text -> if T.strip text /= text
-        then [SPAN [] [TEXT (renderWithStyles text)]] <> acc
+        then [SPAN [] [TEXT (render text)]] <> acc
         else [SPAN styles [TEXT text]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
   where
-    -- Render given text with 'StyleData'
-    renderWithStyles :: Text -> Text
-    renderWithStyles text = foldr apply text styles
-
-    apply :: Style -> Text -> Text
-    apply Bold text                = "**" <> text <> "**"
-    apply Italic text              = "_" <> text <> "_"
-    apply StrikeThrough text       = "~~" <> text <> "~~"
-    apply (Sized (Level lvl)) text = applySize lvl text
-    apply (UserStyle _) text       = "**" <> text <> "**"
-
-    -- Add font size
-    applySize :: Int -> Text -> Text
-    applySize fontSize text = mconcat
-        [ "<span style=\"font-size:"
-        , tshow (fromIntegral fontSize * 0.5 :: Double) -- Might tweak the numbers
-        , "em\">"
-        , text
-        , "</span>"
-        ]
+    render text =  renderInlineBlock $ SPAN styles [TEXT text]
 
 styledTextModel :: [Style] -> [Segment] -> [InlineBlock]
 styledTextModel styles segments
   | concatSegment segments == [TEXT ""] = renderEmptyStyledSpan styles
   | isEmptySegments segments            = []
-  | otherwise                           = someFunc segments styles
+  | otherwise                           = modelSpan segments styles
 
 renderStyledSpan :: [Style] -> [Segment] -> [InlineBlock]
 renderStyledSpan styles segments =
@@ -488,7 +473,7 @@ checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
         parsed'  = C.commonmarkToNode [] rendered
-        modeled  = toModel block
+        modeled  = toRoundTripModel block
     in ( block
        , rendered
        , parsed'
@@ -501,11 +486,11 @@ isAllBolds :: [InlineBlock] -> Bool
 isAllBolds = all checkBolds
     where
       checkBolds = \case
-         SPAN [Bold] segments         -> 
+         SPAN [Bold] segments ->
             null segments || (any isText segments && all isEmptyText segments)
-         SPAN [UserStyle _s] segments -> 
+         SPAN [UserStyle _s] segments ->
             null segments || (any isText segments && all isEmptyText segments)
-         _others                      -> False
+         _others -> False
       isEmptyText = \case
-        TEXT text -> T.null $ T.strip text 
+        TEXT text -> T.null $ T.strip text
         _others   -> False
