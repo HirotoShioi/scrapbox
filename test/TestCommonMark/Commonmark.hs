@@ -317,7 +317,6 @@ toModel = \case
 
 toInlineModel :: [InlineBlock] -> [InlineBlock]
 toInlineModel inlines 
-    | hasAnyText inlines = []
     | isAllBolds inlines = []
     | otherwise          = 
     foldr (\inline acc -> case inline of
@@ -502,19 +501,11 @@ isAllBolds :: [InlineBlock] -> Bool
 isAllBolds = all checkBolds
     where
       checkBolds = \case
-         SPAN [Bold] segments         -> null segments
-         SPAN [UserStyle _s] segments -> null segments
+         SPAN [Bold] segments         -> 
+            null segments || (any isText segments && all isEmptyText segments)
+         SPAN [UserStyle _s] segments -> 
+            null segments || (any isText segments && all isEmptyText segments)
          _others                      -> False
-
-hasAnyText :: [InlineBlock] -> Bool
-hasAnyText = any hasText
-  where
-    hasText = \case
-        SPAN [Bold] []               -> False
-        SPAN [Bold] segments         -> any isText segments && all isEmptyText segments
-        SPAN [UserStyle _s] []       -> False
-        SPAN [UserStyle _s] segments -> any isText segments && all isEmptyText segments
-        _others                      -> False
-    isEmptyText = \case
-      TEXT text -> T.null $ T.strip text 
-      _others   -> False
+      isEmptyText = \case
+        TEXT text -> T.null $ T.strip text 
+        _others   -> False
