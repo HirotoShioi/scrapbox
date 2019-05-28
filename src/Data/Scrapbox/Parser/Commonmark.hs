@@ -25,7 +25,7 @@ import           Data.Scrapbox.Types as S (Block (..), InlineBlock(..), Scrapbox
                                            Segment, Style (..), concatInline,
                                            concatScrapText)
 
-import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks)
+import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks, extractTextInline)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
 --------------------------------------------------------------------------------
@@ -180,11 +180,12 @@ toHeading headingNum nodes =
     -- | Convert 'Node' into list of 'Segment'
     toSegments :: Node -> [Segment]
     toSegments (Node _ nodeType contents) = case nodeType of
-        C.TEXT textContent -> [text textContent] -- Need to perform text extraction
-        C.CODE codeContent -> [link Nothing codeContent]
-        C.LINK url title   -> [toLink contents url title]
-        IMAGE url title    -> [toLink contents url title]
-        _                  -> concatMap toSegments contents
+        C.TEXT textContent        -> extractTextInline textContent
+        C.CODE codeContent        -> [link Nothing codeContent]
+        C.LINK url title          -> [toLink contents url title]
+        C.HTML_INLINE htmlContent -> [text htmlContent]
+        C.IMAGE url title         -> [toLink contents url title]
+        _                         -> concatMap toSegments contents
 
 -- | Construct 'BULLET_POINT'
 toBulletPoint :: [Node] -> Block
@@ -204,7 +205,7 @@ extractTextFromNodes = foldr
     extractText :: NodeType -> Text
     extractText = \case
         C.TEXT textContent -> textContent
-        CODE codeContent   -> "`" <> codeContent <> "`"
+        C.CODE codeContent   -> "`" <> codeContent <> "`"
         -- For now, we're going to ignore everything else
         _         -> mempty
 

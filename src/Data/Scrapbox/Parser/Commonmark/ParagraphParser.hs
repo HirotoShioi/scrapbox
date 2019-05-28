@@ -7,6 +7,7 @@ module Data.Scrapbox.Parser.Commonmark.ParagraphParser
     ( toInlineBlocks
     -- * Exposed for testing
     , runParagraphParser
+    , extractTextInline
     ) where
 
 
@@ -136,3 +137,12 @@ toInlineBlocks text = either
     (const [SPAN mempty [TEXT text]])
     id
     (runParagraphParser (T.unpack text))
+
+extractTextInline :: Text -> [Segment]
+extractTextInline text =
+    let inlineBlocks = toInlineBlocks text
+    in foldr (\inline acc -> case inline of
+        SPAN _styles segments -> segments <> acc
+        CODE_NOTATION expr    -> [TEXT expr] <> acc
+        MATH_EXPRESSION expr  -> [TEXT expr] <> acc
+        ) mempty inlineBlocks
