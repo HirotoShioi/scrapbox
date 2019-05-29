@@ -149,7 +149,7 @@ extractParagraph :: Parser String
 extractParagraph = go mempty
   where
 -- As you can see, this is very dangerous
--- Logic
+-- Logic test
 --
 -- @
 -- 1. First, check if there's any closing bracket ']'
