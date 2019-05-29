@@ -126,7 +126,7 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
         [paragraph [span styles [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
     C.IMAGE url _              -> [thumbnail url]
-    C.HTML_INLINE htmlContent  -> [paragraph $ toInlineBlocks htmlContent]
+    C.HTML_INLINE _htmlContent -> []
     C.BLOCK_QUOTE              ->
         [blockQuote $ concatMap (toInlineBlock styles) contents]
     -- I have on idea what these are,
@@ -148,7 +148,6 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
         C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
         C.IMAGE url title  -> withStyle [toLink contents url title]
-        C.HTML_INLINE html -> withStyle [text html]
         _                    -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
@@ -184,7 +183,7 @@ toHeading headingNum nodes =
         C.TEXT textContent        -> extractTextInline textContent
         C.CODE codeContent        -> [link Nothing codeContent]
         C.LINK url title          -> [toLink contents url title]
-        C.HTML_INLINE htmlContent -> [text htmlContent]
+        -- C.HTML_INLINE htmlContent -> [text htmlContent]
         C.IMAGE url title         -> [toLink contents url title]
         _                         -> concatMap toSegments contents
 
