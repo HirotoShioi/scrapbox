@@ -73,7 +73,19 @@ renderUrl name (Url url)
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
     -- Add spaces between inlineblocks to ensure each of them are rendered correctly
-    foldr ((<>) . renderInlineBlock) mempty inlineBlocks
+    -- Fix ["Hello", " " , "World"]
+    foldr (\inline acc -> case inline of
+        SPAN [] segments -> if isSpaces segments
+            then renderInlineBlock (SPAN [] segments) <> acc
+            else renderInlineBlock (SPAN [] segments) <> " " <> acc
+        others           -> renderInlineBlock others <> " " <> acc)
+        mempty
+        inlineBlocks
+  where
+    isSpaces = all (\case
+        TEXT text -> T.null (T.strip text)
+        _others    -> False
+        )
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
@@ -104,9 +116,14 @@ renderHeading (Level headingNum) segments =
                 2 -> 3
                 1 -> 4
                 _ -> 4
-        renderedSegments = foldr ( (<>) . renderSegment) mempty segments
+        renderedSegments = foldr ( (<>) . renderSegment) mempty (adjustSpaces segments)
         renderedLevel    = T.replicate level "#"
     in  renderedLevel <> " " <> renderedSegments
+  where
+    adjustSpaces :: [Segment] -> [Segment]
+    adjustSpaces [] = []
+    adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
+    adjustSpaces (x:xs) = x : adjustSpaces xs
 
 -- | Render 'Segment'
 renderSegment ::  Segment -> Text

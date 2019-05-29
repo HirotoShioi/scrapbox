@@ -12,7 +12,7 @@ import           RIO
 
 import qualified CMark as C
 import           Data.Char (isLetter)
-import           RIO.List (initMaybe, lastMaybe, zipWith)
+import           RIO.List (zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -254,6 +254,8 @@ toRoundTripModel = \case
             then emptyQuote
             else [b]
     BLOCK_QUOTE (ScrapText [SPAN [UserStyle _u] []]) -> emptyQuote
+     -- StrikeThrough parsed as CODE_BLOCK
+    BLOCK_QUOTE (ScrapText [SPAN [StrikeThrough] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText (SPAN [] (TEXT text : rest) : rest'))->
         [ BLOCK_QUOTE
             ( ScrapText $ toInlineModel
@@ -269,10 +271,18 @@ toRoundTripModel = \case
             else [BLOCK_QUOTE $ ScrapText $ toInlineModel inlines]
     BULLET_POINT s blocks ->
         [BULLET_POINT s (concatMap toRoundTripModel blocks)]
+
+    -- HEADING
     HEADING level (TEXT text:rest) ->
-        [HEADING (toLevel level) (toSegmentModel (TEXT (T.stripStart text) : rest))]
+        let head | not . T.null . T.stripStart $ text = 
+                    HEADING (toLevel level) (toSegmentModel (TEXT (T.stripStart text) : rest))
+                 | isEmptySegments (TEXT text : rest) = HEADING (toLevel level) []
+                 | otherwise =  HEADING (toLevel level) (toSegmentModel rest)
+        in [head]
     HEADING level segments ->
-        [HEADING (toLevel level) (toSegmentModel segments)]
+        if isEmptySegments segments
+            then [HEADING (toLevel level) []]
+            else [HEADING (toLevel level) (toSegmentModel segments)]
     LINEBREAK -> []
 
     -- Paragraph
@@ -281,6 +291,8 @@ toRoundTripModel = \case
             then []
             else [PARAGRAPH (ScrapText [SPAN [] (toSegmentModel segments)])]
     PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] []]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
+    PARAGRAPH (ScrapText [SPAN [Bold] []]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
     PARAGRAPH (ScrapText [SPAN [StrikeThrough] []]) ->
         [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
@@ -340,9 +352,10 @@ toRoundTripModel = \case
 
 toInlineModel :: [InlineBlock] -> [InlineBlock]
 toInlineModel inlines
-    | isAllBolds inlines = []
+    | isAllBolds inlines = [SPAN [] [TEXT "\n"]] -- [SPAN [Bold] [],SPAN [UserStyle "!?%"] [TEXT ""]]
     | otherwise          =
-    foldr (\inline acc -> case inline of
+    let spaceAddedInlines = addSpaces inlines
+    in foldr (\inline acc -> case inline of
         CODE_NOTATION expr ->
             if T.null expr
                 then [SPAN [] [TEXT "``"]] <> acc
@@ -351,35 +364,47 @@ toInlineModel inlines
             if T.null expr
                 then [SPAN [] [TEXT "``"]] <> acc
                 else [CODE_NOTATION expr] <> acc
-
         -- SPAN
-        SPAN [Bold] segments ->
-            if isEmptySegments segments
-                then acc
-                else modelSpan segments [Bold] <> acc
         SPAN [] [] -> acc
-        SPAN [UserStyle _s] [] -> [SPAN [] [TEXT "\n"]] <> acc
         SPAN [UserStyle _s] segments ->
             if isEmptySegments segments
-                then acc
+                then [SPAN [] [TEXT "****"]] <> acc
                 else modelSpan segments [Bold] <> acc
         SPAN [style] [] -> [SPAN [] [TEXT (renderStyle style)]] <> acc
-        s@(SPAN [_s] _segments) -> [s] <> acc
-        SPAN styles [] -> renderEmptyStyledSpan styles <> acc
-        SPAN styles segments -> styledTextModel styles segments <> acc
-    ) mempty inlines
+        SPAN styles segments -> modelSpan segments styles <> acc
+    ) mempty spaceAddedInlines
+  where
+    addSpaces :: [InlineBlock] -> [InlineBlock]
+    addSpaces []  = []
+    addSpaces [x] = [x]
+    addSpaces (SPAN [] segments : xs ) = if isSpaces segments
+        then SPAN [] segments : xs
+        else SPAN [] (segments <> [TEXT " "]) : addSpaces xs
+    addSpaces (x:xs) = x : SPAN [] [TEXT " "] : addSpaces xs
+
+    isSpaces = all (\case
+        TEXT text -> T.null (T.strip text)
+        _others    -> False
+        )
 
 toSegmentModel :: [Segment] -> [Segment]
-toSegmentModel = foldr (\segment acc -> case segment of
-    TEXT text    -> if T.null (T.stripStart text)
-        then acc
-        else [TEXT text] <> acc
-    HASHTAG text -> [TEXT ("#" <> text)] <> acc
-    others       -> [others] <> acc ) mempty
+toSegmentModel segments =
+    let spaceAddedSegments = adjustSpaces segments
+    in foldr (\segment acc -> case segment of
+        HASHTAG text -> [TEXT ("#" <> text)] <> acc
+        others       -> [others] <> acc
+        )
+        mempty
+        spaceAddedSegments
+  where
+    adjustSpaces :: [Segment] -> [Segment]
+    adjustSpaces [] = []
+    adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
+    adjustSpaces (x:xs) = x : adjustSpaces xs
 
 modelSpan :: [Segment] -> [Style] -> [InlineBlock]
 modelSpan segments styles = foldr (\segment acc -> case segment of
-    TEXT text -> if T.strip text /= text
+    TEXT text -> if T.strip text /= text || T.null text
         then [SPAN [] [TEXT (render text)]] <> acc
         else [SPAN styles [TEXT text]] <> acc
     others -> [SPAN styles [others]] <> acc
@@ -389,7 +414,6 @@ modelSpan segments styles = foldr (\segment acc -> case segment of
 
 styledTextModel :: [Style] -> [Segment] -> [InlineBlock]
 styledTextModel styles segments
-  | concatSegment segments == [TEXT ""] = renderEmptyStyledSpan styles
   | isEmptySegments segments            = []
   | otherwise                           = modelSpan segments styles
 
@@ -410,36 +434,6 @@ renderStyledSpan styles segments =
             , SPAN [] [TEXT "</span>"]
             ]
         else [SPAN styles segments]
-
-renderEmptyStyledSpan :: [Style] -> [InlineBlock]
-renderEmptyStyledSpan styles =
-    let sizeSum =
-            foldr (\style acc' -> case style of
-                Sized (Level num) -> num + acc'
-                _others           -> acc'
-                ) 0
-                $ filter isSized styles
-
-        restStyle = filter (not . isSized) styles
-    in maybe
-        []
-        (\(lastEle, rest) -> if sizeSum > 0
-            then
-                let renderedText = mconcat
-                        [ "<span style=\"font-size:"
-                        , tshow (toSize (Level sizeSum))
-                        , "em\">"
-                        , renderStyle lastEle
-                        , "</span>"
-                        ]
-                in [SPAN rest [TEXT renderedText]]
-            else [SPAN rest [TEXT (renderStyle lastEle)]]
-        )
-        (do
-            last <- lastMaybe restStyle
-            rest <- initMaybe restStyle
-            return (last, rest)
-        )
 
 renderStyle :: Style -> Text
 renderStyle = \case
