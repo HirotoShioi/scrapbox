@@ -78,8 +78,8 @@ renderScrapText (ScrapText inlineBlocks) =
     adjust [] = mempty
     adjust [x] = x
     adjust (text : xs)
-      | T.stripEnd text /= text = text <> adjust xs
-      | otherwise               = text <> " " <> adjust xs  
+      | T.stripEnd text /= text || T.null text = text <> adjust xs
+      | otherwise                                      = text <> " " <> adjust xs  
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
@@ -123,7 +123,7 @@ renderHeading (Level headingNum) segments =
 -- | Render 'Segment'
 renderSegment ::  Segment -> Text
 renderSegment = \case
-    HASHTAG text               -> "**#" <> text <> "**"
+    HASHTAG text               -> "#" <> text <> ""
     LINK Nothing url           -> renderUrl mempty url
     LINK (Just name) url       -> renderUrl name url
     TEXT text                  -> text

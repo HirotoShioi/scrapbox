@@ -321,8 +321,6 @@ toRoundTripModel = \case
         if T.null (T.stripStart text)
             then emptyText
             else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
-    PARAGRAPH (ScrapText (SPAN [UserStyle _s] []:rest)) ->
-        [PARAGRAPH (ScrapText (SPAN [] [TEXT "****"] : toInlineModel rest))]
 
     PARAGRAPH (ScrapText [MATH_EXPRESSION "", CODE_NOTATION ""]) ->
         [PARAGRAPH (ScrapText [CODE_NOTATION ""])]
@@ -381,6 +379,8 @@ toInlineModel inlines
                 else [CODE_NOTATION expr] <> acc
         -- SPAN
         SPAN [] [] -> acc
+        SPAN [Italic] [TEXT ""] ->
+            [SPAN [] [TEXT "__"]] <> acc
         SPAN [UserStyle _s] segments ->
             if isEmptySegments segments
                 then [SPAN [] [TEXT "****"]] <> acc
@@ -399,21 +399,13 @@ toInlineModel inlines
     addSpaces :: [InlineBlock] -> [InlineBlock]
     addSpaces []  = []
     addSpaces [x] = [x]
-    addSpaces (SPAN [] segments : xs ) = if isSpaces segments
-        then SPAN [] segments : xs
-        else SPAN [] (segments <> [TEXT " "]) : addSpaces xs
     addSpaces (x:xs) = x : SPAN [] [TEXT " "] : addSpaces xs
-
+    
     filterSize :: [InlineBlock] -> [InlineBlock]
     filterSize [] = []
     filterSize (SPAN styles segments : xs) = 
         SPAN (filter (not . isSized) styles) segments : filterSize xs
     filterSize (x : xs)                    = x : filterSize xs
-
-    isSpaces = all (\case
-        TEXT text -> T.null (T.strip text)
-        _others    -> False
-        )
 
 removeTrailingSpaces :: [InlineBlock] -> [InlineBlock]
 removeTrailingSpaces is = maybe
@@ -463,7 +455,7 @@ modelSpan segments styles = foldr (\segment acc -> case segment of
     TEXT text -> if T.null text
         then acc
         else [SPAN styles [TEXT text]] <> acc
-    HASHTAG tag -> [SPAN (Bold : styles) [TEXT ("#" <> tag)]] <> acc
+    HASHTAG tag -> [SPAN styles [TEXT ("#" <> tag)]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
 
