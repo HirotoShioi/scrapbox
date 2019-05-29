@@ -12,7 +12,7 @@ import           RIO
 
 import qualified CMark as C
 import           Data.Char (isLetter)
-import           RIO.List (zipWith)
+import           RIO.List (zipWith, lastMaybe, initMaybe)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -371,6 +371,14 @@ toInlineModel inlines
                 then [SPAN [] [TEXT "****"]] <> acc
                 else modelSpan segments [Bold] <> acc
         SPAN [style] [] -> [SPAN [] [TEXT (renderStyle style)]] <> acc
+        SPAN styles []  -> maybe
+                ([SPAN styles []] <> acc)
+                (\(last, init) -> [SPAN init [TEXT (renderStyle last)]] <> acc)
+                (do
+                    last <- lastMaybe styles
+                    init <- initMaybe styles
+                    return (last, init)
+                )
         SPAN styles segments -> modelSpan segments styles <> acc
     ) mempty spaceAddedInlines
   where
@@ -397,6 +405,7 @@ toSegmentModel segments =
         mempty
         spaceAddedSegments
   where
+    -- [HASHTAG "a", TEXT " a"]
     adjustSpaces :: [Segment] -> [Segment]
     adjustSpaces [] = []
     adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
@@ -497,6 +506,7 @@ isAllBolds = all checkBolds
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3)] [TEXT ""]])
+-- HEADING (Level 3) [HASHTAG "",TEXT " "]
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
