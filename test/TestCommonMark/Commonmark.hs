@@ -33,13 +33,6 @@ import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
                                          unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
--- | Generate random text
-genNoSymbolText :: Gen Text
-genNoSymbolText = fromString <$> listOf (arbitraryPrintableChar `suchThat` isLetter)
-
-genNoSymbolText1 :: Gen Text
-genNoSymbolText1 = fromString <$> listOf1 (arbitraryPrintableChar `suchThat` isLetter)
-
 commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ do
     prop "Model test" commonmarkModelTest
@@ -51,6 +44,7 @@ commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ 
 -- Commonmark model test
 --------------------------------------------------------------------------------
 
+-- | Syntaxes in commonmark
 data CommonMark
     = ParagraphSection !Text
     | HeaderText !Int !Text
@@ -65,6 +59,7 @@ data CommonMark
     | CodeNotation !Text
     deriving (Eq, Show, Generic)
 
+-- | Styles in commonmark
 data TestStyle
     = BoldStyle
     | ItalicStyle
@@ -72,45 +67,20 @@ data TestStyle
     | StrikeThroughStyle
     deriving (Eq, Enum, Show)
 
+--------------------------------------------------------------------------------
+-- Defining generators
+--------------------------------------------------------------------------------
+
+-- | Generate random text
+genNoSymbolText :: Gen Text
+genNoSymbolText = fromString <$> listOf (arbitraryPrintableChar `suchThat` isLetter)
+
+-- | Generate random text withoug null
+genNoSymbolText1 :: Gen Text
+genNoSymbolText1 = fromString <$> listOf1 (arbitraryPrintableChar `suchThat` isLetter)
+
 instance Arbitrary TestStyle where
     arbitrary = elements [BoldStyle .. StrikeThroughStyle]
-
-renderCommonmark :: CommonMark -> Text
-renderCommonmark = \case
-    ParagraphSection text       -> text
-    HeaderText level text       -> T.replicate level "#" <> " " <> text
-    TableSection header content -> renderTable header content
-    ImageSection title someLink -> "![" <> title <> "](" <> someLink <> ")"
-    OrderedListBlock list       -> T.unlines $ zipWith
-        (\num someText -> tshow num <> ". " <> someText)
-        ([1..] :: [Int])
-        list
-    UnorderedListBlock list     -> T.unlines $ map ("- " <>) list
-    BlockQuoteText text         -> ">" <> text
-    StyledText style text       -> case style of
-        BoldStyle          -> "**" <> text <> "**"
-        ItalicStyle        -> "*" <> text <> "*"
-        StrikeThroughStyle -> "~~" <> text <> "~~"
-        NoStyles           -> text
-    CodeBlockSection codes      -> T.unlines $ ["```"] <> codes <> ["```"]
-    Link name url               -> "[" <> name <> "](" <> url <> ")"
-    CodeNotation notation       -> "`" <> notation <> "`"
-
-renderTable :: [Text] -> [[Text]] -> Text
-renderTable header contents = do
-    let renderedHeader   = renderColumn header
-    let between          = renderBetween' (length header)
-    let renderedContents = renderTableContent contents
-    T.unlines $ [renderedHeader] <> [between] <> renderedContents
-  where
-    renderColumn :: [Text] -> Text
-    renderColumn = foldl' (\acc a -> acc <> a <> " | ") "| "
-
-    renderBetween' :: Int -> Text
-    renderBetween' rowNum' = T.replicate rowNum' "|- " <> "|"
-
-    renderTableContent :: [[Text]] -> [Text]
-    renderTableContent = map renderColumn
 
 instance Arbitrary CommonMark where
     arbitrary =
@@ -135,8 +105,53 @@ instance Arbitrary CommonMark where
             return $ TableSection header contents
     shrink = genericShrink
 
-toScrapbox :: CommonMark -> [Block]
-toScrapbox = \case
+--------------------------------------------------------------------------------
+-- Renderer
+--------------------------------------------------------------------------------
+
+-- | Renderer for @Commonmark@
+renderCommonmark :: CommonMark -> Text
+renderCommonmark = \case
+    ParagraphSection text       -> text
+    HeaderText level text       -> T.replicate level "#" <> " " <> text
+    TableSection header content -> renderTable header content
+    ImageSection title someLink -> "![" <> title <> "](" <> someLink <> ")"
+    OrderedListBlock list       -> T.unlines $ zipWith
+        (\num someText -> tshow num <> ". " <> someText)
+        ([1..] :: [Int])
+        list
+    UnorderedListBlock list     -> T.unlines $ map ("- " <>) list
+    BlockQuoteText text         -> ">" <> text
+    StyledText style text       -> case style of
+        BoldStyle          -> "**" <> text <> "**"
+        ItalicStyle        -> "*" <> text <> "*"
+        StrikeThroughStyle -> "~~" <> text <> "~~"
+        NoStyles           -> text
+    CodeBlockSection codes      -> T.unlines $ ["```"] <> codes <> ["```"]
+    Link name url               -> "[" <> name <> "](" <> url <> ")"
+    CodeNotation notation       -> "`" <> notation <> "`"
+  where
+    renderTable :: [Text] -> [[Text]] -> Text
+    renderTable header contents = do
+        let renderedHeader   = renderColumn header
+        let between          = renderBetween' (length header)
+        let renderedContents = renderTableContent contents
+        T.unlines $ [renderedHeader] <> [between] <> renderedContents
+    renderColumn :: [Text] -> Text
+    renderColumn = foldl' (\acc a -> acc <> a <> " | ") "| "
+
+    renderBetween' :: Int -> Text
+    renderBetween' rowNum' = T.replicate rowNum' "|- " <> "|"
+
+    renderTableContent :: [[Text]] -> [Text]
+    renderTableContent = map renderColumn
+
+--------------------------------------------------------------------------------
+-- Modeling
+--------------------------------------------------------------------------------
+
+modelScrapbox :: CommonMark -> [Block]
+modelScrapbox = \case
     ParagraphSection text ->
         if T.null text
             then mempty
@@ -212,10 +227,14 @@ toScrapbox = \case
             mempty
         | otherwise = [PARAGRAPH (ScrapText [SPAN (toStyle style) [TEXT text]])]
 
+--------------------------------------------------------------------------------
+-- Test
+--------------------------------------------------------------------------------
+
 commonmarkModelTest :: CommonMark -> Property
 commonmarkModelTest commonmark =
     let (Scrapbox content) = commonmarkToNode [] . renderCommonmark $ commonmark
-    in content === toScrapbox commonmark
+    in content === modelScrapbox commonmark
 
 --------------------------------------------------------------------------------
 -- Commonmark roundtrip test
@@ -358,25 +377,6 @@ toSegmentModel = foldr (\segment acc -> case segment of
     HASHTAG text -> [TEXT ("#" <> text)] <> acc
     others       -> [others] <> acc ) mempty
 
-isImageUrl :: Text -> Bool
-isImageUrl url = any (`T.isSuffixOf` url)
-    [ ".bmp"
-    , ".gif"
-    , ".jpg"
-    , ".jpeg"
-    , ".png"
-    ]
-
-isEmptySegments :: [Segment] -> Bool
-isEmptySegments segments =
-    let concatedSegments = concatSegment segments
-        isAllText        = all isText concatedSegments
-        someBool         = foldr (\segment acc -> case segment of
-                                    TEXT text -> T.null (T.stripStart text) && acc
-                                    _others   -> False
-                                ) True concatedSegments
-    in isAllText && someBool
-
 modelSpan :: [Segment] -> [Style] -> [InlineBlock]
 modelSpan segments styles = foldr (\segment acc -> case segment of
     TEXT text -> if T.strip text /= text
@@ -460,6 +460,29 @@ toLevel (Level lvl)= case lvl of
 toSize :: Level -> Double
 toSize (Level lvl) = fromIntegral lvl * 0.5 :: Double
 
+--------------------------------------------------------------------------------
+-- Predicates
+--------------------------------------------------------------------------------
+
+isImageUrl :: Text -> Bool
+isImageUrl url = any (`T.isSuffixOf` url)
+    [ ".bmp"
+    , ".gif"
+    , ".jpg"
+    , ".jpeg"
+    , ".png"
+    ]
+
+isEmptySegments :: [Segment] -> Bool
+isEmptySegments segments =
+    let concatedSegments = concatSegment segments
+        isAllText        = all isText concatedSegments
+        someBool         = foldr (\segment acc -> case segment of
+                                    TEXT text -> T.null (T.stripStart text) && acc
+                                    _others   -> False
+                                ) True concatedSegments
+    in isAllText && someBool
+
 isAllBolds :: [InlineBlock] -> Bool
 isAllBolds = all checkBolds
     where
@@ -472,6 +495,10 @@ isAllBolds = all checkBolds
       isEmptyText = \case
         TEXT text -> T.null $ T.strip text
         _others   -> False
+
+--------------------------------------------------------------------------------
+-- Checker
+--------------------------------------------------------------------------------
 
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
