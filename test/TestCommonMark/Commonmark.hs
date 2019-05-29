@@ -257,7 +257,7 @@ toRoundTripModel = \case
     BLOCK_QUOTE (ScrapText [SPAN [UserStyle _u] segments]) ->
         if isEmptySegments segments
             then emptyQuote
-            else [BLOCK_QUOTE (ScrapText [SPAN [Bold] segments])]
+            else [BLOCK_QUOTE (ScrapText (toInlineModel [SPAN [Bold] segments]))]
      -- StrikeThrough parsed as CODE_BLOCKa
     BLOCK_QUOTE (ScrapText [SPAN [StrikeThrough] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText (SPAN [] (TEXT text : rest) : rest'))->
@@ -291,6 +291,8 @@ toRoundTripModel = \case
     LINEBREAK -> []
 
     -- Paragraph
+    PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT "__"]])]
     p@(PARAGRAPH (ScrapText [SPAN [] [LINK (Just name) url]])) ->
         if T.all isSpace name || T.null name || isImageUrl url
             then [THUMBNAIL url]
@@ -331,14 +333,14 @@ toRoundTripModel = \case
     PARAGRAPH (ScrapText [MATH_EXPRESSION "", MATH_EXPRESSION ""]) ->
         [PARAGRAPH (ScrapText [CODE_NOTATION ""])]
 
-    PARAGRAPH (ScrapText [CODE_NOTATION text1, CODE_NOTATION text2]) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`" <> text1 <> "``"<> text2 <>"`")]])]
-    PARAGRAPH (ScrapText [MATH_EXPRESSION text1, MATH_EXPRESSION text2]) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`" <> text1 <> "``"<> text2 <>"`")]])]
-    PARAGRAPH (ScrapText [MATH_EXPRESSION text1, CODE_NOTATION text2]) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`" <> text1 <> "``"<> text2 <>"`")]])]
-    PARAGRAPH (ScrapText [CODE_NOTATION text1, MATH_EXPRESSION text2]) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT ("`" <> text1 <> "``"<> text2 <>"`")]])]
+    PARAGRAPH (ScrapText [CODE_NOTATION "", CODE_NOTATION text2]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT "`` "],CODE_NOTATION text2])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION "", MATH_EXPRESSION text2]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT "`` "],CODE_NOTATION text2])]
+    PARAGRAPH (ScrapText [MATH_EXPRESSION "", CODE_NOTATION text2]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT "`` "],CODE_NOTATION text2])]
+    PARAGRAPH (ScrapText [CODE_NOTATION "", MATH_EXPRESSION text2]) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT "`` "],CODE_NOTATION text2])]
 
     PARAGRAPH (ScrapText inlines) ->
         [PARAGRAPH (ScrapText (toInlineModel inlines))]
@@ -459,13 +461,11 @@ toSegmentModel segments =
 modelSpan :: [Segment] -> [Style] -> [InlineBlock]
 modelSpan segments styles = foldr (\segment acc -> case segment of
     TEXT text -> if T.null text
-        then [SPAN [] [TEXT (render text)]] <> acc
+        then acc
         else [SPAN styles [TEXT text]] <> acc
     HASHTAG tag -> [SPAN (Bold : styles) [TEXT ("#" <> tag)]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
-  where
-    render text =  renderInlineBlock $ SPAN styles [TEXT text]
 
 styledTextModel :: [Style] -> [Segment] -> [InlineBlock]
 styledTextModel styles segments

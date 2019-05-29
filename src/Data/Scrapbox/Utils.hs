@@ -52,7 +52,7 @@ hasNoTrailingSpaces str =
     in T.strip txt == txt
 
 syntaxSymobls :: String
-syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>']
+syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>', '-', '\n']
 
 -- | Generate random url
 genPrintableUrl :: Gen Text

@@ -475,6 +475,7 @@ formatInline (x:xs)                   = x : formatInline xs
 -- | Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                               = []
+addSpace [HASHTAG txt]                    = [HASHTAG txt]
 addSpace (HASHTAG txt : TEXT text : rest) =
     HASHTAG txt : TEXT (" " <> text) : addSpace rest
 addSpace (HASHTAG txt : rest)             =
