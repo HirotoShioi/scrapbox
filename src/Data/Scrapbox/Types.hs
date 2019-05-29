@@ -297,7 +297,7 @@ instance Arbitrary Style where
 instance {-# OVERLAPS #-} Arbitrary [Style] where
     arbitrary = do
         somelvl <- arbitrary
-        let someStyle = fmap (sort . nub) <$> listOf $ elements [Italic, StrikeThrough]
+        let someStyle = fmap (sort . nub) <$> listOf $ elements [Italic]
         oneof
             [ someStyle
             , return [Bold]

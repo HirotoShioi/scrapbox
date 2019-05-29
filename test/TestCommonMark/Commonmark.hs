@@ -298,7 +298,7 @@ toRoundTripModel = \case
     PARAGRAPH (ScrapText [SPAN [] segments]) ->
         if isEmptySegments segments
             then []
-            else [PARAGRAPH (ScrapText [SPAN [] (toSegmentModel segments)])]
+            else [PARAGRAPH (ScrapText (toInlineModel [SPAN [] segments]))]
     PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] []]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
     PARAGRAPH (ScrapText [SPAN [Bold] []]) ->
@@ -367,7 +367,7 @@ toInlineModel [SPAN [Sized _level] segments] =
 toInlineModel inlines
     | isAllBolds inlines = [SPAN [] [TEXT "\n"]] -- [SPAN [Bold] [],SPAN [UserStyle "!?%"] [TEXT ""]]
     | otherwise          =
-    let spaceAddedInlines = filterSize . addSpaces $ inlines
+    let spaceAddedInlines = removeTrailingSpaces . filterSize . addSpaces $ inlines
     in foldr (\inline acc -> case inline of
         CODE_NOTATION expr ->
             if T.null expr
@@ -413,6 +413,31 @@ toInlineModel inlines
         _others    -> False
         )
 
+removeTrailingSpaces :: [InlineBlock] -> [InlineBlock]
+removeTrailingSpaces is = maybe
+    is
+    (\(initSeg, lastSeg, initInline) ->
+        let lastSeg' = case lastSeg of
+                        TEXT text -> if T.null (T.stripEnd text)
+                            then mempty
+                            else [TEXT (T.stripEnd text)]
+                        others    -> [others]
+        in initInline <> [SPAN [] (initSeg <> lastSeg')]
+    )
+    (do
+        lastInline <- lastMaybe is
+        segments   <- getSegments lastInline
+        initSeg    <- initMaybe segments
+        lastSeg    <- lastMaybe segments
+        initInline <- initMaybe is
+        return (initSeg, lastSeg, initInline)
+    )
+
+getSegments :: InlineBlock -> Maybe [Segment]
+getSegments (SPAN [] segments) = Just segments
+getSegments _                  = Nothing
+
+-- Need to remove trailing spaces
 toSegmentModel :: [Segment] -> [Segment]
 toSegmentModel segments =
     let spaceAddedSegments = adjustSpaces segments
@@ -436,6 +461,7 @@ modelSpan segments styles = foldr (\segment acc -> case segment of
     TEXT text -> if T.null text
         then [SPAN [] [TEXT (render text)]] <> acc
         else [SPAN styles [TEXT text]] <> acc
+    HASHTAG tag -> [SPAN (Bold : styles) [TEXT ("#" <> tag)]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
   where
@@ -504,9 +530,9 @@ isAllBolds = all checkBolds
 
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
--- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3)] [TEXT ""]])
--- PARAGRAPH (ScrapText [SPAN [Bold] [TEXT " "],SPAN [Italic,StrikeThrough] []])
 -- PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] [],CODE_NOTATION ""])
+-- PARAGRAPH (ScrapText [CODE_NOTATION "",CODE_NOTATION "a"])
+-- PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] [],SPAN [Bold] []])
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
