@@ -371,20 +371,10 @@ toInlineModel [SPAN [Sized _level] segments] =
         else modelSpan [] segments
 toInlineModel inlines
     | isAllBolds inlines = [SPAN [] [TEXT "\n"]] -- [SPAN [Bold] [],SPAN [UserStyle "!?%"] [TEXT ""]]
-    | otherwise          =
-    let spaceAddedInlines = removeTrailingSpaces . filterSize . addSpaces $ inlines
+    | otherwise =
+    let modifiedInlines = removeTrailingSpaces . filterSize . addSpaces . filterHead $ inlines
     in foldr (\inline acc -> case inline of
-        CODE_NOTATION expr ->
-            let b | T.null expr        = SPAN [] [TEXT "``"]
-                  | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
-                  | otherwise          = CODE_NOTATION ( T.unwords
-                                                       . filter (/= mempty)
-                                                       . T.split (== ' ')
-                                                       . T.dropWhileEnd (== ' ')
-                                                       . T.dropWhile (== ' ')
-                                                       $ expr
-                                                       )
-            in [b] <> acc
+        CODE_NOTATION expr -> toExpr expr <> acc
         MATH_EXPRESSION expr ->
             let b | T.null expr        = SPAN [] [TEXT "``"]
                   | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
@@ -408,10 +398,11 @@ toInlineModel inlines
             if isEmptySegments segments
                 then [SPAN [] [TEXT "****"]] <> acc
                 else modelSpan [Bold] segments <> acc
-        SPAN styles []  -> renderWithStyles styles <> acc
+        SPAN styles []       -> renderWithStyles styles <> acc
         SPAN styles segments -> modelSpan styles segments <> acc
-    ) mempty spaceAddedInlines
+    ) mempty modifiedInlines
   where
+
     addSpaces :: [InlineBlock] -> [InlineBlock]
     addSpaces []                       = []
     addSpaces [x]                      = [x]
@@ -424,6 +415,26 @@ toInlineModel inlines
     filterSize (SPAN styles segments : xs) =
         SPAN (filter (not . isSized) styles) segments : filterSize xs
     filterSize (x : xs)                    = x : filterSize xs
+
+    filterHead :: [InlineBlock] -> [InlineBlock]
+    filterHead [] = []
+    filterHead (SPAN [] (TEXT text : rest) : xs) =
+        SPAN [] (TEXT (T.stripStart text) : rest) : xs
+    filterHead others = others
+    
+    toExpr :: Text -> [InlineBlock]
+    toExpr expr =
+        let b | T.null expr        = SPAN [] [TEXT "``"]
+              | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
+              | otherwise          = CODE_NOTATION 
+                  ( T.unwords
+                  . filter (/= mempty)
+                  . T.split (== ' ')
+                  . T.dropWhileEnd (== ' ')
+                  . T.dropWhile (== ' ')
+                  $ expr
+                  )
+        in [b]
 
 removeTrailingSpaces :: [InlineBlock] -> [InlineBlock]
 removeTrailingSpaces is = maybe
@@ -579,7 +590,7 @@ isAllBolds = all checkBolds
 -- Checker
 --------------------------------------------------------------------------------
 
--- PARAGRAPH (ScrapText [SPAN [] [HASHTAG ""],SPAN [Sized (Level 5),Italic,StrikeThrough] []])
+-- PARAGRAPH (ScrapText [SPAN [] [TEXT " "],SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- PARAGRAPH (ScrapText [SPAN [] [TEXT " "],CODE_NOTATION ""])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
