@@ -297,7 +297,7 @@ toRoundTripModel = \case
     PARAGRAPH (ScrapText (SPAN [] (HASHTAG text : rest) : restInline)) ->
         if isEmptySegments (TEXT text : rest) && null restInline
             then [HEADING (Level 4) []]
-            else [ HEADING ( Level 4 ) 
+            else [ HEADING ( Level 4 )
                      (toSegmentModel ([TEXT text] <> rest <> toSegment restInline))
                  ]
     PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
@@ -370,7 +370,7 @@ toInlineModel [SPAN [Sized _level] segments] =
         then []
         else modelSpan [] segments
 toInlineModel inlines
-    | isAllBolds inlines = [SPAN [] [TEXT "\n"]] -- [SPAN [Bold] [],SPAN [UserStyle "!?%"] [TEXT ""]]
+    | isAllBolds inlines  = [SPAN [] [TEXT "\n"]] -- [SPAN [Bold] [],SPAN [UserStyle "!?%"] [TEXT ""]]
     | otherwise =
     let modifiedInlines = removeTrailingSpaces . filterSize . addSpaces . filterHead $ inlines
     in foldr (\inline acc -> case inline of
@@ -421,12 +421,12 @@ toInlineModel inlines
     filterHead (SPAN [] (TEXT text : rest) : xs) =
         SPAN [] (TEXT (T.stripStart text) : rest) : xs
     filterHead others = others
-    
+
     toExpr :: Text -> [InlineBlock]
     toExpr expr =
         let b | T.null expr        = SPAN [] [TEXT "``"]
               | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
-              | otherwise          = CODE_NOTATION 
+              | otherwise          = CODE_NOTATION
                   ( T.unwords
                   . filter (/= mempty)
                   . T.split (== ' ')
@@ -437,8 +437,8 @@ toInlineModel inlines
         in [b]
 
 removeTrailingSpaces :: [InlineBlock] -> [InlineBlock]
-removeTrailingSpaces is = maybe
-    is
+removeTrailingSpaces inlines = maybe
+    inlines
     (\(initSeg, lastSeg, initInline) ->
         let lastSeg' = case lastSeg of
                         TEXT text -> if T.null (T.stripEnd text)
@@ -448,11 +448,11 @@ removeTrailingSpaces is = maybe
         in initInline <> [SPAN [] (initSeg <> lastSeg')]
     )
     (do
-        lastInline <- lastMaybe is
+        lastInline <- lastMaybe inlines
         segments   <- getSegments lastInline
         initSeg    <- initMaybe segments
         lastSeg    <- lastMaybe segments
-        initInline <- initMaybe is
+        initInline <- initMaybe inlines
         return (initSeg, lastSeg, initInline)
     )
 
@@ -548,8 +548,9 @@ toSegment = foldr (\inline acc -> case inline of
         (lastMaybe styles)
     SPAN _styles segments -> segments <> acc
     CODE_NOTATION expr    -> [TEXT expr] <> acc
-    MATH_EXPRESSION expr  -> [TEXT expr] <> acc 
+    MATH_EXPRESSION expr  -> [TEXT expr] <> acc
     ) mempty
+
 --------------------------------------------------------------------------------
 -- Predicates
 --------------------------------------------------------------------------------
@@ -581,6 +582,7 @@ isAllBolds = all checkBolds
             null segments || (any isText segments && all isEmptyText segments)
          SPAN [UserStyle _s] segments ->
             null segments || (any isText segments && all isEmptyText segments)
+         SPAN [] segments -> null segments || concatSegment segments == [TEXT ""]
          _others -> False
       isEmptyText = \case
         TEXT text -> T.null $ T.strip text
@@ -591,11 +593,9 @@ isAllBolds = all checkBolds
 --------------------------------------------------------------------------------
 
 -- PARAGRAPH (ScrapText [SPAN [] [TEXT " "],SPAN [Sized (Level 3),Italic,StrikeThrough] []])
--- PARAGRAPH (ScrapText [SPAN [] [TEXT " "],CODE_NOTATION ""])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
 -- PARAGRAPH (ScrapText [SPAN [] [],SPAN [Bold] []])
--- SPAN [UserStyle "!?%"] [TEXT "",LINK Nothing (Url "http://www.2D2NEPzZiXjTO4PAmRTxAETgc9gmb3s22XVQfRPxTmqF1nHIw4btP.jpeg")]
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
