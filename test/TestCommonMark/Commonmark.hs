@@ -29,8 +29,8 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
                                          isBulletPoint, isSized, isTable,
                                          isText, renderInlineBlock,
-                                         runParagraphParser, shortListOf,
-                                         unverbose, renderSegments)
+                                         renderSegments, runParagraphParser,
+                                         shortListOf, unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -359,7 +359,7 @@ toRoundTripModel = \case
     others    -> [others]
   where
     emptyQuote = [BLOCK_QUOTE (ScrapText [])]
-    emptyText = [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
+    emptyText  = [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
 
 toInlineModel :: [InlineBlock] -> [InlineBlock]
 toInlineModel [SPAN [Sized _level] segments] =
@@ -403,9 +403,10 @@ toInlineModel inlines
     ) mempty spaceAddedInlines
   where
     addSpaces :: [InlineBlock] -> [InlineBlock]
-    addSpaces []     = []
-    addSpaces [x]    = [x]
-    addSpaces (x:xs) = x : SPAN [] [TEXT " "] : addSpaces xs
+    addSpaces []                = []
+    addSpaces [x]               = [x]
+    addSpaces (SPAN [] [] : xs) = SPAN [] [] : addSpaces xs
+    addSpaces (x:xs)            = x : SPAN [] [TEXT " "] : addSpaces xs
 
     filterSize :: [InlineBlock] -> [InlineBlock]
     filterSize [] = []

@@ -19,8 +19,7 @@ import qualified RIO.Text as T
 
 import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
-                                             paragraph, scrapbox, span, text,
-                                             thumbnail)
+                                             paragraph, scrapbox, span, text)
 import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
                                            Scrapbox, Segment, Style (..),
                                            concatInline, concatScrapText)
@@ -125,7 +124,8 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.LINK url title           ->
         [paragraph [span styles [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
-    C.IMAGE url _              -> [thumbnail url]
+    C.IMAGE url _              ->
+        [paragraph [span styles [toLink contents url (extractTextFromNodes contents)]]]
     C.HTML_INLINE _htmlContent -> []
     C.BLOCK_QUOTE              ->
         [blockQuote $ concatMap (toInlineBlock styles) contents]
@@ -180,12 +180,12 @@ toHeading headingNum nodes =
     -- | Convert 'Node' into list of 'Segment'
     toSegments :: Node -> [Segment]
     toSegments (Node _ nodeType contents) = case nodeType of
-        C.TEXT textContent        -> extractTextInline textContent
-        C.CODE codeContent        -> [link Nothing codeContent]
-        C.LINK url title          -> [toLink contents url title]
+        C.TEXT textContent -> extractTextInline textContent
+        C.CODE codeContent -> [link Nothing codeContent]
+        C.LINK url title   -> [toLink contents url title]
         -- C.HTML_INLINE htmlContent -> [text htmlContent]
-        C.IMAGE url title         -> [toLink contents url title]
-        _                         -> concatMap toSegments contents
+        C.IMAGE url title  -> [toLink contents url title]
+        _                  -> concatMap toSegments contents
 
 -- | Construct 'BULLET_POINT'
 toBulletPoint :: [Node] -> Block
