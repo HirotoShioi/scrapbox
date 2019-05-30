@@ -124,7 +124,7 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.LINK url title           ->
         [paragraph [span styles [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
-    C.IMAGE url _              ->
+    C.IMAGE url _title         ->
         [paragraph [span styles [toLink contents url (extractTextFromNodes contents)]]]
     C.HTML_INLINE _htmlContent -> []
     C.BLOCK_QUOTE              ->
@@ -147,7 +147,7 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
         C.TEXT textContent -> toInlineText textContent
         C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
-        C.IMAGE url title  -> withStyle [toLink contents url title]
+        C.IMAGE url _title -> withStyle [toLink contents url (extractTextFromNodes contents)]
         _                    -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
@@ -184,7 +184,7 @@ toHeading headingNum nodes =
         C.CODE codeContent -> [link Nothing codeContent]
         C.LINK url title   -> [toLink contents url title]
         -- C.HTML_INLINE htmlContent -> [text htmlContent]
-        C.IMAGE url title  -> [toLink contents url title]
+        C.IMAGE url _title -> [toLink contents url (extractTextFromNodes contents)]
         _                  -> concatMap toSegments contents
 
 -- | Construct 'BULLET_POINT'

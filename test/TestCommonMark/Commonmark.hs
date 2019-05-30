@@ -303,7 +303,7 @@ toRoundTripModel = \case
         if isEmptySegments segments
             then []
             else [PARAGRAPH (ScrapText (toInlineModel [SPAN [] segments]))]
-    PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] []]) ->
+    PARAGRAPH (ScrapText [SPAN [UserStyle _u] []]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
     PARAGRAPH (ScrapText [SPAN [Bold] []]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
@@ -352,10 +352,7 @@ toRoundTripModel = \case
         if null content
             then [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
             else [TABLE n c]
-    THUMBNAIL url ->
-        if isImageUrl url
-            then [THUMBNAIL url]
-            else [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]])]
+    THUMBNAIL url -> [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]])]
     others    -> [others]
   where
     emptyQuote = [BLOCK_QUOTE (ScrapText [])]
@@ -365,20 +362,22 @@ toInlineModel :: [InlineBlock] -> [InlineBlock]
 toInlineModel [SPAN [Sized _level] segments] =
     if isEmptySegments segments
         then []
-        else [SPAN [] segments]
+        else modelSpan [] segments
 toInlineModel inlines
     | isAllBolds inlines = [SPAN [] [TEXT "\n"]] -- [SPAN [Bold] [],SPAN [UserStyle "!?%"] [TEXT ""]]
     | otherwise          =
     let spaceAddedInlines = removeTrailingSpaces . filterSize . addSpaces $ inlines
     in foldr (\inline acc -> case inline of
         CODE_NOTATION expr ->
-            if T.null expr
-                then [SPAN [] [TEXT "``"]] <> acc
-                else [CODE_NOTATION (T.unwords $ T.words $ T.strip expr)] <> acc
+            let b | T.null expr        = SPAN [] [TEXT "``"]
+                  | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
+                  | otherwise          = CODE_NOTATION (T.unwords $ T.words $ T.strip expr)
+            in [b] <> acc
         MATH_EXPRESSION expr ->
-            if T.null expr
-                then [SPAN [] [TEXT "``"]] <> acc
-                else [CODE_NOTATION (T.unwords $ T.words $ T.strip expr)] <> acc
+            let b | T.null expr        = SPAN [] [TEXT "``"]
+                  | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
+                  | otherwise          = CODE_NOTATION (T.unwords $ T.words $ T.strip expr)
+            in [b] <> acc
         -- SPAN
         SPAN [] [] -> acc
         SPAN [Italic] [TEXT ""] ->
