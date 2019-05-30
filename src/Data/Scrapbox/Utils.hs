@@ -59,7 +59,8 @@ instance Arbitrary Text where
     shrink =  map (T.pack . filter (`notElem` syntaxSymobls)) . shrink . T.unpack
 
 syntaxSymobls :: String
-syntaxSymobls = ['!', '_', '*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>', '-', '\n']
+syntaxSymobls = [ '+', '~','!', '_', '*', '[', ']', '/', '&'
+                , '\\', '$', '#', '"', '\'', '`', '>', '-', '\n']
 
 -- | Generate random url
 genPrintableUrl :: Gen Text

@@ -27,10 +27,10 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
-                                         isBulletPoint, isSized, isTable,
-                                         isText, renderInlineBlock,
-                                         renderSegments, runParagraphParser,
-                                         shortListOf, unverbose, isLink)
+                                         isBulletPoint, isLink, isSized,
+                                         isTable, isText, renderInlineBlock,
+                                         runParagraphParser, shortListOf,
+                                         unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -169,7 +169,7 @@ modelScrapbox = \case
         if null content
             then mempty
             else [BULLET_POINT (Start 1) (mkParagraphs content)]
-    ImageSection t url -> 
+    ImageSection t url ->
         if T.null t
             then [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing (Url url)]])]
             else [PARAGRAPH (ScrapText [SPAN [] [LINK (Just t) (Url url)]])]
@@ -295,13 +295,11 @@ toRoundTripModel = \case
 
     -- Paragraph
     PARAGRAPH (ScrapText [SPAN [] (HASHTAG text : rest)]) ->
-        [ HEADING ( Level 4 ) (toSegmentModel (TEXT text : rest))]
+        if isEmptySegments (TEXT text : rest)
+            then [HEADING (Level 4) []]
+            else [HEADING ( Level 4 ) (toSegmentModel (TEXT text : rest))]
     PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "__"]])]
-    p@(PARAGRAPH (ScrapText [SPAN [] [LINK (Just name) url]])) ->
-        if T.all isSpace name || T.null name || isImageUrl url
-            then [THUMBNAIL url]
-            else [p]
     PARAGRAPH (ScrapText [SPAN [] segments]) ->
         if isEmptySegments segments
             then []
@@ -317,7 +315,10 @@ toRoundTripModel = \case
             then [CODE_BLOCK (CodeName "code") (CodeSnippet [])]
             else [p]
     PARAGRAPH (ScrapText (SPAN [StrikeThrough] []:rest)) ->
-        [CODE_BLOCK (CodeName (foldr ((<>) . renderInlineBlock) mempty rest)) (CodeSnippet [])]
+        [ CODE_BLOCK
+            (CodeName (foldr ((<>) . renderInlineBlock) mempty rest))
+            (CodeSnippet [])
+        ]
     PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
@@ -374,12 +375,24 @@ toInlineModel inlines
         CODE_NOTATION expr ->
             let b | T.null expr        = SPAN [] [TEXT "``"]
                   | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
-                  | otherwise          = CODE_NOTATION (T.unwords $ T.words $ T.strip expr)
+                  | otherwise          = CODE_NOTATION ( T.unwords
+                                                       . filter (/= mempty)
+                                                       . T.split (== ' ')
+                                                       . T.dropWhileEnd (== ' ')
+                                                       . T.dropWhile (== ' ')
+                                                       $ expr
+                                                       )
             in [b] <> acc
         MATH_EXPRESSION expr ->
             let b | T.null expr        = SPAN [] [TEXT "``"]
                   | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
-                  | otherwise          = CODE_NOTATION (T.unwords $ T.words $ T.strip expr)
+                  | otherwise          = CODE_NOTATION ( T.unwords
+                                                       . filter (/= mempty)
+                                                       . T.split (== ' ')
+                                                       . T.dropWhileEnd (== ' ')
+                                                       . T.dropWhile (== ' ')
+                                                       $ expr
+                                                       )
             in [b] <> acc
         -- SPAN
         SPAN [] [] -> acc
@@ -400,7 +413,8 @@ toInlineModel inlines
     addSpaces :: [InlineBlock] -> [InlineBlock]
     addSpaces []                = []
     addSpaces [x]               = [x]
-    addSpaces (SPAN [] [] : xs) = SPAN [] [] : addSpaces xs
+    addSpaces (SPAN [] [] : xs) = addSpaces xs
+    addSpaces (SPAN [] [TEXT ""] : xs) = addSpaces xs
     addSpaces (x:xs)            = x : SPAN [] [TEXT " "] : addSpaces xs
 
     filterSize :: [InlineBlock] -> [InlineBlock]
@@ -446,6 +460,7 @@ toSegmentModel segments =
   where
     adjustSpaces :: [Segment] -> [Segment]
     adjustSpaces [] = []
+    adjustSpaces [x] = [x]
     adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
     adjustSpaces (h1@(HASHTAG _t) : rest) = if isEmptySegments rest
         then [h1]
@@ -460,19 +475,16 @@ modelSpan styles segments
                   <> segments
                   <> [TEXT (renderStyle [StrikeThrough])]
     in modelSpan newStyle newSegment
-  | T.strip (renderSegments segments) /= renderSegments segments 
-    && T.any (not . isSpace) (renderSegments segments) =
-      [ SPAN [] [TEXT (renderStyle styles)]
-      , SPAN [] segments
-      , SPAN [] [TEXT (T.reverse $ renderStyle styles)]
-      ]
   | otherwise = foldr (\segment acc -> case segment of
-    TEXT text -> 
-      let b | T.null text && null styles = acc
-            | T.null text && (not . null) styles = renderWithStyles styles <> acc
+    TEXT text ->
+      let b | T.null text
+            && (not . isEmptySegments $ segments) = acc
+            | T.null text && (not . null) styles && isEmptySegments segments
+                = renderWithStyles styles <> acc
             | otherwise = [SPAN styles [TEXT text]] <> acc
       in b
     HASHTAG tag -> [SPAN styles [TEXT ("#" <> tag)]] <> acc
+    LINK (Just "") url -> [SPAN styles [LINK Nothing url]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
 
@@ -548,9 +560,11 @@ isAllBolds = all checkBolds
 -- Checker
 --------------------------------------------------------------------------------
 
+-- PARAGRAPH (ScrapText [SPAN [] [TEXT " "],CODE_NOTATION ""])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
 -- PARAGRAPH (ScrapText [SPAN [] [],SPAN [Bold] []])
+-- SPAN [UserStyle "!?%"] [TEXT "",LINK Nothing (Url "http://www.2D2NEPzZiXjTO4PAmRTxAETgc9gmb3s22XVQfRPxTmqF1nHIw4btP.jpeg")]
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
