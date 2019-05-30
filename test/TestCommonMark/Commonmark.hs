@@ -411,11 +411,11 @@ toInlineModel inlines
     ) mempty spaceAddedInlines
   where
     addSpaces :: [InlineBlock] -> [InlineBlock]
-    addSpaces []                = []
-    addSpaces [x]               = [x]
-    addSpaces (SPAN [] [] : xs) = addSpaces xs
+    addSpaces []                       = []
+    addSpaces [x]                      = [x]
+    addSpaces (SPAN [] [] : xs)        = addSpaces xs
     addSpaces (SPAN [] [TEXT ""] : xs) = addSpaces xs
-    addSpaces (x:xs)            = x : SPAN [] [TEXT " "] : addSpaces xs
+    addSpaces (x:xs)                   = x : SPAN [] [TEXT " "] : addSpaces xs
 
     filterSize :: [InlineBlock] -> [InlineBlock]
     filterSize [] = []

@@ -21,7 +21,8 @@ import           RIO
 import           Data.Char (isSpace)
 import           RIO.List (headMaybe, isPrefixOf, stripPrefix)
 import qualified RIO.Text as T
-import           Test.QuickCheck (Gen, elements, listOf1, resize, sized, Arbitrary(..))
+import           Test.QuickCheck (Arbitrary (..), Gen, elements, listOf1,
+                                  resize, sized)
 import           Test.QuickCheck.Arbitrary (arbitraryPrintableChar)
 import           Test.QuickCheck.Gen (suchThat)
 
