@@ -181,7 +181,7 @@ toHeading headingNum nodes =
     toSegments :: Node -> [Segment]
     toSegments (Node _ nodeType contents) = case nodeType of
         C.TEXT textContent -> extractTextInline textContent
-        C.CODE codeContent -> [link Nothing codeContent]
+        C.CODE codeContent -> [text codeContent]
         C.LINK url title   -> [toLink contents url title]
         -- C.HTML_INLINE htmlContent -> [text htmlContent]
         C.IMAGE url _title -> [toLink contents url (extractTextFromNodes contents)]

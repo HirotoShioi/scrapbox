@@ -294,10 +294,12 @@ toRoundTripModel = \case
     LINEBREAK -> []
 
     -- Paragraph
-    PARAGRAPH (ScrapText [SPAN [] (HASHTAG text : rest)]) ->
-        if isEmptySegments (TEXT text : rest)
+    PARAGRAPH (ScrapText (SPAN [] (HASHTAG text : rest) : restInline)) ->
+        if isEmptySegments (TEXT text : rest) && null restInline
             then [HEADING (Level 4) []]
-            else [HEADING ( Level 4 ) (toSegmentModel (TEXT text : rest))]
+            else [ HEADING ( Level 4 ) 
+                     (toSegmentModel ([TEXT text] <> rest <> toSegment restInline))
+                 ]
     PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "__"]])]
     PARAGRAPH (ScrapText [SPAN [] segments]) ->
@@ -520,6 +522,23 @@ toLevel (Level lvl)= case lvl of
     1 -> Level 2
     _ -> Level 1
 
+toSegment :: [InlineBlock] -> [Segment]
+toSegment = foldr (\inline acc -> case inline of
+    SPAN [] []            -> acc
+    SPAN styles []        -> maybe
+        acc
+        (\case
+            StrikeThrough -> [TEXT "~~~~"] <> acc
+            Bold          -> [TEXT "**"] <> acc
+            Italic        -> [TEXT "__"] <> acc
+            Sized _s      -> acc
+            UserStyle _u  -> [TEXT "****"] <> acc
+        )
+        (lastMaybe styles)
+    SPAN _styles segments -> segments <> acc
+    CODE_NOTATION expr    -> [TEXT expr] <> acc
+    MATH_EXPRESSION expr  -> [TEXT expr] <> acc 
+    ) mempty
 --------------------------------------------------------------------------------
 -- Predicates
 --------------------------------------------------------------------------------
@@ -560,6 +579,7 @@ isAllBolds = all checkBolds
 -- Checker
 --------------------------------------------------------------------------------
 
+-- PARAGRAPH (ScrapText [SPAN [] [HASHTAG ""],SPAN [Sized (Level 5),Italic,StrikeThrough] []])
 -- PARAGRAPH (ScrapText [SPAN [] [TEXT " "],CODE_NOTATION ""])
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
