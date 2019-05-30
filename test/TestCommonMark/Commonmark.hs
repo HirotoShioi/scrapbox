@@ -12,7 +12,7 @@ import           RIO
 
 import qualified CMark as C
 import           Data.Char (isLetter, isSpace)
-import           RIO.List (zipWith, lastMaybe, initMaybe)
+import           RIO.List (initMaybe, lastMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -27,10 +27,10 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
-                                         isBulletPoint, isTable,
+                                         isBulletPoint, isSized, isTable,
                                          isText, renderInlineBlock,
                                          runParagraphParser, shortListOf,
-                                         unverbose, isSized)
+                                         unverbose, renderSegments)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -249,10 +249,10 @@ commonmarkRoundTripTest block = ((not . isTable) block && (not . isBulletPoint) 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
-    b@(BLOCK_QUOTE (ScrapText [SPAN [Bold] segments])) ->
+    BLOCK_QUOTE (ScrapText [SPAN [Bold] segments]) ->
         if isEmptySegments segments
             then emptyQuote
-            else [b]
+            else [BLOCK_QUOTE (ScrapText (toInlineModel [SPAN [Bold] segments]))]
     BLOCK_QUOTE (ScrapText [SPAN [UserStyle _u] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText [SPAN [UserStyle _u] segments]) ->
         if isEmptySegments segments
@@ -279,7 +279,7 @@ toRoundTripModel = \case
 
     -- HEADING
     HEADING level (TEXT text:rest) ->
-        let head | not . T.null . T.stripStart $ text = 
+        let head | not . T.null . T.stripStart $ text =
                     HEADING (toLevel level) (toSegmentModel (TEXT (T.stripStart text) : rest))
                  | isEmptySegments (TEXT text : rest) = HEADING (toLevel level) []
                  | otherwise =  HEADING (toLevel level) (toSegmentModel rest)
@@ -291,6 +291,8 @@ toRoundTripModel = \case
     LINEBREAK -> []
 
     -- Paragraph
+    PARAGRAPH (ScrapText [SPAN [] (HASHTAG text : rest)]) ->
+        [ HEADING ( Level 4 ) (toSegmentModel (TEXT text : rest))]
     PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "__"]])]
     p@(PARAGRAPH (ScrapText [SPAN [] [LINK (Just name) url]])) ->
@@ -372,38 +374,42 @@ toInlineModel inlines
         CODE_NOTATION expr ->
             if T.null expr
                 then [SPAN [] [TEXT "``"]] <> acc
-                else [CODE_NOTATION expr] <> acc
+                else [CODE_NOTATION (T.unwords $ T.words $ T.strip expr)] <> acc
         MATH_EXPRESSION expr ->
             if T.null expr
                 then [SPAN [] [TEXT "``"]] <> acc
-                else [CODE_NOTATION expr] <> acc
+                else [CODE_NOTATION (T.unwords $ T.words $ T.strip expr)] <> acc
         -- SPAN
         SPAN [] [] -> acc
         SPAN [Italic] [TEXT ""] ->
             [SPAN [] [TEXT "__"]] <> acc
+        SPAN [Bold] segments ->
+            if isEmptySegments segments
+                then [SPAN [] [TEXT "****"]] <> acc
+                else modelSpan [Bold] segments <> acc
         SPAN [UserStyle _s] segments ->
             if isEmptySegments segments
                 then [SPAN [] [TEXT "****"]] <> acc
-                else modelSpan segments [Bold] <> acc
+                else modelSpan [Bold] segments <> acc
         SPAN styles []  -> maybe
                 ([SPAN styles []] <> acc)
-                (\(last, init) -> [SPAN init [TEXT (renderStyle last)]] <> acc)
+                (\(last, init) -> [SPAN init [TEXT (renderStyle [last] <> T.reverse (renderStyle [last]))]] <> acc)
                 (do
                     last <- lastMaybe styles
                     init <- initMaybe styles
                     return (last, init)
                 )
-        SPAN styles segments -> modelSpan segments styles <> acc
+        SPAN styles segments -> modelSpan styles segments <> acc
     ) mempty spaceAddedInlines
   where
     addSpaces :: [InlineBlock] -> [InlineBlock]
-    addSpaces []  = []
-    addSpaces [x] = [x]
+    addSpaces []     = []
+    addSpaces [x]    = [x]
     addSpaces (x:xs) = x : SPAN [] [TEXT " "] : addSpaces xs
-    
+
     filterSize :: [InlineBlock] -> [InlineBlock]
     filterSize [] = []
-    filterSize (SPAN styles segments : xs) = 
+    filterSize (SPAN styles segments : xs) =
         SPAN (filter (not . isSized) styles) segments : filterSize xs
     filterSize (x : xs)                    = x : filterSize xs
 
@@ -450,8 +456,14 @@ toSegmentModel segments =
         else h1 : adjustSpaces rest
     adjustSpaces (x:xs) = x : adjustSpaces xs
 
-modelSpan :: [Segment] -> [Style] -> [InlineBlock]
-modelSpan segments styles = foldr (\segment acc -> case segment of
+modelSpan :: [Style] -> [Segment] -> [InlineBlock]
+modelSpan styles segments
+  | T.strip (renderSegments segments) /= renderSegments segments =
+      [ SPAN [] [TEXT (renderStyle styles)]
+      , SPAN [] segments
+      , SPAN [] [TEXT (renderStyle styles)]
+      ]
+  | otherwise = foldr (\segment acc -> case segment of
     TEXT text -> if T.null text
         then acc
         else [SPAN styles [TEXT text]] <> acc
@@ -462,15 +474,16 @@ modelSpan segments styles = foldr (\segment acc -> case segment of
 styledTextModel :: [Style] -> [Segment] -> [InlineBlock]
 styledTextModel styles segments
   | isEmptySegments segments            = []
-  | otherwise                           = modelSpan segments styles
+  | otherwise                           = modelSpan styles segments
 
-renderStyle :: Style -> Text
-renderStyle = \case
-    Bold          -> "****"
-    Italic        -> "__"
-    StrikeThrough -> "~~~~"
-    Sized _lvl    -> ""
-    UserStyle _s  -> "****"
+renderStyle :: [Style] -> Text
+renderStyle = foldr (\style acc -> case style of
+    Bold          -> "**" <> acc
+    Italic        -> "_" <> acc
+    StrikeThrough -> "~~" <> acc
+    Sized _style  -> acc
+    UserStyle _s  -> "**" <> acc
+    ) mempty
 
 toLevel :: Level -> Level
 toLevel (Level lvl)= case lvl of
@@ -522,9 +535,7 @@ isAllBolds = all checkBolds
 
 -- BLOCK_QUOTE (ScrapText [SPAN [Sized (Level 3),Italic,StrikeThrough] []])
 -- TABLE (TableName "(") (TableContent [["a"]])
--- PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] [],CODE_NOTATION ""])
--- PARAGRAPH (ScrapText [CODE_NOTATION "",CODE_NOTATION "a"])
--- PARAGRAPH (ScrapText [SPAN [UserStyle "!?%"] [],SPAN [Bold] []])
+-- PARAGRAPH (ScrapText [SPAN [] [],SPAN [Bold] []])
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])

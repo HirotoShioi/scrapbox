@@ -7,9 +7,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- This is to avoid warnings regarding defining typeclass instance of 'Text'
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Data.Scrapbox.Types
     ( -- * Datatypes
       Scrapbox (..)
@@ -57,7 +54,6 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
-import qualified RIO.Text as T
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
                                   genericShrink, listOf, oneof, resize, sized)
 
@@ -242,10 +238,6 @@ instance Arbitrary InlineBlock where
                   , (1, randMathExpr)
                   ]
     shrink = genericShrink
-
-instance Arbitrary Text where
-    arbitrary = genPrintableText
-    shrink =  map T.pack . nub . shrink . T.unpack
 
 -- | Segment
 data Segment

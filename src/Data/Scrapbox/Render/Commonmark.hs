@@ -79,7 +79,7 @@ renderScrapText (ScrapText inlineBlocks) =
     adjust [x] = x
     adjust (text : xs)
       | T.stripEnd text /= text || T.null text = text <> adjust xs
-      | otherwise                                      = text <> " " <> adjust xs  
+      | otherwise                              = text <> " " <> adjust xs  
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
