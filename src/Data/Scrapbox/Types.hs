@@ -183,15 +183,15 @@ data Block
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Block where
-    arbitrary = replaceAmbiguousBlock <$> frequency
-            [ (2, return LINEBREAK)
-            , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary))
-            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
-            , (3, PARAGRAPH <$> arbitrary)
-            , (1, TABLE <$> arbitrary <*> arbitrary)
-            , (2, THUMBNAIL <$> arbitrary)
+    arbitrary = replaceAmbiguousBlock <$> oneof
+            [ return LINEBREAK
+            , BLOCK_QUOTE <$> arbitrary
+            , BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary)
+            , CODE_BLOCK <$> arbitrary <*> arbitrary
+            , HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary)
+            , PARAGRAPH <$> arbitrary
+            , TABLE <$> arbitrary <*> arbitrary
+            , THUMBNAIL <$> arbitrary
             ]
     shrink = \case
         BULLET_POINT s b ->
@@ -289,7 +289,7 @@ instance Arbitrary Style where
 instance {-# OVERLAPS #-} Arbitrary [Style] where
     arbitrary = do
         somelvl <- arbitrary
-        let someStyle = fmap (sort . nub) <$> listOf $ elements [Italic]
+        let someStyle = fmap (sort . nub) <$> listOf $ elements [Italic, StrikeThrough]
         oneof
             [ someStyle
             , return [Bold]

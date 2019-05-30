@@ -30,7 +30,7 @@ import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
                                          isBulletPoint, isSized, isTable,
                                          isText, renderInlineBlock,
                                          renderSegments, runParagraphParser,
-                                         shortListOf, unverbose)
+                                         shortListOf, unverbose, isLink)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -169,7 +169,10 @@ modelScrapbox = \case
         if null content
             then mempty
             else [BULLET_POINT (Start 1) (mkParagraphs content)]
-    ImageSection _t url -> [THUMBNAIL (Url url)]
+    ImageSection t url -> 
+        if T.null t
+            then [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing (Url url)]])]
+            else [PARAGRAPH (ScrapText [SPAN [] [LINK (Just t) (Url url)]])]
     StyledText style text -> modelStyledText style text
     BlockQuoteText text ->
         if T.null text
@@ -390,14 +393,7 @@ toInlineModel inlines
             if isEmptySegments segments
                 then [SPAN [] [TEXT "****"]] <> acc
                 else modelSpan [Bold] segments <> acc
-        SPAN styles []  -> maybe
-                ([SPAN styles []] <> acc)
-                (\(last, init) -> [SPAN init [TEXT (renderStyle [last] <> T.reverse (renderStyle [last]))]] <> acc)
-                (do
-                    last <- lastMaybe styles
-                    init <- initMaybe styles
-                    return (last, init)
-                )
+        SPAN styles []  -> renderWithStyles styles <> acc
         SPAN styles segments -> modelSpan styles segments <> acc
     ) mempty spaceAddedInlines
   where
@@ -458,15 +454,24 @@ toSegmentModel segments =
 
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
-  | T.strip (renderSegments segments) /= renderSegments segments =
+  | elem StrikeThrough styles && any isLink segments =
+    let newStyle = filter (/= StrikeThrough) styles
+        newSegment = [TEXT (renderStyle [StrikeThrough])]
+                  <> segments
+                  <> [TEXT (renderStyle [StrikeThrough])]
+    in modelSpan newStyle newSegment
+  | T.strip (renderSegments segments) /= renderSegments segments 
+    && T.any (not . isSpace) (renderSegments segments) =
       [ SPAN [] [TEXT (renderStyle styles)]
       , SPAN [] segments
-      , SPAN [] [TEXT (renderStyle styles)]
+      , SPAN [] [TEXT (T.reverse $ renderStyle styles)]
       ]
   | otherwise = foldr (\segment acc -> case segment of
-    TEXT text -> if T.null text
-        then acc
-        else [SPAN styles [TEXT text]] <> acc
+    TEXT text -> 
+      let b | T.null text && null styles = acc
+            | T.null text && (not . null) styles = renderWithStyles styles <> acc
+            | otherwise = [SPAN styles [TEXT text]] <> acc
+      in b
     HASHTAG tag -> [SPAN styles [TEXT ("#" <> tag)]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
@@ -484,6 +489,16 @@ renderStyle = foldr (\style acc -> case style of
     Sized _style  -> acc
     UserStyle _s  -> "**" <> acc
     ) mempty
+
+renderWithStyles :: [Style] -> [InlineBlock]
+renderWithStyles styles = maybe
+    [SPAN styles []]
+    (\(last, init) -> [SPAN init [TEXT (renderStyle [last] <> T.reverse (renderStyle [last]))]])
+    (do
+        last <- lastMaybe styles
+        init <- initMaybe styles
+        return (last, init)
+    )
 
 toLevel :: Level -> Level
 toLevel (Level lvl)= case lvl of
