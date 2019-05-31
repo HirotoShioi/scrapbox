@@ -562,7 +562,7 @@ toSegment = foldr (\inline acc -> case inline of
         acc
         (\case
             StrikeThrough -> [TEXT "~~~~"] <> acc
-            Bold          -> [TEXT "**"] <> acc
+            Bold          -> [TEXT "****"] <> acc
             Italic        -> [TEXT "__"] <> acc
             Sized _s      -> acc
             UserStyle _u  -> [TEXT "****"] <> acc
@@ -570,13 +570,13 @@ toSegment = foldr (\inline acc -> case inline of
         (lastMaybe styles)
     SPAN styles segments  ->
         if StrikeThrough `elem` styles
-            then [TEXT (renderStyle [StrikeThrough])]
-                <>  segments
-                <> [TEXT (T.reverse $ renderStyle [StrikeThrough])]
+            then   [TEXT (" " <> renderStyle [StrikeThrough])]
+                <> segments
+                <> [TEXT (T.reverse (renderStyle [StrikeThrough]) <> " ")]
                 <> acc
-            else segments
-    CODE_NOTATION expr    -> [TEXT ("`"<> expr <> "`")] <> acc
-    MATH_EXPRESSION expr  -> [TEXT ("`" <> expr <> "`")] <> acc
+            else segments <> acc
+    CODE_NOTATION expr    -> [TEXT expr] <> acc
+    MATH_EXPRESSION expr  -> [TEXT expr] <> acc
     ) mempty
 
 --------------------------------------------------------------------------------
@@ -620,8 +620,6 @@ isAllBolds = all checkBolds
 -- Checker
 --------------------------------------------------------------------------------
 
--- HEADING (Level 3) [TEXT "a "]
--- PARAGRAPH (ScrapText [SPAN [] [HASHTAG ""],SPAN [Sized (Level 2),Italic,StrikeThrough] [LINK Nothing (Url "http://www.Lu9bUzsxvCMZLXaETxiQoI0AtEgBNklzHvPkknynwWqPMMrDX.jpeg")]])
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])

@@ -142,7 +142,7 @@ newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableName where
-    arbitrary = TableName <$> genPrintableText
+    arbitrary = TableName <$> genNonSpaceText
 
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
