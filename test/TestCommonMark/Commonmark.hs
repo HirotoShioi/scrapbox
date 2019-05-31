@@ -27,10 +27,9 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
-                                         isBulletPoint, isLink, isSized,
-                                         isTable, isText, renderInlineBlock,
-                                         runParagraphParser, shortListOf,
-                                         unverbose)
+                                         isBulletPoint, isLink, isSized, isText,
+                                         renderInlineBlock, runParagraphParser,
+                                         shortListOf, unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -244,7 +243,7 @@ commonmarkModelTest commonmark =
 --------------------------------------------------------------------------------
 
 commonmarkRoundTripTest :: Block -> Property
-commonmarkRoundTripTest block = ((not . isTable) block && (not . isBulletPoint) block) ==>
+commonmarkRoundTripTest block = (not . isBulletPoint) block ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
     in parsed === unverbose (Scrapbox (toRoundTripModel block))
@@ -352,12 +351,13 @@ toRoundTripModel = \case
         [PARAGRAPH (ScrapText (toInlineModel inlines))]
 
     -- Table
-    TABLE (TableName name) (TableContent [[""]]) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT (name <> "|  ||--|")]])]
-    TABLE n@(TableName name) c@(TableContent content) ->
-        if null content
-            then [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
-            else [TABLE n c]
+    TABLE (TableName name) (TableContent []) ->
+        [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
+    TABLE (TableName name) (TableContent contents) ->
+        [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])
+        , LINEBREAK
+        , TABLE (TableName "table") (TableContent $ map (fmap T.strip) contents)
+        ]
     THUMBNAIL url -> [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]])]
     others    -> [others]
   where

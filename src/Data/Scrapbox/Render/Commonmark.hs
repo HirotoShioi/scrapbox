@@ -8,6 +8,7 @@ AST into commonmark
 module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmarkNoOption
     , renderInlineBlock
+    , renderTable
     ) where
 import           RIO
 
@@ -167,7 +168,9 @@ renderCodeblock (CodeName name) (CodeSnippet snippet) =
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent contents) =
     let renderedContent = fromMaybe (map T.unwords contents) renderTableM
-    in [name] <> renderedContent
+    in if T.null name
+        then renderedContent
+        else [name] <> [""] <> renderedContent
   where
     renderTableM :: Maybe [Text]
     renderTableM = do
