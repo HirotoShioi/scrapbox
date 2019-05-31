@@ -6,7 +6,11 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Commonmark where
+module TestCommonMark.Commonmark
+    ( commonmarkSpec
+    , commonmarkRoundTripTest
+    , checkCommonmarkRoundTrip
+    ) where
 
 import           RIO
 
@@ -293,16 +297,6 @@ toRoundTripModel = \case
     LINEBREAK -> []
 
     -- Paragraph
-    PARAGRAPH (ScrapText [SPAN [] [HASHTAG ""], MATH_EXPRESSION ""]) ->
-        [HEADING (Level 4) [TEXT "``"]]
-    PARAGRAPH (ScrapText [SPAN [] [HASHTAG ""], CODE_NOTATION ""]) ->
-        [HEADING (Level 4) [TEXT "``"]]
-    PARAGRAPH (ScrapText (SPAN [] (HASHTAG text : rest) : restInline)) ->
-        if isEmptySegments (TEXT text : rest) && null restInline
-            then [HEADING (Level 4) []]
-            else [ HEADING ( Level 4 )
-                     (toSegmentModel ([TEXT text] <> rest <> toSegment restInline))
-                 ]
     PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "__"]])]
     PARAGRAPH (ScrapText [SPAN [] segments]) ->
@@ -523,11 +517,6 @@ modelSpan styles segments
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
 
-styledTextModel :: [Style] -> [Segment] -> [InlineBlock]
-styledTextModel styles segments
-  | isEmptySegments segments            = []
-  | otherwise                           = modelSpan styles segments
-
 renderStyle :: [Style] -> Text
 renderStyle = foldr (\style acc -> case style of
     Bold          -> "**" <> acc
@@ -555,42 +544,9 @@ toLevel (Level lvl)= case lvl of
     1 -> Level 2
     _ -> Level 1
 
-toSegment :: [InlineBlock] -> [Segment]
-toSegment = foldr (\inline acc -> case inline of
-    SPAN [] []            -> acc
-    SPAN styles []        -> maybe
-        acc
-        (\case
-            StrikeThrough -> [TEXT "~~~~"] <> acc
-            Bold          -> [TEXT "****"] <> acc
-            Italic        -> [TEXT "__"] <> acc
-            Sized _s      -> acc
-            UserStyle _u  -> [TEXT "****"] <> acc
-        )
-        (lastMaybe styles)
-    SPAN styles segments  ->
-        if StrikeThrough `elem` styles
-            then   [TEXT (" " <> renderStyle [StrikeThrough])]
-                <> segments
-                <> [TEXT (T.reverse (renderStyle [StrikeThrough]) <> " ")]
-                <> acc
-            else segments <> acc
-    CODE_NOTATION expr    -> [TEXT expr] <> acc
-    MATH_EXPRESSION expr  -> [TEXT expr] <> acc
-    ) mempty
-
 --------------------------------------------------------------------------------
 -- Predicates
 --------------------------------------------------------------------------------
-
-isImageUrl :: Url -> Bool
-isImageUrl (Url url) = any (`T.isSuffixOf` url)
-    [ ".bmp"
-    , ".gif"
-    , ".jpg"
-    , ".jpeg"
-    , ".png"
-    ]
 
 isEmptySegments :: [Segment] -> Bool
 isEmptySegments segments =
