@@ -36,6 +36,7 @@ commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ do
     prop "Model test" commonmarkModelTest
     shouldParseSpec runParagraphParser
+    modifyMaxSuccess (const 100) $ prop "Round trip model test on commonmarks" commonmarkRoundTripTest
     prop "should return non-empty list of blocks if the given string is non-empty" $
         propNonNull runParagraphParser id
 
