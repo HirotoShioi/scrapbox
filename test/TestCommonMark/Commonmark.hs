@@ -467,9 +467,10 @@ getSegments _                  = Nothing
 -- Need to remove trailing spaces
 toSegmentModel :: [Segment] -> [Segment]
 toSegmentModel segments =
-    let spaceAddedSegments = adjustSpaces segments
+    let spaceAddedSegments = remove . adjustSpaces $ segments
     in foldr (\segment acc -> case segment of
         HASHTAG text -> [TEXT ("#" <> text)] <> acc
+        TEXT ""      -> acc
         others       -> [others] <> acc
         )
         mempty
@@ -483,6 +484,23 @@ toSegmentModel segments =
         then [h1]
         else h1 : adjustSpaces rest
     adjustSpaces (x:xs) = x : adjustSpaces xs
+
+    remove :: [Segment] -> [Segment]
+    remove [] = []
+    remove [TEXT text] = [TEXT (T.stripEnd text)]
+    remove xs = maybe
+        xs
+        (\(init, last) -> case last of
+            TEXT text -> if T.null (T.stripEnd text)
+                then init
+                else init <> [TEXT (T.stripEnd text)]
+            _others   -> xs
+        )
+        (do
+            last <- lastMaybe xs
+            init <- initMaybe xs
+            return (init, last)
+        )
 
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
@@ -550,9 +568,15 @@ toSegment = foldr (\inline acc -> case inline of
             UserStyle _u  -> [TEXT "****"] <> acc
         )
         (lastMaybe styles)
-    SPAN _styles segments -> segments <> acc
-    CODE_NOTATION expr    -> [TEXT expr] <> acc
-    MATH_EXPRESSION expr  -> [TEXT expr] <> acc
+    SPAN styles segments  ->
+        if StrikeThrough `elem` styles
+            then [TEXT (renderStyle [StrikeThrough])]
+                <>  segments
+                <> [TEXT (T.reverse $ renderStyle [StrikeThrough])]
+                <> acc
+            else segments
+    CODE_NOTATION expr    -> [TEXT ("`"<> expr <> "`")] <> acc
+    MATH_EXPRESSION expr  -> [TEXT ("`" <> expr <> "`")] <> acc
     ) mempty
 
 --------------------------------------------------------------------------------
@@ -596,6 +620,7 @@ isAllBolds = all checkBolds
 -- Checker
 --------------------------------------------------------------------------------
 
+-- HEADING (Level 3) [TEXT "a "]
 -- PARAGRAPH (ScrapText [SPAN [] [HASHTAG ""],SPAN [Sized (Level 2),Italic,StrikeThrough] [LINK Nothing (Url "http://www.Lu9bUzsxvCMZLXaETxiQoI0AtEgBNklzHvPkknynwWqPMMrDX.jpeg")]])
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
