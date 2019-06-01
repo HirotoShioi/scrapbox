@@ -10,13 +10,16 @@ module TestCommonMark.Commonmark
     ( commonmarkSpec
     , commonmarkRoundTripTest
     , checkCommonmarkRoundTrip
+    , toBulletPointModel
+    , toInlineModel
+    , toRoundTripModel
     ) where
 
 import           RIO
 
 import qualified CMark as C
 import           Data.Char (isLetter, isSpace)
-import           RIO.List (initMaybe, lastMaybe, zipWith)
+import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -30,10 +33,10 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Scrapbox (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
-import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl,
-                                         isBulletPoint, isLink, isSized, isText,
-                                         renderInlineBlock, runParagraphParser,
-                                         shortListOf, unverbose)
+import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isLink,
+                                         isSized, isText, renderInlineBlock,
+                                         runParagraphParser, shortListOf,
+                                         unverbose)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -247,13 +250,20 @@ commonmarkModelTest commonmark =
 --------------------------------------------------------------------------------
 
 commonmarkRoundTripTest :: Block -> Property
-commonmarkRoundTripTest block = (not . isBulletPoint) block ==>
+commonmarkRoundTripTest block = lessThanOneElement block ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
     in parsed === unverbose (Scrapbox (toRoundTripModel block))
+  where
+    lessThanOneElement :: Block -> Bool
+    lessThanOneElement (BULLET_POINT _start blocks) = length blocks <= 1
+    lessThanOneElement _others                      = True
 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
+
+    BULLET_POINT _start blocks -> toBulletPointModel blocks
+
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText [SPAN [Bold] segments]) ->
         if isEmptySegments segments
@@ -280,20 +290,17 @@ toRoundTripModel = \case
             then emptyQuote
             else [BLOCK_QUOTE $ ScrapText $ toInlineModel inlines]
 
-    BULLET_POINT s blocks ->
-        [BULLET_POINT s (concatMap toRoundTripModel blocks)]
-
     -- HEADING
     HEADING level (TEXT text:rest) ->
         let head | not . T.null . T.stripStart $ text =
-                    HEADING (toLevel level) (toSegmentModel (TEXT (T.stripStart text) : rest))
-                 | isEmptySegments (TEXT text : rest) = HEADING (toLevel level) []
-                 | otherwise =  HEADING (toLevel level) (toSegmentModel rest)
+                    HEADING (toLevelModel level) (toSegmentModel (TEXT (T.stripStart text) : rest))
+                 | isEmptySegments (TEXT text : rest) = HEADING (toLevelModel level)  []
+                 | otherwise =  HEADING (toLevelModel level) (toSegmentModel rest)
         in [head]
     HEADING level segments ->
         if isEmptySegments segments
-            then [HEADING (toLevel level) []]
-            else [HEADING (toLevel level) (toSegmentModel segments)]
+            then [HEADING (toLevelModel level) []]
+            else [HEADING (toLevelModel level) (toSegmentModel segments)]
     LINEBREAK -> []
 
     -- Paragraph
@@ -361,6 +368,9 @@ toRoundTripModel = \case
   where
     emptyQuote = [BLOCK_QUOTE (ScrapText [])]
     emptyText  = [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
+    toLevelModel (Level num)
+      | num >= 5  = Level 1
+      | otherwise = Level num
 
 toInlineModel :: [InlineBlock] -> [InlineBlock]
 toInlineModel [SPAN [Sized _level] segments] =
@@ -536,14 +546,44 @@ renderWithStyles styles = maybe
         return (last, init)
     )
 
-toLevel :: Level -> Level
-toLevel (Level lvl)= case lvl of
-    4 -> Level 4
-    3 -> Level 3
-    2 -> Level 2
-    1 -> Level 2
-    _ -> Level 1
-
+toBulletPointModel :: [Block] -> [Block]
+toBulletPointModel = foldr (\block acc -> case block of
+    c@(CODE_BLOCK _name _snippet) -> 
+        if null acc
+            then toRoundTripModel c <> acc
+            else toRoundTripModel c <> [LINEBREAK] <> acc
+    t@(TABLE (TableName name) (TableContent content)) -> 
+        let b   | null content = maybe
+                    [BULLET_POINT (Start 1) [PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]]]
+                    (\(head, rest) -> case head of
+                        BULLET_POINT s bs   -> BULLET_POINT s ([PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]] <> bs) : rest
+                        _others            -> BULLET_POINT (Start 1) [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])] : head : rest
+                    )
+                    ((,) <$> headMaybe acc <*> tailMaybe acc)
+                | null acc  = toRoundTripModel t <> acc
+                | otherwise = toRoundTripModel t <> [LINEBREAK] <> acc
+        in b
+    LINEBREAK -> maybe
+        [BULLET_POINT (Start 1) []]
+        (\(head, rest) -> case head of
+            BULLET_POINT _s _b -> head : rest
+            _others            -> BULLET_POINT (Start 1) [] : head : rest
+        )
+        ((,) <$> headMaybe acc <*> tailMaybe acc)
+    others -> maybe
+        [BULLET_POINT (Start 1) (toRoundTripModel others)]
+        (\(head, rest) -> case head of
+            BULLET_POINT s b   -> BULLET_POINT s (toRoundTripModel others <> b) : rest
+            _others            -> BULLET_POINT (Start 1) (toRoundTripModel others) : head : rest
+        )
+        ((,) <$> headMaybe acc <*> tailMaybe acc)
+    ) mempty . flatten
+  where
+    flatten :: [Block] -> [Block]
+    flatten = foldr (\block acc -> case block of
+        BULLET_POINT _s blocks -> flatten blocks <> acc
+        others                 -> others : acc
+        ) mempty
 --------------------------------------------------------------------------------
 -- Predicates
 --------------------------------------------------------------------------------
@@ -576,6 +616,7 @@ isAllBolds = all checkBolds
 -- Checker
 --------------------------------------------------------------------------------
 
+-- (BULLET_POINT (Start 3) [BULLET_POINT (Start 1) [TABLE (TableName "a1a39YiPa") (TableContent [["e"]]),LINEBREAK]])
 checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, Bool)
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])

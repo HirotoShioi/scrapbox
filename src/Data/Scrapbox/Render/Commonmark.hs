@@ -89,23 +89,25 @@ renderScrapText (ScrapText inlineBlocks) =
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start startNum) blocks =
-    let renderedStart = T.replicate (startNum - 1) "\t" <> "- "
-    in foldr (\block acc ->
+renderBulletPoint _start = foldr (\block acc ->
         let rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
                 -- rendered as bulletpoint
                 CODE_BLOCK codeName codeSnippet ->
-                    renderCodeblock codeName codeSnippet
+                    addSpaces acc $ renderCodeblock codeName codeSnippet
                 TABLE tableName tableContent ->
-                    renderTable tableName tableContent
+                    addSpaces acc $ renderTable tableName tableContent
                 -- Special case on 'BULLET_POINT'
-                BULLET_POINT (Start num) blocks' ->
-                    renderBulletPoint (Start (num + startNum)) blocks'
-                others ->
-                    map (\line -> renderedStart <> line) $ renderBlock others
+                BULLET_POINT start blocks' ->
+                    addSpaces acc $ renderBulletPoint start blocks'
+                others -> map (\t -> "- " <> t) $ renderBlock others
         in rendered <> acc
-        ) mempty blocks
+        ) mempty
+  where
+    addSpaces :: [Text] -> [Text] -> [Text]
+    addSpaces acc content
+      | null acc = content
+      | otherwise = content <> [""]
 
 -- | Render 'HEADING'
 renderHeading :: Level -> [Segment] -> Text
