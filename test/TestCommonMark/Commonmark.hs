@@ -552,16 +552,9 @@ toBulletPointModel = foldr (\block acc -> case block of
         if null acc
             then toRoundTripModel c <> acc
             else toRoundTripModel c <> [LINEBREAK] <> acc
-    t@(TABLE (TableName name) (TableContent content)) -> 
-        let b   | null content = maybe
-                    [BULLET_POINT (Start 1) [PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]]]
-                    (\(head, rest) -> case head of
-                        BULLET_POINT s bs   -> BULLET_POINT s ([PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]] <> bs) : rest
-                        _others            -> BULLET_POINT (Start 1) [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])] : head : rest
-                    )
-                    ((,) <$> headMaybe acc <*> tailMaybe acc)
-                | null acc  = toRoundTripModel t <> acc
-                | otherwise = toRoundTripModel t <> [LINEBREAK] <> acc
+    t@(TABLE _name _content) -> 
+        let b | null acc = toRoundTripModel t <> acc
+              | otherwise = toRoundTripModel t <> [LINEBREAK] <> acc
         in b
     LINEBREAK -> maybe
         [BULLET_POINT (Start 1) []]

@@ -89,7 +89,7 @@ renderScrapText (ScrapText inlineBlocks) =
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint _start = foldr (\block acc ->
+renderBulletPoint _start = foldl' (\acc block->
         let rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
                 -- rendered as bulletpoint
@@ -101,13 +101,13 @@ renderBulletPoint _start = foldr (\block acc ->
                 BULLET_POINT start blocks' ->
                     addSpaces acc $ renderBulletPoint start blocks'
                 others -> map (\t -> "- " <> t) $ renderBlock others
-        in rendered <> acc
+        in acc <> rendered
         ) mempty
   where
     addSpaces :: [Text] -> [Text] -> [Text]
     addSpaces acc content
-      | null acc = content
-      | otherwise = content <> [""]
+      | null acc  = content
+      | otherwise = [""] <> content
 
 -- | Render 'HEADING'
 renderHeading :: Level -> [Segment] -> Text
