@@ -73,7 +73,7 @@ renderUrl name (Url url)
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
-    adjust $ foldr ((:) . renderInlineBlock) mempty (hashCare inlineBlocks)
+    adjust $ foldl' (\acc inline -> acc <> [renderInlineBlock inline]) mempty (hashCare inlineBlocks)
   where
     adjust :: [Text] -> Text
     adjust [] = mempty
@@ -118,7 +118,10 @@ renderHeading (Level headingNum) segments =
                 2 -> 3
                 1 -> 4
                 _ -> 4
-        renderedSegments = foldr ( (<>) . renderSegment) mempty (adjustSpaces segments)
+        renderedSegments = foldl'
+            (\acc segment -> acc <> renderSegment segment)
+            mempty
+            (adjustSpaces segments)
         renderedLevel    = T.replicate level "#"
     in  renderedLevel <> " " <> renderedSegments
   where

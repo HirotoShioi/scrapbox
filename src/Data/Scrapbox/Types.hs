@@ -317,7 +317,7 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
 
     mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
     mkVerboseInlineBlock (SPAN style segments) =
-        foldr (\segment acc -> [SPAN style [segment]] <> acc) mempty segments
+        foldl' (\acc segment -> acc <> [SPAN style [segment]]) mempty segments
     mkVerboseInlineBlock others                = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure

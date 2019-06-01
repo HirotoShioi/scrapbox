@@ -51,7 +51,7 @@ renderBlock = \case
 -- | Render given 'ScrapText' into 'Text'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlines) =
-    foldr (\scrap acc-> renderInline scrap <> acc) mempty inlines
+    foldl' (\acc scrap -> acc <> renderInline scrap) mempty inlines
 
 -- | Render given 'InlineBlock' into 'Text'
 renderInline :: InlineBlock -> Text
@@ -61,7 +61,7 @@ renderInline (MATH_EXPRESSION expr)  = "[$ " <> expr <> "]"
 
 -- | Render given @[Segment]@ to 'Text'
 renderSegments :: [Segment] -> Text
-renderSegments = foldr (\inline acc -> renderSegment inline <> acc) mempty
+renderSegments = foldl' (\acc inline -> acc <> renderSegment inline) mempty
   where
     renderSegment :: Segment -> Text
     renderSegment = \case

@@ -197,9 +197,9 @@ toBulletPoint nodes = bulletPoint 1 $ convertToBlocks nodes
 
 -- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
-extractTextFromNodes = foldr
-    (\(Node _ nodeType nodes') acc ->
-        extractText nodeType <> extractTextFromNodes nodes' <> acc
+extractTextFromNodes = foldl'
+    (\acc (Node _ nodeType nodes') ->
+        acc <> extractText nodeType <> extractTextFromNodes nodes'
     ) mempty
   where
     extractText :: NodeType -> Text

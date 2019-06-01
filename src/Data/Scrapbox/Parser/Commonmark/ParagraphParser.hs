@@ -141,8 +141,8 @@ toInlineBlocks text = either
 extractTextInline :: Text -> [Segment]
 extractTextInline text =
     let inlineBlocks = toInlineBlocks text
-    in foldr (\inline acc -> case inline of
-        SPAN _styles segments -> segments <> acc
-        CODE_NOTATION expr    -> [TEXT expr] <> acc
-        MATH_EXPRESSION expr  -> [TEXT expr] <> acc
+    in foldl' (\acc inline -> case inline of
+        SPAN _styles segments -> acc <> segments
+        CODE_NOTATION expr    -> acc <> [TEXT expr]
+        MATH_EXPRESSION expr  -> acc <> [TEXT expr]
         ) mempty inlineBlocks
