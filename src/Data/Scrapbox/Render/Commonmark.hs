@@ -39,7 +39,7 @@ renderBlock :: Block -> [Text]
 renderBlock = \case
     LINEBREAK                       -> [""]
     BLOCK_QUOTE scraptext           -> [">" <> renderScrapText scraptext]
-    BULLET_POINT start blocks       -> renderBulletPoint start blocks
+    BULLET_POINT _start blocks      -> renderBulletPoint (Start 0) blocks
     CODE_BLOCK codeName codeSnippet -> renderCodeblock codeName codeSnippet
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
@@ -89,8 +89,9 @@ renderScrapText (ScrapText inlineBlocks) =
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint _start = foldl' (\acc block->
-        let rendered = case block of
+renderBulletPoint (Start num) = foldl' (\acc block->
+        let spaces   = T.replicate num "\t"
+            rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
                 -- rendered as bulletpoint
                 CODE_BLOCK codeName codeSnippet ->
@@ -98,9 +99,9 @@ renderBulletPoint _start = foldl' (\acc block->
                 TABLE tableName tableContent ->
                     addSpaces acc $ renderTable tableName tableContent
                 -- Special case on 'BULLET_POINT'
-                BULLET_POINT start blocks' ->
-                    addSpaces acc $ renderBulletPoint start blocks'
-                others -> map (\t -> "- " <> t) $ renderBlock others
+                BULLET_POINT _s blocks' ->
+                    addSpaces acc $ renderBulletPoint (Start $ num + 1) blocks'
+                others -> map (\t -> spaces <> "- " <> t) $ renderBlock others
         in acc <> rendered
         ) mempty
   where

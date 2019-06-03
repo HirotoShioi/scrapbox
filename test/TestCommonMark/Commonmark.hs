@@ -548,11 +548,11 @@ renderWithStyles styles = maybe
 
 toBulletPointModel :: [Block] -> [Block]
 toBulletPointModel = foldr (\block acc -> case block of
-    c@(CODE_BLOCK _name _snippet) -> 
+    c@(CODE_BLOCK _name _snippet) ->
         if null acc
             then toRoundTripModel c <> acc
             else toRoundTripModel c <> [LINEBREAK] <> acc
-    t@(TABLE _name _content) -> 
+    t@(TABLE _name _content) ->
         let b | null acc = toRoundTripModel t <> acc
               | otherwise = toRoundTripModel t <> [LINEBREAK] <> acc
         in b
