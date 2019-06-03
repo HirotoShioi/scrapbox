@@ -56,7 +56,7 @@ columnParser = do
         rest    <- P.takeText
         return (currList ++ [element], rest)
 
--- | Convert given common mark table into 'TABLE' block
+-- | Convert given common mark table into @TABLE@ block
 commonmarkTableToTable :: CommonMarkTable -> Block
 commonmarkTableToTable (CommonMarkTable columns) =
     table "table" (map getColumn columns)

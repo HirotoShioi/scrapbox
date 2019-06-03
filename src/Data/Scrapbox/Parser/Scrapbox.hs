@@ -41,7 +41,7 @@ lineBreakParser = do
     _ <- endOfLine
     return LINEBREAK
 
--- | Parser for 'PARAGRAPH'
+-- | Parser for @PARAGRAPH@
 paragraphParser :: Parser Block
 paragraphParser = do
     str       <- getString

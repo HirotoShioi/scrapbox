@@ -448,6 +448,7 @@ isStrikeThrough :: Style -> Bool
 isStrikeThrough StrikeThrough = True
 isStrikeThrough _             = False
 
+-- | Checks whether given 'Style' is 'Sized'
 isSized :: Style -> Bool
 isSized (Sized _) = True
 isSized _         = False
