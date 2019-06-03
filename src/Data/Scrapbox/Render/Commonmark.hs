@@ -7,6 +7,9 @@ AST into commonmark
 
 module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmarkNoOption
+    , renderInlineBlock
+    , renderTable
+    , renderBlock
     ) where
 import           RIO
 
@@ -37,7 +40,7 @@ renderBlock :: Block -> [Text]
 renderBlock = \case
     LINEBREAK                       -> [""]
     BLOCK_QUOTE scraptext           -> [">" <> renderScrapText scraptext]
-    BULLET_POINT start blocks       -> renderBulletPoint start blocks
+    BULLET_POINT _start blocks      -> renderBulletPoint (Start 0) blocks
     CODE_BLOCK codeName codeSnippet -> renderCodeblock codeName codeSnippet
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
@@ -66,34 +69,47 @@ renderUrl name (Url url)
         , ".jpeg"
         , ".png"
         ]       = "![" <> name <> "](" <> url <> ")"
-  | T.null name = url
   | otherwise   = "[" <> name <> "]" <> "(" <> url <> ")"
 
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
-    -- Add spaces between inlineblocks to ensure each of them are rendered correctly
-    T.unwords $ map renderInlineBlock inlineBlocks
+    adjust $ foldl' (\acc inline -> acc <> [renderInlineBlock inline]) mempty (hashCare inlineBlocks)
+  where
+    adjust :: [Text] -> Text
+    adjust [] = mempty
+    adjust [x] = x
+    adjust (text : xs)
+      | T.stripEnd text /= text || T.null text = text <> adjust xs
+      | otherwise                              = text <> " " <> adjust xs
+
+    hashCare :: [InlineBlock] -> [InlineBlock]
+    hashCare [] = []
+    hashCare (SPAN [] (HASHTAG tag : rest) : xs) = SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
+    hashCare others = others
 
 -- | Render 'BULLET_POINT'
 renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start startNum) blocks =
-    let renderedStart = T.replicate (startNum - 1) "\t" <> "- "
-    in foldr (\block acc ->
-        let rendered = case block of
+renderBulletPoint (Start num) = foldl' (\acc block->
+        let spaces   = T.replicate num "\t"
+            rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
                 -- rendered as bulletpoint
                 CODE_BLOCK codeName codeSnippet ->
-                    renderCodeblock codeName codeSnippet
+                    addSpaces acc $ renderCodeblock codeName codeSnippet
                 TABLE tableName tableContent ->
-                    renderTable tableName tableContent
+                    addSpaces acc $ renderTable tableName tableContent
                 -- Special case on 'BULLET_POINT'
-                BULLET_POINT (Start num) blocks' ->
-                    renderBulletPoint (Start (num + startNum)) blocks'
-                others ->
-                    map (\line -> renderedStart <> line) $ renderBlock others
-        in rendered <> acc
-        ) mempty blocks
+                BULLET_POINT _s blocks' ->
+                    addSpaces acc $ renderBulletPoint (Start $ num + 1) blocks'
+                others -> map (\t -> spaces <> "- " <> t) $ renderBlock others
+        in acc <> rendered
+        ) mempty
+  where
+    addSpaces :: [Text] -> [Text] -> [Text]
+    addSpaces acc content
+      | null acc  = content
+      | otherwise = [""] <> content
 
 -- | Render 'HEADING'
 renderHeading :: Level -> [Segment] -> Text
@@ -104,14 +120,23 @@ renderHeading (Level headingNum) segments =
                 2 -> 3
                 1 -> 4
                 _ -> 4
-        renderedSegments = foldr ( (<>) . renderSegment) mempty segments
+        renderedSegments = foldl'
+            (\acc segment -> acc <> renderSegment segment)
+            mempty
+            (adjustSpaces segments)
         renderedLevel    = T.replicate level "#"
     in  renderedLevel <> " " <> renderedSegments
+  where
+    -- [HASHTAG "a", TEXT " a"]
+    adjustSpaces :: [Segment] -> [Segment]
+    adjustSpaces [] = []
+    adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
+    adjustSpaces (x:xs) = x : adjustSpaces xs
 
 -- | Render 'Segment'
 renderSegment ::  Segment -> Text
 renderSegment = \case
-    HASHTAG text               -> "**#" <> text <> "**"
+    HASHTAG text               -> "#" <> text <> ""
     LINK Nothing url           -> renderUrl mempty url
     LINK (Just name) url       -> renderUrl name url
     TEXT text                  -> text
@@ -122,7 +147,7 @@ renderInlineBlock = \case
     CODE_NOTATION text   -> "`" <> text <> "`"
     MATH_EXPRESSION text -> "`" <> text <> "`"
     SPAN styles segments ->
-        let renderedSegments = foldr ( (<>) . renderSegment) mempty segments
+        let renderedSegments = foldl' (\acc segment -> acc <> renderSegment segment) mempty segments
         in renderWithStyle (nub styles) renderedSegments
   where
     -- Render given text with 'StyleData'
@@ -155,7 +180,9 @@ renderCodeblock (CodeName name) (CodeSnippet snippet) =
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent contents) =
     let renderedContent = fromMaybe (map T.unwords contents) renderTableM
-    in [name] <> renderedContent
+    in if T.null name
+        then renderedContent
+        else [name] <> [""] <> renderedContent
   where
     renderTableM :: Maybe [Text]
     renderTableM = do

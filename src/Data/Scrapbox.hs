@@ -190,7 +190,7 @@ size :: Scrapbox -> Int
 size (Scrapbox blocks) = blockSize blocks
   where
     blockSize :: [Block] -> Int
-    blockSize = foldr (\block acc -> case block of
+    blockSize = foldl' (\acc block -> case block of
       BULLET_POINT _ bs -> blockSize bs + 1 + acc
       _                 -> 1 + acc
       ) 0

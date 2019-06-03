@@ -3,6 +3,9 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+-- This is to avoid warnings regarding defining typeclass instance of 'Text'
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Data.Scrapbox.Utils
     ( -- * Testing utilities
       genPrintableText
@@ -18,7 +21,8 @@ import           RIO
 import           Data.Char (isSpace)
 import           RIO.List (headMaybe, isPrefixOf, stripPrefix)
 import qualified RIO.Text as T
-import           Test.QuickCheck (Gen, elements, listOf1, resize, sized)
+import           Test.QuickCheck (Arbitrary (..), Gen, elements, listOf1,
+                                  resize, sized)
 import           Test.QuickCheck.Arbitrary (arbitraryPrintableChar)
 import           Test.QuickCheck.Gen (suchThat)
 
@@ -51,13 +55,18 @@ hasNoTrailingSpaces str =
     let txt = T.pack str
     in T.strip txt == txt
 
+instance Arbitrary Text where
+    arbitrary = genPrintableText
+    shrink =  map (T.pack . filter (`notElem` syntaxSymobls)) . shrink . T.unpack
+
 syntaxSymobls :: String
-syntaxSymobls = ['*', '[', ']', '/', '\\', '$', '#', '"', '\'', '`', '>']
+syntaxSymobls = [ '+', '~','!', '_', '*', '[', ']', '/', '&', '<', '>'
+                , '\\', '#', '"', '\'', '`', '>', '-', '\n', '|', ')']
 
 -- | Generate random url
 genPrintableUrl :: Gen Text
 genPrintableUrl = do
-    end <- elements 
+    end <- elements
         [ ".org"
         , ".edu"
         , ".com"

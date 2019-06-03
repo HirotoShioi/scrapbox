@@ -7,9 +7,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- This is to avoid warnings regarding defining typeclass instance of 'Text'
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Data.Scrapbox.Types
     ( -- * Datatypes
       Scrapbox (..)
@@ -47,6 +44,7 @@ module Data.Scrapbox.Types
     , isBold
     , isItalic
     , isStrikeThrough
+    , isSized
     , removeAmbiguity
     ) where
 
@@ -56,7 +54,6 @@ import           Data.List (groupBy, nub, sort)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
-import qualified RIO.Text as T
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
                                   genericShrink, listOf, oneof, resize, sized)
 
@@ -145,7 +142,7 @@ newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableName where
-    arbitrary = TableName <$> genPrintableText
+    arbitrary = TableName <$> genNonSpaceText
 
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
@@ -186,15 +183,15 @@ data Block
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Block where
-    arbitrary = replaceAmbiguousBlock <$> frequency
-            [ (2, return LINEBREAK)
-            , (1, BLOCK_QUOTE <$> arbitrary)
-            , (1, BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary))
-            , (1, CODE_BLOCK <$> arbitrary <*> arbitrary)
-            , (2, HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary))
-            , (3, PARAGRAPH <$> arbitrary)
-            , (1, TABLE <$> arbitrary <*> arbitrary)
-            , (2, THUMBNAIL <$> arbitrary)
+    arbitrary = replaceAmbiguousBlock <$> oneof
+            [ return LINEBREAK
+            , BLOCK_QUOTE <$> arbitrary
+            , BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary)
+            , CODE_BLOCK <$> arbitrary <*> arbitrary
+            , HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary)
+            , PARAGRAPH <$> arbitrary
+            , TABLE <$> arbitrary <*> arbitrary
+            , THUMBNAIL <$> arbitrary
             ]
     shrink = \case
         BULLET_POINT s b ->
@@ -241,10 +238,6 @@ instance Arbitrary InlineBlock where
                   , (1, randMathExpr)
                   ]
     shrink = genericShrink
-
-instance Arbitrary Text where
-    arbitrary = genPrintableText
-    shrink =  map T.pack . nub . shrink . T.unpack
 
 -- | Segment
 data Segment
@@ -324,7 +317,7 @@ verbose (Scrapbox blocks) = Scrapbox $ map convertToVerbose blocks
 
     mkVerboseInlineBlock :: InlineBlock -> [InlineBlock]
     mkVerboseInlineBlock (SPAN style segments) =
-        foldr (\segment acc -> [SPAN style [segment]] <> acc) mempty segments
+        foldl' (\acc segment -> acc <> [SPAN style [segment]]) mempty segments
     mkVerboseInlineBlock others                = [others]
 
 -- | Convert given 'Scrapbox' into unverbose structure
@@ -455,6 +448,10 @@ isStrikeThrough :: Style -> Bool
 isStrikeThrough StrikeThrough = True
 isStrikeThrough _             = False
 
+isSized :: Style -> Bool
+isSized (Sized _) = True
+isSized _         = False
+
 --------------------------------------------------------------------------------
 -- These functions are used to define typeclass instance of Arbitrary
 --------------------------------------------------------------------------------
@@ -470,6 +467,7 @@ formatInline (x:xs)                   = x : formatInline xs
 -- | Add space after hashtag
 addSpace :: [Segment] -> [Segment]
 addSpace []                               = []
+addSpace [HASHTAG txt]                    = [HASHTAG txt]
 addSpace (HASHTAG txt : TEXT text : rest) =
     HASHTAG txt : TEXT (" " <> text) : addSpace rest
 addSpace (HASHTAG txt : rest)             =

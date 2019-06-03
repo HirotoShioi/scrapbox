@@ -7,6 +7,7 @@
 module Data.Scrapbox.Parser.Commonmark
     ( -- * Parser
       parseCommonmark
+    , runParagraphParser
     ) where
 
 import           RIO hiding (link, span)
@@ -19,13 +20,14 @@ import qualified RIO.Text as T
 
 import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
-                                             paragraph, scrapbox, span, text,
-                                             thumbnail)
-import           Data.Scrapbox.Types as S (Block (..), InlineBlock, Scrapbox,
-                                           Segment, Style (..), concatInline,
-                                           concatScrapText)
+                                             paragraph, scrapbox, span, text)
+import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
+                                           Scrapbox, Segment, Style (..),
+                                           concatInline, concatScrapText)
 
-import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (toInlineBlocks)
+import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (extractTextInline,
+                                                                  runParagraphParser,
+                                                                  toInlineBlocks)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 
 --------------------------------------------------------------------------------
@@ -124,8 +126,9 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.LINK url title           ->
         [paragraph [span styles [toLink contents url title]]]
     C.HTML_BLOCK htmlContent   -> [codeBlock "html" (T.lines htmlContent)]
-    C.IMAGE url _              -> [thumbnail url]
-    C.HTML_INLINE htmlContent  -> [codeBlock "html" (T.lines htmlContent)]
+    C.IMAGE url _title         ->
+        [paragraph [span styles [toLink contents url (extractTextFromNodes contents)]]]
+    C.HTML_INLINE _htmlContent -> []
     C.BLOCK_QUOTE              ->
         [blockQuote $ concatMap (toInlineBlock styles) contents]
     -- I have on idea what these are,
@@ -137,19 +140,26 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
 -- | Convert 'Node' into list of 'InlineBlock'
 -- Need state monad to inherit style from parent node
 toInlineBlock :: [Style] -> Node -> [InlineBlock]
-toInlineBlock styles nodes = concatInline $ convertToInlineBlock nodes
+toInlineBlock styles node = concatInline $ convertToInlineBlock node
   where
     convertToInlineBlock :: Node -> [InlineBlock]
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
-        EMPH               -> concatMap (toInlineBlock (Italic : styles)) contents
-        STRONG             -> concatMap (toInlineBlock (Bold : styles)) contents
-        C.TEXT textContent -> withStyle [text textContent]
-        CODE codeContent   -> [codeNotation codeContent]
+        C.EMPH             -> concatMap (toInlineBlock (Italic : styles)) contents
+        C.STRONG           -> concatMap (toInlineBlock (Bold : styles)) contents
+        C.TEXT textContent -> toInlineText textContent
+        C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
-        IMAGE url title    -> [span [] [toLink contents url title]]
-        _                  -> concatMap (toInlineBlock styles)  contents
+        C.IMAGE url _title -> withStyle [toLink contents url (extractTextFromNodes contents)]
+        _                    -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
+
+    toInlineText :: Text -> [InlineBlock]
+    toInlineText txt =
+        let inlines = toInlineBlocks txt
+        in map (\case
+                 SPAN s segments -> SPAN (styles <> s) segments
+                 others          -> others) inlines
 
 -- | Convert to 'CODE_BLOCK'
 toCodeBlock :: Text -> [Text] -> Block
@@ -172,10 +182,11 @@ toHeading headingNum nodes =
     -- | Convert 'Node' into list of 'Segment'
     toSegments :: Node -> [Segment]
     toSegments (Node _ nodeType contents) = case nodeType of
-        C.TEXT textContent -> [text textContent]
-        C.CODE codeContent -> [link Nothing codeContent]
+        C.TEXT textContent -> extractTextInline textContent
+        C.CODE codeContent -> [text codeContent]
         C.LINK url title   -> [toLink contents url title]
-        IMAGE url title    -> [toLink contents url title]
+        -- C.HTML_INLINE htmlContent -> [text htmlContent]
+        C.IMAGE url _title -> [toLink contents url (extractTextFromNodes contents)]
         _                  -> concatMap toSegments contents
 
 -- | Construct 'BULLET_POINT'
@@ -188,15 +199,15 @@ toBulletPoint nodes = bulletPoint 1 $ convertToBlocks nodes
 
 -- | Extract text from nodes
 extractTextFromNodes :: [Node] -> Text
-extractTextFromNodes = foldr
-    (\(Node _ nodeType nodes') acc ->
-        extractText nodeType <> extractTextFromNodes nodes' <> acc
+extractTextFromNodes = foldl'
+    (\acc (Node _ nodeType nodes') ->
+        acc <> extractText nodeType <> extractTextFromNodes nodes'
     ) mempty
   where
     extractText :: NodeType -> Text
     extractText = \case
         C.TEXT textContent -> textContent
-        CODE codeContent   -> "`" <> codeContent <> "`"
+        C.CODE codeContent   -> "`" <> codeContent <> "`"
         -- For now, we're going to ignore everything else
         _         -> mempty
 
