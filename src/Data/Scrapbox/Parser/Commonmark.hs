@@ -7,6 +7,7 @@
 module Data.Scrapbox.Parser.Commonmark
     ( -- * Parser
       parseCommonmark
+    , runParagraphParser
     ) where
 
 import           RIO hiding (link, span)
@@ -25,6 +26,7 @@ import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
                                            concatInline, concatScrapText)
 
 import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (extractTextInline,
+                                                                  runParagraphParser,
                                                                   toInlineBlocks)
 import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 

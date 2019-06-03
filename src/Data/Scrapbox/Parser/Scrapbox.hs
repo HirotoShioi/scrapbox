@@ -5,6 +5,8 @@
 
 module Data.Scrapbox.Parser.Scrapbox
     ( runScrapboxParser
+    , runSpanParser
+    , runScrapTextParser
     ) where
 
 import           RIO hiding (many, try)
@@ -18,8 +20,10 @@ import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
                                                 try, unexpected)
 
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (extractParagraph,
+                                                          runScrapTextParser,
                                                           runScrapTextParserM)
-import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParserM)
+import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParser,
+                                                     runSpanParserM)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), Level (..),
                                       Scrapbox (..), Start (..),

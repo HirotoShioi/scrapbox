@@ -34,8 +34,9 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isLink,
-                                         isSized, isText, runParagraphParser,
-                                         shortListOf, unverbose)
+                                         isSized, isText, shortListOf,
+                                         unverbose)
+import           Data.Scrapbox.Parser.Commonmark (runParagraphParser)
 import           Data.Scrapbox.Render.Commonmark (renderBlock,
                                                   renderInlineBlock)
 import           Utils (propNonNull, shouldParseSpec)
@@ -257,7 +258,7 @@ commonmarkRoundTripTest block = lessThanOneElement block ==>
     in parsed === unverbose (Scrapbox (toRoundTripModel block))
   where
     lessThanOneElement :: Block -> Bool
-    lessThanOneElement (BULLET_POINT _start blocks) = 
+    lessThanOneElement (BULLET_POINT _start blocks) =
         length blocks <= 1 && all lessThanOneElement blocks
     lessThanOneElement _others = True
 
@@ -269,7 +270,7 @@ toRoundTripModel = \case
         foldl' (\acc block -> case block of
             t@(TABLE _n _c)      -> acc <> toRoundTripModel t
             c@(CODE_BLOCK _n _c) -> acc <> toRoundTripModel c
-            b                    -> 
+            b ->
                 let rendered = map ("- " <> ) $ renderBlock b
                     code     = CODE_BLOCK (CodeName "code") (CodeSnippet rendered)
                 in acc <> [code]

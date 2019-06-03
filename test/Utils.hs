@@ -18,7 +18,7 @@ import           RIO
 
 import           Data.Char (isLetter)
 import           Data.Scrapbox (Block (..), Scrapbox (..), renderToScrapbox)
-import           Data.Scrapbox.Internal (runScrapboxParser)
+import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Prelude (putStrLn)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, it)

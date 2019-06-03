@@ -14,8 +14,9 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Scrapbox (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), renderToScrapbox, size)
-import           Data.Scrapbox.Internal (runScrapTextParser, runScrapboxParser,
-                                         runSpanParser)
+import           Data.Scrapbox.Parser.Scrapbox (runScrapTextParser,
+                                                runScrapboxParser,
+                                                runSpanParser)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderScrapText,
                                                 renderSegments)
 
