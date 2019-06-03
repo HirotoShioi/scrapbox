@@ -1,18 +1,11 @@
 {-| Exposed modules used for testing
 -}
 module Data.Scrapbox.Internal
-    ( -- * Render functions
-      renderBlock
-    , renderSegments
-    , renderScrapText
-    , renderInline
-    , renderWithStyle
-    -- * Commonmark
-    , renderInlineBlock
+    ( 
     -- * Parsers
     -- These parsers can be used to parse given 'String' into some data type
     -- ** Scrapbox
-    , runScrapTextParser
+      runScrapTextParser
     , runSpanParser
     , runScrapboxParser
     -- ** Commonmark
@@ -51,10 +44,6 @@ import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (runParagraphPa
 import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import           Data.Scrapbox.Parser.Scrapbox.ScrapText (runScrapTextParser)
 import           Data.Scrapbox.Parser.Scrapbox.Span (runSpanParser)
-import           Data.Scrapbox.Render.Commonmark (renderInlineBlock)
-import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderInline,
-                                                renderScrapText, renderSegments,
-                                                renderWithStyle)
 import           Data.Scrapbox.Types (concatInline, concatScrapText,
                                       concatSegment, isBlockQuote, isBold,
                                       isBulletPoint, isCodeBlock,

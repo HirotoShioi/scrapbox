@@ -25,6 +25,8 @@ source-repository head
 library
   exposed-modules:     Data.Scrapbox
                        Data.Scrapbox.Internal
+                       Data.Scrapbox.Render.Commonmark
+                       Data.Scrapbox.Render.Scrapbox
   other-modules:       Data.Scrapbox.Constructors
                        Data.Scrapbox.Parser.Scrapbox
                        Data.Scrapbox.Parser.Scrapbox.Span
@@ -33,8 +35,6 @@ library
                        Data.Scrapbox.Parser.Commonmark
                        Data.Scrapbox.Parser.Commonmark.TableParser
                        Data.Scrapbox.Parser.Commonmark.ParagraphParser
-                       Data.Scrapbox.Render.Scrapbox
-                       Data.Scrapbox.Render.Commonmark
                        Data.Scrapbox.Utils
                        Data.Scrapbox.Types
                        Data.Scrapbox.Examples.Test

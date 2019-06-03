@@ -9,6 +9,7 @@ module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmarkNoOption
     , renderInlineBlock
     , renderTable
+    , renderBlock
     ) where
 import           RIO
 

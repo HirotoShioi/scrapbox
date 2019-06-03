@@ -34,9 +34,10 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isLink,
-                                         isSized, isText, renderInlineBlock,
-                                         runParagraphParser, shortListOf,
-                                         unverbose)
+                                         isSized, isText, runParagraphParser,
+                                         shortListOf, unverbose)
+import           Data.Scrapbox.Render.Commonmark (renderBlock,
+                                                  renderInlineBlock)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -256,13 +257,25 @@ commonmarkRoundTripTest block = lessThanOneElement block ==>
     in parsed === unverbose (Scrapbox (toRoundTripModel block))
   where
     lessThanOneElement :: Block -> Bool
-    lessThanOneElement (BULLET_POINT _start blocks) = length blocks <= 1
-    lessThanOneElement _others                      = True
+    lessThanOneElement (BULLET_POINT _start blocks) = 
+        length blocks <= 1 && all lessThanOneElement blocks
+    lessThanOneElement _others = True
 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
 
-    BULLET_POINT _start blocks -> toBulletPointModel blocks
+
+    BULLET_POINT _s1 [BULLET_POINT _s2 blocks] ->
+        foldl' (\acc block -> case block of
+            t@(TABLE _n _c)      -> acc <> toRoundTripModel t
+            c@(CODE_BLOCK _n _c) -> acc <> toRoundTripModel c
+            b                    -> 
+                let rendered = map ("- " <> ) $ renderBlock b
+                    code     = CODE_BLOCK (CodeName "code") (CodeSnippet rendered)
+                in acc <> [code]
+            ) mempty blocks
+
+    BULLET_POINT _start blocks -> toBulletPointModel (Start 0) blocks
 
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText [SPAN [Bold] segments]) ->
@@ -546,8 +559,8 @@ renderWithStyles styles = maybe
         return (last, init)
     )
 
-toBulletPointModel :: [Block] -> [Block]
-toBulletPointModel = foldr (\block acc -> case block of
+toBulletPointModel :: Start -> [Block] -> [Block]
+toBulletPointModel (Start num) = foldr (\block acc -> case block of
     c@(CODE_BLOCK _name _snippet) ->
         if null acc
             then toRoundTripModel c <> acc
@@ -563,6 +576,8 @@ toBulletPointModel = foldr (\block acc -> case block of
             _others            -> BULLET_POINT (Start 1) [] : head : rest
         )
         ((,) <$> headMaybe acc <*> tailMaybe acc)
+    BULLET_POINT _s blocks ->
+        toBulletPointModel (Start $ num + 1) blocks
     others -> maybe
         [BULLET_POINT (Start 1) (toRoundTripModel others)]
         (\(head, rest) -> case head of
@@ -570,13 +585,8 @@ toBulletPointModel = foldr (\block acc -> case block of
             _others            -> BULLET_POINT (Start 1) (toRoundTripModel others) : head : rest
         )
         ((,) <$> headMaybe acc <*> tailMaybe acc)
-    ) mempty . flatten
-  where
-    flatten :: [Block] -> [Block]
-    flatten = foldr (\block acc -> case block of
-        BULLET_POINT _s blocks -> flatten blocks <> acc
-        others                 -> others : acc
-        ) mempty
+    ) mempty
+
 --------------------------------------------------------------------------------
 -- Predicates
 --------------------------------------------------------------------------------

@@ -14,9 +14,11 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Scrapbox (..), Segment (..), Start (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), renderToScrapbox, size)
-import           Data.Scrapbox.Internal (renderBlock, renderScrapText,
-                                         renderSegments, runScrapTextParser,
-                                         runScrapboxParser, runSpanParser)
+import           Data.Scrapbox.Internal (runScrapTextParser, runScrapboxParser,
+                                         runSpanParser)
+import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderScrapText,
+                                                renderSegments)
+
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
