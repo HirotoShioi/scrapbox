@@ -35,7 +35,7 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isLink,
                                          isSized, isText, shortListOf,
-                                         unverbose)
+                                         unverbose, isBold)
 import           Data.Scrapbox.Parser.Commonmark (runParagraphParser)
 import           Data.Scrapbox.Render.Commonmark (renderBlock,
                                                   renderInlineBlock)
@@ -45,6 +45,7 @@ commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ do
     prop "Model test" commonmarkModelTest
     shouldParseSpec runParagraphParser
+    prop "model test on commonmark round-trip" commonmarkRoundTripTest
     prop "should return non-empty list of blocks if the given string is non-empty" $
         propNonNull runParagraphParser id
 
@@ -264,16 +265,14 @@ commonmarkRoundTripTest block = lessThanOneElement block ==>
 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
-
-
+    -- Need to fix this in the future
     BULLET_POINT _s1 [BULLET_POINT _s2 blocks] ->
         foldl' (\acc block -> case block of
             t@(TABLE _n _c)      -> acc <> toRoundTripModel t
             c@(CODE_BLOCK _n _c) -> acc <> toRoundTripModel c
-            b ->
-                let rendered = map ("- " <> ) $ renderBlock b
-                    code     = CODE_BLOCK (CodeName "code") (CodeSnippet rendered)
-                in acc <> [code]
+            b -> let rendered = map ("- " <> ) $ renderBlock b
+                     code     = CODE_BLOCK (CodeName "code") (CodeSnippet rendered)
+                 in acc <> [code]
             ) mempty blocks
 
     BULLET_POINT _start blocks -> toBulletPointModel (Start 0) blocks
@@ -318,6 +317,11 @@ toRoundTripModel = \case
     LINEBREAK -> []
 
     -- Paragraph
+    PARAGRAPH (ScrapText inlines@[SPAN [bolds] [], SPAN styles []]) ->
+        let b | (isBold bolds || isSized bolds) && any (\s -> isBold s || isSized s) styles  = 
+                PARAGRAPH $ ScrapText (SPAN [] [TEXT "**** "] : renderWithStyles (filter (not . isSized) styles))
+              | otherwise = PARAGRAPH (ScrapText (toInlineModel inlines))
+        in [b]
     PARAGRAPH (ScrapText [SPAN [Sized _level,Italic] [TEXT ""]]) ->
         [PARAGRAPH (ScrapText [SPAN [] [TEXT "__"]])]
     PARAGRAPH (ScrapText [SPAN [] segments]) ->
@@ -445,18 +449,17 @@ toInlineModel inlines
     filterHead others = others
 
     toExpr :: Text -> [InlineBlock]
-    toExpr expr =
-        let b | T.null expr        = SPAN [] [TEXT "``"]
-              | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
-              | otherwise          = CODE_NOTATION
-                  ( T.unwords
-                  . filter (/= mempty)
-                  . T.split (== ' ')
-                  . T.dropWhileEnd (== ' ')
-                  . T.dropWhile (== ' ')
-                  $ expr
-                  )
-        in [b]
+    toExpr expr
+        | T.null expr        = [SPAN [] [TEXT "``"]]
+        | T.all isSpace expr = [CODE_NOTATION (T.filter (/= ' ') expr)]
+        | otherwise          = (:[]) $ CODE_NOTATION
+            ( T.unwords
+            . filter (/= mempty)
+            . T.split (== ' ')
+            . T.dropWhileEnd (== ' ')
+            . T.dropWhile (== ' ')
+            $ expr
+            )
 
 removeTrailingSpaces :: [InlineBlock] -> [InlineBlock]
 removeTrailingSpaces inlines = maybe

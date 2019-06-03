@@ -141,20 +141,13 @@ scrapTextParserSpec =
 scrapboxParserSpec :: Spec
 scrapboxParserSpec =
     describe "Scrapbox parser" $ modifyMaxSuccess (const 5000) $ do
-        roundTripSpec
+        prop "should be able to perform roundtrip if there's no ambiguous syntax" scrapboxRoundTripTest
         shouldParseSpec runScrapboxParser
-
         prop "should be able to perform round-trip on block" blockRoundTripTest
         prop "should return non-empty list of blocks if the given string is non-empty" $
             propNonNull runScrapboxParser (\(Scrapbox blocks) -> blocks)
 
         syntaxPageTest
-
--- | Performs roundtrips test
-roundTripSpec :: Spec
-roundTripSpec = describe "Scrapbox" $
-    prop "should be able to perform roundtrip if there's no ambiguous syntax"
-        scrapboxRoundTripTest
 
 scrapboxRoundTripTest :: Property
 scrapboxRoundTripTest = within 5000000 $ property $
