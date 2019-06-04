@@ -265,7 +265,7 @@ instance Arbitrary Segment where
 -- | Style that can be applied to the 'Segment'
 data Style
     = Sized Level
-    -- ^ You can use this to combine all three as of the styles as well as Header
+    -- ^ Font size
     | Bold
     -- ^ Bold style
     | Italic
@@ -273,6 +273,7 @@ data Style
     | StrikeThrough
     -- ^ StrikeThrough style
     | UserStyle !Text
+    -- ^ User defined style
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Style where

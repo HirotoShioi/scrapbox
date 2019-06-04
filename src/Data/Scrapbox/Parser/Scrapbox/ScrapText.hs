@@ -29,20 +29,20 @@ import           Data.Scrapbox.Types (InlineBlock (..), Level (..),
 -- | Run 'ScrapText' parser on given 'String'
 --
 -- >>> runScrapTextParser "[* bold text] [- strikethrough text] [/ italic text] simple text [* test [link] test [buggy]"
--- Right 
---     ( ScrapText 
+-- Right
+--     ( ScrapText
 --         [ SPAN [ Bold ] [ TEXT "bold text" ]
 --         , SPAN [] [ TEXT " " ]
 --         , SPAN [ StrikeThrough ] [ TEXT "strikethrough text" ]
 --         , SPAN [] [ TEXT " " ]
 --         , SPAN [ Italic ] [ TEXT "italic text" ]
 --         , SPAN [] [ TEXT " simple text " ]
---         , SPAN [ Bold ] 
---             [ TEXT "test " 
+--         , SPAN [ Bold ]
+--             [ TEXT "test "
 --             , LINK Nothing ( Url "link" )
---             , TEXT " test [buggy" 
---             ] 
---         ] 
+--             , TEXT " test [buggy"
+--             ]
+--         ]
 --     )
 
 -- @

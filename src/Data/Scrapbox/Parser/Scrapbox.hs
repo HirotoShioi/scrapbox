@@ -1,4 +1,4 @@
-{-| Module exposes 'Scrapbox' parser
+{-| Module exposes a parser for 'Scrapbox'
 -}
 
 {-# LANGUAGE OverloadedStrings #-}

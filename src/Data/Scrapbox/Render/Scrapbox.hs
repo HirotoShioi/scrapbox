@@ -1,4 +1,4 @@
-{-| Render module, defining the function which renders given 'Scrapbox' into 'Text'
+{-| This module exposes a set of rendering functions for the 'Scrapbox'
 -}
 
 {-# LANGUAGE LambdaCase        #-}

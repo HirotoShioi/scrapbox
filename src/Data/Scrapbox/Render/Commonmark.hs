@@ -1,5 +1,4 @@
-{-| This module exports 'renderToCommonmarkNoOption' which renders 'Scrapbox'
-AST into commonmark
+{-| This module exports a set of renderer functions for Commonmark
 -}
 
 {-# LANGUAGE LambdaCase        #-}

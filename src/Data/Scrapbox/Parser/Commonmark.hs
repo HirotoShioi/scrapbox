@@ -1,4 +1,4 @@
-{-| This module defines an parser for Commnonmark.
+{-| This module defines a parser for Commnonmark.
 -}
 
 {-# LANGUAGE LambdaCase        #-}
