@@ -147,8 +147,8 @@ scrapboxParserSpec =
         syntaxPageTest
 
 scrapboxRoundTripTest :: Scrapbox -> Property
-scrapboxRoundTripTest scrapbox = within 5000000 $ property $ 
-      label (printSize $ size scrapbox) 
+scrapboxRoundTripTest scrapbox = within 5000000 $ property $
+      label (printSize $ size scrapbox)
     $ roundTripTest (renderToScrapbox []) runScrapboxParser id
   where
     printSize bsize
@@ -157,7 +157,7 @@ scrapboxRoundTripTest scrapbox = within 5000000 $ property $
       | otherwise                = "More than 10"
 
 blockRoundTripTest :: Block -> Property
-blockRoundTripTest = roundTripTest 
+blockRoundTripTest = roundTripTest
     (T.unlines . renderBlock)
     runScrapboxParser
     (Scrapbox . toModel)
