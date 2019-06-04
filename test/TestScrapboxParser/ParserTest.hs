@@ -19,7 +19,6 @@ import           Data.Scrapbox.Parser.Scrapbox (runScrapTextParser,
                                                 runSpanParser)
 import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderScrapText,
                                                 renderSegments)
-
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -36,14 +35,22 @@ parserSpec = do
 
 -- | General unit testing to see the parser can parse given data as expected
 propParseAsExpected :: (Eq parsed, Show parsed)
-                    => String
+                    => toParsed
                     -> parsed
-                    -> (String -> Either ParseError parsed)
+                    -> (toParsed -> Either ParseError parsed)
                     -> Property
-propParseAsExpected example expected parser = property $ either
-    (const $ property False)
-    (=== expected)
-    (parser example)
+propParseAsExpected example expected parser =
+    parser example === Right expected
+
+roundTripTest :: (Eq parsed, Show parsed)
+              => (item -> Text)
+              -> (String -> Either ParseError parsed)
+              -> (item -> parsed)
+              -> item
+              -> Property
+roundTripTest renderer parser modelFunc item =
+    let roundTripped = parser $ T.unpack $ renderer item
+    in roundTripped === Right (modelFunc item)
 
 --------------------------------------------------------------------------------
 -- Inline syntax
@@ -66,12 +73,7 @@ spanParserSpec =
             prop "round trip tests" segmentRoundTripTest
   where
     segmentRoundTripTest :: Segment -> Property
-    segmentRoundTripTest segment =
-        let rendered = renderSegments [segment]
-        in either
-            (const $ property  False)
-            (=== [segment])
-            (runSpanParser $ T.unpack rendered)
+    segmentRoundTripTest = roundTripTest (\s -> renderSegments [s]) runSpanParser (: [])
 
     exampleText :: String
     exampleText = "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `partial code [partial url #someHashtag"
@@ -107,12 +109,7 @@ scrapTextParserSpec =
 
   where
     scrapTextRoundTripTest :: ScrapText -> Property
-    scrapTextRoundTripTest scrapText =
-        let rendered = renderScrapText scrapText
-        in either
-            (const $ property False)
-            (=== scrapText)
-            (runScrapTextParser $ T.unpack rendered)
+    scrapTextRoundTripTest = roundTripTest renderScrapText runScrapTextParser id
 
     exampleText :: String
     exampleText = "[* bold text] [- strikethrough text] [/ italic text] simple text `code_notation` [* test [link] test [partial]"
@@ -149,16 +146,10 @@ scrapboxParserSpec =
 
         syntaxPageTest
 
-scrapboxRoundTripTest :: Property
-scrapboxRoundTripTest = within 5000000 $ property $
-        \(scrapbox :: Scrapbox) -> label (printSize $ size scrapbox) $
-            let rendered = renderToScrapbox mempty scrapbox
-                eParsed  = runScrapboxParser $ T.unpack rendered
-
-            in either
-                (const $ property False) -- Try to assert how it failed..?
-                (=== scrapbox)
-                eParsed
+scrapboxRoundTripTest :: Scrapbox -> Property
+scrapboxRoundTripTest scrapbox = within 5000000 $ property $ 
+      label (printSize $ size scrapbox) 
+    $ roundTripTest (renderToScrapbox []) runScrapboxParser id
   where
     printSize bsize
       | bsize < 5                = "Less than 5"
@@ -166,12 +157,10 @@ scrapboxRoundTripTest = within 5000000 $ property $
       | otherwise                = "More than 10"
 
 blockRoundTripTest :: Block -> Property
-blockRoundTripTest block =
-    let rendered = T.unlines . renderBlock $ block
-    in either
-        (const $ property False)
-        (\(Scrapbox blocks) -> blocks === toModel block)
-        (runScrapboxParser $ T.unpack rendered)
+blockRoundTripTest = roundTripTest 
+    (T.unlines . renderBlock)
+    runScrapboxParser
+    (Scrapbox . toModel)
   where
     toModel :: Block -> [Block]
     toModel = \case

@@ -6,7 +6,7 @@
 
 module Data.Scrapbox.Parser.Commonmark
     ( -- * Parser
-      parseCommonmark
+      parseCommonmarkNoOption
     , runParagraphParser
     ) where
 
@@ -44,8 +44,8 @@ import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 --  newtype Parser a = Parser (Either ParserException a)
 
 -- | Convert given common mark into 'Scrapbox' AST
-parseCommonmark :: Text -> Scrapbox
-parseCommonmark cmark =
+parseCommonmarkNoOption :: Text -> Scrapbox
+parseCommonmarkNoOption cmark =
     let options = [optSafe, optHardBreaks]
         node    = C.commonmarkToNode options cmark
     in parse node

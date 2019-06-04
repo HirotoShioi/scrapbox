@@ -37,7 +37,6 @@ library
                        Data.Scrapbox.Parser.Commonmark.ParagraphParser
                        Data.Scrapbox.Utils
                        Data.Scrapbox.Types
-                       Data.Scrapbox.Examples.Test
                        Data.Scrapbox.Examples.Example1
                        Data.Scrapbox.Examples.Example2
   hs-source-dirs:      src

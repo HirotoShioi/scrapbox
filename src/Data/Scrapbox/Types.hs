@@ -51,7 +51,7 @@ module Data.Scrapbox.Types
 import           RIO hiding (span)
 
 import           Data.List (groupBy, nub, sort)
-import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
+import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText1,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
@@ -142,7 +142,7 @@ newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableName where
-    arbitrary = TableName <$> genNonSpaceText
+    arbitrary = TableName <$> genNonSpaceText1
 
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
@@ -251,7 +251,7 @@ data Segment
 
 instance Arbitrary Segment where
     arbitrary = do
-        let randomHashTag = HASHTAG <$> genNonSpaceText
+        let randomHashTag = HASHTAG <$> genNonSpaceText1
         let randomLink    = LINK
                 <$> genMaybe genPrintableText
                 <*> (Url <$> genPrintableUrl)

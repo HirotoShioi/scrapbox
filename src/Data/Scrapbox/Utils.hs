@@ -9,7 +9,7 @@
 module Data.Scrapbox.Utils
     ( -- * Testing utilities
       genPrintableText
-    , genNonSpaceText
+    , genNonSpaceText1
     , genPrintableUrl
     , genMaybe
     , shortListOf
@@ -43,8 +43,8 @@ genPrintableText = fromString <$>
         hasNoTrailingSpaces
 
 -- | Generate text without whitespaces
-genNonSpaceText :: Gen Text
-genNonSpaceText = fromString <$>
+genNonSpaceText1 :: Gen Text
+genNonSpaceText1 = fromString <$>
     listOf1 (arbitraryPrintableChar
         `suchThat`
         (\c -> c `notElem` syntaxSymobls && (not . isSpace) c)

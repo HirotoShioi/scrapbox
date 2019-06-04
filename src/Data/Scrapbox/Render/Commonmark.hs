@@ -74,7 +74,7 @@ renderUrl name (Url url)
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
-    adjust $ foldl' (\acc inline -> acc <> [renderInlineBlock inline]) mempty (hashCare inlineBlocks)
+    adjust $ foldl' (\acc inline -> acc <> [renderInlineBlock inline]) mempty (addSpacesHash inlineBlocks)
   where
     adjust :: [Text] -> Text
     adjust [] = mempty
@@ -83,10 +83,10 @@ renderScrapText (ScrapText inlineBlocks) =
       | T.stripEnd text /= text || T.null text = text <> adjust xs
       | otherwise                              = text <> " " <> adjust xs
 
-    hashCare :: [InlineBlock] -> [InlineBlock]
-    hashCare [] = []
-    hashCare (SPAN [] (HASHTAG tag : rest) : xs) = SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
-    hashCare others = others
+    addSpacesHash :: [InlineBlock] -> [InlineBlock]
+    addSpacesHash [] = []
+    addSpacesHash (SPAN [] (HASHTAG tag : rest) : xs) = SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
+    addSpacesHash others = others
 
 -- | Render @BULLET_POINT@
 renderBulletPoint :: Start -> [Block] -> [Text]

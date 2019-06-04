@@ -65,7 +65,6 @@ propNonNull parser getter = property $ \(someText :: NonEmptyPrintableString) ->
         (not . null . getter)
         (parser $ getNonEmptyPrintableString someText)
 
-
 data DiffPair = DiffPair
     { original :: !Block
     -- ^ Original block data
