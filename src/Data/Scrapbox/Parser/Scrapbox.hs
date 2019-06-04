@@ -1,4 +1,4 @@
-{-| Module exposes 'Scrapbox' parser
+{-| Module exposes a parser for 'Scrapbox'
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -41,7 +41,7 @@ lineBreakParser = do
     _ <- endOfLine
     return LINEBREAK
 
--- | Parser for 'PARAGRAPH'
+-- | Parser for @PARAGRAPH@
 paragraphParser :: Parser Block
 paragraphParser = do
     str       <- getString

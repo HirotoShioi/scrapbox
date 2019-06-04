@@ -19,6 +19,17 @@ import           RIO
 
 import qualified CMark as C
 import           Data.Char (isLetter, isSpace)
+import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
+                                InlineBlock (..), Level (..), ScrapText (..),
+                                Scrapbox (..), Segment (..), Start (..),
+                                Style (..), TableContent (..), TableName (..),
+                                Url (..), commonmarkToNode, renderToCommonmark)
+import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
+                                         isLink, isSized, isText, shortListOf,
+                                         unverbose)
+import           Data.Scrapbox.Parser.Commonmark (runParagraphParser)
+import           Data.Scrapbox.Render.Commonmark (renderBlock,
+                                                  renderInlineBlock)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
@@ -27,18 +38,6 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   arbitraryPrintableChar, choose, elements,
                                   genericShrink, listOf, listOf1, oneof,
                                   suchThat, vectorOf, (===), (==>))
-
-import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
-                                InlineBlock (..), Level (..), ScrapText (..),
-                                Scrapbox (..), Segment (..), Start (..),
-                                Style (..), TableContent (..), TableName (..),
-                                Url (..), commonmarkToNode, renderToCommonmark)
-import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isLink,
-                                         isSized, isText, shortListOf,
-                                         unverbose, isBold)
-import           Data.Scrapbox.Parser.Commonmark (runParagraphParser)
-import           Data.Scrapbox.Render.Commonmark (renderBlock,
-                                                  renderInlineBlock)
 import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
@@ -198,11 +197,7 @@ modelScrapbox = \case
             else [PARAGRAPH (ScrapText [CODE_NOTATION notation])]
   where
     mkParagraphs :: [Text] -> [Block]
-    mkParagraphs = map toParagraph
-
-    toParagraph c =
-        let scrapText =  ScrapText [SPAN [] [TEXT c]]
-        in PARAGRAPH scrapText
+    mkParagraphs = map (\c -> PARAGRAPH $ ScrapText [SPAN [] [TEXT c]])
 
     toStyle :: TestStyle -> [Style]
     toStyle = \case
@@ -229,6 +224,7 @@ modelScrapbox = \case
     modelStyledText :: TestStyle -> Text -> [Block]
     modelStyledText style text        -- Needs to take a look
         | style == BoldStyle && T.null text =
+             -- **** is parsed into THEMATIC BREAK
             [PARAGRAPH (ScrapText [SPAN [] [TEXT "\n"]])]
         | style == ItalicStyle && T.null text =
             [ PARAGRAPH (ScrapText [SPAN [] [ TEXT "**" ]])]
@@ -244,8 +240,8 @@ modelScrapbox = \case
 
 commonmarkModelTest :: CommonMark -> Property
 commonmarkModelTest commonmark =
-    let (Scrapbox content) = commonmarkToNode [] . renderCommonmark $ commonmark
-    in content === modelScrapbox commonmark
+    let scrapbox = commonmarkToNode [] . renderCommonmark $ commonmark
+    in scrapbox === Scrapbox (modelScrapbox commonmark)
 
 --------------------------------------------------------------------------------
 -- Commonmark roundtrip test
@@ -317,7 +313,7 @@ toRoundTripModel = \case
 
     -- Paragraph
     PARAGRAPH (ScrapText inlines@[SPAN [bolds] [], SPAN styles []]) ->
-        let b | (isBold bolds || isSized bolds) && any (\s -> isBold s || isSized s) styles  = 
+        let b | (isBold bolds || isSized bolds) && any (\s -> isBold s || isSized s) styles  =
                 PARAGRAPH $ ScrapText (SPAN [] [TEXT "**** "] : renderWithStyles (filter (not . isSized) styles))
               | otherwise = PARAGRAPH (ScrapText (toInlineModel inlines))
         in [b]

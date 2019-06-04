@@ -1,5 +1,4 @@
-{-| This module exports 'renderToCommonmarkNoOption' which renders 'Scrapbox'
-AST into commonmark
+{-| This module exports a set of renderer functions for Commonmark
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -36,6 +35,7 @@ renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
     addLineBreaks (x:LINEBREAK:xs) = x : LINEBREAK : addLineBreaks xs
     addLineBreaks (x:xs)           = x : LINEBREAK : addLineBreaks xs
 
+-- | Render @Block@
 renderBlock :: Block -> [Text]
 renderBlock = \case
     LINEBREAK                       -> [""]
@@ -47,7 +47,7 @@ renderBlock = \case
     TABLE tableName tableContent    -> renderTable tableName tableContent
     THUMBNAIL url                   -> [renderUrl mempty url]
 
--- | Render 'Url'
+-- | Render @Url@
 renderUrl :: Text -> Url -> Text
 renderUrl name (Url url)
   | "https://www.youtube.com/" `T.isPrefixOf` url =
@@ -74,7 +74,7 @@ renderUrl name (Url url)
 -- | Render 'ScrapText'
 renderScrapText :: ScrapText -> Text
 renderScrapText (ScrapText inlineBlocks) =
-    adjust $ foldl' (\acc inline -> acc <> [renderInlineBlock inline]) mempty (hashCare inlineBlocks)
+    adjust $ foldl' (\acc inline -> acc <> [renderInlineBlock inline]) mempty (addSpacesHash inlineBlocks)
   where
     adjust :: [Text] -> Text
     adjust [] = mempty
@@ -83,12 +83,12 @@ renderScrapText (ScrapText inlineBlocks) =
       | T.stripEnd text /= text || T.null text = text <> adjust xs
       | otherwise                              = text <> " " <> adjust xs
 
-    hashCare :: [InlineBlock] -> [InlineBlock]
-    hashCare [] = []
-    hashCare (SPAN [] (HASHTAG tag : rest) : xs) = SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
-    hashCare others = others
+    addSpacesHash :: [InlineBlock] -> [InlineBlock]
+    addSpacesHash [] = []
+    addSpacesHash (SPAN [] (HASHTAG tag : rest) : xs) = SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
+    addSpacesHash others = others
 
--- | Render 'BULLET_POINT'
+-- | Render @BULLET_POINT@
 renderBulletPoint :: Start -> [Block] -> [Text]
 renderBulletPoint (Start num) = foldl' (\acc block->
         let spaces   = T.replicate num "\t"
@@ -111,7 +111,7 @@ renderBulletPoint (Start num) = foldl' (\acc block->
       | null acc  = content
       | otherwise = [""] <> content
 
--- | Render 'HEADING'
+-- | Render @HEADING@
 renderHeading :: Level -> [Segment] -> Text
 renderHeading (Level headingNum) segments =
     let level = case headingNum of
@@ -133,7 +133,7 @@ renderHeading (Level headingNum) segments =
     adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
     adjustSpaces (x:xs) = x : adjustSpaces xs
 
--- | Render 'Segment'
+-- | Render @Segment@
 renderSegment ::  Segment -> Text
 renderSegment = \case
     HASHTAG text               -> "#" <> text <> ""
@@ -141,7 +141,7 @@ renderSegment = \case
     LINK (Just name) url       -> renderUrl name url
     TEXT text                  -> text
 
- -- Does commonmark support math expressions?
+-- | Render @InlineBlock@
 renderInlineBlock :: InlineBlock -> Text
 renderInlineBlock = \case
     CODE_NOTATION text   -> "`" <> text <> "`"
@@ -171,7 +171,7 @@ renderInlineBlock = \case
         , "</span>"
         ]
 
--- | Render 'CODE_BLOCK'
+-- | Render @CODE_BLOCK@
 renderCodeblock :: CodeName -> CodeSnippet -> [Text]
 renderCodeblock (CodeName name) (CodeSnippet snippet) =
     ["```" <> name] <> snippet <> ["```"]

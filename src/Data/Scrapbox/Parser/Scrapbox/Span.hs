@@ -92,17 +92,15 @@ spanParser = manyTill segmentParser eof
 
 -- | Run inline text parser on given 'String'
 --
--- @
--- > runInlineParser "hello [hello yahoo link http://www.yahoo.co.jp] [hello] [] `weird code [weird url #someHashtag"
+-- >>> runSpanParser "hello [hello yahoo link https://github.com/HirotoShioi/scrapbox] [hello] [] `weird code [weird url #someHashtag"
 -- Right
---     [ SimpleText "hello "
---     , Link ( Just "hello yahoo link" ) ( Url "http://www.yahoo.co.jp" )
---     , SimpleText " "
---     , Link Nothing ( Url "hello" )
---     , SimpleText " [] `weird code [weird url "
---     , HashTag "someHashtag"
+--     [ TEXT "hello "
+--     , LINK ( Just "hello yahoo link" ) ( Url "https://github.com/HirotoShioi/scrapbox" )
+--     , TEXT " "
+--     , LINK Nothing ( Url "hello" )
+--     , TEXT " [] `weird code [weird url "
+--     , HASHTAG "someHashtag"
 --     ]
--- @
 runSpanParser :: String -> Either ParseError [Segment]
 runSpanParser = parse spanParser "Inline text parser"
 

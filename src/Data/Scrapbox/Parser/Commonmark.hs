@@ -1,4 +1,4 @@
-{-| This module defines an parser for Commnonmark.
+{-| This module defines a parser for Commnonmark.
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -6,7 +6,7 @@
 
 module Data.Scrapbox.Parser.Commonmark
     ( -- * Parser
-      parseCommonmark
+      parseCommonmarkNoOption
     , runParagraphParser
     ) where
 
@@ -44,8 +44,8 @@ import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 --  newtype Parser a = Parser (Either ParserException a)
 
 -- | Convert given common mark into 'Scrapbox' AST
-parseCommonmark :: Text -> Scrapbox
-parseCommonmark cmark =
+parseCommonmarkNoOption :: Text -> Scrapbox
+parseCommonmarkNoOption cmark =
     let options = [optSafe, optHardBreaks]
         node    = C.commonmarkToNode options cmark
     in parse node
@@ -69,7 +69,7 @@ parse node =  scrapbox $ format $ convertToBlocks [node]
 -- Conversion logic from Node to Block
 --------------------------------------------------------------------------------
 
--- | Compute the diff between the @Nodes@ and apply 'LINEBREAK' accordingly
+-- | Compute the diff between the @Nodes@ and apply @LINEBREAK@ accordingly
 convertToBlocks :: [Node] -> [Block]
 convertToBlocks []  = []
 convertToBlocks [x] = toBlocks x
@@ -161,13 +161,13 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
                  SPAN s segments -> SPAN (styles <> s) segments
                  others          -> others) inlines
 
--- | Convert to 'CODE_BLOCK'
+-- | Convert to @CODE_BLOCK@
 toCodeBlock :: Text -> [Text] -> Block
 toCodeBlock codeInfo code
     | T.null codeInfo = codeBlock "code" code
     | otherwise       = codeBlock codeInfo code
 
--- | Convert to 'HEADING'
+-- | Convert to @HEADING@
 toHeading :: Int -> [Node] -> Block
 toHeading headingNum nodes =
     -- Headers in scrapbox are opposite of what commonmark are
@@ -227,7 +227,7 @@ toLink nodes url title
 -- Paragraph conversion logic
 --------------------------------------------------------------------------------
 
--- | Parse nodes and produce either an @TABLE@ or 'PARAGRAPH'
+-- | Parse nodes and produce either an @TABLE@ or @PARAGRAPH@
 --
 -- CMark parses Table as an list of Paragraphs
 -- So we need to parse it on our own.
@@ -266,7 +266,7 @@ parseParagraph nodes = if isTable nodes
     toParagraph :: [Node] -> [Block]
     toParagraph = concatParagraph . convertToBlocks
 
-    -- | Concatenate 'PARAGRAPH' blocks
+    -- | Concatenate @PARAGRAPH@ blocks
     concatParagraph :: [Block] -> [Block]
     concatParagraph []  = []
     concatParagraph [n] = [n]

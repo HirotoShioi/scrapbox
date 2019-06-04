@@ -28,30 +28,12 @@ module Data.Scrapbox.Types
     , concatScrapText
     , verbose
     , unverbose
-    -- * Predicates
-    , isBlockQuote
-    , isBulletPoint
-    , isCodeBlock
-    , isCodeNotation
-    , isMathExpr
-    , isHeader
-    , isLink
-    , isParagraph
-    , isThumbnail
-    , isTable
-    , isText
-    , isHashTag
-    , isBold
-    , isItalic
-    , isStrikeThrough
-    , isSized
-    , removeAmbiguity
     ) where
 
 import           RIO hiding (span)
 
 import           Data.List (groupBy, nub, sort)
-import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText,
+import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText1,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
@@ -142,7 +124,7 @@ newtype TableName = TableName Text
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableName where
-    arbitrary = TableName <$> genNonSpaceText
+    arbitrary = TableName <$> genNonSpaceText1
 
 -- | Content of the table
 newtype TableContent = TableContent [[Text]]
@@ -251,7 +233,7 @@ data Segment
 
 instance Arbitrary Segment where
     arbitrary = do
-        let randomHashTag = HASHTAG <$> genNonSpaceText
+        let randomHashTag = HASHTAG <$> genNonSpaceText1
         let randomLink    = LINK
                 <$> genMaybe genPrintableText
                 <*> (Url <$> genPrintableUrl)
@@ -265,7 +247,7 @@ instance Arbitrary Segment where
 -- | Style that can be applied to the 'Segment'
 data Style
     = Sized Level
-    -- ^ You can use this to combine all three as of the styles as well as Header
+    -- ^ Font size
     | Bold
     -- ^ Bold style
     | Italic
@@ -273,6 +255,7 @@ data Style
     | StrikeThrough
     -- ^ StrikeThrough style
     | UserStyle !Text
+    -- ^ User defined style
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary Style where
@@ -368,89 +351,6 @@ concatSegment [] = []
 concatSegment (TEXT txt1 : TEXT txt2 : rest) =
     concatSegment $ (TEXT $ txt1 <> txt2) : rest
 concatSegment (a : rest) = a : concatSegment rest
-
---------------------------------------------------------------------------------
--- Predicates
---------------------------------------------------------------------------------
-
--- | Checks if given 'Block' is an 'HEADING'
-isHeader :: Block -> Bool
-isHeader (HEADING _ _) = True
-isHeader _             = False
-
--- | Checks whether given 'Block' is 'BLOCK_QUOTE'
-isBlockQuote :: Block -> Bool
-isBlockQuote (BLOCK_QUOTE _) = True
-isBlockQuote _               = False
-
--- | Checks whether given 'Block' is 'BULLET_POINT'
-isBulletPoint :: Block -> Bool
-isBulletPoint (BULLET_POINT _ _) = True
-isBulletPoint _                  = False
-
--- | Checks whether given 'Block' is 'CODE_BLOCK'
-isCodeBlock :: Block -> Bool
-isCodeBlock (CODE_BLOCK _ _) = True
-isCodeBlock _                = False
-
--- | Checks whether given 'Block' is 'PARAGRAPH'
-isParagraph :: Block -> Bool
-isParagraph (PARAGRAPH _) = True
-isParagraph _             = False
-
--- | Checks whether given 'Block' is 'THUMBNAIL'
-isThumbnail :: Block -> Bool
-isThumbnail (THUMBNAIL _) = True
-isThumbnail _             = False
-
--- | Checks whether given 'Block' is 'TABLE'
-isTable :: Block -> Bool
-isTable (TABLE _ _) = True
-isTable _           = False
-
--- | Checks whether given 'InlineBlock' is 'CODE_NOTATION'
-isCodeNotation :: InlineBlock -> Bool
-isCodeNotation (CODE_NOTATION _) = True
-isCodeNotation _                 = False
-
--- | Checks whether given 'InlineBlock' is 'MATH_EXPRESSION'
-isMathExpr :: InlineBlock -> Bool
-isMathExpr (MATH_EXPRESSION _) = True
-isMathExpr _                   = False
-
--- | Checks whether given 'Segment' is 'TEXT'
-isText :: Segment -> Bool
-isText (TEXT _) = True
-isText _        = False
-
--- | Checks whether given 'Segment' is 'LINK'
-isLink :: Segment -> Bool
-isLink (LINK _ _) = True
-isLink _          = False
-
--- | Checks whether given 'Segment' is 'HASHTAG'
-isHashTag :: Segment -> Bool
-isHashTag (HASHTAG _) = True
-isHashTag _           = False
-
--- | Checks whether given 'Style' is 'Bold'
-isBold :: Style -> Bool
-isBold Bold = True
-isBold _    = False
-
--- | Checks whether given 'Style' is 'Italic'
-isItalic :: Style -> Bool
-isItalic Italic = True
-isItalic _      = False
-
--- | Checks whether given 'Style' is 'StrikeThrough'
-isStrikeThrough :: Style -> Bool
-isStrikeThrough StrikeThrough = True
-isStrikeThrough _             = False
-
-isSized :: Style -> Bool
-isSized (Sized _) = True
-isSized _         = False
 
 --------------------------------------------------------------------------------
 -- These functions are used to define typeclass instance of Arbitrary
