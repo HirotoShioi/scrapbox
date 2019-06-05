@@ -33,8 +33,6 @@ library
                        Data.Scrapbox.Parser.Scrapbox.Span
                        Data.Scrapbox.Parser.Scrapbox.ScrapText
                        Data.Scrapbox.Parser.Utils
-                       Data.Scrapbox.Parser.Commonmark.TableParser
-                       Data.Scrapbox.Parser.Commonmark.ParagraphParser
                        Data.Scrapbox.Utils
                        Data.Scrapbox.Types
                        Data.Scrapbox.Examples.Example1
@@ -50,12 +48,12 @@ library
   build-depends:       QuickCheck
                      , attoparsec
                      , base >=4.7 && <5
-                     , cmark
                      , network-uri
                      , parsec
                      , rio
                      , split
                      , text
+                     , cmark-gfm
   default-language:    Haskell2010
 
 test-suite scrapbox-test
@@ -78,7 +76,7 @@ test-suite scrapbox-test
   build-depends:      QuickCheck
                     , attoparsec
                     , base >=4.7 && <5
-                    , cmark
+                    , cmark-gfm
                     , hspec
                     , network-uri
                     , parsec

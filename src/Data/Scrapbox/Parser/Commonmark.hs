@@ -7,28 +7,22 @@
 module Data.Scrapbox.Parser.Commonmark
     ( -- * Parser
       parseCommonmarkNoOption
-    , runParagraphParser
     ) where
 
 import           RIO hiding (link, span)
 
-import           CMark (Node (..), NodeType (..), PosInfo (..), Title,
-                        optHardBreaks, optSafe)
-import qualified CMark as C
-import           Data.List.Split (splitWhen)
-import qualified RIO.Text as T
-
+import           CMarkGFM (CMarkExtension, Node (..), NodeType (..),
+                           PosInfo (..), Title, extAutolink, extStrikethrough,
+                           extTable, extTagfilter, optHardBreaks)
+import qualified CMarkGFM as C
 import           Data.Scrapbox.Constructors (blockQuote, bulletPoint, codeBlock,
                                              codeNotation, heading, link,
                                              paragraph, scrapbox, span, text)
 import           Data.Scrapbox.Types as S (Block (..), InlineBlock (..),
-                                           Scrapbox, Segment, Style (..),
-                                           concatInline, concatScrapText)
-
-import           Data.Scrapbox.Parser.Commonmark.ParagraphParser (extractTextInline,
-                                                                  runParagraphParser,
-                                                                  toInlineBlocks)
-import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
+                                           Scrapbox, Segment (..), Style (..),
+                                           TableContent (..), TableName (..),
+                                           concatInline)
+import qualified RIO.Text as T
 
 --------------------------------------------------------------------------------
 -- Exposed interface
@@ -46,9 +40,17 @@ import           Data.Scrapbox.Parser.Commonmark.TableParser (parseTable)
 -- | Convert given common mark into 'Scrapbox' AST
 parseCommonmarkNoOption :: Text -> Scrapbox
 parseCommonmarkNoOption cmark =
-    let options = [optSafe, optHardBreaks]
-        node    = C.commonmarkToNode options cmark
+    let options = [optHardBreaks]
+        node    = C.commonmarkToNode options exts cmark
     in parse node
+
+exts :: [CMarkExtension]
+exts = [
+      extStrikethrough
+    , extTable
+    , extAutolink
+    , extTagfilter
+    ]
 
 -- | Apply linebreak after TABLE and CODE_BLOCK if there's BULLET_POINT right
 -- after it.
@@ -59,7 +61,7 @@ parse node =  scrapbox $ format $ convertToBlocks [node]
   where
     format :: [Block] -> [Block]
     format [] = []
-    format (t@(TABLE _ _): b@(BULLET_POINT _ _) : rest) =
+    format (t@(S.TABLE _ _): b@(BULLET_POINT _ _) : rest) =
         t : S.LINEBREAK : b : format rest
     format (c@(S.CODE_BLOCK _ _): b@(BULLET_POINT _ _) : rest) =
         c : S.LINEBREAK : b : format rest
@@ -108,14 +110,17 @@ toBlocks = toBlocks' mempty
 -- that the toInlineBlock is implemented correctly.
 toBlocks' :: [Style] -> Node -> [Block]
 toBlocks' styles (Node _ nodeType contents) = case nodeType of
-    C.PARAGRAPH                -> parseParagraph contents
+    C.PARAGRAPH                ->
+        [paragraph $ concatMap (toInlineBlock styles) contents]
     C.DOCUMENT                 -> convertToBlocks contents
     C.HEADING headingNum       -> [toHeading headingNum contents]
     C.EMPH                     ->
         [paragraph $ concatMap (toInlineBlock (Italic : styles)) contents]
     C.STRONG                   ->
         [paragraph $ concatMap (toInlineBlock (Bold : styles)) contents]
-    C.TEXT textContent         -> [paragraph $ toInlineBlocks textContent]
+    C.STRIKETHROUGH            ->
+        [paragraph $ concatMap (toInlineBlock (StrikeThrough : styles)) contents]
+    C.TEXT textContent         -> [paragraph [SPAN styles [S.TEXT textContent]]]
     C.CODE codeContent         -> [paragraph [codeNotation codeContent]]
     C.CODE_BLOCK codeInfo code -> [toCodeBlock codeInfo (T.lines code)]
     C.LIST _                   -> [toBulletPoint contents]
@@ -131,10 +136,19 @@ toBlocks' styles (Node _ nodeType contents) = case nodeType of
     C.HTML_INLINE _htmlContent -> []
     C.BLOCK_QUOTE              ->
         [blockQuote $ concatMap (toInlineBlock styles) contents]
+    C.TABLE _                  -> [toTable contents]
+
+    -- place holder
+    C.TABLE_ROW                ->
+        [paragraph $ concatMap (toInlineBlock styles) contents]
+    C.TABLE_CELL               ->
+        [paragraph $ concatMap (toInlineBlock styles) contents]
     -- I have on idea what these are,
     -- Use placeholder for now. Need to investigate what these actually are
-    C.CUSTOM_INLINE _ _        -> parseParagraph contents
-    C.CUSTOM_BLOCK _ _         -> parseParagraph contents
+    C.CUSTOM_INLINE _ _        ->
+        [paragraph $ concatMap (toInlineBlock styles) contents]
+    C.CUSTOM_BLOCK _ _         ->
+        [paragraph $ concatMap (toInlineBlock styles) contents]
     C.THEMATIC_BREAK           -> [paragraph [span [] [text "\n"]]]
 
 -- | Convert 'Node' into list of 'InlineBlock'
@@ -146,20 +160,14 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
         C.EMPH             -> concatMap (toInlineBlock (Italic : styles)) contents
         C.STRONG           -> concatMap (toInlineBlock (Bold : styles)) contents
-        C.TEXT textContent -> toInlineText textContent
+        C.STRIKETHROUGH    -> concatMap (toInlineBlock (StrikeThrough : styles)) contents
+        C.TEXT textContent -> [SPAN styles [S.TEXT textContent]]
         C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
         C.IMAGE url _title -> withStyle [toLink contents url (extractTextFromNodes contents)]
         _                    -> concatMap (toInlineBlock styles)  contents
     withStyle :: [Segment] -> [InlineBlock]
     withStyle segments = [span styles segments]
-
-    toInlineText :: Text -> [InlineBlock]
-    toInlineText txt =
-        let inlines = toInlineBlocks txt
-        in map (\case
-                 SPAN s segments -> SPAN (styles <> s) segments
-                 others          -> others) inlines
 
 -- | Convert to @CODE_BLOCK@
 toCodeBlock :: Text -> [Text] -> Block
@@ -182,7 +190,7 @@ toHeading headingNum nodes =
     -- | Convert 'Node' into list of 'Segment'
     toSegments :: Node -> [Segment]
     toSegments (Node _ nodeType contents) = case nodeType of
-        C.TEXT textContent -> extractTextInline textContent
+        C.TEXT textContent -> [text textContent]
         C.CODE codeContent -> [text codeContent]
         C.LINK url title   -> [toLink contents url title]
         -- C.HTML_INLINE htmlContent -> [text htmlContent]
@@ -223,54 +231,16 @@ toLink nodes url title
         | T.null title' = link Nothing url
         | otherwise     = link (Just title') url
 
---------------------------------------------------------------------------------
--- Paragraph conversion logic
---------------------------------------------------------------------------------
-
--- | Parse nodes and produce either an @TABLE@ or @PARAGRAPH@
---
--- CMark parses Table as an list of Paragraphs
--- So we need to parse it on our own.
---
--- Hiding functions it so that they will not be misused.
-parseParagraph :: [Node] -> [Block]
-parseParagraph nodes = if isTable nodes
-    then toTable nodes
-    else toParagraph nodes
+toTable :: [Node] -> Block
+toTable nodes = S.TABLE (TableName "table") (TableContent getTableContents)
   where
-    isTable :: [Node] -> Bool
-    isTable nodes' =
-            any (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-        -- Table needs at least a header and seperator to be valid
-         && length nodes >= 2
-         && hasSymbols nodes
-
-    -- Each of the element should have '|' symbol to be an valid table
-    hasSymbols :: [Node] -> Bool
-    hasSymbols nodes' =
-        let filteredNodes  =
-                splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            extractedTexts = map extractTextFromNodes filteredNodes
-        in all (T.any (== '|')) extractedTexts
-
-    toTable :: [Node] -> [Block]
-    toTable nodes' =
-        let splittedNodes = splitWhen (\(Node _ nodetype _) -> nodetype == SOFTBREAK) nodes'
-            nodeTexts     = map extractTextFromNodes splittedNodes
-        in either
-            (\_ -> toParagraph nodes')
-            (: [])
-            (parseTable nodeTexts)
-
-    -- | Convert list of 'Node' into list of 'Block'
-    toParagraph :: [Node] -> [Block]
-    toParagraph = concatParagraph . convertToBlocks
-
-    -- | Concatenate @PARAGRAPH@ blocks
-    concatParagraph :: [Block] -> [Block]
-    concatParagraph []  = []
-    concatParagraph [n] = [n]
-    concatParagraph (S.PARAGRAPH stext1 : S.PARAGRAPH stext2 : rest) =
-        let concatedParagraph = S.PARAGRAPH $ concatScrapText stext1 stext2
-        in concatParagraph $ [concatedParagraph] <> rest
-    concatParagraph (a : b : rest) = a : b : concatParagraph rest
+    getTableContents :: [[Text]]
+    getTableContents = foldl' (\acc (Node _ nodeType contents) -> case nodeType of
+        TABLE_ROW -> acc <> [extractCells contents]
+        _others   -> acc
+        ) mempty nodes
+    extractCells :: [Node] -> [Text]
+    extractCells = foldl' (\acc (Node _ nodeType contents) -> case nodeType of
+        TABLE_CELL -> acc <> [extractTextFromNodes contents]
+        _others    -> acc
+        ) mempty

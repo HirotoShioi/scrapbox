@@ -6,18 +6,11 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Commonmark
-    ( commonmarkSpec
-    , commonmarkRoundTripTest
-    , checkCommonmarkRoundTrip
-    , toBulletPointModel
-    , toInlineModel
-    , toRoundTripModel
-    ) where
+module TestCommonMark.Commonmark where
 
 import           RIO
 
-import qualified CMark as C
+import qualified CMarkGFM as C
 import           Data.Char (isLetter, isSpace)
 import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 InlineBlock (..), Level (..), ScrapText (..),
@@ -25,27 +18,23 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
-                                         isLink, isSized, isText, shortListOf,
+                                         isSized, isText, shortListOf,
                                          unverbose)
-import           Data.Scrapbox.Parser.Commonmark (runParagraphParser)
 import           Data.Scrapbox.Render.Commonmark (renderBlock,
-                                                  renderInlineBlock)
-import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith)
+                                                  renderInlineBlock, renderSegment)
+import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith, maximumMaybe)
 import qualified RIO.Text as T
-import           Test.Hspec (Spec, describe)
+import           Test.Hspec (Spec)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   arbitraryPrintableChar, choose, elements,
                                   genericShrink, listOf, listOf1, oneof,
                                   suchThat, vectorOf, (===), (==>))
-import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
-commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ do
+commonmarkSpec = modifyMaxSuccess (const 5000) $ do
     prop "Model test" commonmarkModelTest
-    shouldParseSpec runParagraphParser
-    prop "should return non-empty list of blocks if the given string is non-empty" $
-        propNonNull runParagraphParser id
+    -- prop "Round trip test" commonmarkRoundTripTest
 
 --------------------------------------------------------------------------------
 -- Commonmark model test
@@ -338,14 +327,14 @@ toRoundTripModel = \case
             (CodeName (foldr ((<>) . renderInlineBlock) mempty rest))
             (CodeSnippet [])
         ]
-    PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]]) ->
+    PARAGRAPH (ScrapText is@[SPAN [Bold] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
-            else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
-    PARAGRAPH (ScrapText [SPAN [UserStyle _s] [TEXT text]]) ->
+            else [PARAGRAPH (ScrapText $ toInlineModel is)]
+    PARAGRAPH (ScrapText is@[SPAN [UserStyle _s] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
-            else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
+            else [PARAGRAPH (ScrapText $ toInlineModel is)]
 
     PARAGRAPH (ScrapText [MATH_EXPRESSION "", CODE_NOTATION ""]) ->
         [PARAGRAPH (ScrapText [CODE_NOTATION ""])]
@@ -374,7 +363,7 @@ toRoundTripModel = \case
     TABLE (TableName name) (TableContent contents) ->
         [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])
         , LINEBREAK
-        , TABLE (TableName "table") (TableContent $ map (fmap T.strip) contents)
+        , TABLE (TableName "table") (TableContent $ alignTable $ map (fmap T.strip) contents)
         ]
     THUMBNAIL url -> [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]])]
     others    -> [others]
@@ -384,6 +373,15 @@ toRoundTripModel = \case
     toLevelModel (Level num)
       | num >= 5  = Level 1
       | otherwise = Level num
+
+alignTable :: [[Text]] -> [[Text]]
+alignTable rows = maybe rows align (maximumMaybe $ map length rows)
+  where
+    align :: Int -> [[Text]]
+    align maxRow = foldl' (\acc row -> if length row < maxRow
+        then acc <> [row <> replicate (maxRow - length row) ""]
+        else acc <> [row]
+        ) mempty rows
 
 toInlineModel :: [InlineBlock] -> [InlineBlock]
 toInlineModel [SPAN [Sized _level] segments] =
@@ -396,30 +394,14 @@ toInlineModel inlines
     let modifiedInlines = removeTrailingSpaces . filterSize . addSpaces . filterHead $ inlines
     in foldr (\inline acc -> case inline of
         CODE_NOTATION expr -> toExpr expr <> acc
-        MATH_EXPRESSION expr ->
-            let b | T.null expr        = SPAN [] [TEXT "``"]
-                  | T.all isSpace expr = CODE_NOTATION (T.filter (/= ' ') expr)
-                  | otherwise          = CODE_NOTATION ( T.unwords
-                                                       . filter (/= mempty)
-                                                       . T.split (== ' ')
-                                                       . T.dropWhileEnd (== ' ')
-                                                       . T.dropWhile (== ' ')
-                                                       $ expr
-                                                       )
-            in [b] <> acc
+        MATH_EXPRESSION expr -> toExpr expr <> acc
         -- SPAN
         SPAN [] [] -> acc
         SPAN [Italic] [TEXT ""] ->
             [SPAN [] [TEXT "__"]] <> acc
-        SPAN [Bold] segments ->
-            if isEmptySegments segments
-                then [SPAN [] [TEXT "****"]] <> acc
-                else modelSpan [Bold] segments <> acc
-        SPAN [UserStyle _s] segments ->
-            if isEmptySegments segments
-                then [SPAN [] [TEXT "****"]] <> acc
-                else modelSpan [Bold] segments <> acc
         SPAN styles []       -> renderWithStyles styles <> acc
+        SPAN [Bold] segments -> modelSpan [Bold] segments <> acc
+        SPAN [UserStyle _s] segments -> modelSpan [Bold] segments <> acc
         SPAN styles segments -> modelSpan styles segments <> acc
     ) mempty modifiedInlines
   where
@@ -447,14 +429,7 @@ toInlineModel inlines
     toExpr expr
         | T.null expr        = [SPAN [] [TEXT "``"]]
         | T.all isSpace expr = [CODE_NOTATION (T.filter (/= ' ') expr)]
-        | otherwise          = (:[]) $ CODE_NOTATION
-            ( T.unwords
-            . filter (/= mempty)
-            . T.split (== ' ')
-            . T.dropWhileEnd (== ' ')
-            . T.dropWhile (== ' ')
-            $ expr
-            )
+        | otherwise          = (:[]) $ CODE_NOTATION expr
 
 removeTrailingSpaces :: [InlineBlock] -> [InlineBlock]
 removeTrailingSpaces inlines = maybe
@@ -518,15 +493,18 @@ toSegmentModel segments =
             return (init, last)
         )
 
+renderSegments :: [Segment] -> Text
+renderSegments = foldr (\segment acc -> renderSegment segment <> acc) mempty
+
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
-  | elem StrikeThrough styles && any isLink segments =
-    let newStyle = filter (/= StrikeThrough) styles
-        newSegment = [TEXT (renderStyle [StrikeThrough])]
-                  <> segments
-                  <> [TEXT (renderStyle [StrikeThrough])]
-    in modelSpan newStyle newSegment
-  | otherwise = foldr (\segment acc -> case segment of
+    | T.strip (renderSegments segments) /= renderSegments segments = 
+        [ SPAN [] $
+               [TEXT (renderStyle styles)]
+            <> segments
+            <> [TEXT (T.reverse (renderStyle styles))]
+        ]
+    | otherwise = foldr (\segment acc -> case segment of
     TEXT text ->
       let b | T.null text
             && (not . isEmptySegments $ segments) = acc
@@ -623,7 +601,7 @@ checkCommonmarkRoundTrip :: Block -> (Block, Text, C.Node, Scrapbox, Scrapbox, B
 checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
-        parsed'  = C.commonmarkToNode [] rendered
+        parsed'  = C.commonmarkToNode [] exts rendered
         modeled  = toRoundTripModel block
     in ( block
        , rendered
@@ -632,3 +610,12 @@ checkCommonmarkRoundTrip block =
        , unverbose . Scrapbox $ modeled
        , parsed == unverbose (Scrapbox modeled)
        )
+  where
+    exts :: [C.CMarkExtension]
+    exts = [
+          C.extStrikethrough
+        , C.extTable
+        , C.extAutolink
+        , C.extTagfilter
+        ]
+
