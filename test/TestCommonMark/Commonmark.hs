@@ -27,7 +27,7 @@ import           Data.Scrapbox.Render.Commonmark (renderBlock,
 import           RIO.List (headMaybe, initMaybe, lastMaybe, maximumMaybe,
                            tailMaybe, zipWith)
 import qualified RIO.Text as T
-import           Test.Hspec (Spec)
+import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   arbitraryPrintableChar, choose, elements,
@@ -35,9 +35,9 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   suchThat, vectorOf, (===), (==>))
 
 commonmarkSpec :: Spec
-commonmarkSpec = modifyMaxSuccess (const 5000) $ do
+commonmarkSpec = describe "Tests" $ modifyMaxSuccess (const 5000) $ do
+    prop "Round trip test" commonmarkRoundTripTest
     prop "Model test" commonmarkModelTest
-    -- prop "Round trip test" commonmarkRoundTripTest
 
 --------------------------------------------------------------------------------
 -- Commonmark model test
@@ -506,10 +506,10 @@ renderSegments = foldr (\segment acc -> renderSegment segment <> acc) mempty
 
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
-    | T.strip (renderSegments segments) /= renderSegments segments =
+    | (not . null) styles && (T.strip (renderSegments segments) /= renderSegments segments) =
         [ SPAN [] $
                [TEXT (renderStyle styles)]
-            <> segments
+            <> filter filterEmptyText segments
             <> [TEXT (T.reverse (renderStyle styles))]
         ]
     | otherwise = foldr (\segment acc -> case segment of
@@ -524,6 +524,11 @@ modelSpan styles segments
     LINK (Just "") url -> [SPAN styles [LINK Nothing url]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
+  where
+    filterEmptyText :: Segment -> Bool
+    filterEmptyText = \case
+        TEXT text -> (not . T.null) text
+        _others   -> True
 
 renderStyle :: [Style] -> Text
 renderStyle = foldr (\style acc -> case style of
