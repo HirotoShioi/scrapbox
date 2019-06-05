@@ -32,7 +32,7 @@ module Data.Scrapbox.Types
 
 import           RIO hiding (span)
 
-import           Data.List (groupBy, nub, sort)
+import           Data.List (groupBy, nub, sort, sortBy)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText1,
                                       genPrintableText, genPrintableUrl,
                                       shortListOf)
@@ -131,7 +131,10 @@ newtype TableContent = TableContent [[Text]]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary TableContent where
-    arbitrary = TableContent <$> shortListOf (shortListOf genPrintableText)
+    arbitrary = TableContent . align <$> shortListOf (shortListOf genPrintableText)
+      where
+        align :: [[Text]] -> [[Text]]
+        align = sortBy (flip (\ a b -> length a `compare` length b))
     shrink (TableContent content) =
         map TableContent
             $ filter (not . any null)
@@ -317,11 +320,15 @@ unverbose (Scrapbox blocks) = Scrapbox $ map unVerboseBlock blocks
 
     unVerboseScrapText :: ScrapText -> ScrapText
     unVerboseScrapText (ScrapText inlines) =
-        ScrapText $ concatMap concatInline $ groupBy isSameStyle inlines
+        ScrapText $ sortStyle $ concatMap concatInline $ groupBy isSameStyle inlines
 
     isSameStyle :: InlineBlock -> InlineBlock -> Bool
     isSameStyle (SPAN style1 _) (SPAN style2 _) = style1 == style2
     isSameStyle _ _                             = False
+
+    sortStyle [] = []
+    sortStyle (SPAN style segment : xs) = SPAN (sort style) segment : sortStyle xs
+    sortStyle (x : xs)                  = x : sortStyle xs
 
 -- | Concatinate 'SPAN' with same style
 concatInline :: [InlineBlock] -> [InlineBlock]

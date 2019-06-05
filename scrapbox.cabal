@@ -78,6 +78,7 @@ test-suite scrapbox-test
                     , attoparsec
                     , base >=4.7 && <5
                     , cmark
+                    , cmark-gfm
                     , hspec
                     , network-uri
                     , parsec

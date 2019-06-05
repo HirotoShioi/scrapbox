@@ -160,6 +160,7 @@ toInlineBlock styles node = concatInline $ convertToInlineBlock node
     convertToInlineBlock (Node _ nodeType contents) = case nodeType of
         C.EMPH             -> concatMap (toInlineBlock (Italic : styles)) contents
         C.STRONG           -> concatMap (toInlineBlock (Bold : styles)) contents
+        C.STRIKETHROUGH    -> concatMap (toInlineBlock (StrikeThrough : styles)) contents
         C.TEXT textContent -> [SPAN styles [S.TEXT textContent]]
         C.CODE codeContent -> [codeNotation codeContent]
         C.LINK url title   -> withStyle [toLink contents url title]
