@@ -14,6 +14,7 @@ module TestCommonMark.Commonmark
     , toBulletPointModel
     , toInlineModel
     , toRoundTripModel
+    , modelSpan
     ) where
 
 import           RIO
@@ -29,7 +30,7 @@ import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
                                          isSized, isText, shortListOf,
                                          unverbose)
 import           Data.Scrapbox.Render.Commonmark (renderBlock,
-                                                  renderInlineBlock)
+                                                  renderInlineBlock, renderSegment)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith, maximumMaybe)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec)
@@ -40,9 +41,8 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   suchThat, vectorOf, (===), (==>))
 
 commonmarkSpec :: Spec
-commonmarkSpec = modifyMaxSuccess (const 5000) $ do
+commonmarkSpec = modifyMaxSuccess (const 5000) $
     prop "Model test" commonmarkModelTest
-    prop "Round trip test" commonmarkRoundTripTest
 
 --------------------------------------------------------------------------------
 -- Commonmark model test
@@ -335,14 +335,14 @@ toRoundTripModel = \case
             (CodeName (foldr ((<>) . renderInlineBlock) mempty rest))
             (CodeSnippet [])
         ]
-    PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]]) ->
+    PARAGRAPH (ScrapText is@[SPAN [Bold] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
-            else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
-    PARAGRAPH (ScrapText [SPAN [UserStyle _s] [TEXT text]]) ->
+            else [PARAGRAPH (ScrapText $ toInlineModel is)]
+    PARAGRAPH (ScrapText is@[SPAN [UserStyle _s] [TEXT text]]) ->
         if T.null (T.stripStart text)
             then emptyText
-            else [PARAGRAPH (ScrapText [SPAN [Bold] [TEXT text]])]
+            else [PARAGRAPH (ScrapText $ toInlineModel is)]
 
     PARAGRAPH (ScrapText [MATH_EXPRESSION "", CODE_NOTATION ""]) ->
         [PARAGRAPH (ScrapText [CODE_NOTATION ""])]
@@ -407,15 +407,9 @@ toInlineModel inlines
         SPAN [] [] -> acc
         SPAN [Italic] [TEXT ""] ->
             [SPAN [] [TEXT "__"]] <> acc
-        SPAN [Bold] segments ->
-            if isEmptySegments segments
-                then [SPAN [] [TEXT "****"]] <> acc
-                else modelSpan [Bold] segments <> acc
-        SPAN [UserStyle _s] segments ->
-            if isEmptySegments segments
-                then [SPAN [] [TEXT "****"]] <> acc
-                else modelSpan [Bold] segments <> acc
         SPAN styles []       -> renderWithStyles styles <> acc
+        SPAN [Bold] segments -> modelSpan [Bold] segments <> acc
+        SPAN [UserStyle _s] segments -> modelSpan [Bold] segments <> acc
         SPAN styles segments -> modelSpan styles segments <> acc
     ) mempty modifiedInlines
   where
@@ -507,8 +501,21 @@ toSegmentModel segments =
             return (init, last)
         )
 
+renderSegments :: [Segment] -> Text
+renderSegments = foldr (\segment acc -> renderSegment segment <> acc) mempty
+
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
-modelSpan styles segments = foldr (\segment acc -> case segment of
+modelSpan styles segments
+    | T.strip (renderSegments segments) /= renderSegments segments = 
+        [ SPAN []
+            [ TEXT 
+                (  renderStyle styles
+                <> renderSegments segments
+                <> T.reverse (renderStyle styles)
+                )
+            ] 
+        ]
+    | otherwise = foldr (\segment acc -> case segment of
     TEXT text ->
       let b | T.null text
             && (not . isEmptySegments $ segments) = acc

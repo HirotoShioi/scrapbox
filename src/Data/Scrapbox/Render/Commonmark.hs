@@ -9,6 +9,7 @@ module Data.Scrapbox.Render.Commonmark
     , renderInlineBlock
     , renderTable
     , renderBlock
+    , renderSegment
     ) where
 import           RIO
 
