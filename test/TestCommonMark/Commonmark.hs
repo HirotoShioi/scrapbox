@@ -6,16 +6,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestCommonMark.Commonmark
-    ( commonmarkSpec
-    , commonmarkRoundTripTest
-    , commonmarkModelTest
-    , checkCommonmarkRoundTrip
-    , toBulletPointModel
-    , toInlineModel
-    , toRoundTripModel
-    , modelSpan
-    ) where
+module TestCommonMark.Commonmark where
 
 import           RIO
 
@@ -41,8 +32,9 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   suchThat, vectorOf, (===), (==>))
 
 commonmarkSpec :: Spec
-commonmarkSpec = modifyMaxSuccess (const 5000) $
+commonmarkSpec = modifyMaxSuccess (const 5000) $ do
     prop "Model test" commonmarkModelTest
+    -- prop "Round trip test" commonmarkRoundTripTest
 
 --------------------------------------------------------------------------------
 -- Commonmark model test
@@ -507,13 +499,10 @@ renderSegments = foldr (\segment acc -> renderSegment segment <> acc) mempty
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
     | T.strip (renderSegments segments) /= renderSegments segments = 
-        [ SPAN []
-            [ TEXT 
-                (  renderStyle styles
-                <> renderSegments segments
-                <> T.reverse (renderStyle styles)
-                )
-            ] 
+        [ SPAN [] $
+               [TEXT (renderStyle styles)]
+            <> segments
+            <> [TEXT (T.reverse (renderStyle styles))]
         ]
     | otherwise = foldr (\segment acc -> case segment of
     TEXT text ->
