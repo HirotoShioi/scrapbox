@@ -18,11 +18,14 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
-                                         isSized, isText, shortListOf,
+                                         isBulletPoint, isCodeBlock, isSized,
+                                         isTable, isText, shortListOf,
                                          unverbose)
 import           Data.Scrapbox.Render.Commonmark (renderBlock,
-                                                  renderInlineBlock, renderSegment)
-import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith, maximumMaybe)
+                                                  renderInlineBlock,
+                                                  renderSegment)
+import           RIO.List (headMaybe, initMaybe, lastMaybe, maximumMaybe,
+                           tailMaybe, zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -244,7 +247,12 @@ commonmarkRoundTripTest block = lessThanOneElement block ==>
   where
     lessThanOneElement :: Block -> Bool
     lessThanOneElement (BULLET_POINT _start blocks) =
-        length blocks <= 1 && all lessThanOneElement blocks
+           all lessThanOneElement blocks
+        && all (\b ->
+               (not . isCodeBlock) b
+            && (not . isTable) b
+            && (not . isBulletPoint) b
+            ) blocks
     lessThanOneElement _others = True
 
 toRoundTripModel :: Block -> [Block]
@@ -498,7 +506,7 @@ renderSegments = foldr (\segment acc -> renderSegment segment <> acc) mempty
 
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
-    | T.strip (renderSegments segments) /= renderSegments segments = 
+    | T.strip (renderSegments segments) /= renderSegments segments =
         [ SPAN [] $
                [TEXT (renderStyle styles)]
             <> segments

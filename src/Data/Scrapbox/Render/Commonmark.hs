@@ -102,7 +102,7 @@ renderBulletPoint (Start num) = foldl' (\acc block->
                     addSpaces acc $ renderTable tableName tableContent
                 -- Special case on 'BULLET_POINT'
                 BULLET_POINT _s blocks' ->
-                    addSpaces acc $ renderBulletPoint (Start $ num + 1) blocks'
+                    renderBulletPoint (Start $ num + 1) blocks'
                 others -> map (\t -> spaces <> "- " <> t) $ renderBlock others
         in acc <> rendered
         ) mempty
