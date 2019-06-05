@@ -27,7 +27,6 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
                                          isLink, isSized, isText, shortListOf,
                                          unverbose)
-import           Data.Scrapbox.Parser.Commonmark (runParagraphParser)
 import           Data.Scrapbox.Render.Commonmark (renderBlock,
                                                   renderInlineBlock)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith)
@@ -38,14 +37,10 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   arbitraryPrintableChar, choose, elements,
                                   genericShrink, listOf, listOf1, oneof,
                                   suchThat, vectorOf, (===), (==>))
-import           Utils (propNonNull, shouldParseSpec)
 
 commonmarkSpec :: Spec
 commonmarkSpec = describe "CommonMark parser" $ modifyMaxSuccess (const 5000) $ do
     prop "Model test" commonmarkModelTest
-    shouldParseSpec runParagraphParser
-    prop "should return non-empty list of blocks if the given string is non-empty" $
-        propNonNull runParagraphParser id
 
 --------------------------------------------------------------------------------
 -- Commonmark model test
