@@ -33,8 +33,6 @@ library
                        Data.Scrapbox.Parser.Scrapbox.Span
                        Data.Scrapbox.Parser.Scrapbox.ScrapText
                        Data.Scrapbox.Parser.Utils
-                       Data.Scrapbox.Parser.Commonmark.TableParser
-                       Data.Scrapbox.Parser.Commonmark.ParagraphParser
                        Data.Scrapbox.Utils
                        Data.Scrapbox.Types
                        Data.Scrapbox.Examples.Example1
