@@ -280,7 +280,7 @@ toRoundTripModel = \case
         if isEmptySegments segments
             then [HEADING (toLevelModel level) []]
             else [HEADING (toLevelModel level) (toSegmentModel segments)]
-    
+
     -- Need to fix this in the future
     BULLET_POINT _s1 [BULLET_POINT _s2 blocks] ->
         foldl' (\acc block -> case block of
@@ -395,12 +395,18 @@ toSegmentModel segments =
     adjustSpaces (x:xs) = x : adjustSpaces xs
 
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
-modelSpan styles = foldr (\segment acc -> case segment of
-    TEXT text -> [SPAN styles [TEXT text]] <> acc
+modelSpan styles segments = foldr (\segment acc -> case segment of
+    TEXT text ->
+        let b | T.null text
+                && (not . isEmptySegments $ segments) = acc
+              | T.null text && (not . null) styles && isEmptySegments segments
+                = renderWithStyles styles <> acc
+              | otherwise = [SPAN styles [TEXT text]] <> acc
+        in b
     HASHTAG tag -> [SPAN styles [TEXT ("#" <> tag)]] <> acc
     LINK (Just "") url -> [SPAN styles [LINK Nothing url]] <> acc
     others -> [SPAN styles [others]] <> acc
-    ) mempty
+    ) mempty segments
 
 renderStyle :: [Style] -> Text
 renderStyle = foldr (\style acc -> case style of
