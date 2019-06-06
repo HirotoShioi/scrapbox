@@ -219,12 +219,11 @@ filterEmpty (BULLET_POINT s bs : xs) =
 filterEmpty (x : xs)  = x : filterEmpty xs
 
 modifyBulletPoint :: [Block] -> [Block]
-modifyBulletPoint blocks = filterEmpty $ foldr (\block acc -> case block of
+modifyBulletPoint blocks = filterEmpty $ foldl' (\acc block -> case block of
         BULLET_POINT s bs ->
             let (stay, out) = runState (extract bs) []
-                bulletpoint = BULLET_POINT s stay
-            in [bulletpoint] <> out <> acc
-        _others -> block : acc
+            in acc <> [BULLET_POINT s stay] <> out
+        _others -> acc <> [block]
     ) mempty blocks
   where
     extract :: (MonadState [Block] m) => [Block] -> m [Block]
@@ -233,8 +232,7 @@ modifyBulletPoint blocks = filterEmpty $ foldr (\block acc -> case block of
         c@(CODE_BLOCK _n _s) -> modify (<> [c]) >>  return acc
         BULLET_POINT s' bs   -> do
             rest <- extract bs
-            let bulletpoint = BULLET_POINT s' rest
-            return (acc <> [bulletpoint])
+            return (acc <> [BULLET_POINT s' rest])
         others               -> return (acc <> [others])
         ) mempty
 
