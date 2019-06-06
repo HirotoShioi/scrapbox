@@ -10,6 +10,8 @@ module Data.Scrapbox.Render.Commonmark
     , renderTable
     , renderBlock
     , renderSegment
+    , exampleBlock
+    , modifyBulletPoint
     ) where
 import           RIO
 
@@ -26,8 +28,10 @@ import qualified RIO.Text as T
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmarkNoOption :: Scrapbox -> Text
 renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
-    $ concatMap renderBlock
-    $ addLineBreaks blocks
+    . concatMap renderBlock
+    . addLineBreaks
+    . concatMap modifyBulletPoint
+    $ blocks
   where
     addLineBreaks :: [Block] -> [Block]
     addLineBreaks []               = []
@@ -92,7 +96,7 @@ renderScrapText (ScrapText inlineBlocks) =
 -- | Render @BULLET_POINT@
 renderBulletPoint :: Start -> [Block] -> [Text]
 renderBulletPoint (Start num) = foldl' (\acc block->
-        let spaces   = T.replicate num "\t"
+        let spaces   = T.replicate num " "
             rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
                 -- rendered as bulletpoint
@@ -199,3 +203,39 @@ renderTable (TableName name) (TableContent contents) =
     -- Render middle section
     middle :: [Int] -> Text
     middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"
+
+modifyBulletPoint :: Block -> [Block]
+modifyBulletPoint block = case block of
+    BULLET_POINT _s _bs -> uncurry (<>) . g $ [block]
+    _others             -> [block]
+  where
+    g = foldr (\b (stay, out) ->
+        let (x, y) = extraction b
+        in (x : stay, y <> out)
+        ) mempty
+    
+    extraction = \case
+        BULLET_POINT s bs -> (\(stay, out) -> (BULLET_POINT s stay, out))
+            $ foldr (\b (shouldBeIn, shouldBeOut) -> case b of
+                t@(TABLE _n _c)      -> (shouldBeIn, t : shouldBeOut)
+                c@(CODE_BLOCK _n _s) -> (shouldBeIn, c : shouldBeOut)
+                BULLET_POINT s' bs'  ->
+                    let (stay, out)      = g bs'
+                        bulletPointBlock = BULLET_POINT s' stay
+                    in  (bulletPointBlock : shouldBeIn, out <> shouldBeOut)
+                _other               -> (b : shouldBeIn, shouldBeOut)
+                ) (mempty, mempty) bs
+        others -> (others, [])
+
+exampleBlock :: Block
+exampleBlock = BULLET_POINT ( Start 2 ) 
+    [ HEADING ( Level 2 ) [ TEXT "World" ]
+    , BULLET_POINT ( Start 2 ) 
+        [ BULLET_POINT ( Start 1 ) 
+            [ HEADING ( Level 2 ) [ TEXT "Hello" ]
+            , LINEBREAK
+            , TABLE ( TableName "tableName" ) 
+                ( TableContent [ [""] ] )
+            ] 
+        ]
+    ] 
