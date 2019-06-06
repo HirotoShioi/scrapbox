@@ -259,9 +259,7 @@ commonmarkRoundTripTest block = lessThanOneElement block ==>
     lessThanOneElement :: Block -> Bool
     lessThanOneElement (BULLET_POINT _start blocks) =
            all lessThanOneElement blocks
-        && all (\b ->
-            (not . isTable) b
-            ) blocks
+        && all (not . isTable) blocks
         && maybe True (not . isBulletPoint) (headMaybe blocks)
     lessThanOneElement _others = True
 

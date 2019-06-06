@@ -15,7 +15,8 @@ let
           attoparsec base cmark-gfm network-uri parsec QuickCheck rio text
         ];
         testHaskellDepends = [
-          attoparsec base cmark-gfm hspec parsec QuickCheck rio split text
+          attoparsec base cmark-gfm hspec network-uri parsec QuickCheck rio
+          split text
         ];
         homepage = "https://github.com/HirotoShioi/scrapbox#readme";
         description = "Renderer and parser for Scrapbox";
