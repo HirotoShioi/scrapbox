@@ -46,7 +46,6 @@ library
                        -Wredundant-constraints
                        -Wnoncanonical-monad-instances
   build-depends:       QuickCheck
-                     , attoparsec
                      , base >=4.7 && <5
                      , network-uri
                      , parsec

@@ -4,7 +4,7 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, attoparsec, base, cmark-gfm, hspec
+  f = { mkDerivation, attoparsec, base, cmark-gfm, hspec, mtl
       , network-uri, parsec, QuickCheck, rio, split, stdenv, text
       }:
       mkDerivation {
@@ -12,7 +12,7 @@ let
         version = "0.1.0.0";
         src = ./.;
         libraryHaskellDepends = [
-          attoparsec base cmark-gfm network-uri parsec QuickCheck rio text
+          base cmark-gfm mtl network-uri parsec QuickCheck rio text
         ];
         testHaskellDepends = [
           attoparsec base cmark-gfm hspec network-uri parsec QuickCheck rio
