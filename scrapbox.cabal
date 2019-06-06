@@ -82,4 +82,5 @@ test-suite scrapbox-test
                     , scrapbox
                     , split
                     , text
+                    , network-uri
   default-language:   Haskell2010

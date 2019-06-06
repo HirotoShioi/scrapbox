@@ -18,14 +18,13 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
-                                         isBulletPoint, isCodeBlock, isSized,
-                                         isTable, isText, shortListOf,
-                                         unverbose)
-import           Data.Scrapbox.Render.Commonmark (renderBlock,
+                                         isBulletPoint, isSized, isTable,
+                                         isText, shortListOf, unverbose)
+import           Data.Scrapbox.Render.Commonmark (modifyBulletPoint,
                                                   renderInlineBlock,
                                                   renderSegment)
 import           RIO.List (headMaybe, initMaybe, lastMaybe, maximumMaybe,
-                           tailMaybe, zipWith)
+                           zipWith)
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -239,35 +238,37 @@ commonmarkModelTest commonmark =
 -- Commonmark roundtrip test
 --------------------------------------------------------------------------------
 
+adjustLineBreaks :: [Block] -> [Block]
+adjustLineBreaks [] = []
+adjustLineBreaks (c1@(CODE_BLOCK _c _s) : c2@(CODE_BLOCK _c1 _s1) : rest) =
+    c1 : LINEBREAK : adjustLineBreaks (c2 : rest)
+adjustLineBreaks (x : xs) = x : adjustLineBreaks xs
+
 commonmarkRoundTripTest :: Block -> Property
 commonmarkRoundTripTest block = lessThanOneElement block ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
-    in parsed === unverbose (Scrapbox (toRoundTripModel block))
+    in parsed === unverbose
+        ( Scrapbox
+        . adjustLineBreaks
+        . concatMap toRoundTripModel
+        . modifyBulletPoint
+        $ block
+        )
   where
     lessThanOneElement :: Block -> Bool
     lessThanOneElement (BULLET_POINT _start blocks) =
            all lessThanOneElement blocks
         && all (\b ->
-               (not . isCodeBlock) b
-            && (not . isTable) b
-            && (not . isBulletPoint) b
+            (not . isTable) b
             ) blocks
+        && maybe True (not . isBulletPoint) (headMaybe blocks)
     lessThanOneElement _others = True
 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
-    -- Need to fix this in the future
-    BULLET_POINT _s1 [BULLET_POINT _s2 blocks] ->
-        foldl' (\acc block -> case block of
-            t@(TABLE _n _c)      -> acc <> toRoundTripModel t
-            c@(CODE_BLOCK _n _c) -> acc <> toRoundTripModel c
-            b -> let rendered = map ("- " <> ) $ renderBlock b
-                     code     = CODE_BLOCK (CodeName "code") (CodeSnippet rendered)
-                 in acc <> [code]
-            ) mempty blocks
 
-    BULLET_POINT _start blocks -> toBulletPointModel (Start 0) blocks
+    BULLET_POINT _start blocks -> [toBulletPointModel (Start 1) blocks]
 
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText [SPAN [Bold] segments]) ->
@@ -549,33 +550,18 @@ renderWithStyles styles = maybe
         return (last, init)
     )
 
-toBulletPointModel :: Start -> [Block] -> [Block]
-toBulletPointModel (Start num) = foldr (\block acc -> case block of
-    c@(CODE_BLOCK _name _snippet) ->
-        if null acc
-            then toRoundTripModel c <> acc
-            else toRoundTripModel c <> [LINEBREAK] <> acc
-    t@(TABLE _name _content) ->
-        let b | null acc = toRoundTripModel t <> acc
-              | otherwise = toRoundTripModel t <> [LINEBREAK] <> acc
-        in b
-    LINEBREAK -> maybe
-        [BULLET_POINT (Start 1) []]
-        (\(head, rest) -> case head of
-            BULLET_POINT _s _b -> head : rest
-            _others            -> BULLET_POINT (Start 1) [] : head : rest
-        )
-        ((,) <$> headMaybe acc <*> tailMaybe acc)
-    BULLET_POINT _s blocks ->
-        toBulletPointModel (Start $ num + 1) blocks
-    others -> maybe
-        [BULLET_POINT (Start 1) (toRoundTripModel others)]
-        (\(head, rest) -> case head of
-            BULLET_POINT s b   -> BULLET_POINT s (toRoundTripModel others <> b) : rest
-            _others            -> BULLET_POINT (Start 1) (toRoundTripModel others) : head : rest
-        )
-        ((,) <$> headMaybe acc <*> tailMaybe acc)
-    ) mempty
+toBulletPointModel :: Start -> [Block] -> Block
+toBulletPointModel start bs = BULLET_POINT start $ foldr (\block acc -> case block of
+    BULLET_POINT _s blocks -> concatMap toRoundTripModel (flatten blocks) <> acc
+    TABLE _n _m            -> acc
+    CODE_BLOCK _n _s       -> acc
+    others                 -> toRoundTripModel others <> acc
+    ) mempty bs
+  where
+    flatten = foldr (\block acc -> case block of
+        BULLET_POINT _s bb -> bb <> acc
+        others             -> others : acc
+        ) mempty
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -615,13 +601,17 @@ checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
         parsed'  = C.commonmarkToNode [] exts rendered
-        modeled  = toRoundTripModel block
+        modeled  = unverbose
+                . Scrapbox
+                . adjustLineBreaks
+                . concatMap toRoundTripModel
+                . modifyBulletPoint $ block
     in ( block
        , rendered
        , parsed'
        , parsed
-       , unverbose . Scrapbox $ modeled
-       , parsed == unverbose (Scrapbox modeled)
+       , modeled
+       , parsed == modeled
        )
   where
     exts :: [C.CMarkExtension]

@@ -8,9 +8,9 @@ module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmarkNoOption
     , renderInlineBlock
     , renderTable
-    , renderBlock
     , renderSegment
     , exampleBlock
+    , exampleBlock2
     , modifyBulletPoint
     ) where
 import           RIO
@@ -32,20 +32,20 @@ renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
     . addLineBreaks
     . concatMap modifyBulletPoint
     $ blocks
-  where
-    addLineBreaks :: [Block] -> [Block]
-    addLineBreaks []               = []
-    addLineBreaks [x]              = [x]
-    addLineBreaks (LINEBREAK:xs)   = LINEBREAK : addLineBreaks xs
-    addLineBreaks (x:LINEBREAK:xs) = x : LINEBREAK : addLineBreaks xs
-    addLineBreaks (x:xs)           = x : LINEBREAK : addLineBreaks xs
+
+addLineBreaks :: [Block] -> [Block]
+addLineBreaks []               = []
+addLineBreaks [x]              = [x]
+addLineBreaks (LINEBREAK:xs)   = LINEBREAK : addLineBreaks xs
+addLineBreaks (x:LINEBREAK:xs) = x : LINEBREAK : addLineBreaks xs
+addLineBreaks (x:xs)           = x : LINEBREAK : addLineBreaks xs
 
 -- | Render @Block@
 renderBlock :: Block -> [Text]
 renderBlock = \case
     LINEBREAK                       -> [""]
     BLOCK_QUOTE scraptext           -> [">" <> renderScrapText scraptext]
-    BULLET_POINT _start blocks      -> renderBulletPoint (Start 0) blocks
+    BULLET_POINT _start blocks      -> renderBulletPointUnsafe (Start 0) blocks
     CODE_BLOCK codeName codeSnippet -> renderCodeblock codeName codeSnippet
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
@@ -94,8 +94,11 @@ renderScrapText (ScrapText inlineBlocks) =
     addSpacesHash others = others
 
 -- | Render @BULLET_POINT@
-renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start num) = foldl' (\acc block->
+--
+-- Do not export this.
+-- This function needs to be used by calling from renderToCommonmarkNoOption
+renderBulletPointUnsafe :: Start -> [Block] -> [Text]
+renderBulletPointUnsafe (Start num) = foldl' (\acc block->
         let spaces   = T.replicate num " "
             rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
@@ -106,7 +109,7 @@ renderBulletPoint (Start num) = foldl' (\acc block->
                     addSpaces acc $ renderTable tableName tableContent
                 -- Special case on 'BULLET_POINT'
                 BULLET_POINT _s blocks' ->
-                    renderBulletPoint (Start $ num + 1) blocks'
+                    renderBulletPointUnsafe (Start $ num + 1) blocks'
                 others -> map (\t -> spaces <> "- " <> t) $ renderBlock others
         in acc <> rendered
         ) mempty
@@ -204,16 +207,28 @@ renderTable (TableName name) (TableContent contents) =
     middle :: [Int] -> Text
     middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"
 
+filterEmptyBulletPoint :: [Block] -> [Block]
+filterEmptyBulletPoint = filter (\case
+    BULLET_POINT _s bs -> (not . null) (filterEmptyBulletPoint bs)
+    _others            -> True
+    )
+
 modifyBulletPoint :: Block -> [Block]
-modifyBulletPoint block = case block of
-    BULLET_POINT _s _bs -> uncurry (<>) . g $ [block]
-    _others             -> [block]
+modifyBulletPoint block =
+    let a = uncurry (:) . extraction $ block
+    in filterEmptyBulletPoint a
   where
-    g = foldr (\b (stay, out) ->
-        let (x, y) = extraction b
-        in (x : stay, y <> out)
+    g :: [Block] -> ([Block], [Block])
+    g = foldr (\b (stay, out) -> case b of
+        t@(TABLE _n _c)      -> (stay, t : out)
+        c@(CODE_BLOCK _n _s) -> (stay, c : out)
+        BULLET_POINT _s' bs   ->
+            let (x, y) = g bs
+            in (x <> stay, y <> out)
+        others               -> (others : stay, out)
         ) mempty
-    
+
+    extraction :: Block -> (Block, [Block])
     extraction = \case
         BULLET_POINT s bs -> (\(stay, out) -> (BULLET_POINT s stay, out))
             $ foldr (\b (shouldBeIn, shouldBeOut) -> case b of
@@ -228,14 +243,26 @@ modifyBulletPoint block = case block of
         others -> (others, [])
 
 exampleBlock :: Block
-exampleBlock = BULLET_POINT ( Start 2 ) 
+exampleBlock = BULLET_POINT ( Start 2 )
     [ HEADING ( Level 2 ) [ TEXT "World" ]
-    , BULLET_POINT ( Start 2 ) 
-        [ BULLET_POINT ( Start 1 ) 
-            [ HEADING ( Level 2 ) [ TEXT "Hello" ]
+    , CODE_BLOCK (CodeName "codename") (CodeSnippet [])
+    , BULLET_POINT ( Start 3 )
+        [ BULLET_POINT ( Start 1 )
+            [ HEADING ( Level 4 ) [ TEXT "Hello" ]
             , LINEBREAK
-            , TABLE ( TableName "tableName" ) 
+            , TABLE ( TableName "tableName" )
                 ( TableContent [ [""] ] )
-            ] 
+            , CODE_BLOCK (CodeName "codename") (CodeSnippet [])
+            ]
         ]
-    ] 
+    ]
+
+exampleBlock2 :: Block
+exampleBlock2 = BULLET_POINT ( Start 3 )
+    [ HEADING ( Level 2 ) [ TEXT "hello" ]
+    , BULLET_POINT ( Start 2 )
+        [ CODE_BLOCK ( CodeName "codeName" ) ( CodeSnippet [] )
+        , LINEBREAK
+        , CODE_BLOCK ( CodeName "codeName" ) ( CodeSnippet [] )
+        ]
+    ]
