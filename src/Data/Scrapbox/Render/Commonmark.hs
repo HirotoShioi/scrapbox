@@ -1,6 +1,8 @@
 {-| This module exports a set of renderer functions for Commonmark
 -}
 
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -15,6 +17,7 @@ module Data.Scrapbox.Render.Commonmark
     ) where
 import           RIO
 
+import           Control.Monad.State.Strict (MonadState, modify, runState)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
@@ -30,15 +33,15 @@ renderToCommonmarkNoOption :: Scrapbox -> Text
 renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
     . concatMap renderBlock
     . addLineBreaks
-    . concatMap modifyBulletPoint
+    . modifyBulletPoint
     $ blocks
-
-addLineBreaks :: [Block] -> [Block]
-addLineBreaks []               = []
-addLineBreaks [x]              = [x]
-addLineBreaks (LINEBREAK:xs)   = LINEBREAK : addLineBreaks xs
-addLineBreaks (x:LINEBREAK:xs) = x : LINEBREAK : addLineBreaks xs
-addLineBreaks (x:xs)           = x : LINEBREAK : addLineBreaks xs
+  where
+    addLineBreaks :: [Block] -> [Block]
+    addLineBreaks []               = []
+    addLineBreaks [x]              = [x]
+    addLineBreaks (LINEBREAK:xs)   = LINEBREAK : addLineBreaks xs
+    addLineBreaks (x:LINEBREAK:xs) = x : LINEBREAK : addLineBreaks xs
+    addLineBreaks (x:xs)           = x : LINEBREAK : addLineBreaks xs
 
 -- | Render @Block@
 renderBlock :: Block -> [Text]
@@ -207,40 +210,33 @@ renderTable (TableName name) (TableContent contents) =
     middle :: [Int] -> Text
     middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"
 
-filterEmptyBulletPoint :: [Block] -> [Block]
-filterEmptyBulletPoint = filter (\case
-    BULLET_POINT _s bs -> (not . null) (filterEmptyBulletPoint bs)
-    _others            -> True
-    )
+filterEmpty :: [Block] -> [Block]
+filterEmpty [] = []
+filterEmpty (BULLET_POINT s bs : xs) =
+    if null (filterEmpty bs)
+        then filterEmpty xs
+        else BULLET_POINT s (filterEmpty bs) : filterEmpty xs
+filterEmpty (x : xs)  = x : filterEmpty xs
 
-modifyBulletPoint :: Block -> [Block]
-modifyBulletPoint block =
-    let a = uncurry (:) . extraction $ block
-    in filterEmptyBulletPoint a
+modifyBulletPoint :: [Block] -> [Block]
+modifyBulletPoint blocks = filterEmpty $ foldr (\block acc -> case block of
+        BULLET_POINT s bs ->
+            let (stay, out) = runState (extract bs) []
+                bulletpoint = BULLET_POINT s stay
+            in [bulletpoint] <> out <> acc
+        _others -> block : acc
+    ) mempty blocks
   where
-    g :: [Block] -> ([Block], [Block])
-    g = foldr (\b (stay, out) -> case b of
-        t@(TABLE _n _c)      -> (stay, t : out)
-        c@(CODE_BLOCK _n _s) -> (stay, c : out)
-        BULLET_POINT _s' bs   ->
-            let (x, y) = g bs
-            in (x <> stay, y <> out)
-        others               -> (others : stay, out)
+    extract :: (MonadState [Block] m) => [Block] -> m [Block]
+    extract = foldM (\acc block -> case block of
+        t@(TABLE _n _c)      -> modify (<> [t]) >>  return acc
+        c@(CODE_BLOCK _n _s) -> modify (<> [c]) >>  return acc
+        BULLET_POINT s' bs   -> do
+            rest <- extract bs
+            let bulletpoint = BULLET_POINT s' rest
+            return (acc <> [bulletpoint])
+        others               -> return (acc <> [others])
         ) mempty
-
-    extraction :: Block -> (Block, [Block])
-    extraction = \case
-        BULLET_POINT s bs -> (\(stay, out) -> (BULLET_POINT s stay, out))
-            $ foldr (\b (shouldBeIn, shouldBeOut) -> case b of
-                t@(TABLE _n _c)      -> (shouldBeIn, t : shouldBeOut)
-                c@(CODE_BLOCK _n _s) -> (shouldBeIn, c : shouldBeOut)
-                BULLET_POINT s' bs'  ->
-                    let (stay, out)      = g bs'
-                        bulletPointBlock = BULLET_POINT s' stay
-                    in  (bulletPointBlock : shouldBeIn, out <> shouldBeOut)
-                _other               -> (b : shouldBeIn, shouldBeOut)
-                ) (mempty, mempty) bs
-        others -> (others, [])
 
 exampleBlock :: Block
 exampleBlock = BULLET_POINT ( Start 2 )

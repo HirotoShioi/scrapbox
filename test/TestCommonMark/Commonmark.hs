@@ -245,28 +245,32 @@ adjustLineBreaks (c1@(CODE_BLOCK _c _s) : c2@(CODE_BLOCK _c1 _s1) : rest) =
 adjustLineBreaks (x : xs) = x : adjustLineBreaks xs
 
 commonmarkRoundTripTest :: Block -> Property
-commonmarkRoundTripTest block = lessThanOneElement block ==>
+commonmarkRoundTripTest block = filterCases 0 block ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
     in parsed === unverbose
         ( Scrapbox
+        . filterEmpty
         . adjustLineBreaks
         . concatMap toRoundTripModel
         . modifyBulletPoint
-        $ block
+        $ [block]
         )
   where
-    lessThanOneElement :: Block -> Bool
-    lessThanOneElement (BULLET_POINT _start blocks) =
-           all lessThanOneElement blocks
-        && all (not . isTable) blocks
+    filterCases :: Int -> Block -> Bool
+    filterCases num (BULLET_POINT _start blocks) =
+           all (not . isTable) blocks
         && maybe True (not . isBulletPoint) (headMaybe blocks)
-    lessThanOneElement _others = True
+        -- The parser fails to parse bullet point at some depth, this num is used
+        -- so that we ignore those cases.
+        && num < 4
+        && all (filterCases (num + 1))  blocks
+    filterCases _n _others = True
 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
 
-    BULLET_POINT _start blocks -> [toBulletPointModel (Start 1) blocks]
+    BULLET_POINT _start blocks  -> [toBulletPointModel (Start 1) blocks]
 
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText [SPAN [Bold] segments]) ->
@@ -557,7 +561,7 @@ toBulletPointModel start bs = BULLET_POINT start $ foldr (\block acc -> case blo
     ) mempty bs
   where
     flatten = foldr (\block acc -> case block of
-        BULLET_POINT _s bb -> bb <> acc
+        BULLET_POINT _s bb -> flatten bb <> acc
         others             -> others : acc
         ) mempty
 
@@ -601,9 +605,10 @@ checkCommonmarkRoundTrip block =
         parsed'  = C.commonmarkToNode [] exts rendered
         modeled  = unverbose
                 . Scrapbox
+                . filterEmpty
                 . adjustLineBreaks
                 . concatMap toRoundTripModel
-                . modifyBulletPoint $ block
+                . modifyBulletPoint $ [block]
     in ( block
        , rendered
        , parsed'
@@ -620,3 +625,15 @@ checkCommonmarkRoundTrip block =
         , C.extTagfilter
         ]
 
+filterEmpty' :: [Block] -> [Block]
+filterEmpty' [] = []
+filterEmpty' (BULLET_POINT s bs : xs) =
+    if null bs
+        then filterEmpty' xs
+        else BULLET_POINT s (filterEmpty' bs) : filterEmpty' xs
+filterEmpty' (x : xs)  = x : filterEmpty' xs
+
+filterEmpty :: [Block] -> [Block]
+filterEmpty [] = []
+filterEmpty (BULLET_POINT s bs : xs) = BULLET_POINT s (filterEmpty' bs) : filterEmpty xs
+filterEmpty (x : xs) = x : filterEmpty xs
