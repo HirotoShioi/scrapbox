@@ -25,7 +25,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       TableContent (..), TableName (..),
                                       Url (..))
 import           Network.URI (parseURI, uriQuery)
-import           RIO.List (foldl', headMaybe, nub, tailMaybe)
+import           RIO.List (foldl', headMaybe, nub, tailMaybe, maximumMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
@@ -190,16 +190,19 @@ renderCodeblock (CodeName name) (CodeSnippet snippet) =
 -- | Render @TABLE@
 renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent [])       = [name]
-renderTable (TableName name) (TableContent contents) =
-    let renderedContent = fromMaybe (map T.unwords contents) renderTableM
+renderTable (TableName name) (TableContent contents)
+  | all null contents = [name]
+  | otherwise = 
+    let alignedContents = alignTable contents
+        renderedContent = fromMaybe (map T.unwords alignedContents) (renderTableM alignedContents)
     in if T.null name
         then renderedContent
         else [name] <> [""] <> renderedContent
   where
-    renderTableM :: Maybe [Text]
-    renderTableM = do
-        headColumn <- headMaybe contents
-        rest       <- tailMaybe contents
+    renderTableM :: [[Text]] -> Maybe [Text]
+    renderTableM cs = do
+        headColumn <- headMaybe cs
+        rest       <- tailMaybe cs
         let headColumnNums = map T.length headColumn
         return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
 
@@ -210,6 +213,15 @@ renderTable (TableName name) (TableContent contents) =
     -- Render middle section
     middle :: [Int] -> Text
     middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"
+
+    alignTable :: [[Text]] -> [[Text]]
+    alignTable rows = maybe rows (align rows) (maximumMaybe $ map length rows)
+
+    align :: [[Text]] -> Int -> [[Text]]
+    align rows maxRow = foldl' (\acc row -> if length row < maxRow
+        then acc <> [row <> replicate (maxRow - length row) ""]
+        else acc <> [row]
+        ) mempty rows
 
 filterEmpty :: [Block] -> [Block]
 filterEmpty [] = []
@@ -229,7 +241,9 @@ modifyBulletPoint blocks = filterEmpty $ foldl' (\acc block -> case block of
   where
     extract :: (MonadState [Block] m) => [Block] -> m [Block]
     extract = foldM (\acc block -> case block of
-        t@(TABLE _n _c)      -> modify (<> [t]) >>  return acc
+        t@(TABLE _n (TableContent contents)) -> if null contents || all null contents
+            then return (acc <> [t])
+            else modify (<> [t]) >>  return acc
         c@(CODE_BLOCK _n _s) -> modify (<> [c]) >>  return acc
         BULLET_POINT s' bs   -> do
             rest <- extract bs

@@ -364,13 +364,13 @@ toRoundTripModel = \case
         [PARAGRAPH (ScrapText (toInlineModel inlines))]
 
     -- Table
-    TABLE (TableName name) (TableContent []) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
     TABLE (TableName name) (TableContent contents) ->
-        [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])
-        , LINEBREAK
-        , TABLE (TableName "table") (TableContent $ alignTable $ map (fmap T.strip) contents)
-        ]
+        if all null contents || null contents
+            then [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
+            else [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])
+                 , LINEBREAK
+                 , TABLE (TableName "table") (TableContent $ alignTable $ map (fmap T.strip) contents)
+                 ]
     THUMBNAIL url -> [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]])]
     others    -> [others]
   where
