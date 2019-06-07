@@ -241,8 +241,10 @@ modifyBulletPoint blocks = filterEmpty $ foldl' (\acc block -> case block of
   where
     extract :: (MonadState [Block] m) => [Block] -> m [Block]
     extract = foldM (\acc block -> case block of
-        t@(TABLE _n (TableContent contents)) -> if null contents || all null contents
-            then return (acc <> [t])
+        t@(TABLE (TableName name) (TableContent contents)) -> if null contents || all null contents
+            then do
+                let paragraph = PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]  
+                return (acc <> [paragraph])
             else modify (<> [t]) >>  return acc
         c@(CODE_BLOCK _n _s) -> modify (<> [c]) >>  return acc
         BULLET_POINT s' bs   -> do

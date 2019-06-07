@@ -19,7 +19,7 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
                                          isBulletPoint, isSized, isText,
-                                         shortListOf, unverbose)
+                                         shortListOf1, unverbose)
 import           Data.Scrapbox.Render.Commonmark (modifyBulletPoint,
                                                   renderInlineBlock,
                                                   renderSegment)
@@ -99,7 +99,7 @@ instance Arbitrary CommonMark where
         tableGenerator = do
             rowNum   <- choose (2,10)
             header   <- vectorOf rowNum genNoSymbolText
-            contents <- shortListOf $ vectorOf rowNum genNoSymbolText
+            contents <- shortListOf1 $ vectorOf rowNum genNoSymbolText
             return $ TableSection header contents
     shrink = genericShrink
 
@@ -550,7 +550,10 @@ renderWithStyles styles = maybe
 toBulletPointModel :: Start -> [Block] -> Block
 toBulletPointModel start bs = BULLET_POINT start $ foldr (\block acc -> case block of
     BULLET_POINT _s blocks -> concatMap toRoundTripModel (flatten blocks) <> acc
-    TABLE _n _m            -> acc
+    TABLE (TableName name) (TableContent content) -> 
+        if null content || all null content
+            then [PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]] <> acc
+            else acc
     CODE_BLOCK _n _s       -> acc
     others                 -> toRoundTripModel others <> acc
     ) mempty bs
