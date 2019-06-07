@@ -18,8 +18,8 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
-                                         isBulletPoint, isSized, isTable,
-                                         isText, shortListOf, unverbose)
+                                         isBulletPoint, isSized, isText,
+                                         shortListOf, unverbose)
 import           Data.Scrapbox.Render.Commonmark (modifyBulletPoint,
                                                   renderInlineBlock,
                                                   renderSegment)
@@ -238,12 +238,6 @@ commonmarkModelTest commonmark =
 -- Commonmark roundtrip test
 --------------------------------------------------------------------------------
 
-adjustLineBreaks :: [Block] -> [Block]
-adjustLineBreaks [] = []
-adjustLineBreaks (c1@(CODE_BLOCK _c _s) : c2@(CODE_BLOCK _c1 _s1) : rest) =
-    c1 : LINEBREAK : adjustLineBreaks (c2 : rest)
-adjustLineBreaks (x : xs) = x : adjustLineBreaks xs
-
 commonmarkRoundTripTest :: Block -> Property
 commonmarkRoundTripTest block = filterCases 0 block ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
@@ -259,8 +253,9 @@ commonmarkRoundTripTest block = filterCases 0 block ==>
   where
     filterCases :: Int -> Block -> Bool
     filterCases num (BULLET_POINT _start blocks) =
-           all (not . isTable) blocks
-        && maybe True (not . isBulletPoint) (headMaybe blocks)
+           -- Parser does not work properly if the first element of the bullet point is
+           -- bulletpoint (meaning its nested)
+           maybe True (not . isBulletPoint) (headMaybe blocks)
         -- The parser fails to parse bullet point at some depth, this num is used
         -- so that we ignore those cases.
         && num < 4
@@ -637,3 +632,21 @@ filterEmpty :: [Block] -> [Block]
 filterEmpty [] = []
 filterEmpty (BULLET_POINT s bs : xs) = BULLET_POINT s (filterEmpty' bs) : filterEmpty xs
 filterEmpty (x : xs) = x : filterEmpty xs
+
+adjustLineBreaks :: [Block] -> [Block]
+adjustLineBreaks [] = []
+adjustLineBreaks (c1@(CODE_BLOCK _c _s) : c2@(CODE_BLOCK _c1 _s1) : rest) =
+    c1 : LINEBREAK : adjustLineBreaks (c2 : rest)
+adjustLineBreaks (p@(PARAGRAPH _) : c@(CODE_BLOCK _c _s) : rest) =
+    p : LINEBREAK : adjustLineBreaks (c: rest)
+adjustLineBreaks (t@(TABLE _n _c) : c@(CODE_BLOCK _a _b) : rest) =
+    t : LINEBREAK : adjustLineBreaks (c : rest)
+adjustLineBreaks (c@(CODE_BLOCK _ _) : t@(TABLE _ _) : rest) =
+    c : adjustLineBreaks (t : rest)
+adjustLineBreaks (c@(CODE_BLOCK _ _) : p@(PARAGRAPH _ ) : rest) =
+    c : LINEBREAK : adjustLineBreaks (p : rest)
+adjustLineBreaks (p1@(PARAGRAPH _) : p2@(PARAGRAPH _) : rest) =
+    p1 : LINEBREAK : adjustLineBreaks (p2 : rest)
+adjustLineBreaks (t@(TABLE _ _) : p@(PARAGRAPH _) : rest) =
+    t : LINEBREAK : adjustLineBreaks (p : rest)
+adjustLineBreaks (x : xs) = x : adjustLineBreaks xs

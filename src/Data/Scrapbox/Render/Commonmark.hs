@@ -189,6 +189,7 @@ renderCodeblock (CodeName name) (CodeSnippet snippet) =
 
 -- | Render @TABLE@
 renderTable :: TableName -> TableContent -> [Text]
+renderTable (TableName name) (TableContent [])       = [name]
 renderTable (TableName name) (TableContent contents) =
     let renderedContent = fromMaybe (map T.unwords contents) renderTableM
     in if T.null name
