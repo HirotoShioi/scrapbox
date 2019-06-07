@@ -18,13 +18,15 @@ import           Data.Scrapbox (Block (..), CodeName (..), CodeSnippet (..),
                                 Style (..), TableContent (..), TableName (..),
                                 Url (..), commonmarkToNode, renderToCommonmark)
 import           Data.Scrapbox.Internal (concatSegment, genPrintableUrl, isBold,
-                                         isSized, isText, shortListOf,
-                                         unverbose)
-import           Data.Scrapbox.Render.Commonmark (renderBlock,
-                                                  renderInlineBlock, renderSegment)
-import           RIO.List (headMaybe, initMaybe, lastMaybe, tailMaybe, zipWith, maximumMaybe)
+                                         isBulletPoint, isSized, isText,
+                                         shortListOf1, unverbose)
+import           Data.Scrapbox.Render.Commonmark (modifyBulletPoint,
+                                                  renderInlineBlock,
+                                                  renderSegment)
+import           RIO.List (headMaybe, initMaybe, lastMaybe, maximumMaybe,
+                           zipWith)
 import qualified RIO.Text as T
-import           Test.Hspec (Spec)
+import           Test.Hspec (Spec, describe)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   arbitraryPrintableChar, choose, elements,
@@ -32,9 +34,9 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property,
                                   suchThat, vectorOf, (===), (==>))
 
 commonmarkSpec :: Spec
-commonmarkSpec = modifyMaxSuccess (const 5000) $ do
+commonmarkSpec = describe "Tests" $ modifyMaxSuccess (const 5000) $ do
+    prop "Round trip test" commonmarkRoundTripTest
     prop "Model test" commonmarkModelTest
-    -- prop "Round trip test" commonmarkRoundTripTest
 
 --------------------------------------------------------------------------------
 -- Commonmark model test
@@ -97,7 +99,7 @@ instance Arbitrary CommonMark where
         tableGenerator = do
             rowNum   <- choose (2,10)
             header   <- vectorOf rowNum genNoSymbolText
-            contents <- shortListOf $ vectorOf rowNum genNoSymbolText
+            contents <- shortListOf1 $ vectorOf rowNum genNoSymbolText
             return $ TableSection header contents
     shrink = genericShrink
 
@@ -237,29 +239,33 @@ commonmarkModelTest commonmark =
 --------------------------------------------------------------------------------
 
 commonmarkRoundTripTest :: Block -> Property
-commonmarkRoundTripTest block = lessThanOneElement block ==>
+commonmarkRoundTripTest block = filterCases 0 block ==>
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
-    in parsed === unverbose (Scrapbox (toRoundTripModel block))
+    in parsed === unverbose
+        ( Scrapbox
+        . filterEmpty
+        . adjustLineBreaks
+        . concatMap toRoundTripModel
+        . modifyBulletPoint
+        $ [block]
+        )
   where
-    lessThanOneElement :: Block -> Bool
-    lessThanOneElement (BULLET_POINT _start blocks) =
-        length blocks <= 1 && all lessThanOneElement blocks
-    lessThanOneElement _others = True
+    filterCases :: Int -> Block -> Bool
+    filterCases num (BULLET_POINT _start blocks) =
+           -- Parser does not work properly if the first element of the bullet point is
+           -- bulletpoint (meaning its nested)
+           maybe True (not . isBulletPoint) (headMaybe blocks)
+        -- The parser fails to parse bullet point at some depth, this num is used
+        -- so that we ignore those cases.
+        && num < 4
+        && all (filterCases (num + 1))  blocks
+    filterCases _n _others = True
 
 toRoundTripModel :: Block -> [Block]
 toRoundTripModel = \case
-    -- Need to fix this in the future
-    BULLET_POINT _s1 [BULLET_POINT _s2 blocks] ->
-        foldl' (\acc block -> case block of
-            t@(TABLE _n _c)      -> acc <> toRoundTripModel t
-            c@(CODE_BLOCK _n _c) -> acc <> toRoundTripModel c
-            b -> let rendered = map ("- " <> ) $ renderBlock b
-                     code     = CODE_BLOCK (CodeName "code") (CodeSnippet rendered)
-                 in acc <> [code]
-            ) mempty blocks
 
-    BULLET_POINT _start blocks -> toBulletPointModel (Start 0) blocks
+    BULLET_POINT _start blocks  -> [toBulletPointModel (Start 1) blocks]
 
     BLOCK_QUOTE (ScrapText [SPAN [Bold] []]) -> emptyQuote
     BLOCK_QUOTE (ScrapText [SPAN [Bold] segments]) ->
@@ -358,13 +364,13 @@ toRoundTripModel = \case
         [PARAGRAPH (ScrapText (toInlineModel inlines))]
 
     -- Table
-    TABLE (TableName name) (TableContent []) ->
-        [PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
     TABLE (TableName name) (TableContent contents) ->
-        [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])
-        , LINEBREAK
-        , TABLE (TableName "table") (TableContent $ alignTable $ map (fmap T.strip) contents)
-        ]
+        if all null contents || null contents
+            then [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])]
+            else [ PARAGRAPH (ScrapText [SPAN [] [TEXT name]])
+                 , LINEBREAK
+                 , TABLE (TableName "table") (TableContent $ alignTable $ map (fmap T.strip) contents)
+                 ]
     THUMBNAIL url -> [PARAGRAPH (ScrapText [SPAN [] [LINK Nothing url]])]
     others    -> [others]
   where
@@ -498,10 +504,10 @@ renderSegments = foldr (\segment acc -> renderSegment segment <> acc) mempty
 
 modelSpan :: [Style] -> [Segment] -> [InlineBlock]
 modelSpan styles segments
-    | T.strip (renderSegments segments) /= renderSegments segments = 
+    | (not . null) styles && (T.strip (renderSegments segments) /= renderSegments segments) =
         [ SPAN [] $
                [TEXT (renderStyle styles)]
-            <> segments
+            <> filter filterEmptyText segments
             <> [TEXT (T.reverse (renderStyle styles))]
         ]
     | otherwise = foldr (\segment acc -> case segment of
@@ -516,6 +522,11 @@ modelSpan styles segments
     LINK (Just "") url -> [SPAN styles [LINK Nothing url]] <> acc
     others -> [SPAN styles [others]] <> acc
     ) mempty segments
+  where
+    filterEmptyText :: Segment -> Bool
+    filterEmptyText = \case
+        TEXT text -> (not . T.null) text
+        _others   -> True
 
 renderStyle :: [Style] -> Text
 renderStyle = foldr (\style acc -> case style of
@@ -536,33 +547,21 @@ renderWithStyles styles = maybe
         return (last, init)
     )
 
-toBulletPointModel :: Start -> [Block] -> [Block]
-toBulletPointModel (Start num) = foldr (\block acc -> case block of
-    c@(CODE_BLOCK _name _snippet) ->
-        if null acc
-            then toRoundTripModel c <> acc
-            else toRoundTripModel c <> [LINEBREAK] <> acc
-    t@(TABLE _name _content) ->
-        let b | null acc = toRoundTripModel t <> acc
-              | otherwise = toRoundTripModel t <> [LINEBREAK] <> acc
-        in b
-    LINEBREAK -> maybe
-        [BULLET_POINT (Start 1) []]
-        (\(head, rest) -> case head of
-            BULLET_POINT _s _b -> head : rest
-            _others            -> BULLET_POINT (Start 1) [] : head : rest
-        )
-        ((,) <$> headMaybe acc <*> tailMaybe acc)
-    BULLET_POINT _s blocks ->
-        toBulletPointModel (Start $ num + 1) blocks
-    others -> maybe
-        [BULLET_POINT (Start 1) (toRoundTripModel others)]
-        (\(head, rest) -> case head of
-            BULLET_POINT s b   -> BULLET_POINT s (toRoundTripModel others <> b) : rest
-            _others            -> BULLET_POINT (Start 1) (toRoundTripModel others) : head : rest
-        )
-        ((,) <$> headMaybe acc <*> tailMaybe acc)
-    ) mempty
+toBulletPointModel :: Start -> [Block] -> Block
+toBulletPointModel start bs = BULLET_POINT start $ foldr (\block acc -> case block of
+    BULLET_POINT _s blocks -> concatMap toRoundTripModel (flatten blocks) <> acc
+    TABLE (TableName name) (TableContent content) -> 
+        if null content || all null content
+            then [PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]] <> acc
+            else acc
+    CODE_BLOCK _n _s       -> acc
+    others                 -> toRoundTripModel others <> acc
+    ) mempty bs
+  where
+    flatten = foldr (\block acc -> case block of
+        BULLET_POINT _s bb -> flatten bb <> acc
+        others             -> others : acc
+        ) mempty
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -602,13 +601,18 @@ checkCommonmarkRoundTrip block =
     let rendered = renderToCommonmark [] (Scrapbox [block])
         parsed   = commonmarkToNode [] rendered
         parsed'  = C.commonmarkToNode [] exts rendered
-        modeled  = toRoundTripModel block
+        modeled  = unverbose
+                . Scrapbox
+                . filterEmpty
+                . adjustLineBreaks
+                . concatMap toRoundTripModel
+                . modifyBulletPoint $ [block]
     in ( block
        , rendered
        , parsed'
        , parsed
-       , unverbose . Scrapbox $ modeled
-       , parsed == unverbose (Scrapbox modeled)
+       , modeled
+       , parsed == modeled
        )
   where
     exts :: [C.CMarkExtension]
@@ -619,3 +623,33 @@ checkCommonmarkRoundTrip block =
         , C.extTagfilter
         ]
 
+filterEmpty' :: [Block] -> [Block]
+filterEmpty' [] = []
+filterEmpty' (BULLET_POINT s bs : xs) =
+    if null bs
+        then filterEmpty' xs
+        else BULLET_POINT s (filterEmpty' bs) : filterEmpty' xs
+filterEmpty' (x : xs)  = x : filterEmpty' xs
+
+filterEmpty :: [Block] -> [Block]
+filterEmpty [] = []
+filterEmpty (BULLET_POINT s bs : xs) = BULLET_POINT s (filterEmpty' bs) : filterEmpty xs
+filterEmpty (x : xs) = x : filterEmpty xs
+
+adjustLineBreaks :: [Block] -> [Block]
+adjustLineBreaks [] = []
+adjustLineBreaks (c1@(CODE_BLOCK _c _s) : c2@(CODE_BLOCK _c1 _s1) : rest) =
+    c1 : LINEBREAK : adjustLineBreaks (c2 : rest)
+adjustLineBreaks (p@(PARAGRAPH _) : c@(CODE_BLOCK _c _s) : rest) =
+    p : LINEBREAK : adjustLineBreaks (c: rest)
+adjustLineBreaks (t@(TABLE _n _c) : c@(CODE_BLOCK _a _b) : rest) =
+    t : LINEBREAK : adjustLineBreaks (c : rest)
+adjustLineBreaks (c@(CODE_BLOCK _ _) : t@(TABLE _ _) : rest) =
+    c : adjustLineBreaks (t : rest)
+adjustLineBreaks (c@(CODE_BLOCK _ _) : p@(PARAGRAPH _ ) : rest) =
+    c : LINEBREAK : adjustLineBreaks (p : rest)
+adjustLineBreaks (p1@(PARAGRAPH _) : p2@(PARAGRAPH _) : rest) =
+    p1 : LINEBREAK : adjustLineBreaks (p2 : rest)
+adjustLineBreaks (t@(TABLE _ _) : p@(PARAGRAPH _) : rest) =
+    t : LINEBREAK : adjustLineBreaks (p : rest)
+adjustLineBreaks (x : xs) = x : adjustLineBreaks xs

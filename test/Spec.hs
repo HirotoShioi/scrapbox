@@ -12,8 +12,8 @@ import           TestCommonMark.Commonmark (commonmarkSpec)
 import           TestScrapboxParser.ParserTest (parserSpec)
 
 main :: IO ()
-main = hspec $ parallel $ do
-    describe "Scrapbox parser"
+main = hspec $ do
+    describe "Scrapbox parser" $ parallel
         parserSpec
     describe "Commonmark parser"
         commonmarkSpec

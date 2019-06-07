@@ -30,6 +30,7 @@ module Data.Scrapbox.Internal
     , genPrintableUrl
     , genMaybe
     , shortListOf
+    , shortListOf1
     ) where
 
 import           RIO
@@ -39,7 +40,7 @@ import           Data.Scrapbox.Types (Block (..), InlineBlock (..),
                                       concatScrapText, concatSegment, unverbose,
                                       verbose)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
-                                      genPrintableUrl, shortListOf)
+                                      genPrintableUrl, shortListOf, shortListOf1)
 
 --------------------------------------------------------------------------------
 -- Predicates

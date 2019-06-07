@@ -46,14 +46,13 @@ library
                        -Wredundant-constraints
                        -Wnoncanonical-monad-instances
   build-depends:       QuickCheck
-                     , attoparsec
                      , base >=4.7 && <5
                      , network-uri
                      , parsec
                      , rio
-                     , split
                      , text
                      , cmark-gfm
+                     , mtl
   default-language:    Haskell2010
 
 test-suite scrapbox-test
@@ -78,10 +77,10 @@ test-suite scrapbox-test
                     , base >=4.7 && <5
                     , cmark-gfm
                     , hspec
-                    , network-uri
                     , parsec
                     , rio
                     , scrapbox
                     , split
                     , text
+                    , network-uri
   default-language:   Haskell2010

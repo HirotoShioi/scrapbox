@@ -35,7 +35,7 @@ import           RIO hiding (span)
 import           Data.List (groupBy, nub, sort, sortBy)
 import           Data.Scrapbox.Utils (genMaybe, genNonSpaceText1,
                                       genPrintableText, genPrintableUrl,
-                                      shortListOf)
+                                      shortListOf1, shortListOf)
 import           Test.QuickCheck (Arbitrary (..), choose, elements, frequency,
                                   genericShrink, listOf, oneof, resize, sized)
 
@@ -50,7 +50,7 @@ newtype Scrapbox = Scrapbox [Block]
 
 instance Arbitrary Scrapbox where
     arbitrary = sized $ \size -> resize (adjustSize size) $ do
-        (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf arbitrary
+        (Scrapbox blocks) <- unverbose . Scrapbox <$> shortListOf1 arbitrary
         return $ Scrapbox $ removeAmbiguity blocks
         where
             adjustSize num | num < 30 = num
@@ -109,7 +109,7 @@ newtype CodeSnippet = CodeSnippet [Text]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary CodeSnippet where
-    arbitrary = CodeSnippet <$> shortListOf genPrintableText
+    arbitrary = CodeSnippet <$> shortListOf1 genPrintableText
     shrink = genericShrink
 
 -- | Heading level
@@ -171,9 +171,9 @@ instance Arbitrary Block where
     arbitrary = replaceAmbiguousBlock <$> oneof
             [ return LINEBREAK
             , BLOCK_QUOTE <$> arbitrary
-            , BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf arbitrary)
+            , BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf1 arbitrary)
             , CODE_BLOCK <$> arbitrary <*> arbitrary
-            , HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf arbitrary)
+            , HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf1 arbitrary)
             , PARAGRAPH <$> arbitrary
             , TABLE <$> arbitrary <*> arbitrary
             , THUMBNAIL <$> arbitrary
@@ -201,7 +201,7 @@ newtype ScrapText = ScrapText [InlineBlock]
     deriving (Eq, Show, Generic, Read, Ord)
 
 instance Arbitrary ScrapText where
-    arbitrary = ScrapText . formatInline . concatInline <$> shortListOf arbitrary
+    arbitrary = ScrapText . formatInline . concatInline <$> shortListOf1 arbitrary
     shrink (ScrapText inlines) = map (ScrapText . formatInline . concatInline) $ genericShrink inlines
 
 -- | InlineBlock
@@ -215,7 +215,7 @@ data InlineBlock
 
 instance Arbitrary InlineBlock where
     arbitrary = do
-        let randSpan     = SPAN <$> arbitrary <*> shortListOf arbitrary
+        let randSpan     = SPAN <$> arbitrary <*> shortListOf1 arbitrary
         let randCode     = CODE_NOTATION <$> genPrintableText
         let randMathExpr = MATH_EXPRESSION <$> genPrintableText
         frequency [ (7, randSpan)

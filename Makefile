@@ -7,21 +7,21 @@ stylish-haskell: ## Apply stylish-haskell on all *.hs files
 	@find . -type f -name "*.hs" -not -path '.git' -not -path '*.stack-work*' -print0 | xargs -0 stylish-haskell -i
 
 ghci: ## Run repl
-	@stack ghci $(PROJECT_NAME):lib --haddock-deps --ghci-options=-fobject-code
+	@stack ghci $(PROJECT_NAME):lib --haddock-deps --ghci-options=-fobject-code 
 
 ghcid:  ## Run ghcid
-	@ghcid --command "stack ghci $(PROJECT_NAME):lib --ghci-options=-fobject-code"
+	@ghcid --command "stack ghci $(PROJECT_NAME):lib --ghci-options=-fobject-code "
 
 run-test: ## Build & run test
 	@stack build --fast && \
 	stack test --fast
 
 test-ghci: ## Run repl on test suites
-	@stack build $(PROJECT_NAME):lib --fast && \
-	stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code
+	@stack build $(PROJECT_NAME):lib --fast  && \
+	stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code 
 
 test-ghcid: ## Run ghcid on test suites
-	@stack build $(PROJECT_NAME):lib --fast && \
+	@stack build $(PROJECT_NAME):lib --fast  && \
 	ghcid --command "stack ghci $(PROJECT_NAME):lib $(PROJECT_NAME):test:$(PROJECT_NAME)-test --ghci-options=-fobject-code"
 
 .PHONY: stylish-haskell ghci ghcid run-test test-ghcid test-ghci help

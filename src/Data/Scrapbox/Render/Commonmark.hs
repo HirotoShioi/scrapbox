@@ -1,6 +1,8 @@
 {-| This module exports a set of renderer functions for Commonmark
 -}
 
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -8,11 +10,14 @@ module Data.Scrapbox.Render.Commonmark
     ( renderToCommonmarkNoOption
     , renderInlineBlock
     , renderTable
-    , renderBlock
     , renderSegment
+    , exampleBlock
+    , exampleBlock2
+    , modifyBulletPoint
     ) where
 import           RIO
 
+import           Control.Monad.State.Strict (MonadState, modify, runState)
 import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       CodeSnippet (..), InlineBlock (..),
                                       Level (..), ScrapText (..), Scrapbox (..),
@@ -20,14 +25,16 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       TableContent (..), TableName (..),
                                       Url (..))
 import           Network.URI (parseURI, uriQuery)
-import           RIO.List (foldl', headMaybe, nub, tailMaybe)
+import           RIO.List (foldl', headMaybe, nub, tailMaybe, maximumMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
 renderToCommonmarkNoOption :: Scrapbox -> Text
 renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
-    $ concatMap renderBlock
-    $ addLineBreaks blocks
+    . concatMap renderBlock
+    . addLineBreaks
+    . modifyBulletPoint
+    $ blocks
   where
     addLineBreaks :: [Block] -> [Block]
     addLineBreaks []               = []
@@ -41,7 +48,7 @@ renderBlock :: Block -> [Text]
 renderBlock = \case
     LINEBREAK                       -> [""]
     BLOCK_QUOTE scraptext           -> [">" <> renderScrapText scraptext]
-    BULLET_POINT _start blocks      -> renderBulletPoint (Start 0) blocks
+    BULLET_POINT _start blocks      -> renderBulletPointUnsafe (Start 0) blocks
     CODE_BLOCK codeName codeSnippet -> renderCodeblock codeName codeSnippet
     HEADING level segments          -> [renderHeading level segments]
     PARAGRAPH scraptext             -> [renderScrapText scraptext]
@@ -90,9 +97,12 @@ renderScrapText (ScrapText inlineBlocks) =
     addSpacesHash others = others
 
 -- | Render @BULLET_POINT@
-renderBulletPoint :: Start -> [Block] -> [Text]
-renderBulletPoint (Start num) = foldl' (\acc block->
-        let spaces   = T.replicate num "\t"
+--
+-- Do not export this.
+-- This function needs to be used by calling from renderToCommonmarkNoOption
+renderBulletPointUnsafe :: Start -> [Block] -> [Text]
+renderBulletPointUnsafe (Start num) = foldl' (\acc block->
+        let spaces   = T.replicate num " "
             rendered = case block of
                 -- Filtering 'CODE_BLOCK' and 'TABLE' blocks since it cannot be
                 -- rendered as bulletpoint
@@ -102,7 +112,7 @@ renderBulletPoint (Start num) = foldl' (\acc block->
                     addSpaces acc $ renderTable tableName tableContent
                 -- Special case on 'BULLET_POINT'
                 BULLET_POINT _s blocks' ->
-                    addSpaces acc $ renderBulletPoint (Start $ num + 1) blocks'
+                    renderBulletPointUnsafe (Start $ num + 1) blocks'
                 others -> map (\t -> spaces <> "- " <> t) $ renderBlock others
         in acc <> rendered
         ) mempty
@@ -179,16 +189,20 @@ renderCodeblock (CodeName name) (CodeSnippet snippet) =
 
 -- | Render @TABLE@
 renderTable :: TableName -> TableContent -> [Text]
-renderTable (TableName name) (TableContent contents) =
-    let renderedContent = fromMaybe (map T.unwords contents) renderTableM
+renderTable (TableName name) (TableContent [])       = [name]
+renderTable (TableName name) (TableContent contents)
+  | all null contents = [name]
+  | otherwise = 
+    let alignedContents = alignTable contents
+        renderedContent = fromMaybe (map T.unwords alignedContents) (renderTableM alignedContents)
     in if T.null name
         then renderedContent
         else [name] <> [""] <> renderedContent
   where
-    renderTableM :: Maybe [Text]
-    renderTableM = do
-        headColumn <- headMaybe contents
-        rest       <- tailMaybe contents
+    renderTableM :: [[Text]] -> Maybe [Text]
+    renderTableM cs = do
+        headColumn <- headMaybe cs
+        rest       <- tailMaybe cs
         let headColumnNums = map T.length headColumn
         return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
 
@@ -199,3 +213,67 @@ renderTable (TableName name) (TableContent contents) =
     -- Render middle section
     middle :: [Int] -> Text
     middle = foldl' (\acc num -> acc <> T.replicate (num + 2) "-" <> "|") "|"
+
+    alignTable :: [[Text]] -> [[Text]]
+    alignTable rows = maybe rows (align rows) (maximumMaybe $ map length rows)
+
+    align :: [[Text]] -> Int -> [[Text]]
+    align rows maxRow = foldl' (\acc row -> if length row < maxRow
+        then acc <> [row <> replicate (maxRow - length row) ""]
+        else acc <> [row]
+        ) mempty rows
+
+filterEmpty :: [Block] -> [Block]
+filterEmpty [] = []
+filterEmpty (BULLET_POINT s bs : xs) =
+    if null (filterEmpty bs)
+        then filterEmpty xs
+        else BULLET_POINT s (filterEmpty bs) : filterEmpty xs
+filterEmpty (x : xs)  = x : filterEmpty xs
+
+modifyBulletPoint :: [Block] -> [Block]
+modifyBulletPoint blocks = filterEmpty $ foldl' (\acc block -> case block of
+        BULLET_POINT s bs ->
+            let (stay, out) = runState (extract bs) []
+            in acc <> [BULLET_POINT s stay] <> out
+        _others -> acc <> [block]
+    ) mempty blocks
+  where
+    extract :: (MonadState [Block] m) => [Block] -> m [Block]
+    extract = foldM (\acc block -> case block of
+        t@(TABLE (TableName name) (TableContent contents)) -> if null contents || all null contents
+            then do
+                let paragraph = PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]  
+                return (acc <> [paragraph])
+            else modify (<> [t]) >>  return acc
+        c@(CODE_BLOCK _n _s) -> modify (<> [c]) >>  return acc
+        BULLET_POINT s' bs   -> do
+            rest <- extract bs
+            return (acc <> [BULLET_POINT s' rest])
+        others               -> return (acc <> [others])
+        ) mempty
+
+exampleBlock :: Block
+exampleBlock = BULLET_POINT ( Start 2 )
+    [ HEADING ( Level 2 ) [ TEXT "World" ]
+    , CODE_BLOCK (CodeName "codename") (CodeSnippet [])
+    , BULLET_POINT ( Start 3 )
+        [ BULLET_POINT ( Start 1 )
+            [ HEADING ( Level 4 ) [ TEXT "Hello" ]
+            , LINEBREAK
+            , TABLE ( TableName "tableName" )
+                ( TableContent [ [""] ] )
+            , CODE_BLOCK (CodeName "codename") (CodeSnippet [])
+            ]
+        ]
+    ]
+
+exampleBlock2 :: Block
+exampleBlock2 = BULLET_POINT ( Start 3 )
+    [ HEADING ( Level 2 ) [ TEXT "hello" ]
+    , BULLET_POINT ( Start 2 )
+        [ CODE_BLOCK ( CodeName "codeName" ) ( CodeSnippet [] )
+        , LINEBREAK
+        , CODE_BLOCK ( CodeName "codeName" ) ( CodeSnippet [] )
+        ]
+    ]

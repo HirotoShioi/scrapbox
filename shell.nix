@@ -4,19 +4,19 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, attoparsec, base, cmark, hspec, network-uri
-      , parsec, QuickCheck, rio, split, stdenv, text
+  f = { mkDerivation, attoparsec, base, cmark-gfm, hspec, mtl
+      , network-uri, parsec, QuickCheck, rio, split, stdenv, text
       }:
       mkDerivation {
         pname = "scrapbox";
         version = "0.1.0.0";
         src = ./.;
         libraryHaskellDepends = [
-          attoparsec base cmark network-uri parsec QuickCheck rio split text
+          base cmark-gfm mtl network-uri parsec QuickCheck rio text
         ];
         testHaskellDepends = [
-          attoparsec base cmark hspec network-uri parsec QuickCheck rio split
-          text
+          attoparsec base cmark-gfm hspec network-uri parsec QuickCheck rio
+          split text
         ];
         homepage = "https://github.com/HirotoShioi/scrapbox#readme";
         description = "Renderer and parser for Scrapbox";

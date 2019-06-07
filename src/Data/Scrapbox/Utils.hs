@@ -12,6 +12,7 @@ module Data.Scrapbox.Utils
     , genNonSpaceText1
     , genPrintableUrl
     , genMaybe
+    , shortListOf1
     , shortListOf
     , isURL
     ) where
@@ -21,7 +22,7 @@ import           RIO
 import           Data.Char (isSpace)
 import           RIO.List (headMaybe, isPrefixOf, stripPrefix)
 import qualified RIO.Text as T
-import           Test.QuickCheck (Arbitrary (..), Gen, elements, listOf1,
+import           Test.QuickCheck (Arbitrary (..), Gen, elements, listOf, listOf1,
                                   resize, sized)
 import           Test.QuickCheck.Arbitrary (arbitraryPrintableChar)
 import           Test.QuickCheck.Gen (suchThat)
@@ -94,6 +95,12 @@ genMaybe gen = do
 -- | Generate shorter list
 shortListOf :: Gen a -> Gen [a]
 shortListOf g = sized $ \s ->
+    resize
+        ((round :: Double -> Int) . sqrt . fromIntegral $ s)
+        (listOf (resize s g))
+
+shortListOf1 :: Gen a -> Gen [a]
+shortListOf1 g = sized $ \s ->
     resize
         ((round :: Double -> Int) . sqrt . fromIntegral $ s)
         (listOf1 (resize s g))

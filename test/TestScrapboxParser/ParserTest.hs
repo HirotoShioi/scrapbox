@@ -22,7 +22,8 @@ import           Data.Scrapbox.Render.Scrapbox (renderBlock, renderScrapText,
 import qualified RIO.Text as T
 import           Test.Hspec (Spec, describe, it)
 import           Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
-import           Test.QuickCheck (Property, label, property, within, (===))
+import           Test.QuickCheck (Property, label, within, (===),
+                                  (==>))
 import           Text.Parsec (ParseError)
 import           Utils (propNonNull, shouldParseSpec)
 
@@ -146,21 +147,30 @@ scrapboxParserSpec =
 
         syntaxPageTest
 
+noTables :: [Block] -> Bool
+noTables []                                      = True
+noTables (TABLE _ (TableContent content) : rest) = (not . null) content && all (not . null) content && noTables rest
+noTables (BULLET_POINT _ bs : rest)              = noTables bs && noTables rest
+noTables (_ : xs)                                = noTables xs
+
 scrapboxRoundTripTest :: Scrapbox -> Property
-scrapboxRoundTripTest scrapbox = within 5000000 $ property $
+scrapboxRoundTripTest scrapbox@(Scrapbox blocks) = within 5000000 $
+      noTables blocks ==>
       label (printSize $ size scrapbox)
-    $ roundTripTest (renderToScrapbox []) runScrapboxParser id
+    $ let roundTripped = runScrapboxParser $ T.unpack $ renderToScrapbox [] scrapbox
+      in roundTripped === Right (model scrapbox)
   where
     printSize bsize
       | bsize < 5                = "Less than 5"
       | bsize >= 5 && bsize < 10 = "More than 5, but less than 10"
       | otherwise                = "More than 10"
+    model :: Scrapbox -> Scrapbox
+    model = id
 
 blockRoundTripTest :: Block -> Property
-blockRoundTripTest = roundTripTest
-    (T.unlines . renderBlock)
-    runScrapboxParser
-    (Scrapbox . toModel)
+blockRoundTripTest block = noTables [block] ==> 
+    let roundTripped = runScrapboxParser $ T.unpack $ T.unlines $ renderBlock block
+    in roundTripped === Right (Scrapbox $ toModel block)
   where
     toModel :: Block -> [Block]
     toModel = \case
