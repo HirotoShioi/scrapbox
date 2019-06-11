@@ -25,7 +25,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       TableContent (..), TableName (..),
                                       Url (..))
 import           Network.URI (parseURI, uriQuery)
-import           RIO.List (foldl', headMaybe, nub, tailMaybe, maximumMaybe)
+import           RIO.List (foldl', headMaybe, maximumMaybe, nub, tailMaybe)
 import qualified RIO.Text as T
 
 -- | Render given 'Scrapbox' AST into commonmark
@@ -61,8 +61,15 @@ renderUrl name (Url url)
   | "https://www.youtube.com/" `T.isPrefixOf` url =
         maybe
             url
-            (\youtubeId ->
-                "[![" <> name <> "](https://img.youtube.com/vi/" <> youtubeId <> "/0.jpg)](" <> url <> ")"
+            (\youtubeId -> mconcat
+                [ "[!["
+                , name
+                , "](https://img.youtube.com/vi/"
+                , youtubeId
+                , "/0.jpg)]("
+                , url
+                , ")"
+                ]
             )
             (do
                 uri      <- parseURI (T.unpack url)
@@ -93,7 +100,8 @@ renderScrapText (ScrapText inlineBlocks) =
 
     addSpacesHash :: [InlineBlock] -> [InlineBlock]
     addSpacesHash [] = []
-    addSpacesHash (SPAN [] (HASHTAG tag : rest) : xs) = SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
+    addSpacesHash (SPAN [] (HASHTAG tag : rest) : xs) =
+        SPAN [] (TEXT " " : HASHTAG tag : rest) : xs
     addSpacesHash others = others
 
 -- | Render @BULLET_POINT@
@@ -141,7 +149,8 @@ renderHeading (Level headingNum) segments =
     -- [HASHTAG "a", TEXT " a"]
     adjustSpaces :: [Segment] -> [Segment]
     adjustSpaces [] = []
-    adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) = h1 : TEXT " " : adjustSpaces (h2 : rest)
+    adjustSpaces (h1@(HASHTAG _t1) : h2@(HASHTAG _t2) : rest) =
+        h1 : TEXT " " : adjustSpaces (h2 : rest)
     adjustSpaces (x:xs) = x : adjustSpaces xs
 
 -- | Render @Segment@
@@ -158,7 +167,10 @@ renderInlineBlock = \case
     CODE_NOTATION text   -> "`" <> text <> "`"
     MATH_EXPRESSION text -> "`" <> text <> "`"
     SPAN styles segments ->
-        let renderedSegments = foldl' (\acc segment -> acc <> renderSegment segment) mempty segments
+        let renderedSegments = foldl'
+                (\acc segment -> acc <> renderSegment segment)
+                mempty
+                segments
         in renderWithStyle (nub styles) renderedSegments
   where
     -- Render given text with 'StyleData'
@@ -192,9 +204,11 @@ renderTable :: TableName -> TableContent -> [Text]
 renderTable (TableName name) (TableContent [])       = [name]
 renderTable (TableName name) (TableContent contents)
   | all null contents = [name]
-  | otherwise = 
+  | otherwise =
     let alignedContents = alignTable contents
-        renderedContent = fromMaybe (map T.unwords alignedContents) (renderTableM alignedContents)
+        renderedContent = fromMaybe
+            (map T.unwords alignedContents)
+            (renderTableM alignedContents)
     in if T.null name
         then renderedContent
         else [name] <> [""] <> renderedContent
@@ -204,7 +218,9 @@ renderTable (TableName name) (TableContent contents)
         headColumn <- headMaybe cs
         rest       <- tailMaybe cs
         let headColumnNums = map T.length headColumn
-        return $ [renderColumn headColumn] <> [middle headColumnNums] <> map renderColumn rest
+        return $ [renderColumn headColumn]
+            <> [middle headColumnNums]
+            <> map renderColumn rest
 
     -- Render column section
     renderColumn :: [Text] -> Text
@@ -241,9 +257,10 @@ modifyBulletPoint blocks = filterEmpty $ foldl' (\acc block -> case block of
   where
     extract :: (MonadState [Block] m) => [Block] -> m [Block]
     extract = foldM (\acc block -> case block of
-        t@(TABLE (TableName name) (TableContent contents)) -> if null contents || all null contents
+        t@(TABLE (TableName name) (TableContent contents)) -> 
+            if null contents || all null contents
             then do
-                let paragraph = PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]  
+                let paragraph = PARAGRAPH $ ScrapText [SPAN [] [TEXT name]]
                 return (acc <> [paragraph])
             else modify (<> [t]) >>  return acc
         c@(CODE_BLOCK _n _s) -> modify (<> [c]) >>  return acc

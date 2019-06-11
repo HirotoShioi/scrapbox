@@ -30,7 +30,8 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
 
 -- | Render given 'Scrapbox' AST into Scrapbox page
 renderToScrapboxNoOption :: Scrapbox -> Text
-renderToScrapboxNoOption (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
+renderToScrapboxNoOption (Scrapbox blocks) = 
+    T.unlines $ concatMap renderBlock blocks
 
 --------------------------------------------------------------------------------
 -- Rendering logics

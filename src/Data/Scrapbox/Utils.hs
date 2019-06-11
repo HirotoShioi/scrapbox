@@ -62,7 +62,8 @@ instance Arbitrary Text where
 
 syntaxSymobls :: String
 syntaxSymobls = [ '+', '~','!', '_', '*', '[', ']', '/', '&', '<', '>'
-                , '\\', '#', '"', '\'', '`', '>', '-', '\n', '|', ')', '@', '^', '.']
+                , '\\', '#', '"', '\'', '`', '>', '-', '\n', '|', ')'
+                , '@', '^', '.']
 
 -- | Generate random url
 genPrintableUrl :: Gen Text

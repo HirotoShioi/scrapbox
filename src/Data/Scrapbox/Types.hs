@@ -55,7 +55,8 @@ instance Arbitrary Scrapbox where
         where
             adjustSize num | num < 30 = num
                            | otherwise = 30
-    shrink (Scrapbox blocks) = map (unverbose . Scrapbox . removeAmbiguity) $ shrink blocks
+    shrink (Scrapbox blocks) = 
+        map (unverbose . Scrapbox . removeAmbiguity) $ shrink blocks
 
 -- | Replace ambiguous @[Block]@ with something else. Used for testing.
 removeAmbiguity :: [Block] -> [Block]
@@ -171,9 +172,11 @@ instance Arbitrary Block where
     arbitrary = replaceAmbiguousBlock <$> oneof
             [ return LINEBREAK
             , BLOCK_QUOTE <$> arbitrary
-            , BULLET_POINT <$> arbitrary <*> (removeAmbiguity <$> shortListOf1 arbitrary)
+            , BULLET_POINT <$> arbitrary <*> 
+                (removeAmbiguity <$> shortListOf1 arbitrary)
             , CODE_BLOCK <$> arbitrary <*> arbitrary
-            , HEADING <$> arbitrary <*> (concatSegment . addSpace <$> shortListOf1 arbitrary)
+            , HEADING <$> arbitrary <*> 
+                (concatSegment . addSpace <$> shortListOf1 arbitrary)
             , PARAGRAPH <$> arbitrary
             , TABLE <$> arbitrary <*> arbitrary
             , THUMBNAIL <$> arbitrary
@@ -202,7 +205,8 @@ newtype ScrapText = ScrapText [InlineBlock]
 
 instance Arbitrary ScrapText where
     arbitrary = ScrapText . formatInline . concatInline <$> shortListOf1 arbitrary
-    shrink (ScrapText inlines) = map (ScrapText . formatInline . concatInline) $ genericShrink inlines
+    shrink (ScrapText inlines) = 
+            map (ScrapText . formatInline . concatInline) $ genericShrink inlines
 
 -- | InlineBlock
 data InlineBlock
@@ -336,7 +340,8 @@ concatInline []                       = []
 concatInline [SPAN style inline]      = [SPAN style (concatSegment inline)]
 concatInline [inline]                 = [inline]
 concatInline (span1@(SPAN style1 inline1): span2@(SPAN style2 inline2) :rest)
-    | style1 == style2 = concatInline (SPAN style1 (concatSegment $ inline1 <> inline2) : rest)
+    | style1 == style2 = 
+        concatInline (SPAN style1 (concatSegment $ inline1 <> inline2) : rest)
     | otherwise        = concatSpan span1 : concatInline (concatSpan span2 : rest)
 concatInline (span@(SPAN _ _) : rest) = concatSpan span : concatInline rest
 concatInline (a : rest)               = a : concatInline rest
@@ -368,7 +373,8 @@ formatInline :: [InlineBlock] -> [InlineBlock]
 formatInline [] = []
 formatInline [SPAN style segments]    = [SPAN style $ addSpace segments]
 formatInline [inline]                 = [inline]
-formatInline (SPAN style segments:xs) = SPAN style (addSpace segments) : formatInline xs
+formatInline (SPAN style segments:xs) = 
+    SPAN style (addSpace segments) : formatInline xs
 formatInline (x:xs)                   = x : formatInline xs
 
 -- | Add space after hashtag

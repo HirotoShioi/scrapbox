@@ -40,7 +40,8 @@ import           Data.Scrapbox.Types (Block (..), InlineBlock (..),
                                       concatScrapText, concatSegment, unverbose,
                                       verbose)
 import           Data.Scrapbox.Utils (genMaybe, genPrintableText,
-                                      genPrintableUrl, shortListOf, shortListOf1)
+                                      genPrintableUrl, shortListOf,
+                                      shortListOf1)
 
 --------------------------------------------------------------------------------
 -- Predicates
