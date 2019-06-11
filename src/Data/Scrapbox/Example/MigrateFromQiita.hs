@@ -28,6 +28,7 @@ import qualified Data.ByteString.Lazy as BL
 import           Data.Scrapbox (ParseError, commonmarkToScrapbox,
                                 optFilterRelativePathLink, optSectionHeading,
                                 scrapboxToCommonmark)
+import           Data.Semigroup ((<>))
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -187,7 +188,7 @@ backupToMd path = do
         (throwIO FailedToReadBackUp)
         return
         =<< (decodeStrict <$> BS.readFile path)
-    
+
     convertoCommonMark :: ScrapboxBackup -> IO [(Text, Text)]
     convertoCommonMark scrapboxBackup = either
         (const $ throwIO FailedToCreateMdFile)
