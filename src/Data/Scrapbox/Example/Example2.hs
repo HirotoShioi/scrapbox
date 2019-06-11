@@ -5,7 +5,7 @@ Example page: https://scrapbox.io/toSrapbox/Syntax
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Scrapbox.Examples.Example2
+module Data.Scrapbox.Example.Example2
     ( example2'
     ) where
 

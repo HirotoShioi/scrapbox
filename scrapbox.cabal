@@ -29,14 +29,15 @@ library
                        Data.Scrapbox.Render.Scrapbox
                        Data.Scrapbox.Parser.Scrapbox
                        Data.Scrapbox.Parser.Commonmark
+                       Data.Scrapbox.Example.MigrateFromQiita
   other-modules:       Data.Scrapbox.Constructors
                        Data.Scrapbox.Parser.Scrapbox.Span
                        Data.Scrapbox.Parser.Scrapbox.ScrapText
                        Data.Scrapbox.Parser.Utils
                        Data.Scrapbox.Utils
                        Data.Scrapbox.Types
-                       Data.Scrapbox.Examples.Example1
-                       Data.Scrapbox.Examples.Example2
+                       Data.Scrapbox.Example.Example1
+                       Data.Scrapbox.Example.Example2
   hs-source-dirs:      src
   default-extensions:  NoImplicitPrelude
   ghc-options:         -Wall
@@ -46,13 +47,18 @@ library
                        -Wredundant-constraints
                        -Wnoncanonical-monad-instances
   build-depends:       QuickCheck
+                     , aeson
                      , base >=4.7 && <5
+                     , bytestring
                      , network-uri
                      , parsec
                      , rio
                      , text
+                     , time
                      , cmark-gfm
                      , mtl
+                     , http-conduit
+                     , aeson-pretty
   default-language:    Haskell2010
 
 test-suite scrapbox-test

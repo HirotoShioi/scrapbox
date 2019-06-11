@@ -4,15 +4,17 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, attoparsec, base, cmark-gfm, hspec, mtl
-      , network-uri, parsec, QuickCheck, rio, split, stdenv, text
+  f = { mkDerivation, aeson, aeson-pretty, attoparsec, base
+      , bytestring, cmark-gfm, hspec, http-conduit, mtl, network-uri
+      , parsec, QuickCheck, rio, split, stdenv, text, time
       }:
       mkDerivation {
         pname = "scrapbox";
         version = "0.1.0.0";
         src = ./.;
         libraryHaskellDepends = [
-          base cmark-gfm mtl network-uri parsec QuickCheck rio text
+          aeson aeson-pretty base bytestring cmark-gfm http-conduit mtl
+          network-uri parsec QuickCheck rio text time
         ];
         testHaskellDepends = [
           attoparsec base cmark-gfm hspec network-uri parsec QuickCheck rio
