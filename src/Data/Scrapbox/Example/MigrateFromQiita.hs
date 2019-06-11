@@ -6,7 +6,15 @@ of an Qiita blog posts of given user.
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Scrapbox.Example.MigrateFromQiita where
+module Data.Scrapbox.Example.MigrateFromQiita
+    ( ScrapboxBackup(..)
+    , ScrapboxPage(..)
+    , QiitaBlogPost(..)
+    , Config(..)
+    , defaultConfig
+    , mkScrapboxBackupJSON
+    , backupToMd
+    ) where
 
 import           Prelude
 
@@ -106,21 +114,20 @@ instance FromJSON ScrapboxBackup where
 -- to fetch/store given Qiita blog posts
 --------------------------------------------------------------------------------
 
--- | Dir to store
-storePath :: FilePath
-storePath = "./test-docs/"
+data Config = Config
+    { storePath     :: !FilePath
+    , qiitaUserName :: !UserName
+    , backupName    :: !String
+    , backUpTitle   :: !Text
+    }
 
--- | Qiita username
-qiitaUserName :: UserName
-qiitaUserName = UserName "Enter_Qiita_Username_Here"
-
--- | Name of the backup file
-backupName :: String
-backupName = "backup.json"
-
--- | Title of the back
-backUpTitle :: Text
-backUpTitle = "Qiita backup"
+defaultConfig :: Config
+defaultConfig = Config {
+          storePath = "./test-docs/"
+        , qiitaUserName = UserName "Enter_Qiita_Username_Here"
+        , backupName = "backup.json"
+        , backUpTitle = "Qiita backup"
+    }
 
 --------------------------------------------------------------------------------
 -- Conversion
@@ -146,12 +153,12 @@ toScrapboxBackup title createdTime qiitaPosts =
 
 -- | Fetch blogposts from Qiita, convert them into 'ScrapboxBackup' and storing it
 -- into @storePath@
-mkScrapboxBackupJSON :: IO ()
-mkScrapboxBackupJSON = do
-    qiitaPosts <- fetchPosts qiitaUserName
+mkScrapboxBackupJSON :: Config -> IO ()
+mkScrapboxBackupJSON config = do
+    qiitaPosts <- fetchPosts (qiitaUserName config)
     currTime   <- getPOSIXTime
-    let backup = toScrapboxBackup backUpTitle currTime qiitaPosts
-    BL.writeFile (storePath <> backupName) (encodePretty backup)
+    let backup = toScrapboxBackup (backUpTitle config) currTime qiitaPosts
+    BL.writeFile (storePath config <> backupName config) (encodePretty backup)
   where
     fetchPosts :: UserName -> IO [QiitaBlogPost]
     fetchPosts username = either
