@@ -188,7 +188,6 @@ backupToMd path = do
         (throwIO FailedToReadBackUp)
         return
         =<< (decodeStrict <$> BS.readFile path)
-
     convertoCommonMark :: ScrapboxBackup -> IO [(Text, Text)]
     convertoCommonMark scrapboxBackup = either
         (const $ throwIO FailedToCreateMdFile)
