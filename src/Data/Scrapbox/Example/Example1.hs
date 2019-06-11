@@ -5,7 +5,7 @@ Example page: https://scrapbox.io/scrapbox-parser/Get_started
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Scrapbox.Examples.Example1
+module Data.Scrapbox.Example.Example1
   ( getStartedScrapbox
   , getsInterestingSB
   , onceStartedSB
