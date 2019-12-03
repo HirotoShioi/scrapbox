@@ -26,7 +26,7 @@ module Data.Scrapbox
     , ScrapboxOption
     , optSectionHeading
     , optFilterRelativePathLink
-    -- * Rendering Scrapbox AST
+    -- * Rendering structured Scrapbox tree
     , renderToScrapbox
     , renderToCommonmark
     -- * Useful functions
@@ -144,7 +144,7 @@ scrapboxToCommonmark :: [ScrapboxOption] -> Text -> Either ParseError Text
 scrapboxToCommonmark options scrapboxPage =
   renderToCommonmarkNoOption <$> scrapboxToNode options scrapboxPage
 
--- | Parse given 'Scrapbox' formatted text into 'Scrapbox' AST
+-- | Parse given 'Scrapbox' formatted text into structured 'Scrapbox' tree
 scrapboxToNode :: [ScrapboxOption] -> Text -> Either ParseError Scrapbox
 scrapboxToNode options scrapboxPage =
   applyOption options <$> runScrapboxParser (T.unpack scrapboxPage)
@@ -153,15 +153,16 @@ scrapboxToNode options scrapboxPage =
 commonmarkToScrapbox :: [ScrapboxOption] -> Text -> Text
 commonmarkToScrapbox opts = renderToScrapboxNoOption . commonmarkToNode opts
 
--- | Convert given commonmark into 'Scrapbox' AST
+-- | Convert given commonmark into strucutred 'Scrapbox' tree, which can be
+-- | transformed or rendered usinng Haskell code
 commonmarkToNode :: [ScrapboxOption] -> Text -> Scrapbox
 commonmarkToNode opts = applyOption opts . parseCommonmarkNoOption . applyCorrection
 
--- | Render given 'Scrapbox' AST into commonmark with given @[ScrapboxOption]@
+-- | Render given structured 'Scrapbox' tree into commonmark with given @[ScrapboxOption]@
 renderToCommonmark :: [ScrapboxOption] -> Scrapbox -> Text
 renderToCommonmark opts = renderToCommonmarkNoOption . applyOption opts
 
--- | Render given 'Scrapbox' AST into Scrapbox page with given @[ScrapboxOption]@
+-- | Render given structured 'Scrapbox' tree into Scrapbox page with given @[ScrapboxOption]@
 renderToScrapbox :: [ScrapboxOption] -> Scrapbox -> Text
 renderToScrapbox opts = renderToScrapboxNoOption . applyOption opts
 

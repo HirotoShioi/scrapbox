@@ -37,7 +37,7 @@ import qualified RIO.Text as T
 --- It would be nice if these functions are wrapped in Either like this:
 --  newtype Parser a = Parser (Either ParserException a)
 
--- | Convert given common mark into 'Scrapbox' AST
+-- | Convert given common mark into 'Scrapbox' structured tree
 parseCommonmarkNoOption :: Text -> Scrapbox
 parseCommonmarkNoOption cmark =
     let options = [optHardBreaks]

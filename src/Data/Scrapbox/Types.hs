@@ -1,4 +1,4 @@
-{-| Datatypes used to represent the scrapbox AST as well as some of the helper
+{-| Datatypes used to express the parsed text into structured tree as well as some of the helper
 -- functions.
 -}
 
