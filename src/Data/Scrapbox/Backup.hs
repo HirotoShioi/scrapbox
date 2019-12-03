@@ -74,24 +74,22 @@ instance FromJSON ScrapboxBackup where
     pages <- o .: "pages"
     pure $ ScrapboxBackup name displayname exported pages
 
-fromBackup :: ByteString -> Either BackupError ScrapboxBackup
+-- | Parse given backup json file into list of commonmark pages
+fromBackup :: ByteString -> Either BackupError [Text]
 fromBackup jsonByteString =
   either
     (\s -> Left $ FailedToDecodeBackupJSON s)
-    (\backup -> do
-        pages <- mapM intoMarkdown $ sbPages backup
-        return $ backup { sbPages = pages }
+    (\backup -> mapM intoMarkdown $ sbPages backup
     )
     (eitherDecodeStrict jsonByteString)
   where
-    intoMarkdown :: ScrapboxPage -> Either BackupError ScrapboxPage
-    intoMarkdown (ScrapboxPage title created updated content') = do
+    intoMarkdown :: ScrapboxPage -> Either BackupError Text
+    intoMarkdown (ScrapboxPage title _created _updated content') = do
         let content = T.unlines content'
-        parsedPage <- either
+        either
             (\_parseError -> Left $ FailedToParsePage title)
-            (\parsed -> Right $ T.lines $ renderToCommonmarkNoOption parsed)
+            (\parsed -> Right $ renderToCommonmarkNoOption parsed)
             (runScrapboxParser $ T.unpack content)
-        return $ ScrapboxPage title created updated parsedPage
 
         
 

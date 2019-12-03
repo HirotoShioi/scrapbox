@@ -31,6 +31,7 @@ module Data.Scrapbox
     -- * Exporting from backup file
     fromBackup,
     toBackup,
+    toBackupJSON,
     ScrapboxBackup (..),
     ScrapboxPage (..),
 
@@ -86,6 +87,8 @@ import RIO
 import RIO.List (headMaybe)
 import qualified RIO.Text as T
 import Text.ParserCombinators.Parsec (ParseError)
+import Data.Aeson (encode)
+import qualified Data.ByteString.Lazy as BL
 
 --------------------------------------------------------------------------------
 -- Parse Option
@@ -217,11 +220,14 @@ size (Scrapbox blocks) = blockSize blocks
 --------------------------------------------------------------------------------
 
 -- | Convert given list of markdown pages into 'ScrapboxBackup'
-toBackup :: [ScrapboxOption] -> [Text] -> IO ScrapboxBackup
-toBackup options pages = do
+toBackup :: [ScrapboxOption] -> [Text] -> Text -> Text -> IO ScrapboxBackup
+toBackup options pages name displayName = do
     currTime <- round <$> getPOSIXTime
     let scrapboxPages = map (\page -> toScrapboxPage currTime currTime $ commonmarkToNode options page) pages
-    return $ ScrapboxBackup Nothing Nothing currTime scrapboxPages
+    return $ ScrapboxBackup (Just name) (Just displayName) currTime scrapboxPages
+
+toBackupJSON :: [ScrapboxOption] -> [Text] -> Text -> Text -> IO ByteString
+toBackupJSON options pages name displayName = BL.toStrict . encode <$> toBackup options pages name displayName
 
 toScrapboxPage :: Integer -> Integer -> Scrapbox -> ScrapboxPage
 toScrapboxPage created updated scrapbox@(Scrapbox content) =
