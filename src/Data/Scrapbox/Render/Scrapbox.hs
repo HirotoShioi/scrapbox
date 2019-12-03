@@ -28,7 +28,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
 -- Exposed interface
 --------------------------------------------------------------------------------
 
--- | Render given 'Scrapbox' AST into Scrapbox page
+-- | Render given 'Scrapbox' tree into Scrapbox page
 renderToScrapboxNoOption :: Scrapbox -> Text
 renderToScrapboxNoOption (Scrapbox blocks) = T.unlines $ concatMap renderBlock blocks
 

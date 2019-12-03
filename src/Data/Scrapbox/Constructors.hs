@@ -1,4 +1,4 @@
-{-| Constructor that can be used to build scrapbox AST
+{-| Constructor that can be used to build scrapbox tree
 -}
 
 module Data.Scrapbox.Constructors

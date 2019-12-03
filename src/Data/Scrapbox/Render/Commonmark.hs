@@ -28,7 +28,7 @@ import           Network.URI (parseURI, uriQuery)
 import           RIO.List (foldl', headMaybe, nub, tailMaybe, maximumMaybe)
 import qualified RIO.Text as T
 
--- | Render given 'Scrapbox' AST into commonmark
+-- | Render given 'Scrapbox' tree into commonmark
 renderToCommonmarkNoOption :: Scrapbox -> Text
 renderToCommonmarkNoOption (Scrapbox blocks) = T.unlines
     . concatMap renderBlock

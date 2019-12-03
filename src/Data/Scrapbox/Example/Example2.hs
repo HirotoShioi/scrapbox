@@ -1,4 +1,4 @@
-{-| Example of how our defined AST can be used to represent the scrapbox page
+{-| Example of how our defined data structure can be used to represent the scrapbox page
 
 Example page: https://scrapbox.io/toSrapbox/Syntax
 -}
