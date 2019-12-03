@@ -29,6 +29,7 @@ library
                        Data.Scrapbox.Render.Scrapbox
                        Data.Scrapbox.Parser.Scrapbox
                        Data.Scrapbox.Parser.Commonmark
+                       Data.Scrapbox.Backup
                        Data.Scrapbox.Example.MigrateFromQiita
   other-modules:       Data.Scrapbox.Constructors
                        Data.Scrapbox.Parser.Scrapbox.Span

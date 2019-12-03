@@ -1,70 +1,91 @@
-{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
---------------------------------------------------------------------------------
-{-|
-Module:      Scrapbox
-Copyright:   (c) 2018-2019 Hiroto Shioi
-License:     BSD3
-Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
-Stability:   experimental
-Portability: portable
-
-Renderer and parser for scrapbox <https://scrapbox.io/product>
--}
---------------------------------------------------------------------------------
-
+-- |
+-- Module:      Scrapbox
+-- Copyright:   (c) 2018-2019 Hiroto Shioi
+-- License:     BSD3
+-- Maintainer:  Hiroto Shioi <shioihigg@gmail.com>
+-- Stability:   experimental
+-- Portability: portable
+--
+-- Renderer and parser for scrapbox <https://scrapbox.io/product>
 module Data.Scrapbox
-    (
-    -- * Converting commonmark
-      commonmarkToScrapbox
-    , commonmarkToNode
+  ( -- * Converting commonmark
+    commonmarkToScrapbox,
+    commonmarkToNode,
+
     -- * Converting scrapbox
-    , scrapboxToCommonmark
-    , scrapboxToNode
+    scrapboxToCommonmark,
+    scrapboxToNode,
+
     -- ** Parse options
-    , ScrapboxOption
-    , optSectionHeading
-    , optFilterRelativePathLink
+    ScrapboxOption,
+    optSectionHeading,
+    optFilterRelativePathLink,
+
     -- * Rendering structured Scrapbox tree
-    , renderToScrapbox
-    , renderToCommonmark
+    renderToScrapbox,
+    renderToCommonmark,
+
+    -- * Exporting from backup file
+    fromBackup,
+    toBackup,
+    ScrapboxBackup (..),
+    ScrapboxPage (..),
+
     -- * Useful functions
-    , size
+    size,
+    extractText,
+
     -- * Data types
-    , Scrapbox(..)
-    , Block(..)
-    , Url(..)
-    , Level(..)
-    , Start(..)
-    , CodeName(..)
-    , CodeSnippet(..)
-    , TableName(..)
-    , TableContent(..)
+    Scrapbox (..),
+    Block (..),
+    Url (..),
+    Level (..),
+    Start (..),
+    CodeName (..),
+    CodeSnippet (..),
+    TableName (..),
+    TableContent (..),
+
     -- ** Inline block
-    , ScrapText(..)
-    , InlineBlock(..)
-    , Segment(..)
-    , Style(..)
-    , ParseError
-    ) where
+    ScrapText (..),
+    InlineBlock (..),
+    Segment (..),
+    Style (..),
+    ParseError,
+  )
+where
 
-import           RIO
+import Data.List (nub)
+import Data.Scrapbox.Backup (ScrapboxBackup (..), ScrapboxPage (..), fromBackup)
+import Data.Scrapbox.Parser.Commonmark (parseCommonmarkNoOption)
+import Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
+import Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
+import Data.Scrapbox.Render.Scrapbox (renderToScrapboxNoOption)
+import Data.Scrapbox.Types
+  ( Block (..),
+    CodeName (..),
+    CodeSnippet (..),
+    InlineBlock (..),
+    Level (..),
+    ScrapText (..),
+    Scrapbox (..),
+    Segment (..),
+    Start (..),
+    Style (..),
+    TableContent (..),
+    TableName (..),
+    Url (..),
+    unverbose,
+  )
+import Data.Scrapbox.Utils (isURL)
+import Data.Time.Clock.POSIX (getPOSIXTime)
+import RIO
+import RIO.List (headMaybe)
 import qualified RIO.Text as T
-
-import           Data.List (nub)
-import           Data.Scrapbox.Parser.Commonmark (parseCommonmarkNoOption)
-import           Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
-import           Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
-import           Data.Scrapbox.Render.Scrapbox (renderToScrapboxNoOption)
-import           Data.Scrapbox.Types (Block (..), CodeName (..),
-                                      CodeSnippet (..), InlineBlock (..),
-                                      Level (..), ScrapText (..), Scrapbox (..),
-                                      Segment (..), Start (..), Style (..),
-                                      TableContent (..), TableName (..),
-                                      Url (..), unverbose)
-import           Data.Scrapbox.Utils (isURL)
-import           Text.ParserCombinators.Parsec (ParseError)
+import Text.ParserCombinators.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Parse Option
@@ -72,10 +93,10 @@ import           Text.ParserCombinators.Parsec (ParseError)
 
 -- | Option which user can provide when parsing/rendering
 data ScrapboxOption
-  = SectionHeading
-  -- ^ Add 'LINEBREAK' before heading to make the content easier to read
-  | FilterRelativeLink
-  -- ^ Remove relative link such as @../foo/bar/baz.md@ when parsing link
+  = -- | Add 'LINEBREAK' before heading to make the content easier to read
+    SectionHeading
+  | -- | Remove relative link such as @../foo/bar/baz.md@ when parsing link
+    FilterRelativeLink
   deriving (Eq)
 
 -- | This parse option adds 'LINEBREAK' before each 'HEADING' to make it easier
@@ -94,39 +115,35 @@ applyOption :: [ScrapboxOption] -> Scrapbox -> Scrapbox
 applyOption options scrapbox = unverbose . foldr apply scrapbox . nub $ options
   where
     apply :: ScrapboxOption -> Scrapbox -> Scrapbox
-    apply SectionHeading (Scrapbox blocks)     = Scrapbox $ applyLinebreak blocks
+    apply SectionHeading (Scrapbox blocks) = Scrapbox $ applyLinebreak blocks
     apply FilterRelativeLink (Scrapbox blocks) = Scrapbox $ map applyFilterLink blocks
-
     -- Apply 'LINEBREAK' between 'HEADING' section
     -- >> [HEADING, b1, b2, b3, HEADING, b4, b5, b6, HEADING]
     -- >> [HEADING, b1, b2, b3, LINEBREAK, HEADING, b4, b5, b6, LINEBREAK, HEADING]
     applyLinebreak :: [Block] -> [Block]
-    applyLinebreak []  = []
+    applyLinebreak [] = []
     applyLinebreak [b] = [b]
-    applyLinebreak (LINEBREAK : heading@(HEADING _ _) : rest)
-        = LINEBREAK : heading : applyLinebreak rest
-    applyLinebreak (b:HEADING level content:rest)
-        = b : LINEBREAK : applyLinebreak (HEADING level content : rest)
-    applyLinebreak (b: rest)
-        = b : applyLinebreak rest
-
+    applyLinebreak (LINEBREAK : heading@(HEADING _ _) : rest) =
+      LINEBREAK : heading : applyLinebreak rest
+    applyLinebreak (b : HEADING level content : rest) =
+      b : LINEBREAK : applyLinebreak (HEADING level content : rest)
+    applyLinebreak (b : rest) =
+      b : applyLinebreak rest
     applyFilterLink :: Block -> Block
     applyFilterLink = \case
-        PARAGRAPH (ScrapText inlines)   ->
-            PARAGRAPH $ ScrapText $ map f inlines
-        BULLET_POINT start blocks       ->
-            BULLET_POINT start $ map applyFilterLink blocks
-        BLOCK_QUOTE (ScrapText inlines) ->
-            BLOCK_QUOTE $ ScrapText $ map f inlines
-        HEADING level segments          ->
-            HEADING level $ map filterRelativeLink segments
-        other                           -> other
-
+      PARAGRAPH (ScrapText inlines) ->
+        PARAGRAPH $ ScrapText $ map f inlines
+      BULLET_POINT start blocks ->
+        BULLET_POINT start $ map applyFilterLink blocks
+      BLOCK_QUOTE (ScrapText inlines) ->
+        BLOCK_QUOTE $ ScrapText $ map f inlines
+      HEADING level segments ->
+        HEADING level $ map filterRelativeLink segments
+      other -> other
     f :: InlineBlock -> InlineBlock
     f = \case
       SPAN style segments -> SPAN style $ map filterRelativeLink segments
-      other               -> other
-
+      other -> other
     filterRelativeLink :: Segment -> Segment
     filterRelativeLink = \case
       LINK (Just name) (Url url) ->
@@ -177,9 +194,9 @@ applyCorrection = T.unlines . map apply . T.lines
     apply :: Text -> Text
     apply line
       | "#" `T.isPrefixOf` line
-        && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
+          && not (" " `T.isPrefixOf` T.dropWhile (== '#') line) =
         let (symbol, rest) = T.break (/= '#') line
-        in symbol <> " " <> rest
+         in symbol <> " " <> rest
       | otherwise = line
 
 -- | Return the number of blocks within given 'Scrapbox'
@@ -187,7 +204,54 @@ size :: Scrapbox -> Int
 size (Scrapbox blocks) = blockSize blocks
   where
     blockSize :: [Block] -> Int
-    blockSize = foldl' (\acc block -> case block of
-      BULLET_POINT _ bs -> blockSize bs + 1 + acc
-      _                 -> 1 + acc
-      ) 0
+    blockSize =
+      foldl'
+        ( \acc block -> case block of
+            BULLET_POINT _ bs -> blockSize bs + 1 + acc
+            _ -> 1 + acc
+        )
+        0
+
+--------------------------------------------------------------------------------
+-- toBackup
+--------------------------------------------------------------------------------
+
+-- | Convert given list of markdown pages into 'ScrapboxBackup'
+toBackup :: [ScrapboxOption] -> [Text] -> IO ScrapboxBackup
+toBackup options pages = do
+    currTime <- round <$> getPOSIXTime
+    let scrapboxPages = map (\page -> toScrapboxPage currTime currTime $ commonmarkToNode options page) pages
+    return $ ScrapboxBackup Nothing Nothing currTime scrapboxPages
+
+toScrapboxPage :: Integer -> Integer -> Scrapbox -> ScrapboxPage
+toScrapboxPage created updated scrapbox@(Scrapbox content) =
+  let title = maybe "Title" (\ele -> extractText ele) (headMaybe content)
+  in ScrapboxPage title created updated (T.lines $ renderToScrapboxNoOption scrapbox)
+
+
+-- Extract 'Text' from given 'Block'
+extractText :: Block -> Text
+extractText = \case
+    LINEBREAK -> ""
+    BLOCK_QUOTE scrapText -> fromScrapText scrapText
+    BULLET_POINT _start blocks -> T.concat $ map extractText blocks
+    CODE_BLOCK (CodeName name) (CodeSnippet snippet) -> T.concat $ [name] <> snippet
+    HEADING _level segments -> T.concat $ map fromSegment segments
+    PARAGRAPH scrapText -> fromScrapText scrapText
+    TABLE (TableName name) (TableContent content) -> T.concat $ [name] <> (join $ content)
+    THUMBNAIL (Url url) -> url
+  where
+    fromScrapText :: ScrapText -> Text
+    fromScrapText (ScrapText inlines) =
+        T.concat $ map fromInline inlines 
+    fromInline :: InlineBlock -> Text
+    fromInline = \case
+        SPAN _styles segments -> T.concat $ map fromSegment segments
+        CODE_NOTATION notation -> notation
+        MATH_EXPRESSION expr -> expr
+    fromSegment :: Segment -> Text
+    fromSegment = \case
+        HASHTAG text -> text
+        LINK Nothing (Url url) -> url
+        LINK (Just text) (Url url) -> text <> url
+        TEXT text -> text
