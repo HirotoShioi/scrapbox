@@ -1,6 +1,6 @@
 # scrapbox
 
-[![Build Status](https://travis-ci.org/HirotoShioi/scrapbox.svg?branch=master)](https://travis-ci.org/HirotoShioi/scrapbox)
+[![Build Status](https://travis-ci.org/HirotoShioi/scrapbox.svg?branch=master)](https://travis-ci.com/HirotoShioi/scrapbox.svg?branch=master)
 
 `scrapbox` is a parser library for [scrapbox](https://scrapbox.io/product).
 
