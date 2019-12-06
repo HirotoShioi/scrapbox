@@ -34,6 +34,7 @@ module Data.Scrapbox
     toBackupJSON,
     ScrapboxBackup (..),
     ScrapboxPage (..),
+    BackupError(..),
 
     -- * Useful functions
     size,
@@ -60,7 +61,7 @@ module Data.Scrapbox
 where
 
 import Data.List (nub)
-import Data.Scrapbox.Backup (ScrapboxBackup (..), ScrapboxPage (..), fromBackup)
+import Data.Scrapbox.Backup (ScrapboxBackup (..), ScrapboxPage (..), fromBackup, BackupError(..))
 import Data.Scrapbox.Parser.Commonmark (parseCommonmarkNoOption)
 import Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
@@ -87,8 +88,8 @@ import RIO
 import RIO.List (headMaybe)
 import qualified RIO.Text as T
 import Text.ParserCombinators.Parsec (ParseError)
-import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy as BL
+import Data.Aeson.Encode.Pretty (encodePretty)
 
 --------------------------------------------------------------------------------
 -- Parse Option
@@ -174,7 +175,7 @@ commonmarkToScrapbox :: [ScrapboxOption] -> Text -> Text
 commonmarkToScrapbox opts = renderToScrapboxNoOption . commonmarkToNode opts
 
 -- | Convert given commonmark into strucutred 'Scrapbox' tree, which can be
--- | transformed or rendered usinng Haskell code
+-- transformed or rendered usinng Haskell code
 commonmarkToNode :: [ScrapboxOption] -> Text -> Scrapbox
 commonmarkToNode opts = applyOption opts . parseCommonmarkNoOption . applyCorrection
 
@@ -220,22 +221,26 @@ size (Scrapbox blocks) = blockSize blocks
 --------------------------------------------------------------------------------
 
 -- | Convert given list of markdown pages into 'ScrapboxBackup'
-toBackup :: [ScrapboxOption] -> [Text] -> Text -> Text -> IO ScrapboxBackup
-toBackup options pages name displayName = do
+toBackup :: [ScrapboxOption] -> [Text] -> Text -> IO ScrapboxBackup
+toBackup options pages name = do
     currTime <- round <$> getPOSIXTime
     let scrapboxPages = map (\page -> toScrapboxPage currTime currTime $ commonmarkToNode options page) pages
-    return $ ScrapboxBackup (Just name) (Just displayName) currTime scrapboxPages
+    return $ ScrapboxBackup (Just name) (Just name) currTime scrapboxPages
+  where
+    toScrapboxPage :: Integer -> Integer -> Scrapbox -> ScrapboxPage
+    toScrapboxPage created updated scrapbox@(Scrapbox content) =
+      let title = maybe "Title" (\ele -> extractText ele) (headMaybe content)
+      in ScrapboxPage title created updated (T.lines $ renderToScrapboxNoOption scrapbox)
+    
 
-toBackupJSON :: [ScrapboxOption] -> [Text] -> Text -> Text -> IO ByteString
-toBackupJSON options pages name displayName = BL.toStrict . encode <$> toBackup options pages name displayName
-
-toScrapboxPage :: Integer -> Integer -> Scrapbox -> ScrapboxPage
-toScrapboxPage created updated scrapbox@(Scrapbox content) =
-  let title = maybe "Title" (\ele -> extractText ele) (headMaybe content)
-  in ScrapboxPage title created updated (T.lines $ renderToScrapboxNoOption scrapbox)
+-- | Convert given list of markdown pages into prettified json encoded 'ByteString'
+-- 
+-- This function is equivalent to @encodePretty . toBackup@
+toBackupJSON :: [ScrapboxOption] -> [Text] -> Text -> IO ByteString
+toBackupJSON options pages name = BL.toStrict . encodePretty <$> toBackup options pages name
 
 
--- Extract 'Text' from given 'Block'
+-- | Extract 'Text' from given 'Block'
 extractText :: Block -> Text
 extractText = \case
     LINEBREAK -> ""

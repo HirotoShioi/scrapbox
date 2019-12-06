@@ -1,3 +1,6 @@
+{-| Module exposing backup related functions
+-}
+
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -5,6 +8,7 @@ module Data.Scrapbox.Backup
   ( ScrapboxBackup (..),
     ScrapboxPage (..),
     fromBackup,
+    BackupError(..),
   )
 where
 
@@ -13,6 +17,7 @@ import RIO
 import Data.Scrapbox.Parser.Scrapbox
 import qualified RIO.Text as T
 import Data.Scrapbox.Render.Commonmark
+import Control.Exception (Exception(..))
 
 data ScrapboxPage
   = ScrapboxPage
@@ -91,14 +96,15 @@ fromBackup jsonByteString =
             (\parsed -> Right $ renderToCommonmarkNoOption parsed)
             (runScrapboxParser $ T.unpack content)
 
-        
-
 data BackupError
+  -- ^ Failed to decode json file
   = FailedToDecodeBackupJSON String
+  -- ^ Failed to parse page
   | FailedToParsePage Text
+  deriving (Show, Eq, Ord)
 
-instance Show BackupError where
-  show = \case
+instance Exception BackupError where
+  displayException = \case
     FailedToDecodeBackupJSON s -> "Failed to decode backup json file with reason: "
         <> s
     FailedToParsePage s -> "Failed to parse page: " <> T.unpack s
