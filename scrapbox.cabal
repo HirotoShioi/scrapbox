@@ -25,12 +25,13 @@ source-repository head
 library
   exposed-modules:     Data.Scrapbox
                        Data.Scrapbox.Internal
+                       Data.Scrapbox.Constructors
                        Data.Scrapbox.Render.Commonmark
                        Data.Scrapbox.Render.Scrapbox
                        Data.Scrapbox.Parser.Scrapbox
                        Data.Scrapbox.Parser.Commonmark
+  other-modules:       Data.Scrapbox.Backup
                        Data.Scrapbox.Example.MigrateFromQiita
-  other-modules:       Data.Scrapbox.Constructors
                        Data.Scrapbox.Parser.Scrapbox.Span
                        Data.Scrapbox.Parser.Scrapbox.ScrapText
                        Data.Scrapbox.Parser.Utils
