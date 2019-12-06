@@ -11,11 +11,11 @@
 --
 -- Renderer and parser for scrapbox <https://scrapbox.io/product>
 module Data.Scrapbox
-  ( -- * Converting commonmark
+  ( -- * Converting commonmark formatted text
     commonmarkToScrapbox,
     commonmarkToNode,
 
-    -- * Converting scrapbox
+    -- * Converting scrapbox formatted text
     scrapboxToCommonmark,
     scrapboxToNode,
 
@@ -34,7 +34,6 @@ module Data.Scrapbox
     toBackupJSON,
     ScrapboxBackup (..),
     ScrapboxPage (..),
-    BackupError(..),
 
     -- * Useful functions
     size,
@@ -50,18 +49,21 @@ module Data.Scrapbox
     CodeSnippet (..),
     TableName (..),
     TableContent (..),
-
-    -- ** Inline block
     ScrapText (..),
     InlineBlock (..),
     Segment (..),
     Style (..),
-    ParseError,
+
+    -- * Exceptions
+    ScrapboxError (..),
   )
 where
 
+import Data.Aeson.Encode.Pretty (encodePretty)
+import qualified Data.ByteString.Lazy as BL
 import Data.List (nub)
-import Data.Scrapbox.Backup (ScrapboxBackup (..), ScrapboxPage (..), fromBackup, BackupError(..))
+import Data.Scrapbox.Backup (ScrapboxBackup (..), ScrapboxPage (..), fromBackup)
+import Data.Scrapbox.Exception (ScrapboxError (..))
 import Data.Scrapbox.Parser.Commonmark (parseCommonmarkNoOption)
 import Data.Scrapbox.Parser.Scrapbox (runScrapboxParser)
 import Data.Scrapbox.Render.Commonmark (renderToCommonmarkNoOption)
@@ -87,9 +89,6 @@ import Data.Time.Clock.POSIX (getPOSIXTime)
 import RIO
 import RIO.List (headMaybe)
 import qualified RIO.Text as T
-import Text.ParserCombinators.Parsec (ParseError)
-import qualified Data.ByteString.Lazy as BL
-import Data.Aeson.Encode.Pretty (encodePretty)
 
 --------------------------------------------------------------------------------
 -- Parse Option
@@ -161,12 +160,12 @@ applyOption options scrapbox = unverbose . foldr apply scrapbox . nub $ options
 --------------------------------------------------------------------------------
 
 -- | Convert given 'Scrapbox' format text into commonmark format
-scrapboxToCommonmark :: [ScrapboxOption] -> Text -> Either ParseError Text
+scrapboxToCommonmark :: [ScrapboxOption] -> Text -> Either ScrapboxError Text
 scrapboxToCommonmark options scrapboxPage =
   renderToCommonmarkNoOption <$> scrapboxToNode options scrapboxPage
 
 -- | Parse given 'Scrapbox' formatted text into structured 'Scrapbox' tree
-scrapboxToNode :: [ScrapboxOption] -> Text -> Either ParseError Scrapbox
+scrapboxToNode :: [ScrapboxOption] -> Text -> Either ScrapboxError Scrapbox
 scrapboxToNode options scrapboxPage =
   applyOption options <$> runScrapboxParser (T.unpack scrapboxPage)
 
@@ -223,46 +222,44 @@ size (Scrapbox blocks) = blockSize blocks
 -- | Convert given list of markdown pages into 'ScrapboxBackup'
 toBackup :: [ScrapboxOption] -> [Text] -> Text -> IO ScrapboxBackup
 toBackup options pages name = do
-    currTime <- round <$> getPOSIXTime
-    let scrapboxPages = map (\page -> toScrapboxPage currTime currTime $ commonmarkToNode options page) pages
-    return $ ScrapboxBackup (Just name) (Just name) currTime scrapboxPages
+  currTime <- round <$> getPOSIXTime
+  let scrapboxPages = map (\page -> toScrapboxPage currTime currTime $ commonmarkToNode options page) pages
+  return $ ScrapboxBackup (Just name) (Just name) currTime scrapboxPages
   where
     toScrapboxPage :: Integer -> Integer -> Scrapbox -> ScrapboxPage
     toScrapboxPage created updated scrapbox@(Scrapbox content) =
       let title = maybe "Title" (\ele -> extractText ele) (headMaybe content)
-      in ScrapboxPage title created updated (T.lines $ renderToScrapboxNoOption scrapbox)
-    
+       in ScrapboxPage title created updated (T.lines $ renderToScrapboxNoOption scrapbox)
 
 -- | Convert given list of markdown pages into prettified json encoded 'ByteString'
--- 
+--
 -- This function is equivalent to @encodePretty . toBackup@
 toBackupJSON :: [ScrapboxOption] -> [Text] -> Text -> IO ByteString
 toBackupJSON options pages name = BL.toStrict . encodePretty <$> toBackup options pages name
 
-
 -- | Extract 'Text' from given 'Block'
 extractText :: Block -> Text
 extractText = \case
-    LINEBREAK -> ""
-    BLOCK_QUOTE scrapText -> fromScrapText scrapText
-    BULLET_POINT _start blocks -> T.concat $ map extractText blocks
-    CODE_BLOCK (CodeName name) (CodeSnippet snippet) -> T.concat $ [name] <> snippet
-    HEADING _level segments -> T.concat $ map fromSegment segments
-    PARAGRAPH scrapText -> fromScrapText scrapText
-    TABLE (TableName name) (TableContent content) -> T.concat $ [name] <> (join $ content)
-    THUMBNAIL (Url url) -> url
+  LINEBREAK -> ""
+  BLOCK_QUOTE scrapText -> fromScrapText scrapText
+  BULLET_POINT _start blocks -> T.concat $ map extractText blocks
+  CODE_BLOCK (CodeName name) (CodeSnippet snippet) -> T.concat $ [name] <> snippet
+  HEADING _level segments -> T.concat $ map fromSegment segments
+  PARAGRAPH scrapText -> fromScrapText scrapText
+  TABLE (TableName name) (TableContent content) -> T.concat $ [name] <> (join $ content)
+  THUMBNAIL (Url url) -> url
   where
     fromScrapText :: ScrapText -> Text
     fromScrapText (ScrapText inlines) =
-        T.concat $ map fromInline inlines 
+      T.concat $ map fromInline inlines
     fromInline :: InlineBlock -> Text
     fromInline = \case
-        SPAN _styles segments -> T.concat $ map fromSegment segments
-        CODE_NOTATION notation -> notation
-        MATH_EXPRESSION expr -> expr
+      SPAN _styles segments -> T.concat $ map fromSegment segments
+      CODE_NOTATION notation -> notation
+      MATH_EXPRESSION expr -> expr
     fromSegment :: Segment -> Text
     fromSegment = \case
-        HASHTAG text -> text
-        LINK Nothing (Url url) -> url
-        LINK (Just text) (Url url) -> text <> url
-        TEXT text -> text
+      HASHTAG text -> text
+      LINK Nothing (Url url) -> url
+      LINK (Just text) (Url url) -> text <> url
+      TEXT text -> text

@@ -39,6 +39,7 @@ library
                        Data.Scrapbox.Types
                        Data.Scrapbox.Example.Example1
                        Data.Scrapbox.Example.Example2
+                       Data.Scrapbox.Exception
   hs-source-dirs:      src
   default-extensions:  NoImplicitPrelude
   ghc-options:         -Wall

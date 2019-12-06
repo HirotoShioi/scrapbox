@@ -35,10 +35,10 @@ parserSpec = do
     scrapTextParserSpec
 
 -- | General unit testing to see the parser can parse given data as expected
-propParseAsExpected :: (Eq parsed, Show parsed)
+propParseAsExpected :: (Eq parsed, Show parsed, Eq error, Show error)
                     => toParsed
                     -> parsed
-                    -> (toParsed -> Either ParseError parsed)
+                    -> (toParsed -> Either error parsed)
                     -> Property
 propParseAsExpected example expected parser =
     parser example === Right expected

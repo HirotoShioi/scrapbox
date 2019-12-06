@@ -29,13 +29,13 @@ import Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Scrapbox
-  ( ParseError,
-    ScrapboxBackup (..),
+  ( ScrapboxBackup (..),
     ScrapboxPage (..),
     commonmarkToScrapbox,
     optFilterRelativePathLink,
     optSectionHeading,
     scrapboxToCommonmark,
+    ScrapboxError(..)
   )
 import Data.Semigroup ((<>))
 import Data.Text (Text)
@@ -160,7 +160,7 @@ backupToMd path = do
         return
         (toCommonmarks scrapboxBackup)
     -- Create an list of pairs with (Title, Body)
-    toCommonmarks :: ScrapboxBackup -> Either ParseError [(Text, Text)]
+    toCommonmarks :: ScrapboxBackup -> Either ScrapboxError [(Text, Text)]
     toCommonmarks (ScrapboxBackup _ _ _ pages) = forM pages $ \page -> do
       let body = T.unlines $ spLines page
       md <- scrapboxToCommonmark [] body

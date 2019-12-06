@@ -12,7 +12,7 @@ module Data.Scrapbox.Parser.Scrapbox
 import           RIO hiding (many, try)
 
 import           Data.Char (isSpace)
-import           Text.ParserCombinators.Parsec (ParseError, Parser, anyChar,
+import           Text.ParserCombinators.Parsec (Parser, anyChar,
                                                 char, eof, lookAhead, many,
                                                 many1, manyTill, noneOf,
                                                 notFollowedBy, oneOf, parse,
@@ -30,7 +30,7 @@ import           Data.Scrapbox.Types (Block (..), CodeName (..),
                                       TableContent (..), TableName (..),
                                       Url (..))
 import           Data.Scrapbox.Utils (isURL)
-
+import Data.Scrapbox.Exception (ScrapboxError(..))
 --------------------------------------------------------------------------------
 -- Block parser
 --------------------------------------------------------------------------------
@@ -145,8 +145,8 @@ scrapboxParser :: Parser Scrapbox
 scrapboxParser = Scrapbox <$> manyTill (blockParser 0) eof
 
 -- | Run scrapbox parser on given 'String'
-runScrapboxParser :: String -> Either ParseError Scrapbox
-runScrapboxParser = parse scrapboxParser "Scrapbox parser"
+runScrapboxParser :: String -> Either ScrapboxError Scrapbox
+runScrapboxParser toParse = either (\parseError -> Left $ ParseError parseError) return (parse scrapboxParser "Scrapbox parser" toParse)
 
 --------------------------------------------------------------------------------
 -- Helper function

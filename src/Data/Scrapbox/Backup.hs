@@ -8,7 +8,6 @@ module Data.Scrapbox.Backup
   ( ScrapboxBackup (..),
     ScrapboxPage (..),
     fromBackup,
-    BackupError(..),
   )
 where
 
@@ -17,7 +16,7 @@ import RIO
 import Data.Scrapbox.Parser.Scrapbox
 import qualified RIO.Text as T
 import Data.Scrapbox.Render.Commonmark
-import Control.Exception (Exception(..))
+import Data.Scrapbox.Exception (ScrapboxError(..))
 
 data ScrapboxPage
   = ScrapboxPage
@@ -80,7 +79,7 @@ instance FromJSON ScrapboxBackup where
     pure $ ScrapboxBackup name displayname exported pages
 
 -- | Parse given backup json file into list of commonmark pages
-fromBackup :: ByteString -> Either BackupError [Text]
+fromBackup :: ByteString -> Either ScrapboxError [Text]
 fromBackup jsonByteString =
   either
     (\s -> Left $ FailedToDecodeBackupJSON s)
@@ -88,7 +87,7 @@ fromBackup jsonByteString =
     )
     (eitherDecodeStrict jsonByteString)
   where
-    intoMarkdown :: ScrapboxPage -> Either BackupError Text
+    intoMarkdown :: ScrapboxPage -> Either ScrapboxError Text
     intoMarkdown (ScrapboxPage title _created _updated content') = do
         let content = T.unlines content'
         either
@@ -96,15 +95,3 @@ fromBackup jsonByteString =
             (\parsed -> Right $ renderToCommonmarkNoOption parsed)
             (runScrapboxParser $ T.unpack content)
 
-data BackupError
-  -- ^ Failed to decode json file
-  = FailedToDecodeBackupJSON String
-  -- ^ Failed to parse page
-  | FailedToParsePage Text
-  deriving (Show, Eq, Ord)
-
-instance Exception BackupError where
-  displayException = \case
-    FailedToDecodeBackupJSON s -> "Failed to decode backup json file with reason: "
-        <> s
-    FailedToParsePage s -> "Failed to parse page: " <> T.unpack s

@@ -25,7 +25,6 @@ import           Test.Hspec (Spec, it)
 import           Test.QuickCheck (Arbitrary (..), Gen, PrintableString (..),
                                   Property, arbitraryPrintableChar, listOf1,
                                   property, resize, sized, suchThat, within)
-import           Text.Parsec (ParseError)
 
 --------------------------------------------------------------------------------
 -- Helper function
@@ -46,7 +45,7 @@ instance Arbitrary NonEmptyPrintableString where
         return $ NonEmptyPrintableString someText
 
 -- | General testing spec for parser
-shouldParseSpec :: (String -> Either ParseError a) -> Spec
+shouldParseSpec :: (String -> Either error a) -> Spec
 shouldParseSpec parser =
         it "should be able to parse any text without failing or cause infinite loop" $
             within 5000000 $ property $ \(someText :: PrintableString) ->
@@ -54,7 +53,7 @@ shouldParseSpec parser =
 
 -- | General test case on whether given parser returns non null list after parsing
 -- Non null string
-propNonNull :: (String -> Either ParseError a)
+propNonNull :: (String -> Either error a)
             -- ^ Parser
             -> (a -> [b])
             -- ^ Getter
