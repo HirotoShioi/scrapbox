@@ -2,18 +2,20 @@
 -}
 
 module Main
-    ( main
-    ) where
+  ( main,
+  )
+where
 
-import           RIO
-
-import           Test.Hspec (describe, hspec, parallel)
-import           TestCommonMark.Commonmark (commonmarkSpec)
-import           TestScrapboxParser.ParserTest (parserSpec)
+import RIO
+import Test.Hspec (describe, hspec, parallel)
+import TestCommonMark.Commonmark (commonmarkSpec)
+import TestScrapboxParser.ParserTest (parserSpec)
 
 main :: IO ()
 main = hspec $ do
-    describe "Scrapbox parser" $ parallel
-        parserSpec
-    describe "Commonmark parser"
-        commonmarkSpec
+  describe "Scrapbox parser" $
+    parallel
+      parserSpec
+  describe
+    "Commonmark parser"
+    commonmarkSpec

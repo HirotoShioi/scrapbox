@@ -1,8 +1,6 @@
-{-| Module which exports Exception type
--}
-
 {-# LANGUAGE LambdaCase #-}
 
+-- | Module which exports Exception type
 module Data.Scrapbox.Exception
   ( ScrapboxError (..),
   )
@@ -13,12 +11,12 @@ import qualified RIO.Text as T
 import qualified Text.ParserCombinators.Parsec as Parsec
 
 data ScrapboxError
-  = ParseError Parsec.ParseError
-  -- ^ Failed to parse given text as Scrapbox
-  | FailedToDecodeBackupJSON !String
-  -- ^ Failed to decode backup file
-  | FailedToParsePage !Text
-  -- ^ Failed to parse backup file
+  = -- | Failed to parse given text as Scrapbox
+    ParseError Parsec.ParseError
+  | -- | Failed to decode backup file
+    FailedToDecodeBackupJSON !String
+  | -- | Failed to parse backup file
+    FailedToParsePage !Text
   deriving (Show, Eq)
 
 instance Exception ScrapboxError where

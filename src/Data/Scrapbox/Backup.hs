@@ -1,9 +1,7 @@
-{-| Module exposing backup related functions
--}
-
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Module exposing backup related functions
 module Data.Scrapbox.Backup
   ( ScrapboxBackup (..),
     ScrapboxPage (..),
@@ -12,11 +10,11 @@ module Data.Scrapbox.Backup
 where
 
 import Data.Aeson ((.:), (.:?), (.=), FromJSON (..), ToJSON (..), eitherDecodeStrict, object, withObject)
-import RIO
+import Data.Scrapbox.Exception (ScrapboxError (..))
 import Data.Scrapbox.Parser.Scrapbox
-import qualified RIO.Text as T
 import Data.Scrapbox.Render.Commonmark
-import Data.Scrapbox.Exception (ScrapboxError(..))
+import RIO
+import qualified RIO.Text as T
 
 data ScrapboxPage
   = ScrapboxPage
@@ -83,15 +81,14 @@ fromBackup :: ByteString -> Either ScrapboxError [Text]
 fromBackup jsonByteString =
   either
     (\s -> Left $ FailedToDecodeBackupJSON s)
-    (\backup -> mapM intoMarkdown $ sbPages backup
+    ( \backup -> mapM intoMarkdown $ sbPages backup
     )
     (eitherDecodeStrict jsonByteString)
   where
     intoMarkdown :: ScrapboxPage -> Either ScrapboxError Text
     intoMarkdown (ScrapboxPage title _created _updated content') = do
-        let content = T.unlines content'
-        either
-            (\_parseError -> Left $ FailedToParsePage title)
-            (\parsed -> Right $ renderToCommonmarkNoOption parsed)
-            (runScrapboxParser $ T.unpack content)
-
+      let content = T.unlines content'
+      either
+        (\_parseError -> Left $ FailedToParsePage title)
+        (\parsed -> Right $ renderToCommonmarkNoOption parsed)
+        (runScrapboxParser $ T.unpack content)

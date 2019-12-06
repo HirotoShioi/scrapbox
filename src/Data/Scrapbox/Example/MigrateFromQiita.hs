@@ -30,12 +30,12 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Scrapbox
   ( ScrapboxBackup (..),
+    ScrapboxError (..),
     ScrapboxPage (..),
     commonmarkToScrapbox,
     optFilterRelativePathLink,
     optSectionHeading,
     scrapboxToCommonmark,
-    ScrapboxError(..)
   )
 import Data.Semigroup ((<>))
 import Data.Text (Text)
