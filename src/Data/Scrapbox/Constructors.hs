@@ -1,39 +1,49 @@
-{-| Constructor that can be used to build scrapbox tree
--}
-
+-- | Constructor that can be used to build scrapbox tree
 module Data.Scrapbox.Constructors
-    ( scrapbox
+  ( scrapbox,
+
     -- * Blocks
-    , blockQuote
-    , bulletPoint
-    , codeBlock
-    , heading
-    , lineBreak
-    , paragraph
-    , p
-    , table
-    , thumbnail
+    blockQuote,
+    bulletPoint,
+    codeBlock,
+    heading,
+    lineBreak,
+    paragraph,
+    p,
+    table,
+    thumbnail,
+
     -- * InlineBlock
-    , span
-    , bold
-    , italic
-    , strikeThrough
-    , mathExpr
-    , codeNotation
+    span,
+    bold,
+    italic,
+    strikeThrough,
+    mathExpr,
+    codeNotation,
+
     -- * Segment
-    , hashtag
-    , link
-    , text
-    ) where
+    hashtag,
+    link,
+    text,
+  )
+where
 
-import           RIO hiding (link, span)
-
-import           Data.Scrapbox.Types (Block (..), CodeName (..),
-                                      CodeSnippet (..), InlineBlock (..),
-                                      Level (..), ScrapText (..), Scrapbox (..),
-                                      Segment (..), Start (..), Style (..),
-                                      TableContent (..), TableName (..),
-                                      Url (..))
+import Data.Scrapbox.Types
+  ( Block (..),
+    CodeName (..),
+    CodeSnippet (..),
+    InlineBlock (..),
+    Level (..),
+    ScrapText (..),
+    Scrapbox (..),
+    Segment (..),
+    Start (..),
+    Style (..),
+    TableContent (..),
+    TableName (..),
+    Url (..),
+  )
+import RIO hiding (link, span)
 
 --------------------------------------------------------------------------------
 -- Smart constructors
@@ -53,7 +63,8 @@ blockQuote = BLOCK_QUOTE . ScrapText
 
 -- | Constructors for creating 'CODE_BLOCK' block
 codeBlock :: Text -> [Text] -> Block
-codeBlock codeName codeSnippet = CODE_BLOCK
+codeBlock codeName codeSnippet =
+  CODE_BLOCK
     (CodeName codeName)
     (CodeSnippet codeSnippet)
 
